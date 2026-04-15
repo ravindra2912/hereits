@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+Disallow: /dashboard
+Disallow: /api/
+
+Allow: /
+
+Sitemap: https://brandbatao.com/sitemap.xml
