@@ -11,7 +11,7 @@
   </p>
 
   <p class="text-center" style="font-size: 16px; margin-bottom: 24px; color: #4b5563;">
-    We regret to inform you that your business account <strong style="color: #111827;">“{{ $business->name }}”</strong> on brandbatao has been suspended.
+    We regret to inform you that your business account <strong style="color: #111827;">“{{ $business->name }}”</strong> on Hereits has been suspended.
   </p>
 
   <div style="background-color: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px; padding: 20px; margin-bottom: 32px; text-align: left;">

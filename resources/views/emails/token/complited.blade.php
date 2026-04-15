@@ -7,7 +7,7 @@
       <!-- Header -->
       <tr>
         <td class="header">
-          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="brandbatao"></a>
+          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="Hereits"></a>
         </td>
       </tr>
 
@@ -18,8 +18,8 @@
           <p>We hope your recent booking with {{ $apoinment_details->expert->expert_name }} went well!</p>
           <p>We’d love to hear your thoughts to help us improve.</p>
           <p><a href="{{ route('account.booking.details', $apoinment_details->id) }}">Leave a Review</a></p>
-          <p style="margin-top:20px;">Thanks for using brandbatao!</p>
-          <p>– The brandbatao Team</p>
+          <p style="margin-top:20px;">Thanks for using Hereits!</p>
+          <p>– The Hereits Team</p>
         </td>
       </tr>
 

@@ -4,7 +4,7 @@
 return [
 
     "site_setting" => [
-        "name" => "BrandBatao",
+        "name" => "Hereits",
         "logo" => env('APP_URL') . '/assets/images/logo.png',
         "logo-bg-black" => env('APP_URL') . '/assets/images/logo.png',
         "small_logo" => env('APP_URL') . '/assets/images/small_logo.png',
@@ -13,8 +13,8 @@ return [
 
     "contact_info" => [
         "phone" => "8306426026",
-        "email" => "help.Brandbatao@gmail.com",
-        "address" => "1 Xperts Business Center, Vadli, Bhavangar Road",
+        "email" => "hereitshelp@gmail.com",
+        "address" => "Khar get, Mahuva, Bhavangar Road",
         "upi_id" => "gosaikrishna85-1@okicici",
     ],
 
@@ -77,9 +77,9 @@ return [
 
     "social_links" => [
         "facebook" => "https://www.facebook.com/",
-        "twitter" => "https://x.com/brandbatao",
+        "twitter" => "https://x.com/Hereits",
         "instagram" => "https://www.instagram.com/brand_batao/",
-        "linkedin" => "https://www.linkedin.com/in/brandbatao/",
+        "linkedin" => "https://www.linkedin.com/in/Hereits/",
         "youtube" => "https://www.youtube.com/",
     ],
     "category_type" => ['Services', 'Products'],

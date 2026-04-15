@@ -7,7 +7,7 @@
       <!-- Header -->
       <tr>
         <td class="header">
-          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="brandbatao"></a>
+          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="Hereits"></a>
         </td>
       </tr>
 
@@ -27,7 +27,7 @@
           </ul>
 
           <p style="margin-top:20px;">You’ll be notified as your turn approaches. Please keep your phone handy and arrive a few minutes early.</p>
-          <p>– The brandbatao Team</p>
+          <p>– The Hereits Team</p>
         </td>
       </tr>
 

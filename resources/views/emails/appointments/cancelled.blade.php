@@ -7,7 +7,7 @@
       <!-- Header -->
       <tr>
         <td class="header">
-          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="brandbatao"></a>
+          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="Hereits"></a>
         </td>
       </tr>
 
@@ -19,7 +19,7 @@
           <p>If this was a mistake, you can reschedule or contact the provider directly.</p>
           <p><a href="{{ route('business-details', $apoinment_details->business->slug) }}">Reschedule Appointment</a></p>
           <p style="margin-top:20px;">We're sorry for the inconvenience.</p>
-          <p>– The brandbatao Team</p>
+          <p>– The Hereits Team</p>
         </td>
       </tr>
 

@@ -1,7 +1,7 @@
 @extends('front.layouts.main', ['seo' => [
 'title' => config('app.name') . ' - Growth Platform for Local Businesses',
-'description' => 'BrandBatao helps your local business grow with smart scheduling, e-commerce, and service listings. Reach more customers and manage your business effortlessly.',
-'keywords' => 'local business growth, online booking system, e-commerce for local stores, service directory, BrandBatao',
+'description' => 'Hereits helps your local business grow with smart scheduling, e-commerce, and service listings. Reach more customers and manage your business effortlessly.',
+'keywords' => 'local business growth, online booking system, e-commerce for local stores, service directory, Hereits',
 'image' => asset('assets/front/img/poster.png')
 ]])
 

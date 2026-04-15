@@ -41,7 +41,7 @@
 	@if(isset($seo['image']) && !empty($seo['image']))
 	<meta property="og:image" content="{{ $seo['image'] }}">
 	@endif
-	<meta property="og:site_name" content="BrandBatao">
+	<meta property="og:site_name" content="Hereits">
 
 	<!-- Twitter -->
 	<meta property="twitter:card" content="summary_large_image">
@@ -52,7 +52,7 @@
 	<meta property="twitter:image" content="{{ $seo['image'] }}">
 	@endif
 
-	<meta name="author" content="BrandBatao">
+	<meta name="author" content="Hereits">
 	<meta name="language" content="en-IN">
 
 	<!-- Favicon -->

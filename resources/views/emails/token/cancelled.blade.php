@@ -7,7 +7,7 @@
       <!-- Header -->
       <tr>
         <td class="header">
-          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="brandbatao"></a>
+          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="Hereits"></a>
         </td>
       </tr>
 
@@ -19,7 +19,7 @@
           <p>If you didn’t request this cancellation, please contact support or book again:</p>
           <p><a href="{{ route('business-details', $apoinment_details->business->slug) }}">Book New Token</a></p>
           <p style="margin-top:20px;">We're sorry for the inconvenience.</p>
-          <p>– The brandbatao Team</p>
+          <p>– The Hereits Team</p>
         </td>
       </tr>
 

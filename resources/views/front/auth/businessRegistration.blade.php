@@ -1,7 +1,7 @@
 @extends('front.layouts.main', ['seo' => [
-'title' => 'Register your business | brandbatao',
-'description' => 'Register your business with brandbatao and get more customers',
-'keywords' => 'register, business, brandbatao',
+'title' => 'Register your business | Hereits',
+'description' => 'Register your business with Hereits and get more customers',
+'keywords' => 'register, business, Hereits',
 'image' => '' ,
 'city' => '',
 'state' => '',

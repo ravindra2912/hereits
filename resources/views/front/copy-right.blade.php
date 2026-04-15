@@ -1,7 +1,7 @@
 @extends('front.layouts.main', ['seo' => [
 'title' => 'Copyright Policy | ' . config('app.name'),
 'description' => 'Review the copyright policy of ' . config('app.name') . '. Understand our intellectual property rights and the guidelines for content usage.',
-'keywords' => 'copyright, intellectual property, legal policy, BrandBatao'
+'keywords' => 'copyright, intellectual property, legal policy, Hereits'
 ]])
 @section('content')
 @section('title', 'Copy right')

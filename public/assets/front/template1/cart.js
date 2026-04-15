@@ -14,7 +14,7 @@ $(document).ready(function () {
         },
 
         loadCart() {
-            const savedCart = this.getCookie('brandbatao_cart_' + this.businessSlug);
+            const savedCart = this.getCookie('Hereits_cart_' + this.businessSlug);
             if (savedCart) {
                 try {
                     this.items = JSON.parse(savedCart);
@@ -25,7 +25,7 @@ $(document).ready(function () {
         },
 
         saveCart() {
-            this.setCookie('brandbatao_cart_' + this.businessSlug, JSON.stringify(this.items), 7);
+            this.setCookie('Hereits_cart_' + this.businessSlug, JSON.stringify(this.items), 7);
         },
 
         addItem(product, qty = 1) {

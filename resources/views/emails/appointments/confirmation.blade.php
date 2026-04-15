@@ -7,7 +7,7 @@
       <!-- Header -->
       <tr>
         <td class="header">
-          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="brandbatao"></a>
+          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="Hereits"></a>
         </td>
       </tr>
 
@@ -25,9 +25,9 @@
             <li>Location: {{$apoinment_details->business->address}}</li>
           </ul>
 
-          <!-- <p>Need to reschedule?:<a href="https://brandbatao.com">click here</a></p> -->
-          <p style="margin-top:20px;">Thank you for choosing brandbatao!</p>
-          <p>– The brandbatao Team</p>
+          <!-- <p>Need to reschedule?:<a href="https://hereits.com">click here</a></p> -->
+          <p style="margin-top:20px;">Thank you for choosing Hereits!</p>
+          <p>– The Hereits Team</p>
         </td>
       </tr>
 

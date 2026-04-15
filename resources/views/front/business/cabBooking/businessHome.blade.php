@@ -1,11 +1,11 @@
 @extends('front.business.cabBooking.layouts.main', ['seo' => [
-    'title' => $business->name . ' in '.$business->area. ' | brandbatao',
-    'description' => $business->seo_description ?? \Illuminate\Support\Str::limit($business->description, 160),
-    'keywords' => $business->seo_keyword ?? $business->name,
-    'image' => getImage($business->business_image) ,
-    'city' => isset($business->city) && !empty($business->city->name)?$business->city->name:'',
-    'state' => isset($business->state) && !empty($business->state->name)?$business->state->name:'',
-    'position' => $business->latitude.':'.$business->longitude
+'title' => $business->name . ' in '.$business->area. ' | Hereits',
+'description' => $business->seo_description ?? \Illuminate\Support\Str::limit($business->description, 160),
+'keywords' => $business->seo_keyword ?? $business->name,
+'image' => getImage($business->business_image) ,
+'city' => isset($business->city) && !empty($business->city->name)?$business->city->name:'',
+'state' => isset($business->state) && !empty($business->state->name)?$business->state->name:'',
+'position' => $business->latitude.':'.$business->longitude
 ]
 ])
 @section('content')
@@ -15,7 +15,7 @@
 
 @push('schema')
 <script type="application/ld+json">
-  @include('front.business.cabBooking.schema', ['business' => $business, 'type' => 'business'])
+    @include('front.business.cabBooking.schema', ['business' => $business, 'type' => 'business'])
 </script>
 @endpush
 
@@ -24,7 +24,7 @@
     <div class="cab-hero-overlay"></div>
     <div class="cab-hero-content">
         <h1 class="cab-hero-title">Book Your Ride Anytime, Anywhere</h1>
-        
+
         <div class="booking-form-wrapper">
             <form id="cabBookingForm">
                 <div class="booking-input-group">
@@ -32,12 +32,12 @@
                         <i class="fas fa-map-marker-alt text-success fs-5"></i>
                         <input type="text" id="pickupLocation" placeholder="Enter Pickup Location" required>
                     </div>
-                    
+
                     <div class="booking-input">
                         <i class="fas fa-map-pin text-danger fs-5"></i>
                         <input type="text" id="dropLocation" placeholder="Enter Drop Location" required>
                     </div>
-                    
+
                     <button type="button" id="cabSearchBtn" class="btn-cab-primary">
                         <i class="fas fa-search me-2"></i> Search
                     </button>
@@ -54,7 +54,7 @@
             <h2 class="cab-section-title">Cabs and Taxi Service</h2>
             <p class="text-muted mt-3 fs-5">Reliable, safe and comfortable rides for every occasion.</p>
         </div>
-        
+
         <div class="row g-4">
             <div class="col-md-6 col-lg-3">
                 <div class="service-card">
@@ -65,7 +65,7 @@
                     <p>Perfect for dropping off at your destination securely and on time.</p>
                 </div>
             </div>
-            
+
             <div class="col-md-6 col-lg-3">
                 <div class="service-card">
                     <div class="service-icon">
@@ -75,7 +75,7 @@
                     <p>Book a round trip and enjoy a hassle-free journey back home.</p>
                 </div>
             </div>
-            
+
             <div class="col-md-6 col-lg-3">
                 <div class="service-card">
                     <div class="service-icon">
@@ -85,7 +85,7 @@
                     <p>Explore your city with our comfortable local daily rental packages.</p>
                 </div>
             </div>
-            
+
             <div class="col-md-6 col-lg-3">
                 <div class="service-card">
                     <div class="service-icon">
@@ -106,7 +106,7 @@
             <h2 class="cab-section-title">Explore Popular Routes</h2>
             <p class="text-muted mt-3 fs-5">Discover seamless city-to-city travel options across India.</p>
         </div>
-        
+
         <div class="row g-4 justify-content-center">
             <div class="col-md-6 col-lg-4">
                 <div class="route-card">
@@ -117,7 +117,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-6 col-lg-4">
                 <div class="route-card">
                     <img src="https://images.unsplash.com/photo-1587474260580-58f2daeb5dc6?q=80&w=800&auto=format&fit=crop" class="route-img" alt="Pune">
@@ -127,7 +127,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-6 col-lg-4">
                 <div class="route-card">
                     <img src="https://images.unsplash.com/photo-1582510003544-4d00b7f74220?q=80&w=800&auto=format&fit=crop" class="route-img" alt="Surat">
@@ -153,19 +153,19 @@
                     <img src="{{ !empty($setting->about_us_image) ? getImage($setting->about_us_image) : 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=800&auto=format&fit=crop' }}" alt="About {{ $business->name }}">
                 </div>
             </div>
-            
+
             <div class="col-lg-6 px-lg-4">
                 <h6 class="text-uppercase mb-2 text-muted" style="letter-spacing: 1.5px; font-weight: 700; color: var(--cab-primary) !important;">Why Choose Us</h6>
                 <h2 class="fw-bold mb-4" style="color: var(--cab-dark); font-size: 2.4rem;">About {{ $business->name }}</h2>
-                
+
                 @if(!empty($setting->about_us_text))
-                    <div class="text-muted mb-4 fs-5" style="line-height: 1.8;">
-                        {!! \Illuminate\Support\Str::limit(strip_tags($setting->about_us_text), 300) !!}
-                    </div>
+                <div class="text-muted mb-4 fs-5" style="line-height: 1.8;">
+                    {!! \Illuminate\Support\Str::limit(strip_tags($setting->about_us_text), 300) !!}
+                </div>
                 @else
-                    <p class="text-muted mb-4 fs-5" style="line-height: 1.8;">We are committed to providing you with the best travel experience. Our modern fleet and professional drivers ensure that your journey is safe, comfortable, and affordable. We strive to redefine transportation to meet your daily needs.</p>
+                <p class="text-muted mb-4 fs-5" style="line-height: 1.8;">We are committed to providing you with the best travel experience. Our modern fleet and professional drivers ensure that your journey is safe, comfortable, and affordable. We strive to redefine transportation to meet your daily needs.</p>
                 @endif
-                
+
                 <div class="mt-4">
                     <div class="trust-item">
                         <div class="trust-icon">
@@ -176,7 +176,7 @@
                             <p>Verified drivers and monitored rides for your complete safety and security during the trip.</p>
                         </div>
                     </div>
-                    
+
                     <div class="trust-item">
                         <div class="trust-icon">
                             <i class="fas fa-tags"></i>
@@ -186,7 +186,7 @@
                             <p>No hidden charges or surge pricing, just simple, transparent billing and standard competitive rates.</p>
                         </div>
                     </div>
-                    
+
                     <div class="trust-item">
                         <div class="trust-icon">
                             <i class="fas fa-user-tie"></i>
@@ -197,7 +197,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <a href="#contact-us" class="btn-cab-outline mt-3">Learn More</a>
             </div>
         </div>
@@ -212,7 +212,7 @@
         <div class="position-absolute end-0 top-0 opacity-10" style="transform: translate(20%, -20%); z-index: 1;">
             <i class="fas fa-taxi" style="font-size: 20rem; color: var(--cab-primary);"></i>
         </div>
-        
+
         <div class="row g-5 position-relative z-index-2" style="z-index: 2;">
             <div class="col-lg-5">
                 <h6 class="fw-bold text-uppercase ls-1 mb-2" style="color: var(--cab-primary);">Get In Touch</h6>

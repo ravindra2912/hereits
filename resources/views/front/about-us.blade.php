@@ -26,23 +26,23 @@
 
 				<div class="mb-5">
 					<h3 class="fw-bold mb-4">Who We Are</h3>
-					<p class="text-secondary mb-3">brandbatao.com is a hyperlocal platform for local shopping and services that aims to connect local consumers to relevant product and service providers. We help fill the gap between users and businesses by enabling effortless discovery while helping registered businesses showcase their offerings.</p>
-					<p class="text-secondary mb-3">Users can check products via the brandbatao app and website, then visit the store to buy physically or order online for home delivery. We also facilitate store pick-up orders at your convenience.</p>
+					<p class="text-secondary mb-3">hereits.com is a hyperlocal platform for local shopping and services that aims to connect local consumers to relevant product and service providers. We help fill the gap between users and businesses by enabling effortless discovery while helping registered businesses showcase their offerings.</p>
+					<p class="text-secondary mb-3">Users can check products via the Hereits app and website, then visit the store to buy physically or order online for home delivery. We also facilitate store pick-up orders at your convenience.</p>
 				</div>
 
 				<div class="mb-5">
 					<h3 class="fw-bold mb-4">Our Services</h3>
-					<p class="text-secondary mb-3">Service providers on brandbatao can add service plans with prices, ensuring transparency. Users can get services at their doorstep or visit the provider's location.</p>
+					<p class="text-secondary mb-3">Service providers on Hereits can add service plans with prices, ensuring transparency. Users can get services at their doorstep or visit the provider's location.</p>
 				</div>
 
 				<div class="mb-5">
 					<h3 class="fw-bold mb-4">No Commissions</h3>
-					<p class="text-secondary mb-3">brandbatao doesn’t act as an intermediary between buyers and sellers. Both parties interact directly, and we do not charge commissions on transactions.</p>
+					<p class="text-secondary mb-3">Hereits doesn’t act as an intermediary between buyers and sellers. Both parties interact directly, and we do not charge commissions on transactions.</p>
 				</div>
 
 				<div class="mb-5">
 					<h3 class="fw-bold mb-4">Communication</h3>
-					<p class="text-secondary mb-3">We understand the importance of communication. brandbatao Chat helps overcome communication gaps, allowing users to ask about availability, pricing, and specific product details instanty.</p>
+					<p class="text-secondary mb-3">We understand the importance of communication. Hereits Chat helps overcome communication gaps, allowing users to ask about availability, pricing, and specific product details instanty.</p>
 				</div>
 
 				<div class="text-center mt-5">

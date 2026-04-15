@@ -53,7 +53,7 @@ class ExpertController extends Controller
                 ->addColumn('action', function ($row) {
                     $url = route('business.appointment.expert.destroy', $row->id);
                     $url = "'" . $url . "'";
-                    $whatsappMessage = "Hello " . $row->expert_name . "! \n\nManage your professional profile and appointments on BrandBatao.\n\nLogin to Expert Dashboard: https://brandbatao.com/expert-manager/login\nEmail: " . $row->email . "\n\nUse your assigned password to access your dashboard. \n\nBest Regards,\nTeam BrandBatao";
+                    $whatsappMessage = "Hello " . $row->expert_name . "! \n\nManage your professional profile and appointments on Hereits.\n\nLogin to Expert Dashboard: https://hereits.com/expert-manager/login\nEmail: " . $row->email . "\n\nUse your assigned password to access your dashboard. \n\nBest Regards,\nTeam Hereits";
                     $whatsappUrl = "https://api.whatsapp.com/send?text=" . urlencode($whatsappMessage);
 
                     $html = ' <div class="text-center">

@@ -1,5 +1,5 @@
 @extends('front.layouts.main', ['seo' => [
-'title' => '404 | brandbatao',
+'title' => '404 | Hereits',
 'description' => 'Page not found',
 'keywords' => '404, page not found',
 'image' => asset('front/images/404.svg'),

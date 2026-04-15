@@ -18,35 +18,35 @@ class FaqSeeder extends Seeder
             // ---------------- GENERAL ----------------
             [
                 'type' => 'General',
-                'question' => 'What is BrandBatao?',
-                'answer' => 'BrandBatao is a business management platform that helps you manage appointments, list products and services, and connect with customers online from one place.',
+                'question' => 'What is Hereits?',
+                'answer' => 'Hereits is a business management platform that helps you manage appointments, list products and services, and connect with customers online from one place.',
             ],
             [
                 'type' => 'General',
-                'question' => 'Who can use BrandBatao?',
-                'answer' => 'BrandBatao is designed for small and medium businesses such as salons, clinics, service providers, consultants, and local stores.',
+                'question' => 'Who can use Hereits?',
+                'answer' => 'Hereits is designed for small and medium businesses such as salons, clinics, service providers, consultants, and local stores.',
             ],
             [
                 'type' => 'General',
-                'question' => 'Do I need technical knowledge to use BrandBatao?',
-                'answer' => 'No, BrandBatao is built to be simple and easy to use. Anyone can get started without technical skills.',
+                'question' => 'Do I need technical knowledge to use Hereits?',
+                'answer' => 'No, Hereits is built to be simple and easy to use. Anyone can get started without technical skills.',
             ],
             [
                 'type' => 'General',
-                'question' => 'Is BrandBatao free to use?',
-                'answer' => 'BrandBatao offers affordable plans with usage-based pricing. Some features may require a paid subscription.',
+                'question' => 'Is Hereits free to use?',
+                'answer' => 'Hereits offers affordable plans with usage-based pricing. Some features may require a paid subscription.',
             ],
 
             // ---------------- BUSINESS ----------------
             [
                 'type' => 'Business',
-                'question' => 'How do I register my business on BrandBatao?',
-                'answer' => 'You can register by signing up on BrandBatao, adding your business details, and completing basic verification.',
+                'question' => 'How do I register my business on Hereits?',
+                'answer' => 'You can register by signing up on Hereits, adding your business details, and completing basic verification.',
             ],
             [
                 'type' => 'Business',
                 'question' => 'Can I manage multiple businesses with one account?',
-                'answer' => 'Yes, BrandBatao allows you to manage multiple businesses depending on your selected plan.',
+                'answer' => 'Yes, Hereits allows you to manage multiple businesses depending on your selected plan.',
             ],
             [
                 'type' => 'Business',
@@ -68,7 +68,7 @@ class FaqSeeder extends Seeder
             [
                 'type' => 'Appointment',
                 'question' => 'Can I manage appointment queues?',
-                'answer' => 'Yes, BrandBatao supports smart queue management to handle high-demand periods.',
+                'answer' => 'Yes, Hereits supports smart queue management to handle high-demand periods.',
             ],
             [
                 'type' => 'Appointment',
@@ -84,7 +84,7 @@ class FaqSeeder extends Seeder
             // ---------------- SERVICES ----------------
             [
                 'type' => 'Services',
-                'question' => 'Can I list multiple services on BrandBatao?',
+                'question' => 'Can I list multiple services on Hereits?',
                 'answer' => 'Yes, you can list multiple services along with pricing and descriptions.',
             ],
             [
@@ -101,7 +101,7 @@ class FaqSeeder extends Seeder
             // ---------------- PRODUCT ----------------
             [
                 'type' => 'Product',
-                'question' => 'Can I list my products on BrandBatao?',
+                'question' => 'Can I list my products on Hereits?',
                 'answer' => 'Yes, you can add and display your products with images, prices, and descriptions.',
             ],
             [

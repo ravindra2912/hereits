@@ -1,7 +1,7 @@
 @extends('front.layouts.main', ['seo' => [
 'title' => 'Cancellation & Refund Policy | ' . config('app.name'),
 'description' => 'Review the cancellation and refund policy of ' . config('app.name') . '. Learn about your rights, eligibility, and the process for refunds and cancellations.',
-'keywords' => 'refund policy, cancellation policy, returns, BrandBatao'
+'keywords' => 'refund policy, cancellation policy, returns, Hereits'
 ]])
 
 @section('content')

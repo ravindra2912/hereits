@@ -29,7 +29,7 @@ class TokenConfirmationMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Your Token is Confirmed – [#" . $this->apoinment_details->token_number . "] at brandbatao",
+            subject: "Your Token is Confirmed – [#" . $this->apoinment_details->token_number . "] at Hereits",
         );
     }
 

@@ -1,5 +1,5 @@
 @extends('front.business.template1.layouts.main', ['seo' => [
-'title' => 'Services | ' . $business->name . ' | brandbatao',
+'title' => 'Services | ' . $business->name . ' | Hereits',
 'description' => $business->seo_description ?? 'Explore services offered by ' . $business->name,
 'keywords' => 'services, ' . ($business->seo_keyword ?? $business->name),
 'image' => getImage($business->business_image)

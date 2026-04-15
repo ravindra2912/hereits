@@ -1,5 +1,5 @@
 @extends('front.business.template1.layouts.main', ['seo' => [
-'title' => $business->name . ' in '.$business->area. ' | brandbatao',
+'title' => $business->name . ' in '.$business->area. ' | Hereits',
 'description' => $business->seo_description ?? \Illuminate\Support\Str::limit($business->description, 160),
 'keywords' => $business->seo_keyword ?? $business->name,
 'image' => getImage($business->business_image) ,

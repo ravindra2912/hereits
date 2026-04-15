@@ -7,7 +7,7 @@
       <!-- Header -->
       <tr>
         <td class="header">
-          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="brandbatao"></a>
+          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="Hereits"></a>
         </td>
       </tr>
 
@@ -19,7 +19,7 @@
           <p style="margin-top:20px;"> To proceed, click the link below: </p>
           <a href="{{ $data['url'] }}">{{ $data['url'] }}</a>
           <p style="margin-top:20px;">Thanks for joining us!</p>
-          <p>– The brandbatao Team</p>
+          <p>– The Hereits Team</p>
         </td>
       </tr>
 

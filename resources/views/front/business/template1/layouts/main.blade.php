@@ -41,7 +41,7 @@
     @if(isset($seo['image']) && !empty($seo['image']))
     <meta property="og:image" content="{{ $seo['image'] }}">
     @endif
-    <meta property="og:site_name" content="BrandBatao">
+    <meta property="og:site_name" content="Hereits">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
@@ -64,8 +64,8 @@
     <meta name="geo.region" content="{{ $seo['state'] }}">
     @endif
 
-    <meta name="author" content="BrandBatao">
-    <meta name="copyright" content="BrandBatao">
+    <meta name="author" content="Hereits">
+    <meta name="copyright" content="Hereits">
     <meta name="language" content="en-IN">
     <meta name="distribution" content="global">
     <meta name="rating" content="general">

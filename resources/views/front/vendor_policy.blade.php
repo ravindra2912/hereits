@@ -1,7 +1,7 @@
 @extends('front.layouts.main', ['seo' => [
 'title' => 'Vendor Policy | ' . config('app.name'),
 'description' => 'Understand our vendor policies and guidelines for selling on ' . config('app.name') . '. We ensure a fair and transparent experience for all our partners.',
-'keywords' => 'vendor policy, seller guidelines, merchant terms, BrandBatao'
+'keywords' => 'vendor policy, seller guidelines, merchant terms, Hereits'
 ]])
 
 @section('content')

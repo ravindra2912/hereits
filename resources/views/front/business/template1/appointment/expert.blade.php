@@ -1,5 +1,5 @@
 @extends('front.business.template1.layouts.main', ['seo' => [
-'title' => $expert->expert_name . ' | ' . $business->name . ' | brandbatao',
+'title' => $expert->expert_name . ' | ' . $business->name . ' | Hereits',
 'description' => \Illuminate\Support\Str::limit($expert->description, 160) ?? $business->seo_description,
 'keywords' => $expert->expert_name . ', ' . ($expert->title ?? 'Expert') . ', ' . ($business->seo_keyword ?? $business->name),
 'image' => getImage($expert->expert_image) ,
