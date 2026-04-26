@@ -27,7 +27,7 @@
                             </div>
                             <div class="card-body p-4">
                                 <h5 class="card-title fw-bold mb-1">{{ $business->name }}</h5>
-                                <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt text-primary me-1"></i> {{ $business->address ?? ($business->city->name ?? 'Surat') }}</p>
+                                <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt text-primary me-1"></i> {{ $business->area ? $business->area .', ' : '' }} {{ $business->city->name ?? '' }}</p>
                                 <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-auto">
                                     <small class="text-muted">Verified</small>
                                     <a href="{{ route('business-details', $business->slug) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">View Details</a>

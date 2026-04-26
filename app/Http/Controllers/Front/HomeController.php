@@ -21,7 +21,7 @@ class HomeController extends Controller
      */
     public function index(Request $request): View
     {
-        $featured_businesses = Business::select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'business_image', 'business_logo', 'business_category_id', 'address')
+        $featured_businesses = Business::select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
             ->with(['businessCategory', 'city'])
             ->where('status', 'active')
             ->orderBy('rating', 'desc')
@@ -121,7 +121,7 @@ class HomeController extends Controller
     public function businessList(Request $request): View
     {
         $businessCategory = getBusinessCategory();
-        $businesses = Business::select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'business_image', 'business_logo', 'business_category_id', 'address')
+        $businesses = Business::select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
             ->with(['businessCategory', 'city'])
             ->where('status', 'active')
             ->orderBy('rating', 'desc')

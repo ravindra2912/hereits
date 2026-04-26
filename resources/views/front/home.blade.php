@@ -82,7 +82,7 @@
                 <h2 class="fw-bold mb-2">Recommended for You</h2>
                 <p class="text-muted mb-0">Top-rated businesses in your neighborhood</p>
             </div>
-            <a href="#" class="btn btn-outline-primary rounded-pill">View All <i class="fas fa-arrow-right ms-2"></i></a>
+            <a href="{{ route('business-list') }}" class="btn btn-outline-primary rounded-pill">View All <i class="fas fa-arrow-right ms-2"></i></a>
         </div>
 
         <div class="row g-4">
@@ -100,7 +100,7 @@
                                 <i class="fas fa-star"></i> <span>{{ number_format($business->rating, 1) }}</span>
                             </div>
                         </div>
-                        <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt me-2 text-primary"></i> {{ $business->address ?? ($business->city->name ?? '') }}</p>
+                        <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt me-2 text-primary"></i> {{ $business->area ? $business->area .', ' : '' }} {{ $business->city->name ?? '' }}</p>
 
                         <div class="d-flex gap-2 mb-3 flex-wrap">
                             <span class="badge bg-light text-muted fw-normal">{{ $business->businessCategory->name ?? 'Business' }}</span>
