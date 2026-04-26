@@ -181,6 +181,19 @@
 				transform: translateY(-20px);
 			}
 		}
+		.location-picker-header {
+			transition: all 0.3s ease;
+			padding: 5px 10px;
+			border-radius: 12px;
+		}
+
+		.location-picker-header:hover {
+			background: rgba(99, 102, 241, 0.05);
+		}
+
+		.cursor-pointer {
+			cursor: pointer;
+		}
 	</style>
 
 
@@ -202,6 +215,7 @@
 
 	<!-- Footer -->
 	@include('front.layouts.footer')
+	@include('front.layouts.location_modal')
 	@include('front.layouts.auth_modals')
 
 	<!-- Bootstrap 5 JS -->

@@ -50,6 +50,7 @@ Route::controller(HomeController::class)->group(function () {
     Route::get('/copy-right', 'CopyRight')->name('CopyRight');
     Route::get('/cancellation-and-refund-policy', 'CancellationAndRefundPolicy')->name('CancellationAndRefundPolicy');
     Route::get('/vendor-policy', 'VendorPolicy')->name('VendorPolicy');
+    Route::get('/businesses', 'businessList')->name('business-list');
 });
 
 Route::controller(AppointmentController::class)->group(function () {

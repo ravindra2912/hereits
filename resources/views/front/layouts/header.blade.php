@@ -1,33 +1,34 @@
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-3" style="z-index: 1021;">
-    <div class="container">
-        <button class="navbar-toggler border-0 p-0 me-3 order-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#navbarOffcanvas" aria-controls="navbarOffcanvas" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
+    <div class="container d-flex align-items-center">
+        <!-- 1. Menu Toggler (Mobile Only) -->
+        <button class="navbar-toggler border-0 p-0 order-0 d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#navbarOffcanvas" aria-controls="navbarOffcanvas" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon" style="width: 22px; height: 22px;"></span>
         </button>
-        <a class="navbar-brand order-1 order-lg-0 mx-auto mx-lg-0" href="{{ route('home') }}">
+
+        <!-- 2. Logo (Desktop Only) -->
+        <a class="navbar-brand order-1 order-lg-0 ms-lg-0 d-none d-lg-block" href="{{ route('home') }}">
             <img src="{{ config('const.site_setting.logo') }}" alt="Logo" class="img-fluid" style="max-height: 40px;" loading="lazy">
         </a>
+
+        <!-- 3. Location (Center on Mobile, After Logo on Desktop) -->
+        <div class="location-picker-header d-flex align-items-center order-2 cursor-pointer mx-auto mx-lg-0 ms-lg-3" data-bs-toggle="modal" data-bs-target="#locationModal">
+            <div class="vr mx-3 d-none d-lg-block h-100 opacity-25"></div>
+            <i class="fas fa-map-marker-alt text-primary" style="font-size: 1rem;"></i>
+            <div class="text-start ms-2">
+                <small class="d-block text-muted d-none d-lg-block" style="font-size: 0.65rem; line-height: 1; text-transform: uppercase;">Location</small>
+                <span class="fw-bold text-dark selected-location-text" style="font-size: 0.9rem; letter-spacing: -0.2px;">Select City</span>
+            </div>
+            <i class="fas fa-chevron-down ms-2 text-muted" style="font-size: 0.6rem;"></i>
+        </div>
+
         <!-- Spacer for mobile to balance layout -->
-        <div class="d-lg-none order-2" style="width: 48px;"></div>
-        <div class="d-none d-lg-flex collapse navbar-collapse order-3" id="navbarNav">
+        <div class="d-lg-none ms-auto order-3" style="width: 20px;"></div>
+
+        <!-- Desktop Navigation -->
+        <div class="d-none d-lg-flex collapse navbar-collapse order-4" id="navbarNav">
             <ul class="navbar-nav ms-auto gap-2 gap-lg-3 text-center text-lg-start shadow-sm-mobile">
                 @if(!request()->routeIs('account.*'))
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('aboutUs') ? 'active' : '' }}" href="{{ route('aboutUs') }}">About Us</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('blog.*') ? 'active' : '' }}" href="{{ route('blog.index') }}">Blog</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ request()->routeIs('why-join-with-us') ? '#pricing' : route('why-join-with-us') . '#pricing' }}">Pricing</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('contactUs') ? 'active' : '' }}" href="{{ route('contactUs') }}">Contact</a>
-                </li>
                 <li class="nav-item d-flex align-items-center ms-lg-2">
                     <a class="nav-link highlight-register-btn px-3 py-2 rounded-pill fw-bold text-white shadow-sm" href="{{ route('why-join-with-us') }}">
                         <i class="fas fa-plus-circle me-1 pulse-icon"></i>List Your Business
@@ -47,9 +48,10 @@
                 </li>
                 @endif
                 @endif
+
+                <!-- Login/Profile (After List Your Business) -->
                 <li class="nav-item ms-lg-3">
                     @auth
-                    <!-- User Dropdown -->
                     <div class="dropdown">
                         <a href="#" class="d-flex align-items-center text-dark text-decoration-none dropdown-toggle gap-2 py-1 px-2 rounded-pill hover-bg-light transition-all" id="userMenuMain" data-bs-toggle="dropdown" aria-expanded="false">
                             <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 35px; height: 35px;">
@@ -60,7 +62,7 @@
                         <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2 py-2" aria-labelledby="userMenuMain" style="min-width: 180px;">
                             <li>
                                 <a class="dropdown-item py-2 d-flex align-items-center gap-3" href="{{ route('account.index') }}">
-                                    <i class="fas fa-chart-line text-muted"></i>
+                                    <i class="fas fa-user text-muted"></i>
                                     <span>Account</span>
                                 </a>
                             </li>
@@ -86,7 +88,6 @@
                     @else
                     <div class="d-flex flex-column flex-lg-row gap-2 mt-3 mt-lg-0 align-items-center">
                         <span data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')" class="btn btn-outline-dark rounded-pill px-4 cursor-pointer">Login</span>
-                        <span data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('register')" class="btn btn-primary rounded-pill px-4 cursor-pointer">Register</span>
                     </div>
                     @endauth
                 </li>
@@ -106,31 +107,6 @@
     <div class="offcanvas-body">
         <ul class="navbar-nav gap-2">
             @if(!request()->routeIs('account.*'))
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">
-                    <i class="fas fa-home me-2"></i>Home
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('aboutUs') ? 'active' : '' }}" href="{{ route('aboutUs') }}">
-                    <i class="fas fa-info-circle me-2"></i>About Us
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('blog.*') ? 'active' : '' }}" href="{{ route('blog.index') }}">
-                    <i class="fas fa-blog me-2"></i>Blog
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ request()->routeIs('why-join-with-us') ? '#pricing' : route('why-join-with-us') . '#pricing' }}">
-                    <i class="fas fa-tags me-2"></i>Pricing
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('contactUs') ? 'active' : '' }}" href="{{ route('contactUs') }}">
-                    <i class="fas fa-envelope me-2"></i>Contact
-                </a>
-            </li>
             <li class="nav-item mt-2">
                 <a class="nav-link bg-gradient-primary text-white px-3 py-2 rounded-3 fw-bold shadow-sm" href="{{ route('why-join-with-us') }}">
                     <i class="fas fa-plus-circle me-2"></i>List Your Business
@@ -182,9 +158,6 @@
                 <div class="d-grid gap-2">
                     <span data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')" data-bs-dismiss="offcanvas" class="btn btn-outline-dark rounded-pill cursor-pointer">
                         <i class="fas fa-sign-in-alt me-2"></i>Login
-                    </span>
-                    <span data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('register')" data-bs-dismiss="offcanvas" class="btn btn-primary rounded-pill cursor-pointer">
-                        <i class="fas fa-user-plus me-2"></i>Register
                     </span>
                 </div>
             </li>

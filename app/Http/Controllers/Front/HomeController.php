@@ -21,7 +21,14 @@ class HomeController extends Controller
      */
     public function index(Request $request): View
     {
-        return view('front.home');
+        $featured_businesses = Business::select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'business_image', 'business_logo', 'business_category_id', 'address')
+            ->with(['businessCategory', 'city'])
+            ->where('status', 'active')
+            ->orderBy('rating', 'desc')
+            ->take(8)
+            ->get();
+
+        return view('front.home', compact('featured_businesses'));
     }
 
     public function whyJoinWithUs(Request $request): View
@@ -109,5 +116,17 @@ class HomeController extends Controller
             return LegalPage::where('page_type', 'VendorPolicy')->first();
         });
         return view('front.vendor_policy', compact('data'));
+    }
+
+    public function businessList(Request $request): View
+    {
+        $businessCategory = getBusinessCategory();
+        $businesses = Business::select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'business_image', 'business_logo', 'business_category_id', 'address')
+            ->with(['businessCategory', 'city'])
+            ->where('status', 'active')
+            ->orderBy('rating', 'desc')
+            ->paginate(15);
+
+        return view('front.business_list', compact('businesses', 'businessCategory'));
     }
 }
