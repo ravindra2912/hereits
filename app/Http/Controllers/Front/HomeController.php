@@ -21,6 +21,11 @@ class HomeController extends Controller
      */
     public function index(Request $request): View
     {
+        return view('front.home');
+    }
+
+    public function whyJoinWithUs(Request $request): View
+    {
 
         $businessCategory = getBusinessCategory();
 
@@ -45,7 +50,7 @@ class HomeController extends Controller
             ->orderBy('price', 'asc')
             ->get();
 
-        return view('front.home', compact('businesses', 'businessCategory', 'blogs', 'plans'));
+        return view('front.why_join_with_us', compact('businesses', 'businessCategory', 'blogs', 'plans'));
     }
 
     public function faq(Request $request): View

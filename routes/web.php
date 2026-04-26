@@ -41,6 +41,7 @@ Route::controller(CommonController::class)->group(function () {
 });
 Route::controller(HomeController::class)->group(function () {
     Route::get('/', 'index')->name('home');
+    Route::get('/why-join-with-us', 'whyJoinWithUs')->name('why-join-with-us');
     Route::get('/faq', 'faq')->name('faq');
     Route::get('/about-us', 'aboutUs')->name('aboutUs');
     Route::get('/contact-us', 'contactUs')->name('contactUs');

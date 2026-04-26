@@ -12,7 +12,7 @@
           <li class="mb-2"><a href="{{ route('aboutUs') }}">About Us</a></li>
           <li class="mb-2"><a href="{{ route('contactUs') }}">Contact Us</a></li>
           <li class="mb-2"><a href="{{ route('blog.index') }}">Blogs</a></li>
-          <li class="mb-2"><a href="{{ route('register.business') }}" class="text-primary fw-bold">List Your Business</a></li>
+          <li class="mb-2"><a href="{{ route('why-join-with-us') }}" class="text-primary fw-bold">List Your Business</a></li>
           <li class="mb-2"><a href="{{ route('termAndCondition') }}">Terms & Conditions</a></li>
           <li class="mb-2"><a href="{{ route('privacyPolicy') }}">Privacy Policy</a></li>
           <li class="mb-2"><a href="{{ route('VendorPolicy') }}">Vendor Policy</a></li>

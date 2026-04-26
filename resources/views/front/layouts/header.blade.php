@@ -22,14 +22,14 @@
                     <a class="nav-link {{ request()->routeIs('blog.*') ? 'active' : '' }}" href="{{ route('blog.index') }}">Blog</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ request()->routeIs('home') ? '#pricing' : route('home') . '#pricing' }}">Pricing</a>
+                    <a class="nav-link" href="{{ request()->routeIs('why-join-with-us') ? '#pricing' : route('why-join-with-us') . '#pricing' }}">Pricing</a>
                 </li>
 
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('contactUs') ? 'active' : '' }}" href="{{ route('contactUs') }}">Contact</a>
                 </li>
                 <li class="nav-item d-flex align-items-center ms-lg-2">
-                    <a class="nav-link highlight-register-btn px-3 py-2 rounded-pill fw-bold text-white shadow-sm" href="{{ route('register.business') }}">
+                    <a class="nav-link highlight-register-btn px-3 py-2 rounded-pill fw-bold text-white shadow-sm" href="{{ route('why-join-with-us') }}">
                         <i class="fas fa-plus-circle me-1 pulse-icon"></i>List Your Business
                     </a>
                 </li>
@@ -122,7 +122,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{{ request()->routeIs('home') ? '#pricing' : route('home') . '#pricing' }}">
+                <a class="nav-link" href="{{ request()->routeIs('why-join-with-us') ? '#pricing' : route('why-join-with-us') . '#pricing' }}">
                     <i class="fas fa-tags me-2"></i>Pricing
                 </a>
             </li>
@@ -132,7 +132,7 @@
                 </a>
             </li>
             <li class="nav-item mt-2">
-                <a class="nav-link bg-gradient-primary text-white px-3 py-2 rounded-3 fw-bold shadow-sm" href="{{ route('register.business') }}">
+                <a class="nav-link bg-gradient-primary text-white px-3 py-2 rounded-3 fw-bold shadow-sm" href="{{ route('why-join-with-us') }}">
                     <i class="fas fa-plus-circle me-2"></i>List Your Business
                 </a>
             </li>
