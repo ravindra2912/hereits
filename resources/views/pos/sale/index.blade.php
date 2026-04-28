@@ -462,6 +462,68 @@
             });
         });
 
+        // Barcode Scanner Logic
+        let barcodeBuffer = "";
+        let lastKeyTime = Date.now();
+        let scannerStatus = $('#global_scanner_status');
+
+        $(document).on('keypress', function(e) {
+            // Only process if not typing in an input field (unless it's the main search)
+            if ($(e.target).is('input, textarea') && !$(e.target).is('#product_search')) {
+                return;
+            }
+
+            const currentTime = Date.now();
+            
+            // Typical human typing is > 50ms per key. Scanners are much faster (< 20ms).
+            if (currentTime - lastKeyTime > 100) {
+                barcodeBuffer = ""; // Reset buffer if too slow
+            }
+
+            if (e.which === 13) { // Enter key - often sent by scanners after the code
+                if (barcodeBuffer.length >= 3) {
+                    handleBarcodeScan(barcodeBuffer);
+                    barcodeBuffer = "";
+                    e.preventDefault();
+                }
+            } else {
+                barcodeBuffer += String.fromCharCode(e.which);
+            }
+            
+            lastKeyTime = currentTime;
+        });
+
+        function handleBarcodeScan(code) {
+            console.log("Scanned:", code);
+            
+            // Visual feedback for scanner "connection"
+            scannerStatus.removeClass('text-secondary border-secondary-subtle')
+                         .addClass('text-success border-success-subtle bg-success-subtle')
+                         .html('<i class="bi bi-upc-scan me-1"></i> Scanner Connected');
+
+            // Find product by SKU/Barcode
+            $.ajax({
+                url: "{{ route('pos.sale.search') }}",
+                data: { search: code },
+                success: function(response) {
+                    // Since the controller returns HTML, we'll look for the first product in the hidden list if possible
+                    // Or we could parse the response.html to find the product data.
+                    // A better way is to have the controller return JSON data for direct matches.
+                    
+                    let tempDiv = $('<div>').append(response.html);
+                    let productCard = tempDiv.find('.product-card').first();
+                    
+                    if (productCard.length > 0) {
+                        let productData = productCard.data();
+                        addToCart(productData);
+                        if (typeof toastr !== 'undefined') toastr.success(`Added: ${productData.name}`);
+                    } else {
+                        if (typeof toastr !== 'undefined') toastr.error(`Product not found: ${code}`);
+                    }
+                }
+            });
+        }
+
         renderCart();
         // fetchProducts();
         $('#product_search').focus();

@@ -61,6 +61,9 @@
         <div class="header-right">
             <div class="d-flex align-items-center gap-2 me-3">
                 <span class="badge bg-light text-success border border-success-subtle rounded-pill px-3">Terminal Active</span>
+                <span class="badge bg-light text-secondary border border-secondary-subtle rounded-pill px-3 d-none d-md-inline-block" id="global_scanner_status">
+                    <i class="bi bi-upc-scan me-1"></i> Scanner Ready
+                </span>
             </div>
 
             <div class="user-profile">
