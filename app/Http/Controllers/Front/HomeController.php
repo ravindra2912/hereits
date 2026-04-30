@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\Plan;
 use App\Models\BusinessCategory;
@@ -148,41 +149,34 @@ class HomeController extends Controller
             return response()->json([]);
         }
 
-        $results = collect();
-
-        // 1. Search Active Businesses
-        $businesses = Business::select('id', 'name', 'slug', 'business_logo')
+        // Optimized Union Query for Businesses and Categories with priority
+        $results = DB::table('businesses')
+            ->select('name', 'slug', 'business_logo as image', DB::raw("'Business' as type"), DB::raw("1 as priority"))
             ->where('status', 'active')
             ->where('name', 'LIKE', "%{$query}%")
-            ->limit(5)
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'title' => $item->name,
-                    'type' => 'Business',
-                    'url' => route('business-details', $item->slug),
-                    'image' => getImage($item->business_logo)
-                ];
-            });
-        $results = $results->concat($businesses);
+            ->union(
+                DB::table('business_categories')
+                    ->select('name', 'slug', 'image', DB::raw("'Category' as type"), DB::raw("2 as priority"))
+                    ->where('status', 'active')
+                    ->where('name', 'LIKE', "%{$query}%")
+            )
+            ->orderBy('priority', 'asc')
+            ->limit(10)
+            ->get();
 
-        // 2. Search Business Categories
-        $categories = BusinessCategory::select('id', 'name', 'slug', 'image')
-            ->where('status', 'active')
-            ->where('name', 'LIKE', "%{$query}%")
-            ->limit(5)
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'title' => $item->name,
-                    'type' => 'Category',
-                    'url' => route('business-list', ['category' => $item->slug]),
-                    'image' => getImage($item->image)
-                ];
-            });
-        $results = $results->concat($categories);
+        // Map results efficiently
+        $formattedResults = $results->map(function ($item) {
+            return [
+                'title' => $item->name,
+                'type' => $item->type,
+                'url' => $item->type === 'Business' 
+                    ? route('business-details', $item->slug) 
+                    : route('business-list', ['category' => $item->slug]),
+                'image' => getImage($item->image)
+            ];
+        });
 
-        return response()->json($results->take(10));
+        return response()->json($formattedResults);
     }
 }
 

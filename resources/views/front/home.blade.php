@@ -20,19 +20,28 @@
                 <h1 class="display-3 fw-bold mb-4 animate-up">Find the Best <span class="text-primary-gradient">Local Store</span> Around You</h1>
                 <p class="lead mb-5 opacity-90 animate-up delay-1">Explore top-rated salons, clinics, stores, and experts in your city with ease.</p>
 
-                <div class="search-box-wrap p-2 bg-white rounded-pill shadow-lg d-flex align-items-center animate-up delay-2">
-                    <div class="flex-grow-1 px-3 d-flex align-items-center">
-                        <i class="fas fa-search text-muted me-2"></i>
-                        <input type="text" class="form-control border-0 shadow-none" placeholder="What are you looking for? (e.g. Salon, Pizza, Clinic)">
-                    </div>
-                    <button class="btn btn-primary rounded-pill px-4 py-2">Search Now</button>
+                <div class="d-flex flex-wrap gap-3 animate-up delay-2">
+                    <a href="{{ route('business-list') }}" class="btn btn-primary btn-lg rounded-pill px-5 py-3 fw-bold shadow-lg">
+                        <i class="fas fa-compass me-2"></i> Explore Now
+                    </a>
+                    <a href="{{ route('why-join-with-us') }}" class="btn btn-outline-light btn-lg rounded-pill px-5 py-3 fw-bold">
+                        <i class="fas fa-plus-circle me-2"></i> List Your Business
+                    </a>
                 </div>
 
-                <div class="mt-4 d-flex gap-3 align-items-center animate-up delay-3">
-                    <small class="opacity-75">Popular:</small>
-                    <a href="#" class="badge rounded-pill bg-white bg-opacity-20 text-white text-decoration-none px-3 py-2 hover-bg-primary transition-all">Salons</a>
-                    <a href="#" class="badge rounded-pill bg-white bg-opacity-20 text-white text-decoration-none px-3 py-2 hover-bg-primary transition-all">Doctors</a>
-                    <a href="#" class="badge rounded-pill bg-white bg-opacity-20 text-white text-decoration-none px-3 py-2 hover-bg-primary transition-all">Groceries</a>
+                <div class="mt-5 d-flex flex-wrap gap-4 align-items-center animate-up delay-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-check-circle text-primary"></i>
+                        <small class="opacity-90 fw-bold">Verified Listings</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-check-circle text-primary"></i>
+                        <small class="opacity-90 fw-bold">Easy Appointments</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-check-circle text-primary"></i>
+                        <small class="opacity-90 fw-bold">Instant Reviews</small>
+                    </div>
                 </div>
             </div>
         </div>
