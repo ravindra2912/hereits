@@ -12,7 +12,7 @@
         </a>
 
         <!-- 3. Location (Center on Mobile, After Logo on Desktop) -->
-        <div class="location-picker-header d-flex align-items-center order-2 cursor-pointer mx-auto mx-lg-0 ms-lg-3" data-bs-toggle="modal" data-bs-target="#locationModal">
+        <div class="location-picker-header d-flex align-items-center order-2 order-lg-1 cursor-pointer mx-auto mx-lg-0 ms-lg-3" data-bs-toggle="modal" data-bs-target="#locationModal">
             <div class="vr mx-3 d-none d-lg-block h-100 opacity-25"></div>
             <i class="fas fa-map-marker-alt text-primary" style="font-size: 1rem;"></i>
             <div class="text-start ms-2">
@@ -22,8 +22,27 @@
             <i class="fas fa-chevron-down ms-2 text-muted" style="font-size: 0.6rem;"></i>
         </div>
 
-        <!-- Spacer for mobile to balance layout -->
-        <div class="d-lg-none ms-auto order-3" style="width: 20px;"></div>
+        <!-- Global Search Box -->
+        <div class="header-search-container mx-lg-4 order-lg-2 position-relative flex-grow-1" id="globalSearchBox" style="max-width: 400px;">
+            <form action="#" method="GET" class="d-flex align-items-center gap-2 w-100" id="globalSearchForm">
+                <button type="button" class="btn btn-link text-dark p-0 d-lg-none" id="closeGlobalSearch">
+                    <i class="fas fa-arrow-left fs-5"></i>
+                </button>
+                <div class="input-group flex-grow-1 search-input-group">
+                    <span class="input-group-text border-end-0 bg-light"><i class="fas fa-search text-muted"></i></span>
+                    <input type="search" name="q" class="form-control border-start-0 bg-light shadow-none" placeholder="Search businesses or categories..." id="globalSearchInput" autocomplete="off">
+                </div>
+            </form>
+            <div id="globalSearchResults" class="search-results-overlay d-none"></div>
+        </div>
+
+        <!-- Mobile Search Trigger -->
+        <button class="btn btn-link text-dark p-1 order-2 order-lg-0 ms-auto d-lg-none" id="mobileGlobalSearchTrigger">
+            <i class="fas fa-search fs-5"></i>
+        </button>
+
+        <!-- Spacer for mobile to balance layout (removed if search is added) -->
+        <!-- <div class="d-lg-none ms-auto order-3" style="width: 20px;"></div> -->
 
         <!-- Desktop Navigation -->
         <div class="d-none d-lg-flex collapse navbar-collapse order-4" id="navbarNav">

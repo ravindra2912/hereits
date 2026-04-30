@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
 use App\Models\Plan;
+use App\Models\BusinessCategory;
+
 
 class HomeController extends Controller
 {
@@ -123,10 +125,64 @@ class HomeController extends Controller
         $businessCategory = getBusinessCategory();
         $businesses = Business::select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
             ->with(['businessCategory', 'city'])
-            ->where('status', 'active')
-            ->orderBy('rating', 'desc')
+            ->where('status', 'active');
+
+        if ($request->has('category')) {
+            $categorySlug = $request->get('category');
+            $businesses->whereHas('businessCategory', function ($q) use ($categorySlug) {
+                $q->where('slug', $categorySlug);
+            });
+        }
+
+        $businesses = $businesses->orderBy('rating', 'desc')
             ->paginate(15);
 
         return view('front.business_list', compact('businesses', 'businessCategory'));
     }
+
+    public function globalSearch(Request $request)
+    {
+        $query = $request->get('q');
+
+        if (empty($query)) {
+            return response()->json([]);
+        }
+
+        $results = collect();
+
+        // 1. Search Active Businesses
+        $businesses = Business::select('id', 'name', 'slug', 'business_logo')
+            ->where('status', 'active')
+            ->where('name', 'LIKE', "%{$query}%")
+            ->limit(5)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'title' => $item->name,
+                    'type' => 'Business',
+                    'url' => route('business-details', $item->slug),
+                    'image' => getImage($item->business_logo)
+                ];
+            });
+        $results = $results->concat($businesses);
+
+        // 2. Search Business Categories
+        $categories = BusinessCategory::select('id', 'name', 'slug', 'image')
+            ->where('status', 'active')
+            ->where('name', 'LIKE', "%{$query}%")
+            ->limit(5)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'title' => $item->name,
+                    'type' => 'Category',
+                    'url' => route('business-list', ['category' => $item->slug]),
+                    'image' => getImage($item->image)
+                ];
+            });
+        $results = $results->concat($categories);
+
+        return response()->json($results->take(10));
+    }
 }
+

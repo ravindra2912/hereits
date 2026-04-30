@@ -51,6 +51,7 @@ Route::controller(HomeController::class)->group(function () {
     Route::get('/cancellation-and-refund-policy', 'CancellationAndRefundPolicy')->name('CancellationAndRefundPolicy');
     Route::get('/vendor-policy', 'VendorPolicy')->name('VendorPolicy');
     Route::get('/businesses', 'businessList')->name('business-list');
+    Route::get('/global-search', 'globalSearch')->name('global-search');
 });
 
 Route::controller(AppointmentController::class)->group(function () {

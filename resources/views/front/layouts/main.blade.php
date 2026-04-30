@@ -77,6 +77,7 @@
 
 	<!-- Custom CSS -->
 	<link rel="stylesheet" href="{{ asset('assets/front/css/style.css') }}?v={{ filemtime(public_path('assets/front/css/style.css')) }}">
+	<link rel="stylesheet" href="{{ asset('assets/front/css/global-search.css') }}?v={{ filemtime(public_path('assets/front/css/global-search.css')) }}">
 
 
 
@@ -226,6 +227,7 @@
 	<script src="{{ asset('assets/common/js/toastr.min.js') }}?v={{ filemtime(public_path('assets/common/js/toastr.min.js')) }}"></script>
 
 	<script src="{{ asset('assets/common/js/ajax.js') }}?v={{ filemtime(public_path('assets/common/js/ajax.js')) }}"></script>
+	<script src="{{ asset('assets/front/js/global-search.js') }}?v={{ filemtime(public_path('assets/front/js/global-search.js')) }}"></script>
 
 
 
