@@ -48,11 +48,11 @@
         <div class="d-none d-lg-flex collapse navbar-collapse order-4" id="navbarNav">
             <ul class="navbar-nav ms-auto gap-2 gap-lg-3 text-center text-lg-start shadow-sm-mobile">
                 @if(!request()->routeIs('account.*'))
-                <li class="nav-item d-flex align-items-center ms-lg-2">
+                <!-- <li class="nav-item d-flex align-items-center ms-lg-2">
                     <a class="nav-link highlight-register-btn px-3 py-2 rounded-pill fw-bold text-white shadow-sm" href="{{ route('why-join-with-us') }}">
                         <i class="fas fa-plus-circle me-1 pulse-icon"></i>List Your Business
                     </a>
-                </li>
+                </li> -->
                 @endif
 
                 @if(request()->routeIs('account.*'))

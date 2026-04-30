@@ -4,10 +4,10 @@
     <div class="row g-4">
       <div class="col-lg-4 col-md-6">
         <img src="{{ config('const.site_setting.logo') }}" alt="Logo" class="img-fluid" style="max-height: 40px;" loading="lazy">
-        <p class="text-white-50">Empowering businesses with the right tools to grow and succeed online.</p>
+        <p class="text-muted">Empowering businesses with the right tools to grow and succeed online.</p>
       </div>
       <div class="col-lg-2 col-md-3 col-6">
-        <h6 class="text-white mb-3">Company</h6>
+        <h6 class="mb-3">Company</h6>
         <ul class="list-unstyled">
           <li class="mb-2"><a href="{{ route('aboutUs') }}">About Us</a></li>
           <li class="mb-2"><a href="{{ route('contactUs') }}">Contact Us</a></li>
@@ -19,7 +19,7 @@
         </ul>
       </div>
       <div class="col-lg-2 col-md-3 col-6">
-        <h6 class="text-white mb-3">Support</h6>
+        <h6 class="mb-3">Support</h6>
         <ul class="list-unstyled">
           <li class="mb-2"><a href="{{ route('faq') }}">FAQ</a></li>
           <li class="mb-2"><a href="{{ route('CancellationAndRefundPolicy') }}">Refund Policy</a></li>
@@ -27,7 +27,7 @@
         </ul>
       </div>
       <div class="col-lg-4 col-md-6">
-        <h6 class="text-white mb-3">Follow Us</h6>
+        <h6 class="mb-3">Follow Us</h6>
         <div class="d-flex gap-3 mt-3">
           @if(config('const.social_links.facebook'))
           <a href="{{ config('const.social_links.facebook') }}" class="social-icon-btn" title="Facebook" target="_blank"><i class="fab fa-facebook-f"></i></a>
@@ -48,7 +48,7 @@
       </div>
     </div>
     <hr class="border-secondary my-4">
-    <div class="text-center text-white-50 small">
+    <div class="text-center text-muted small">
       &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
     </div>
   </div>
