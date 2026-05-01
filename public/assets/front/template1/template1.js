@@ -161,3 +161,46 @@ $(document).ready(function () {
         }
     });
 });
+
+$(document).ready(function () {
+    $('.toggle-favorite-btn').on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const btn = $(this);
+        const icon = btn.find('i');
+        const itemId = btn.data('item-id') || btn.data('business-id');
+        const businessId = btn.data('business-id');
+        const type = btn.data('type') || 'business';
+
+        $.ajax({
+            url: route('toggle-favorite'),
+            type: "POST",
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                item_id: itemId,
+                business_id: businessId,
+                type: type
+            },
+            success: function (response) {
+                if (response.status === 'added') {
+                    icon.removeClass('far text-muted').addClass('fas text-danger');
+                    toastr.success(response.message);
+                } else if (response.status === 'removed') {
+                    icon.removeClass('fas text-danger').addClass('far text-muted');
+                    toastr.success(response.message);
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 401) {
+                    $('#authModal').modal('show');
+                    if (typeof switchAuthSection === 'function') {
+                        switchAuthSection('login');
+                    }
+                } else {
+                    toastr.error('Something went wrong. Please try again.');
+                }
+            }
+        });
+    });
+});

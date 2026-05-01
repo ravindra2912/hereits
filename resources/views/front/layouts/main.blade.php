@@ -182,6 +182,7 @@
 				transform: translateY(-20px);
 			}
 		}
+
 		.location-picker-header {
 			transition: all 0.3s ease;
 			padding: 5px 10px;
@@ -229,7 +230,50 @@
 	<script src="{{ asset('assets/common/js/ajax.js') }}?v={{ filemtime(public_path('assets/common/js/ajax.js')) }}"></script>
 	<script src="{{ asset('assets/front/js/global-search.js') }}?v={{ filemtime(public_path('assets/front/js/global-search.js')) }}"></script>
 
+	<script>
+		$(document).on('click', '.toggle-favorite-btn', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
 
+			const btn = $(this);
+			const icon = btn.find('i');
+			const itemId = btn.data('item-id') || btn.data('business-id');
+			const businessId = btn.data('business-id');
+			const type = btn.data('type') || 'business';
+
+			console.log(itemId, businessId, type);
+
+			$.ajax({
+				url: "{{ route('toggle-favorite') }}",
+				type: "POST",
+				data: {
+					_token: "{{ csrf_token() }}",
+					item_id: itemId,
+					business_id: businessId,
+					type: type
+				},
+				success: function(response) {
+					if (response.status === 'added') {
+						icon.removeClass('far text-muted').addClass('fas text-danger');
+						toastr.success(response.message);
+					} else if (response.status === 'removed') {
+						icon.removeClass('fas text-danger').addClass('far text-muted');
+						toastr.success(response.message);
+					}
+				},
+				error: function(xhr) {
+					if (xhr.status === 401) {
+						$('#authModal').modal('show');
+						if (typeof switchAuthSection === 'function') {
+							switchAuthSection('login');
+						}
+					} else {
+						toastr.error('Something went wrong. Please try again.');
+					}
+				}
+			});
+		});
+	</script>
 
 	@stack('js')
 </body>

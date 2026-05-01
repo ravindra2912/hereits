@@ -163,13 +163,13 @@
             </a>
 
             @guest
-            <button type="button" class="btn btn-outline-light btn-lg rounded-pill fw-bold px-4 hover-lift" 
-                    data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')">
+            <button type="button" class="btn btn-outline-light btn-lg rounded-pill fw-bold px-4 hover-lift"
+              data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')">
               <i class="far fa-heart"></i>
             </button>
             @else
-            <button type="button" class="btn btn-outline-light btn-lg rounded-pill fw-bold px-4 hover-lift toggle-favorite-btn" 
-                    data-business-id="{{ $business->id }}">
+            <button type="button" class="btn btn-outline-light btn-lg rounded-pill fw-bold px-4 hover-lift toggle-favorite-btn"
+              data-business-id="{{ $business->id }}">
               <i class="{{ $business->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart' }}"></i>
             </button>
             @endguest
@@ -323,6 +323,15 @@
             <h3 class="text-white fw-bold mb-0">{{ $experts[0]->expert_name }}</h3>
             <p class="text-white-50 mb-0">{{ $experts[0]->title }}</p>
           </div>
+
+          <!-- Favorite Button -->
+          <button type="button" class="favorite-btn position-absolute top-0 end-0 m-3 rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
+            data-item-id="{{ $experts[0]->id }}"
+            data-business-id="{{ $business->id }}"
+            data-type="expert"
+            style="width: 40px; height: 40px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <i class="{{ $experts[0]->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-5"></i>
+          </button>
         </div>
 
         <!-- Content Section -->
@@ -486,39 +495,7 @@
 
 @push('js')
 <script>
-$(document).ready(function() {
-    $('.toggle-favorite-btn').on('click', function(e) {
-        e.preventDefault();
-        
-        const btn = $(this);
-        const icon = btn.find('i');
-        const businessId = btn.data('business-id');
-        
-        $.ajax({
-            url: "{{ route('toggle-favorite') }}",
-            type: "POST",
-            data: {
-                _token: "{{ csrf_token() }}",
-                business_id: businessId
-            },
-            success: function(response) {
-                if (response.status === 'added') {
-                    icon.removeClass('far').addClass('fas text-danger');
-                } else if (response.status === 'removed') {
-                    icon.removeClass('fas text-danger').addClass('far');
-                }
-            },
-            error: function(xhr) {
-                if (xhr.status === 401) {
-                    $('#authModal').modal('show');
-                    switchAuthSection('login');
-                } else {
-                    alert('Something went wrong. Please try again.');
-                }
-            }
-        });
-    });
-});
+
 </script>
 @endpush
 

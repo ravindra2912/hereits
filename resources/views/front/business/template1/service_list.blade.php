@@ -41,13 +41,21 @@
                     <a href="{{ route('service-details', ['business_slug' => $business->slug, 'service_slug' => $service->slug]) }}" class="text-decoration-none text-dark">
                         <div class="position-relative">
                             <img src="{{ getImage($service->image_url) }}" class="card-img-top object-fit-cover" alt="{{ $service->name }}" style="aspect-ratio: 16/9;" loading="lazy">
-                            <div class="position-absolute top-0 end-0 p-3">
+                            <div class="position-absolute top-0 start-0 p-3">
                                 @if($service->price_type == 'FixPrice')
                                 <span class="badge bg-primary fs-6 shadow-sm">₹{{ $service->price }}</span>
                                 @elseif($service->price_type == 'PriceInRange')
                                 <span class="badge bg-primary fs-6 shadow-sm">₹{{ $service->min_price }} - ₹{{ $service->max_price }}</span>
                                 @endif
                             </div>
+
+                            <button type="button" class="favorite-btn position-absolute top-0 end-0 m-3 rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
+                                data-item-id="{{ $service->id }}"
+                                data-business-id="{{ $business->id }}"
+                                data-type="service"
+                                style="width: 35px; height: 35px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
+                                <i class="{{ $service->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-6"></i>
+                            </button>
                         </div>
                         <div class="card-body p-4">
                             @if($service->category)

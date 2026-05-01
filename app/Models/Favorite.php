@@ -6,7 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Favorite extends Model
 {
-    
+
+    protected $fillable = [
+        'user_id',
+        'business_id',
+        'favorite_type',
+        'favorite_item_id',
+    ];
+
     public function business()
     {
         return $this->belongsTo(Business::class, 'business_id', 'id');

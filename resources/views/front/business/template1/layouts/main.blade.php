@@ -96,6 +96,11 @@
     <meta name="business-slug" content="{{ $business->slug }}">
     <meta name="business-contact" content="{{ $business->contact }}">
 
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    @routes
+    @vite('resources/js/app.js')
+
     @stack('style')
     @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
     <link rel="stylesheet" href="{{ asset('assets/front/template1/cart.css') }}?v={{ filemtime(public_path('assets/front/template1/cart.css')) }}">

@@ -4,6 +4,15 @@
     <div class="col-md-6">
         <div class="card h-100 border-0 shadow-sm hover-lift">
             <div class="card-body p-3">
+                <div class="position-absolute top-0 end-0 p-3">
+                    <button type="button" class="favorite-btn rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
+                        data-item-id="{{ $service->id }}"
+                        data-business-id="{{ $business->id }}"
+                        data-type="service"
+                        style="width: 28px; height: 28px; background: rgba(0,0,0,0.05); z-index: 10; transition: all 0.3s ease;">
+                        <i class="{{ $service->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }}" style="font-size: 0.75rem;"></i>
+                    </button>
+                </div>
                 <div class="d-flex gap-3">
                     <a href="{{ route('service-details', ['business_slug' => $business->slug, 'service_slug' => $service->slug]) }}" class="text-decoration-none">
                         <img src="{{ getImage($service->image_url) }}"

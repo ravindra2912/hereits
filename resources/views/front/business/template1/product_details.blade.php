@@ -256,9 +256,18 @@
                             </button>
                         </div>
                     </div>
-                    <button class="btn btn-outline-dark btn-lg rounded-pill w-100" onclick="openShareModal('{{ url()->current() }}', 'Product', '{{ $product->name }}')">
-                        <i class="bi bi-share me-2"></i> Share Product
-                    </button>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-dark btn-lg rounded-pill flex-grow-1" onclick="openShareModal('{{ url()->current() }}', 'Product', '{{ $product->name }}')">
+                            <i class="bi bi-share me-2"></i> Share Product
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-lg rounded-pill px-4 toggle-favorite-btn"
+                            data-item-id="{{ $product->id }}"
+                            data-business-id="{{ $business->id }}"
+                            data-type="product"
+                            title="{{ $product->is_favorited ? 'Remove from Favorites' : 'Add to Favorites' }}">
+                            <i class="{{ $product->is_favorited ? 'fas fa-heart' : 'far fa-heart' }}"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="mb-4">
@@ -289,8 +298,15 @@
             @foreach($relatedProducts as $related)
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100 rounded-4 overflow-hidden related-card">
-                    <a href="{{ route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $related->slug]) }}">
+                    <a href="{{ route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $related->slug]) }}" class="position-relative d-block">
                         <img src="{{ getImage($related->firstImage?->image_url) }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ $related->name }}">
+                        <button type="button" class="favorite-btn position-absolute top-0 end-0 m-2 rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
+                            data-item-id="{{ $related->id }}"
+                            data-business-id="{{ $business->id }}"
+                            data-type="product"
+                            style="width: 28px; height: 28px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
+                            <i class="{{ $related->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }}" style="font-size: 0.75rem;"></i>
+                        </button>
                     </a>
                     <div class="card-body p-3">
                         <h6 class="fw-bold mb-1 text-truncate text-dark">{{ $related->name }}</h6>

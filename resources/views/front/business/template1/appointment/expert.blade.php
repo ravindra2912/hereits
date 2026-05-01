@@ -72,10 +72,17 @@ $business = $expert->business;
               @endif
 
               <div class="d-flex justify-content-center gap-2 mt-3">
-                <button class="btn btn-outline-primary rounded-pill btn-sm px-3" onclick="openShareModal('{{ url()->current() }}', 'Expert', '{{ $expert->expert_name }}')">
+                <button class="btn btn-outline-primary rounded-pill btn-sm px-3 flex-grow-1" onclick="openShareModal('{{ url()->current() }}', 'Expert', '{{ $expert->expert_name }}')">
                   <i class="fas fa-share-alt me-1"></i> Share
                 </button>
-                <a href="{{ route('expert.board', [$business->slug, $expert->slug]) }}" target="_blank" class="btn btn-outline-dark rounded-pill btn-sm px-3">
+                <button type="button" class="btn btn-outline-danger rounded-pill btn-sm px-3 toggle-favorite-btn"
+                  data-item-id="{{ $expert->id }}"
+                  data-business-id="{{ $expert->business_id }}"
+                  data-type="expert"
+                  title="{{ $expert->is_favorited ? 'Remove from Favorites' : 'Add to Favorites' }}">
+                  <i class="{{ $expert->is_favorited ? 'fas fa-heart' : 'far fa-heart' }}"></i>
+                </button>
+                <a href="{{ route('expert.board', [$business->slug, $expert->slug]) }}" target="_blank" class="btn btn-outline-dark rounded-pill btn-sm px-3 flex-grow-1">
                   <i class="far fa-clipboard me-1"></i> Live Board
                 </a>
               </div>

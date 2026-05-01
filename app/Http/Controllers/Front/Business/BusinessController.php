@@ -71,6 +71,11 @@ class BusinessController extends Controller
                 'department',
                 'business:id,name,slug,address,latitude,longitude,business_image'
             ])
+            ->when(auth()->check(), function ($query) {
+                $query->withExists(['favorites as is_favorited' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }]);
+            })
             ->where('business_id', $business->id)
             ->where('status', 'active')
             ->limit(4)
@@ -99,6 +104,11 @@ class BusinessController extends Controller
                 ->with(['products' => function ($query) {
                     $query->select('id', 'name', 'slug', 'description', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'category_id', 'business_id')
                         ->with(['firstImage:id,product_id,image_url', 'category:id,name'])
+                        ->when(auth()->check(), function ($query) {
+                            $query->withExists(['favorites as is_favorited' => function ($q) {
+                                $q->where('user_id', auth()->id());
+                            }]);
+                        })
                         ->where('status', 'active')
                         ->limit(6);
                 }])
@@ -114,6 +124,11 @@ class BusinessController extends Controller
             if ($details['categoriesWithProducts']->count() == 0) {
                 $details['products'] = Product::select('id', 'name', 'slug', 'description', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'category_id', 'business_id')
                     ->with(['firstImage:id,product_id,image_url', 'category:id,name'])
+                    ->when(auth()->check(), function ($query) {
+                        $query->withExists(['favorites as is_favorited' => function ($q) {
+                            $q->where('user_id', auth()->id());
+                        }]);
+                    })
                     ->where('business_id', $business->id)
                     ->where('status', 'active')
                     ->limit(6)
@@ -141,6 +156,11 @@ class BusinessController extends Controller
                 ->with(['services' => function ($query) {
                     $query->select('id', 'name', 'slug', 'description', 'price_type', 'price', 'max_price', 'min_price', 'category_id', 'image_url', 'business_id')
                         ->with('category:id,name')
+                        ->when(auth()->check(), function ($query) {
+                            $query->withExists(['favorites as is_favorited' => function ($q) {
+                                $q->where('user_id', auth()->id());
+                            }]);
+                        })
                         ->where('status', 'active')
                         ->limit(4);
                 }])
@@ -156,6 +176,11 @@ class BusinessController extends Controller
             if ($details['categoriesWithServices']->count() == 0) {
                 $details['services'] = Service::select('id', 'name', 'slug', 'description', 'price_type', 'price', 'max_price', 'min_price', 'category_id', 'image_url', 'business_id')
                     ->with('category:id,name')
+                    ->when(auth()->check(), function ($query) {
+                        $query->withExists(['favorites as is_favorited' => function ($q) {
+                            $q->where('user_id', auth()->id());
+                        }]);
+                    })
                     ->where('business_id', $business->id)
                     ->where('status', 'active')
                     ->limit(4)

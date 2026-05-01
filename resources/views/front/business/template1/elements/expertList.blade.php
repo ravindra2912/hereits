@@ -45,8 +45,15 @@
                     </div>
 
                     <!-- Availability/Action (Compact) -->
-                    <div class="ms-3 text-end d-none d-sm-block">
-                        <span class="btn btn-outline-primary btn-sm rounded-pill fw-bold">
+                    <div class="ms-3 text-end d-flex flex-column align-items-end gap-2">
+                        <button type="button" class="favorite-btn rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
+                            data-item-id="{{ $expert->id }}"
+                            data-business-id="{{ $expert->business_id }}"
+                            data-type="expert"
+                            style="width: 32px; height: 32px; background: rgba(0,0,0,0.05); z-index: 10; transition: all 0.3s ease;">
+                            <i class="{{ $expert->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-6"></i>
+                        </button>
+                        <span class="btn btn-outline-primary btn-sm rounded-pill fw-bold d-none d-sm-block">
                             Book
                         </span>
                     </div>

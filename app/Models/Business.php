@@ -102,6 +102,6 @@ class Business extends Model
 
     public function favorites()
     {
-        return $this->hasMany(Favorite::class, 'business_id', 'id');
+        return $this->hasMany(Favorite::class, 'favorite_item_id', 'id')->where('favorite_type', 'business');
     }
 }

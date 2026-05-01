@@ -25,7 +25,12 @@ class ServiceController extends Controller
         $query = Service::select('id', 'name', 'slug', 'description', 'price_type', 'price', 'max_price', 'min_price', 'category_id', 'image_url', 'business_id')
             ->with(['category:id,name'])
             ->where('business_id', $business->id)
-            ->where('status', 'active');
+            ->where('status', 'active')
+            ->when(auth()->check(), function ($query) {
+                $query->withExists(['favorites as is_favorited' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }]);
+            });
 
         if ($request->has('category_id') && !empty($request->category_id)) {
             $query->where('category_id', $request->category_id);
@@ -53,6 +58,11 @@ class ServiceController extends Controller
 
         $service = Service::where('business_id', $business->id)
             ->where('slug', $service_slug)
+            ->when(auth()->check(), function ($query) {
+                $query->withExists(['favorites as is_favorited' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }]);
+            })
             ->where('status', 'active')
             ->firstOrFail();
 
@@ -60,6 +70,11 @@ class ServiceController extends Controller
         $recommendedServices = Service::where('business_id', $business->id)
             ->where('id', '!=', $service->id)
             ->where('status', 'active')
+            ->when(auth()->check(), function ($query) {
+                $query->withExists(['favorites as is_favorited' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }]);
+            })
             ->inRandomOrder()
             ->limit(4)
             ->get();

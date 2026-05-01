@@ -41,7 +41,12 @@ class AppointmentController extends Controller
         $query = Expert::select('id', 'business_id', 'title', 'expert_name', 'expert_image', 'department_id', 'slug', 'rating', 'is_appointment_book_with_time_slot')
             ->with(['department', 'business'])
             ->where('business_id', $business->id)
-            ->where('status', 'active');
+            ->where('status', 'active')
+            ->when(auth()->check(), function ($query) {
+                $query->withExists(['favorites as is_favorited' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }]);
+            });
 
         if ($request->has('department') && !empty($request->department) && $request->department != 'all') {
             $query->where('department_id', $request->department);
@@ -81,6 +86,11 @@ class AppointmentController extends Controller
                         ->orderByRaw("FIELD(day, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')");
                 }
             ])
+            ->when(auth()->check(), function ($query) {
+                $query->withExists(['favorites as is_favorited' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }]);
+            })
             ->whereHas('business', function ($q) use ($business_slug) {
                 $q->where('slug', $business_slug)
                     ->whereHas('businessSetting', function ($query) {

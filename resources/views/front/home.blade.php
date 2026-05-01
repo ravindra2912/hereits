@@ -111,7 +111,9 @@
                         </button>
                         @else
                         <button type="button" class="favorite-btn position-absolute top-0 start-0 m-3 rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
+                            data-item-id="{{ $business->id }}"
                             data-business-id="{{ $business->id }}"
+                            data-type="business"
                             style="width: 35px; height: 35px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
                             <i class="{{ $business->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-5"></i>
                         </button>
@@ -218,7 +220,9 @@
 
                         <div class="position-absolute top-0 start-0 m-3">
                             <button type="button" class="favorite-btn rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
+                                data-item-id="{{ $business->id }}"
                                 data-business-id="{{ $business->id }}"
+                                data-type="business"
                                 style="width: 35px; height: 35px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
                                 <i class="fas fa-heart text-danger fs-5"></i>
                             </button>
@@ -483,40 +487,4 @@
 @endpush
 
 @push('js')
-<script>
-    $(document).ready(function() {
-        $('.toggle-favorite-btn').on('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            const btn = $(this);
-            const icon = btn.find('i');
-            const businessId = btn.data('business-id');
-
-            $.ajax({
-                url: "{{ route('toggle-favorite') }}",
-                type: "POST",
-                data: {
-                    _token: "{{ csrf_token() }}",
-                    business_id: businessId
-                },
-                success: function(response) {
-                    if (response.status === 'added') {
-                        icon.removeClass('far text-muted').addClass('fas text-danger');
-                    } else if (response.status === 'removed') {
-                        icon.removeClass('fas text-danger').addClass('far text-muted');
-                    }
-                },
-                error: function(xhr) {
-                    if (xhr.status === 401) {
-                        $('#authModal').modal('show');
-                        switchAuthSection('login');
-                    } else {
-                        alert('Something went wrong. Please try again.');
-                    }
-                }
-            });
-        });
-    });
-</script>
 @endpush

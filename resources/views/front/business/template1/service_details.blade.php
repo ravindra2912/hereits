@@ -71,9 +71,18 @@
                             <a href="https://wa.me/91{{ $business->contact }}?text=Hi, I'm interested in '{{ urlencode($service->name) }}' service. Could you please provide more details?" target="_blank" class="btn btn-success btn-lg rounded-pill shadow-sm">
                                 <i class="fab fa-whatsapp me-2"></i> WhatsApp Inquiry
                             </a>
-                            <button class="btn btn-outline-dark btn-lg rounded-pill shadow-sm mt-2" onclick="openShareModal('{{ url()->current() }}', 'Service', '{{ $service->name }}')">
+                        <div class="d-flex gap-2 mt-2">
+                            <button class="btn btn-outline-dark btn-lg rounded-pill shadow-sm flex-grow-1" onclick="openShareModal('{{ url()->current() }}', 'Service', '{{ $service->name }}')">
                                 <i class="fas fa-share-alt me-2"></i> Share Service
                             </button>
+                            <button type="button" class="btn btn-outline-danger btn-lg rounded-pill px-4 shadow-sm toggle-favorite-btn"
+                                data-item-id="{{ $service->id }}"
+                                data-business-id="{{ $business->id }}"
+                                data-type="service"
+                                title="{{ $service->is_favorited ? 'Remove from Favorites' : 'Add to Favorites' }}">
+                                <i class="{{ $service->is_favorited ? 'fas fa-heart' : 'far fa-heart' }}"></i>
+                            </button>
+                        </div>
                         </div>
                     </div>
 
@@ -103,7 +112,14 @@
                             <img src="{{ getImage($recommendedService->image_url) }}"
                                 class="w-100 h-100 object-fit-cover"
                                 alt="{{ $recommendedService->name }}" loading="lazy">
-                            <div class="position-absolute top-0 end-0 m-3">
+                            <div class="position-absolute top-0 end-0 m-3 d-flex flex-column gap-2 align-items-end">
+                                <button type="button" class="favorite-btn rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
+                                    data-item-id="{{ $recommendedService->id }}"
+                                    data-business-id="{{ $business->id }}"
+                                    data-type="service"
+                                    style="width: 32px; height: 32px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
+                                    <i class="{{ $recommendedService->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-6"></i>
+                                </button>
                                 @if($recommendedService->price_type == 'FixPrice')
                                 <span class="badge bg-dark bg-opacity-75 px-3 py-2">₹{{ number_format($recommendedService->price, 0) }}</span>
                                 @elseif($recommendedService->price_type == 'PriceInRange')

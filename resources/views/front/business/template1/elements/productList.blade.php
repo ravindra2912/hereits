@@ -12,6 +12,14 @@
                     @if($product->category)
                     <span class="badge bg-white text-dark position-absolute top-0 start-0 m-2 shadow-sm border text-truncate product-cat-badge">{{ $product->category->name }}</span>
                     @endif
+
+                    <button type="button" class="favorite-btn position-absolute top-0 end-0 m-2 rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
+                        data-item-id="{{ $product->id }}"
+                        data-business-id="{{ $business->id }}"
+                        data-type="product"
+                        style="width: 28px; height: 28px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
+                        <i class="{{ $product->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }}" style="font-size: 0.75rem;"></i>
+                    </button>
                 </div>
             </a>
 

@@ -132,7 +132,7 @@ class User extends Authenticatable
         if ($this->role == 'Business') {
             $permissions = ['all_access' => true];
             $roleName = 'Business Owner';
-            
+
             // Get business name for owner
             $business = Business::where('owner_id', $this->id)->first();
             $businessName = $business->name ?? 'My Business';

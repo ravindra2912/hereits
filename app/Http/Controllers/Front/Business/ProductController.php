@@ -30,7 +30,12 @@ class ProductController extends Controller
         $query = Product::select('id', 'name', 'slug', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'category_id', 'business_id')
             ->where('business_id', $business->id)
             ->where('status', 'active')
-            ->with(['firstImage:id,product_id,image_url', 'category:id,name']);
+            ->with(['firstImage:id,product_id,image_url', 'category:id,name'])
+            ->when(auth()->check(), function ($query) {
+                $query->withExists(['favorites as is_favorited' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }]);
+            });
 
         if ($request->has('category_id') && !empty($request->category_id)) {
             $query->where('category_id', $request->category_id);
@@ -49,6 +54,11 @@ class ProductController extends Controller
             ->with(['business', 'category', 'images' => function ($query) {
                 $query->orderBy('sort_order', 'asc')->select('id', 'product_id', 'image_url');
             }])
+            ->when(auth()->check(), function ($query) {
+                $query->withExists(['favorites as is_favorited' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }]);
+            })
             ->whereHas('business', function ($q) use ($business_slug) {
                 $q->where('slug', $business_slug)
                     ->whereHas('businessSetting', function ($query) {
@@ -67,6 +77,11 @@ class ProductController extends Controller
             ->where('id', '!=', $product->id)
             ->where('status', 'active')
             ->with(['firstImage:id,product_id,image_url'])
+            ->when(auth()->check(), function ($query) {
+                $query->withExists(['favorites as is_favorited' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }]);
+            })
             ->inRandomOrder()
             ->limit(4)
             ->get();

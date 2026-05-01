@@ -48,4 +48,9 @@ class Expert extends Authenticatable
     {
         return $this->hasMany(BusinessTiming::class, 'expert_id', 'id');
     }
+
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class, 'favorite_item_id', 'id')->where('favorite_type', 'expert');
+    }
 }

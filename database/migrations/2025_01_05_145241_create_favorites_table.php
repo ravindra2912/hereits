@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('business_id')->index();
             $table->unsignedBigInteger('user_id')->nullable()->index();
-            $table->enum('favorite_type', ['business', 'expert']);
+            $table->enum('favorite_type', ['business', 'product', 'expert', 'service']);
             $table->bigInteger('favorite_item_id')->nullable()->comment('business_id, expert_id, etc');
             $table->timestamps();
 
