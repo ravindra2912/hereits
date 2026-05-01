@@ -52,6 +52,7 @@ Route::controller(HomeController::class)->group(function () {
     Route::get('/vendor-policy', 'VendorPolicy')->name('VendorPolicy');
     Route::get('/businesses', 'businessList')->name('business-list');
     Route::get('/global-search', 'globalSearch')->name('global-search');
+    Route::post('/toggle-favorite', 'toggleFavorite')->name('toggle-favorite');
 });
 
 Route::controller(AppointmentController::class)->group(function () {
@@ -119,5 +120,3 @@ Route::controller(ProductController::class)->group(function () {
     Route::get('{business_slug}/product/{product_slug}', 'productDetails')->name('product-detail');
     Route::get('{business_slug}/products', 'businessProducts')->name('business-products');
 });
-
-// require __DIR__ . '/auth.php';

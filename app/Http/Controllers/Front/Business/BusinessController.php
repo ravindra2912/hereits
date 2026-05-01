@@ -26,6 +26,11 @@ class BusinessController extends Controller
                 'state',
                 'city'
             ])
+            ->when(auth()->check(), function ($query) {
+                $query->withExists(['favorites as is_favorited' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }]);
+            })
             ->whereHas('businessSetting', function ($query) {
                 $query->where('subscription_expiry_date', '>=', now());
             })

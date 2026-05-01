@@ -10,27 +10,49 @@
 
 
                     @foreach($businesses as $business)
-                    <div class="col-lg-3 col-md-6">
+                    <div class="col-6 col-md-4 col-lg-3">
                         <div class="card border-0 shadow-sm rounded-4 overflow-hidden hover-lift h-100 transition-all">
-                            <div class="position-relative">
-                                <a href="{{ route('business-details', $business->slug) }}">
-                                    <img src="{{ getImage($business->business_image) }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ $business->name }}">
-                                </a>
-                                <div class="position-absolute top-0 end-0 m-3">
-                                    <span class="badge bg-white text-dark shadow-sm rounded-pill px-3 py-2">
-                                        <i class="fas fa-star text-warning me-1"></i> {{ number_format($business->rating, 1) }}
-                                    </span>
+                            <a href="{{ route('business-details', $business->slug) }}" class="position-relative overflow-hidden d-block business-card-img" style="height: 200px;">
+                                <img src="{{ getImage($business->business_image) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}">
+                                <span class="badge bg-success position-absolute top-0 end-0 m-3 rounded-pill px-3">Open</span>
+                                
+                                <div class="position-absolute top-0 start-0 m-3">
+                                    @guest
+                                    <button type="button" class="favorite-btn rounded-circle border-0 d-flex align-items-center justify-content-center"
+                                        data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')"
+                                        style="width: 35px; height: 35px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
+                                        <i class="far fa-heart text-muted fs-6"></i>
+                                    </button>
+                                    @else
+                                    <button type="button" class="favorite-btn rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
+                                        data-business-id="{{ $business->id }}"
+                                        style="width: 35px; height: 35px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
+                                        <i class="{{ $business->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-6"></i>
+                                    </button>
+                                    @endguest
                                 </div>
-                                <div class="position-absolute bottom-0 start-0 m-3">
-                                    <span class="badge bg-primary rounded-pill px-3 shadow-sm">{{ $business->businessCategory->name ?? 'Business' }}</span>
-                                </div>
-                            </div>
+                            </a>
                             <div class="card-body p-4">
-                                <h5 class="card-title fw-bold mb-1">{{ $business->name }}</h5>
-                                <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt text-primary me-1"></i> {{ $business->area ? $business->area .', ' : '' }} {{ $business->city->name ?? '' }}</p>
-                                <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-auto">
-                                    <small class="text-muted">Verified</small>
-                                    <a href="{{ route('business-details', $business->slug) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">View Details</a>
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="fw-bold text-dark mb-0 text-truncate" style="max-width: 80%;">
+                                        <a href="{{ route('business-details', $business->slug) }}" class="text-decoration-none text-dark">
+                                            {{ $business->name }}
+                                            @if($business->businessSetting->is_verified ?? false)
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" class="ms-1" style="vertical-align: middle;" title="Verified Business">
+                                                    <path fill="var(--primary-color)" d="M23,12L20.56,9.22L20.9,5.54L17.29,4.72L15.4,1.54L12,3L8.6,1.54L6.71,4.72L3.1,5.53L3.44,9.21L1,12L3.44,14.78L3.1,18.47L6.71,19.29L8.6,22.47L12,21L15.4,22.46L17.29,19.28L20.9,18.46L20.56,14.77L23,12Z" />
+                                                    <path fill="white" d="M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9L10,17Z" />
+                                                </svg>
+                                            @endif
+                                        </a>
+                                    </h5>
+                                    <div class="text-warning small d-flex align-items-center gap-1 flex-shrink-0">
+                                        <i class="fas fa-star"></i> <span>{{ number_format($business->rating, 1) }}</span>
+                                    </div>
+                                </div>
+                                <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt text-primary me-2"></i> {{ $business->area ? $business->area .', ' : '' }} {{ $business->city->name ?? '' }}</p>
+                                
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <span class="badge bg-light text-muted fw-normal">{{ $business->businessCategory->name ?? 'Business' }}</span>
                                 </div>
                             </div>
                         </div>
@@ -43,15 +65,11 @@
                     @if(!$businesses->isEmpty())
                     {{ $businesses->links('pagination::bootstrap-5') }}
                     @else
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination pagination-rounded shadow-sm">
-                            <li class="page-item disabled"><span class="page-link"><i class="fas fa-chevron-left"></i></span></li>
-                            <li class="page-item active"><span class="page-link">1</span></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item"><a class="page-link" href="#"><i class="fas fa-chevron-right"></i></a></li>
-                        </ul>
-                    </nav>
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5>No businesses found</h5>
+                        <p class="text-muted">Try adjusting your filters or search query.</p>
+                    </div>
                     @endif
                 </div>
             </div>
@@ -60,8 +78,15 @@
 </div>
 
 <style>
-    .listing-page-wrap {
-        min-height: 100vh;
+    .favorite-btn:hover {
+        transform: scale(1.1);
+        background: #fff !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    @media (max-width: 575.98px) {
+        .listing-page-wrap {
+            min-height: 100vh;
+        }
     }
 
     .hover-lift:hover {
@@ -94,5 +119,87 @@
         opacity: 0.5;
         background-color: #f8f9fa;
     }
+    @media (max-width: 575.98px) {
+        .card-body {
+            padding: 0.75rem !important;
+        }
+        .business-card-img {
+            height: 120px !important;
+        }
+        .card-body h5 {
+            font-size: 0.85rem !important;
+        }
+        .card-body p {
+            font-size: 0.7rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+        .card-body .badge {
+            font-size: 0.6rem !important;
+            padding: 0.2rem 0.5rem !important;
+        }
+        .card-body .btn {
+            padding: 0.3rem 0.8rem !important;
+            font-size: 0.7rem !important;
+        }
+        .g-4, .gx-4 {
+            --bs-gutter-x: 0.5rem !important;
+        }
+        .g-4, .gy-4 {
+            --bs-gutter-y: 0.5rem !important;
+        }
+        .favorite-btn {
+            width: 28px !important;
+            height: 28px !important;
+        }
+        .favorite-btn i {
+            font-size: 0.75rem !important;
+        }
+        .badge.position-absolute {
+            font-size: 0.6rem !important;
+            padding: 0.2rem 0.5rem !important;
+            margin: 0.5rem !important;
+        }
+    }
 </style>
+
+
+@push('js')
+<script>
+    $(document).ready(function() {
+        $('.toggle-favorite-btn').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const btn = $(this);
+            const icon = btn.find('i');
+            const businessId = btn.data('business-id');
+
+            $.ajax({
+                url: "{{ route('toggle-favorite') }}",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    business_id: businessId
+                },
+                success: function(response) {
+                    if (response.status === 'added') {
+                        icon.removeClass('far text-muted').addClass('fas text-danger');
+                    } else if (response.status === 'removed') {
+                        icon.removeClass('fas text-danger').addClass('far text-muted');
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 401) {
+                        $('#authModal').modal('show');
+                        switchAuthSection('login');
+                    } else {
+                        alert('Something went wrong. Please try again.');
+                    }
+                }
+            });
+        });
+    });
+</script>
+@endpush
+
 @endsection

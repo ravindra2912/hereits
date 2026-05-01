@@ -31,11 +31,7 @@ return new class extends Migration
             $table->bigInteger('service_limit')->default(0);
             $table->date('service_limit_expiry_date')->nullable();
             $table->boolean('is_verified')->default(false);
-            // $table->boolean('is_google_drive_connected')->default(false);
-            // $table->string('google_drive_folder_id')->nullable()->comment('Google Drive Folder ID');
-            // $table->string('google_drive_client_id')->nullable()->comment('Google Drive Client ID');
-            // $table->string('google_drive_client_secret')->nullable()->comment('Google Drive Client Secret');
-            // $table->string('google_drive_refresh_token')->nullable()->comment('Google Drive Refresh Token');
+            $table->enum('visibility', ['public', 'private'])->default('public')->comment('public = show in fron listing page, private = hidden from fron listing page');
             $table->text('about_us_text')->nullable()->comment('About Us');
             $table->string('about_us_image')->nullable()->comment('About Us Image');
 

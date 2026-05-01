@@ -161,6 +161,18 @@
             <a href="http://maps.google.com/maps?q={{ $business->latitude.','.$business->longitude }}&ll={{ $business->latitude.','.$business->longitude }}&z=17" target="_blank" class="btn btn-white bg-white text-dark btn-lg rounded-pill fw-bold px-3 hover-lift" data-bs-toggle="tooltip" title="Get Directions">
               <i class="fas fa-directions"></i>
             </a>
+
+            @guest
+            <button type="button" class="btn btn-outline-light btn-lg rounded-pill fw-bold px-4 hover-lift" 
+                    data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')">
+              <i class="far fa-heart"></i>
+            </button>
+            @else
+            <button type="button" class="btn btn-outline-light btn-lg rounded-pill fw-bold px-4 hover-lift toggle-favorite-btn" 
+                    data-business-id="{{ $business->id }}">
+              <i class="{{ $business->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart' }}"></i>
+            </button>
+            @endguest
           </div>
         </div>
       </div>
@@ -199,7 +211,7 @@
     <div id="products" class="mb-5 section-scroll">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="h4 fw-bold mb-0">{{ $category->name }}</h3>
-        <a href="{{ route('business-products', ['business_slug' => $business->slug, 'category_id' => $category->id]) }}" class="btn btn-outline-primary rounded-pill btn-sm">View All</a>
+        <a href="{{ route('business-products', ['business_slug' => $business->slug, 'category_id' => $category->id]) }}" class="btn btn-outline-primary rounded-pill btn-sm d-inline-flex align-items-center text-nowrap">View All <i class="fas fa-arrow-right ms-2"></i></a>
       </div>
       @include('front.business.template1.elements.productList', ['products' => $category->products, 'business' => $business])
     </div>
@@ -209,7 +221,7 @@
     <div id="products" class="mb-5 section-scroll">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="h4 fw-bold mb-0">Our Products</h3>
-        <a href="{{ route('business-products', ['business_slug' => $business->slug]) }}" class="btn btn-outline-primary rounded-pill btn-sm">View All</a>
+        <a href="{{ route('business-products', ['business_slug' => $business->slug]) }}" class="btn btn-outline-primary rounded-pill btn-sm d-inline-flex align-items-center text-nowrap">View All <i class="fas fa-arrow-right ms-2"></i></a>
       </div>
       @include('front.business.template1.elements.productList', ['products' => $details['products'], 'business' => $business])
     </div>
@@ -244,7 +256,7 @@
     <div id="services" class="mb-5 section-scroll">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="h4 fw-bold mb-0">{{ $category->name }}</h3>
-        <a href="{{ route('business-services', ['business_slug' => $business->slug, 'category_id' => $category->id]) }}" class="btn btn-outline-primary rounded-pill btn-sm">View All</a>
+        <a href="{{ route('business-services', ['business_slug' => $business->slug, 'category_id' => $category->id]) }}" class="btn btn-outline-primary rounded-pill btn-sm d-inline-flex align-items-center text-nowrap">View All <i class="fas fa-arrow-right ms-2"></i></a>
       </div>
       @include('front.business.template1.elements.serviceList', ['services' => $category->services, 'business' => $business])
     </div>
@@ -254,7 +266,7 @@
     <div id="services" class="mb-5 section-scroll">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="h4 fw-bold mb-0">Our Services</h3>
-        <a href="{{ route('business-services', ['business_slug' => $business->slug]) }}" class="btn btn-outline-primary rounded-pill btn-sm">View All</a>
+        <a href="{{ route('business-services', ['business_slug' => $business->slug]) }}" class="btn btn-outline-primary rounded-pill btn-sm d-inline-flex align-items-center text-nowrap">View All <i class="fas fa-arrow-right ms-2"></i></a>
       </div>
       @include('front.business.template1.elements.serviceList', ['services' => $details['services'], 'business' => $business])
     </div>
@@ -273,7 +285,7 @@
       <h3 class="h4 fw-bold mb-0">Our Experts</h3>
       @endif
       @if(isset($totalExperts) && $totalExperts > 3)
-      <a href="{{ route('expert.list', $business->slug) }}" class="btn btn-outline-primary rounded-pill btn-sm">View All</a>
+      <a href="{{ route('expert.list', $business->slug) }}" class="btn btn-outline-primary rounded-pill btn-sm d-inline-flex align-items-center text-nowrap">View All <i class="fas fa-arrow-right ms-2"></i></a>
       @endif
     </div>
 
@@ -356,7 +368,7 @@
 
     @if(isset($totalExperts) && $totalExperts > 4)
     <div class="text-center mt-4">
-      <a href="{{ route('expert.list', $business->slug) }}" class="btn btn-light text-primary fw-bold rounded-pill px-4 hover-lift">View All {{ $totalExperts }} Experts <i class="fas fa-arrow-right ms-2"></i></a>
+      <a href="{{ route('expert.list', $business->slug) }}" class="btn btn-light text-primary fw-bold rounded-pill px-4 hover-lift d-inline-flex align-items-center text-nowrap">View All {{ $totalExperts }} Experts <i class="fas fa-arrow-right ms-2"></i></a>
     </div>
     @endif
     @endif
@@ -396,7 +408,7 @@
   <div id="gallery" class="container py-5 section-scroll">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h3 class="h4 fw-bold mb-0">Gallery</h3>
-      <a href="{{ route('business-galleries', ['business_slug' => $business->slug]) }}" class="btn btn-outline-primary rounded-pill btn-sm">View All</a>
+      <a href="{{ route('business-galleries', ['business_slug' => $business->slug]) }}" class="btn btn-outline-primary rounded-pill btn-sm d-inline-flex align-items-center text-nowrap">View All <i class="fas fa-arrow-right ms-2"></i></a>
     </div>
     <div class="row g-3">
       @foreach($galleries as $gallery)
@@ -473,6 +485,41 @@
 
 
 @push('js')
+<script>
+$(document).ready(function() {
+    $('.toggle-favorite-btn').on('click', function(e) {
+        e.preventDefault();
+        
+        const btn = $(this);
+        const icon = btn.find('i');
+        const businessId = btn.data('business-id');
+        
+        $.ajax({
+            url: "{{ route('toggle-favorite') }}",
+            type: "POST",
+            data: {
+                _token: "{{ csrf_token() }}",
+                business_id: businessId
+            },
+            success: function(response) {
+                if (response.status === 'added') {
+                    icon.removeClass('far').addClass('fas text-danger');
+                } else if (response.status === 'removed') {
+                    icon.removeClass('fas text-danger').addClass('far');
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    $('#authModal').modal('show');
+                    switchAuthSection('login');
+                } else {
+                    alert('Something went wrong. Please try again.');
+                }
+            }
+        });
+    });
+});
+</script>
 @endpush
 
 @endsection

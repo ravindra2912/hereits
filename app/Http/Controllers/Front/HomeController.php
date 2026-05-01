@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
-use App\Models\Plan;
 use App\Models\BusinessCategory;
+use App\Models\Favorite;
 
 
 class HomeController extends Controller
@@ -24,14 +24,44 @@ class HomeController extends Controller
      */
     public function index(Request $request): View
     {
+        $categories = [
+            ['name' => 'Salons', 'icon' => 'fa-scissors', 'count' => '1.2k+', 'color' => '#f59e0b'],
+            ['name' => 'Clinics', 'icon' => 'fa-stethoscope', 'count' => '850+', 'color' => '#10b981'],
+            ['name' => 'Retail', 'icon' => 'fa-shopping-bag', 'count' => '2.4k+', 'color' => '#3b82f6'],
+            ['name' => 'Dining', 'icon' => 'fa-utensils', 'count' => '1.8k+', 'color' => '#ef4444'],
+            ['name' => 'Fitness', 'icon' => 'fa-dumbbell', 'count' => '600+', 'color' => '#8b5cf6'],
+            ['name' => 'More', 'icon' => 'fa-th-large', 'count' => '50+', 'color' => '#64748b'],
+        ];
+
         $featured_businesses = Business::select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
-            ->with(['businessCategory', 'city'])
+            ->with(['businessCategory', 'city', 'businessSetting:id,business_id,is_verified'])
+            ->when(auth()->check(), function ($query) {
+                $query->withExists(['favorites as is_favorited' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }]);
+            })
             ->where('status', 'active')
             ->orderBy('rating', 'desc')
             ->take(8)
             ->get();
 
-        return view('front.home', compact('featured_businesses'));
+        $favorite_businesses = collect();
+        if (auth()->check()) {
+            $favorite_businesses = Business::select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
+                ->with(['businessCategory', 'city', 'businessSetting:id,business_id,is_verified'])
+                ->whereHas('favorites', function ($query) {
+                    $query->where('user_id', auth()->id());
+                })
+                ->withExists(['favorites as is_favorited' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }])
+                ->where('status', 'active')
+                ->latest()
+                ->take(4)
+                ->get();
+        }
+
+        return view('front.home', compact('categories', 'featured_businesses', 'favorite_businesses'));
     }
 
     public function whyJoinWithUs(Request $request): View
@@ -125,7 +155,12 @@ class HomeController extends Controller
     {
         $businessCategory = getBusinessCategory();
         $businesses = Business::select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
-            ->with(['businessCategory', 'city'])
+            ->with(['businessCategory', 'city', 'businessSetting:id,business_id,is_verified'])
+            ->when(auth()->check(), function ($query) {
+                $query->withExists(['favorites as is_favorited' => function ($q) {
+                    $q->where('user_id', auth()->id());
+                }]);
+            })
             ->where('status', 'active');
 
         if ($request->has('category')) {
@@ -177,6 +212,35 @@ class HomeController extends Controller
         });
 
         return response()->json($formattedResults);
+    }
+
+    public function toggleFavorite(Request $request)
+    {
+        if (!auth()->check()) {
+            return response()->json(['status' => 'unauthenticated', 'message' => 'Please login to favorite this business.'], 401);
+        }
+
+        $businessId = $request->get('business_id');
+        $user = auth()->user();
+
+        $favorite = Favorite::where('user_id', $user->id)
+            ->where('business_id', $businessId)
+            ->first();
+
+        if ($favorite) {
+            $favorite->delete();
+            return response()->json(['status' => 'removed', 'message' => 'Removed from favorites.']);
+        } else {
+            Favorite::insert([
+                'user_id' => $user->id,
+                'business_id' => $businessId,
+                'favorite_type' => 'business',
+                'favorite_item_id' => $businessId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            return response()->json(['status' => 'added', 'message' => 'Added to favorites.']);
+        }
     }
 }
 

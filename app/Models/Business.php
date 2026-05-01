@@ -99,4 +99,9 @@ class Business extends Model
             ->where('end_date', '>', now())
             ->exists();
     }
+
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class, 'business_id', 'id');
+    }
 }
