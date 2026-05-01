@@ -14,6 +14,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Expert;
+use App\Models\Product;
+use App\Models\Service;
+use App\Models\Favorite;
 use App\Models\AppointmentBooking;
 use App\Models\ReviewAndRating;
 use Illuminate\Support\Facades\DB;
@@ -293,5 +297,43 @@ class AccountController extends Controller
             DB::rollBack();
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
+    }
+
+    public function favorites(): View
+    {
+        $user = Auth::user();
+        $favorites = Favorite::where('user_id', $user->id)->get();
+
+        // Group by type for better presentation
+        $groupedIds = [
+            'business' => [],
+            'expert' => [],
+            'product' => [],
+            'service' => []
+        ];
+
+        foreach ($favorites as $favorite) {
+            if (isset($groupedIds[$favorite->favorite_type])) {
+                $groupedIds[$favorite->favorite_type][] = $favorite->favorite_item_id;
+            }
+        }
+
+        $businesses = Business::whereIn('id', $groupedIds['business'])
+            ->with(['businessCategory', 'city', 'businessSetting'])
+            ->get();
+            
+        $experts = Expert::whereIn('id', $groupedIds['expert'])
+            ->with(['business', 'department'])
+            ->get();
+            
+        $products = Product::whereIn('id', $groupedIds['product'])
+            ->with(['business', 'firstImage'])
+            ->get();
+            
+        $services = Service::whereIn('id', $groupedIds['service'])
+            ->with(['business'])
+            ->get();
+
+        return view('front.account.favorites', compact('businesses', 'experts', 'products', 'services'));
     }
 }

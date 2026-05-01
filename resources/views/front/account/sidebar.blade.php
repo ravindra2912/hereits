@@ -21,6 +21,10 @@
         <i class="fas fa-calendar-check fs-5"></i>
         <span>My Bookings</span>
       </a>
+      <a class="nav-link py-2 px-3 rounded-3 mb-2 d-flex align-items-center gap-3 {{ request()->routeIs('account.favorites') ? 'active' : '' }}" href="{{ route('account.favorites') }}">
+        <i class="fas fa-heart fs-5"></i>
+        <span>My Favorites</span>
+      </a>
       <a class="nav-link py-2 px-3 rounded-3 mb-2 d-flex align-items-center gap-3 {{ request()->routeIs('account.changePassword') ? 'active' : '' }}" href="{{ route('account.changePassword') }}">
         <i class="fas fa-key fs-5"></i>
         <span>Security</span>
