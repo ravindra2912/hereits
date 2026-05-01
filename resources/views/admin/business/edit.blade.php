@@ -314,19 +314,22 @@
           </div>
 
           <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 transition-hover">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 transition-hover border-active">
               <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                   <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary me-3">
-                    <i class="bi bi-patch-check-fill fs-4 text-success"></i>
+                    <i class="bi bi-eye-fill fs-4 text-primary"></i>
                   </div>
                   <div>
-                    <h6 class="mb-0 fw-bold">Verified Business</h6>
-                    <small class="text-muted">Verification Status</small>
+                    <h6 class="mb-0 fw-bold">Visibility</h6>
+                    <small class="text-muted">Public/Private Mode</small>
                   </div>
                 </div>
                 <div class="form-check form-switch m-0">
-                  <input class="form-check-input custom-switch" type="checkbox" role="switch" name="is_verified" {{ $setting->is_verified ? 'checked' : '' }}>
+                    <select name="visibility" class="form-select form-select-sm border-0 shadow-none bg-light fw-bold" style="width: auto;">
+                        <option value="public" {{ $setting->visibility == 'public' ? 'selected' : '' }}>Public</option>
+                        <option value="private" {{ $setting->visibility == 'private' ? 'selected' : '' }}>Private</option>
+                    </select>
                 </div>
               </div>
             </div>

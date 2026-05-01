@@ -256,6 +256,7 @@ function getBusinessSettings($business_id = null)
             'service_limit' => 0,
             'service_limit_expiry_date' => null,
             'is_verified' => false,
+            'visibility' => 'public'
         ];
     }
     return (object)$data;

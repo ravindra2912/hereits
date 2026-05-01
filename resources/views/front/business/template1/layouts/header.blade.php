@@ -42,6 +42,7 @@
             </button>
 
             <!-- Logo & Identity -->
+            @if(isset($setting->visibility) && $setting->visibility == 'private')
             <a class="navbar-brand d-flex align-items-center gap-2 order-1 order-lg-0 mx-auto mx-lg-0" href="{{ route('business-details', $business->slug) }}">
                 @if ($business->business_logo)
                 <img src="{{ getImage($business->business_logo) }}"
@@ -54,6 +55,15 @@
                 </span>
                 @endif
             </a>
+            @else
+            <a class="navbar-brand order-1 order-lg-0 ms-lg-0 d-none d-lg-block" href="{{ route('home') }}">
+                <img src="{{ config('const.site_setting.logo') }}" alt="Logo" class="img-fluid" style="max-height: 40px;" loading="lazy">
+            </a>
+            <!-- Mobile Logo for Public -->
+            <a class="navbar-brand order-1 d-lg-none mx-auto" href="{{ route('home') }}">
+                <img src="{{ config('const.site_setting.logo') }}" alt="Logo" class="img-fluid" style="max-height: 30px;" loading="lazy">
+            </a>
+            @endif
 
             <!-- Universal Search Box (Handles both Desktop & Mobile) -->
             <div class="header-search-container mx-lg-4 order-lg-1 position-relative" id="universalSearchBox">
@@ -161,6 +171,7 @@
 <!-- Mobile Offcanvas Menu -->
 <div class="offcanvas offcanvas-start" tabindex="-1" id="businessOffcanvas" aria-labelledby="businessOffcanvasLabel">
     <div class="offcanvas-header border-bottom">
+        @if(isset($setting->visibility) && $setting->visibility == 'private')
         <a href="{{ route('business-details', $business->slug) }}" class="offcanvas-title d-flex align-items-center gap-2" id="businessOffcanvasLabel">
             @if ($business->business_logo)
             <img src="{{ getImage($business->business_logo) }}" alt="{{ $business->name }}" class="img-fluid rounded offcanvas-logo-sm" loading="lazy">
@@ -170,6 +181,11 @@
             </span>
             @endif
         </a>
+        @else
+        <a href="{{ route('home') }}" class="offcanvas-title" id="businessOffcanvasLabel">
+            <img src="{{ config('const.site_setting.logo') }}" alt="Logo" class="img-fluid" style="max-height: 35px;" loading="lazy">
+        </a>
+        @endif
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">

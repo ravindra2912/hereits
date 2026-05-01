@@ -65,10 +65,26 @@
                     @if(!$businesses->isEmpty())
                     {{ $businesses->links('pagination::bootstrap-5') }}
                     @else
-                    <div class="text-center py-5">
-                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                        <h5>No businesses found</h5>
-                        <p class="text-muted">Try adjusting your filters or search query.</p>
+                    <div class="text-center py-5 animate-up">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-primary rounded-circle mb-4" style="width: 100px; height: 100px;">
+                            <i class="fa fa-rocket text-white" style="font-size: 3.5rem;"></i>
+                        </div>
+                        <h2 class="display-6 fw-bold mb-3">Something Great is <span class="text-primary-gradient">Coming Soon!</span></h2>
+                        <p class="text-muted mb-5 mx-auto" style="max-width: 600px;">We are currently preparing the best local businesses and experts in this category. Stay tuned for our launch!</p>
+                        
+                        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white d-inline-block text-start" style="max-width: 700px;">
+                            <div class="row align-items-center">
+                                <div class="col-md-8 mb-4 mb-md-0">
+                                    <h4 class="fw-bold mb-2">Be the First to Join!</h4>
+                                    <p class="text-muted mb-0 small">Are you a business owner? Start listing your services today and get featured when we go live.</p>
+                                </div>
+                                <div class="col-md-4 text-md-end">
+                                    <a href="{{ route('why-join-with-us') }}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
+                                        Register Now
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     @endif
                 </div>

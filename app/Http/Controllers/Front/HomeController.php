@@ -40,6 +40,9 @@ class HomeController extends Controller
                     $q->where('user_id', auth()->id());
                 }]);
             })
+            ->whereHas('businessSetting', function ($query) {
+                $query->where('visibility', 'public');
+            })
             ->where('status', 'active')
             ->orderBy('rating', 'desc')
             ->take(8)
@@ -161,6 +164,9 @@ class HomeController extends Controller
                     $q->where('user_id', auth()->id());
                 }]);
             })
+            ->whereHas('businessSetting', function ($query) {
+                $query->where('visibility', 'public');
+            })
             ->where('status', 'active');
 
         if ($request->has('category')) {
@@ -204,8 +210,8 @@ class HomeController extends Controller
             return [
                 'title' => $item->name,
                 'type' => $item->type,
-                'url' => $item->type === 'Business' 
-                    ? route('business-details', $item->slug) 
+                'url' => $item->type === 'Business'
+                    ? route('business-details', $item->slug)
                     : route('business-list', ['category' => $item->slug]),
                 'image' => getImage($item->image)
             ];
@@ -243,4 +249,3 @@ class HomeController extends Controller
         }
     }
 }
-

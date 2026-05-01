@@ -381,6 +381,7 @@ class SettingController extends Controller
                     $update->is_service_system = $request->has('is_service_system') ? 1 : 0;
                     $update->is_appointment_system = $request->has('is_appointment_system') ? 1 : 0;
                     $update->is_pos_access = $request->has('is_pos_access') ? 1 : 0;
+                    $update->visibility = $request->visibility ?? 'public';
                 }
 
                 $update->save();

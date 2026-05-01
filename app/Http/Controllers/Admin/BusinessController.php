@@ -398,6 +398,7 @@ class BusinessController extends Controller
                 $update->subscription_expiry_date = $request->subscription_expiry_date;
                 $update->product_limit_expiry_date = $request->product_limit_expiry_date;
                 $update->service_limit_expiry_date = $request->service_limit_expiry_date;
+                $update->visibility = $request->visibility ?? 'public';
                 $update->save();
 
                 $success = true;

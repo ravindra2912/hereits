@@ -60,6 +60,7 @@ class BusinessSetting extends Model
             'product_limit_expiry_date' => $this->product_limit_expiry_date,
             'service_limit' => (int)$this->service_limit,
             'service_limit_expiry_date' => $this->service_limit_expiry_date,
+            'visibility' => $this->visibility,
         ];
 
         return $data;

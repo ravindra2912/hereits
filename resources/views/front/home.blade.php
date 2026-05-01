@@ -48,6 +48,7 @@
     </div>
 </section>
 
+@if(count($featured_businesses) > 0)
 <!-- 2. Business Category Section -->
 <section class="py-5 bg-light">
     <div class="container py-lg-4">
@@ -144,6 +145,56 @@
         </div>
     </div>
 </section>
+@else
+<!-- Coming Soon Section -->
+<section class="py-5 bg-white">
+    <div class="container py-5">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <div class="mb-5 animate-up">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-primary rounded-circle mb-4" style="width: 100px; height: 100px;">
+                        <i class="fa fa-rocket text-white" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h2 class="display-5 fw-bold mb-3">Something Great is <span class="text-primary-gradient">Coming Soon!</span></h2>
+                    <p class="lead text-muted mb-5">We are currently preparing the best local businesses and experts in your area. Stay tuned for our launch!</p>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-light animate-up delay-1">
+                    <div class="row align-items-center">
+                        <div class="col-md-7 text-md-start mb-4 mb-md-0">
+                            <h4 class="fw-bold mb-2">Be the First to Join!</h4>
+                            <p class="text-muted mb-0">Are you a business owner? Start listing your services today and get featured when we go live.</p>
+                        </div>
+                        <div class="col-md-5 text-md-end">
+                            <a href="{{ route('why-join-with-us') }}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
+                                <i class="fas fa-plus-circle me-2"></i> Register Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 pt-4 border-top animate-up delay-2">
+                    <h6 class="text-muted text-uppercase small tracking-wider fw-bold mb-4">What to Expect</h6>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <i class="fa fa-check-circle text-success mb-2 fs-4"></i>
+                            <p class="small fw-bold mb-0">Verified Stores</p>
+                        </div>
+                        <div class="col-md-4">
+                            <i class="fa fa-check-circle text-success mb-2 fs-4"></i>
+                            <p class="small fw-bold mb-0">Expert Services</p>
+                        </div>
+                        <div class="col-md-4">
+                            <i class="fa fa-check-circle text-success mb-2 fs-4"></i>
+                            <p class="small fw-bold mb-0">Easy Bookings</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+@endif
 
 <!-- 4. User Favorites (Only if login and has favorites) -->
 @if(auth()->check() && count($favorite_businesses) > 0)
@@ -218,32 +269,32 @@
                 <div class="row g-4 mb-5">
                     <div class="col-sm-6">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="icon-sm rounded-circle bg-primary bg-opacity-20 text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="fas fa-check"></i>
+                            <div class="icon-sm rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fa fa-check"></i>
                             </div>
                             <span>Increase Visibility</span>
                         </div>
                     </div>
                     <div class="col-sm-6">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="icon-sm rounded-circle bg-primary bg-opacity-20 text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="fas fa-check"></i>
+                            <div class="icon-sm rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fa fa-check"></i>
                             </div>
                             <span>Direct Bookings</span>
                         </div>
                     </div>
                     <div class="col-sm-6">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="icon-sm rounded-circle bg-primary bg-opacity-20 text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="fas fa-check"></i>
+                            <div class="icon-sm rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fa fa-check"></i>
                             </div>
                             <span>Verified Reviews</span>
                         </div>
                     </div>
                     <div class="col-sm-6">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="icon-sm rounded-circle bg-primary bg-opacity-20 text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="fas fa-check"></i>
+                            <div class="icon-sm rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fa fa-check"></i>
                             </div>
                             <span>Smart Insights</span>
                         </div>
@@ -260,8 +311,8 @@
                 <div class="cta-image-wrap position-relative">
                     <img src="{{ asset('assets/front/img/homepage/store.png') }}" class="img-fluid rounded-5 shadow-2xl animate-float" alt="Grow your business">
                     <div class="cta-floating-card p-3 bg-white rounded-4 shadow-lg position-absolute bottom-0 start-0 mb-n4 ms-n4 d-flex align-items-center gap-3 animate-up">
-                        <div class="bg-success-subtle text-success p-2 rounded-circle">
-                            <i class="fas fa-chart-line fs-4"></i>
+                        <div class="bg-success p-2 rounded-circle">
+                            <i class="fa fa-chart-line fs-4 text-white"></i>
                         </div>
                         <div>
                             <h6 class="fw-bold mb-0">+150% Growth</h6>

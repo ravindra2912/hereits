@@ -111,6 +111,24 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Business Visibility -->
+                <div class="col-lg-6">
+                    <div class="card border bg-light rounded-4 h-100">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="fw-bold mb-1">Business Visibility</h6>
+                                <p class="small text-muted mb-0">Public = show in listing, Private = hidden from listing.</p>
+                            </div>
+                            <div class="form-check form-switch p-0">
+                                <select name="visibility" class="form-select form-select-sm border-0 shadow-none bg-white fw-bold px-3 py-2 rounded-pill" style="width: auto; min-width: 120px; cursor: pointer;">
+                                    <option value="public" {{ $setting->visibility == 'public' ? 'selected' : '' }}>Public</option>
+                                    <option value="private" {{ $setting->visibility == 'private' ? 'selected' : '' }}>Private</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="col-12 text-end mt-4">
