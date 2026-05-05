@@ -71,7 +71,6 @@
                         <span class="input-group-text bg-light border-end-0"><i class="bi bi-telephone"></i></span>
                         <input type="number" class="form-control bg-light border-start-0" id="whatsappNumber" placeholder="Enter contact number here">
                     </div>
-                    <small class="text-muted mt-2 d-block">Example: 91 followed by your 10-digit number.</small>
                 </div>
             </div>
             <div class="modal-footer border-top-0 pt-0">
@@ -99,8 +98,8 @@
 
     $('#shareToWhatsapp').click(function() {
         var number = $('#whatsappNumber').val();
-        var url = $('#copylink').data('url');
-        
+        var url = $('#qrText').val();
+
         if (!number) {
             toastr.error("Please enter a contact number");
             return;
@@ -109,9 +108,9 @@
         // Remove any non-numeric characters just in case
         number = number.replace(/\D/g, '');
 
-        var whatsappUrl = "https://wa.me/" + number + "?text=" + encodeURIComponent("Check out my business: " + url);
+        var whatsappUrl = "https://wa.me/91" + number + "?text=" + encodeURIComponent("Check out my business: " + url);
         window.open(whatsappUrl, '_blank');
-        
+
         // Close modal
         var modal = bootstrap.Modal.getInstance(document.getElementById('whatsappModal'));
         modal.hide();
