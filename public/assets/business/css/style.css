@@ -81,15 +81,11 @@ body {
 #sidebar-wrapper {
     height: 100vh;
     overflow-y: auto;
-    position: fixed;
-    top: 0;
-    left: 0;
-    margin-left: -15rem;
-    transition: margin 0.25s ease-out;
     width: 15rem;
     min-width: 15rem;
+    transition: margin 0.25s ease-out;
     box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-    z-index: 1050; /* Higher than navbar */
+    z-index: 1050;
     background-color: var(--sidebar-bg);
 }
 
@@ -468,20 +464,17 @@ body {
     #sidebar-wrapper {
         margin-left: 0;
         position: sticky;
+        top: 0;
     }
 
     #page-content-wrapper {
-        margin-left: 15rem;
-        width: calc(100% - 15rem);
+        margin-left: 0;
+        flex: 1;
+        width: auto;
     }
 
     #wrapper.toggled #sidebar-wrapper {
         margin-left: -15rem;
-    }
-
-    #wrapper.toggled #page-content-wrapper {
-        margin-left: 0;
-        width: 100%;
     }
 }
 
@@ -489,6 +482,8 @@ body {
     #sidebar-wrapper {
         margin-left: -15rem;
         position: fixed;
+        top: 0;
+        left: 0;
     }
 
     #wrapper.toggled #sidebar-wrapper {
