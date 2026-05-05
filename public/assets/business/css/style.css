@@ -81,15 +81,35 @@ body {
 #sidebar-wrapper {
     height: 100vh;
     overflow-y: auto;
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
     margin-left: -15rem;
     transition: margin 0.25s ease-out;
     width: 15rem;
     min-width: 15rem;
     box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
-    z-index: 100;
+    z-index: 1050; /* Higher than navbar */
     background-color: var(--sidebar-bg);
+}
+
+/* Sidebar Backdrop */
+#sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.25s ease-out;
+}
+
+#sidebar-backdrop.active {
+    display: block;
+    opacity: 1;
 }
 
 #sidebar-wrapper::-webkit-scrollbar {
@@ -120,6 +140,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    transition: margin-left 0.25s ease-out;
 }
 
 .main-content-area {
@@ -140,7 +161,7 @@ body {
     background: #444;
 }
 
-body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
+#wrapper.toggled #sidebar-wrapper {
     margin-left: 0;
 }
 
@@ -446,34 +467,37 @@ body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
 @media (min-width: 768px) {
     #sidebar-wrapper {
         margin-left: 0;
+        position: sticky;
     }
 
     #page-content-wrapper {
-        min-width: 0;
-        width: 100%;
+        margin-left: 15rem;
+        width: calc(100% - 15rem);
     }
 
     #wrapper.toggled #sidebar-wrapper {
         margin-left: -15rem;
+    }
+
+    #wrapper.toggled #page-content-wrapper {
+        margin-left: 0;
+        width: 100%;
     }
 }
 
 @media (max-width: 768px) {
     #sidebar-wrapper {
         margin-left: -15rem;
+        position: fixed;
     }
 
     #wrapper.toggled #sidebar-wrapper {
         margin-left: 0;
     }
 
-    .container-fluid {
-        padding-right: 0.3rem !important;
-        padding-left: 0.3rem !important;
-    }
-
-    .card-body {
-        /* padding: 1rem 0.3rem !important; */
+    #page-content-wrapper {
+        margin-left: 0 !important;
+        width: 100% !important;
     }
 }
 

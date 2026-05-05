@@ -84,6 +84,8 @@
   </div>
 
   <div class="d-flex" id="wrapper">
+    <!-- Sidebar Backdrop -->
+    <div id="sidebar-backdrop"></div>
     <!-- Sidebar -->
     @include('business.layouts.sidebar')
 
@@ -114,9 +116,23 @@
 
   <script>
     // Toggle Sidebar
+    const wrapper = document.getElementById("wrapper");
+    const backdrop = document.getElementById("sidebar-backdrop");
+
+    function toggleSidebar() {
+      wrapper.classList.toggle("toggled");
+      if (window.innerWidth <= 768) {
+        backdrop.classList.toggle("active");
+      }
+    }
+
     document.getElementById("menu-toggle")?.addEventListener("click", function(e) {
       e.preventDefault();
-      document.getElementById("wrapper").classList.toggle("toggled");
+      toggleSidebar();
+    });
+
+    backdrop.addEventListener("click", function() {
+      toggleSidebar();
     });
 
     // Dark Mode Toggle
