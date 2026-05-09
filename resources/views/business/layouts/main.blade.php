@@ -95,7 +95,7 @@
       @include('business.layouts.navbar')
 
       <!-- Main Content -->
-      <div class="container-fluid px-4 py-4 main-content-area">
+      <div class="container-fluid px-2 px-md-3 py-3 py-md-4 main-content-area">
         @yield('content')
       </div>
 

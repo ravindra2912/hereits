@@ -37,12 +37,6 @@
                 </div>
 
                 <div class="d-flex flex-nowrap gap-2 gap-md-3">
-                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(route('business-details', $business->slug)) }}" target="_blank" class="btn btn-outline-primary rounded-pill px-3 px-md-4 fw-bold" title="Share on Facebook">
-                        <i class="bi bi-facebook"></i><span class="d-none d-md-inline ms-2">Facebook</span>
-                    </a>
-                    <a href="https://www.instagram.com/" target="_blank" class="btn btn-outline-danger rounded-pill px-3 px-md-4 fw-bold" title="Share on Instagram">
-                        <i class="bi bi-instagram"></i><span class="d-none d-md-inline ms-2">Instagram</span>
-                    </a>
                     <button type="button" class="btn btn-outline-success rounded-pill px-3 px-md-4 fw-bold" data-bs-toggle="modal" data-bs-target="#whatsappModal" title="Share on WhatsApp">
                         <i class="bi bi-whatsapp"></i><span class="d-none d-md-inline ms-2">WhatsApp</span>
                     </button>

@@ -1,5 +1,5 @@
 <nav class="navbar navbar-light border-bottom shadow-sm">
-    <div class="container-fluid">
+    <div class="container-fluid px-3">
         <button class="btn btn-primary" id="menu-toggle"><i class="bi bi-list"></i></button>
 
         <div class="ms-auto d-flex align-items-center">
