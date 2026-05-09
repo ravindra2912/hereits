@@ -257,6 +257,9 @@ class HomeController extends Controller
                 $item->type = 'business';
                 $item->url = route('business-details', $item->slug);
                 $item->image = getImage($item->image);
+                if (isset($item->distance)) {
+                    $item->distance_text = number_format($item->distance, 1) . ' km';
+                }
                 return $item;
             });
 

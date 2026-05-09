@@ -51,7 +51,12 @@
                                         <i class="fas fa-star"></i> <span>{{ number_format($business->rating, 1) }}</span>
                                     </div>
                                 </div>
-                                <p class="text-muted small mb-3"><i class="fas fa-map-marker-alt text-primary me-2"></i> {{ $business->area ? $business->area .', ' : '' }} {{ $business->city->name ?? '' }}</p>
+                                <div class="d-flex align-items-center mb-3">
+                                    <p class="text-muted small mb-0 text-truncate"><i class="fas fa-map-marker-alt text-primary me-2"></i> {{ $business->area ? $business->area .', ' : '' }} {{ $business->city->name ?? '' }}</p>
+                                    @if(isset($business->distance))
+                                    <span class="ms-auto text-primary fw-bold extra-small"><i class="fas fa-route me-1"></i> {{ number_format($business->distance, 1) }} km</span>
+                                    @endif
+                                </div>
                                 
                                 <div class="d-flex gap-2 flex-wrap">
                                     <span class="badge bg-light text-muted fw-normal">{{ $business->businessCategory->name ?? 'Business' }}</span>

@@ -52,7 +52,7 @@ $(document).ready(function () {
                                     <img src="${item.image}" alt="${item.title}">
                                     <div class="search-result-info">
                                         <span class="search-result-name">${item.title}</span>
-                                        <span class="search-result-type">${item.type}</span>
+                                        <span class="search-result-type">${item.type} ${item.distance_text ? ' &bull; ' + item.distance_text : ''}</span>
                                     </div>
                                     <i class="fas fa-chevron-right text-muted small ms-2"></i>
                                 </a>
