@@ -126,6 +126,3 @@ class Business extends Model
             ->whereBetween('longitude', [$swLng, $neLng]);
     }
 }
-
-
-

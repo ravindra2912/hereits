@@ -224,16 +224,34 @@ class HomeController extends Controller
 
     public function globalSearch(Request $request)
     {
-        $query = $request->get('query');
+        $query = $request->get('q');
         if (empty($query)) {
             return response()->json([]);
         }
 
+        $location = LocationController::getUserLocation();
+
         // Search Businesses
-        $businesses = Business::where('name', 'like', "%{$query}%")
+        $businesses = Business::query()
+            ->where('name', 'like', "%{$query}%")
             ->where('status', 'active')
-            ->select('id', 'name', 'slug', 'business_logo as image')
-            ->limit(5)
+            ->when($location, function ($query) use ($location) {
+                if (!empty($location['area_lat_long'])) {
+                    $coords = explode(',', $location['area_lat_long']);
+                    if (count($coords) === 4) {
+                        return $query->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
+                    }
+                }
+
+                if (isset($location['latitude']) && isset($location['longitude'])) {
+                    return $query->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100);
+                }
+
+                return $query;
+            })
+            // Use addSelect to preserve the 'distance' column if added by nearby scope
+            ->addSelect(['id', 'name', 'slug', 'business_logo as image'])
+            ->limit(10)
             ->get()
             ->map(function ($item) {
                 $item->type = 'business';
@@ -246,7 +264,7 @@ class HomeController extends Controller
         $categories = BusinessCategory::where('name', 'like', "%{$query}%")
             ->where('status', 'active')
             ->select('id', 'name', 'slug', 'image')
-            ->limit(5)
+            ->limit(4)
             ->get()
             ->map(function ($item) {
                 $item->type = 'category';
@@ -261,7 +279,7 @@ class HomeController extends Controller
         $formattedResults = $results->map(function ($result) {
             return [
                 'id' => $result->id,
-                'name' => $result->name,
+                'title' => $result->name,
                 'type' => $result->type,
                 'url' => $result->url,
                 'image' => $result->image

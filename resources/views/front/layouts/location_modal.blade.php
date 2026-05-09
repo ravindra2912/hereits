@@ -38,15 +38,15 @@
 
                     <!-- Location History -->
                     @php
-                        $locationHistory = json_decode(request()->cookie('location_history', '[]'), true);
+                    $locationHistory = json_decode(request()->cookie('location_history', '[]'), true);
                     @endphp
                     @if(count($locationHistory) > 0)
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted text-uppercase mb-2">Recent Locations</label>
                         <div class="list-group list-group-flush rounded-3 border overflow-hidden">
                             @foreach($locationHistory as $item)
-                            <button type="button" class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-3 border-0" 
-                                    onclick="saveLocation('{{ $item['type'] }}', '{{ $item['location_name'] }}', {{ $item['latitude'] }}, {{ $item['longitude'] }}, { full_address: '{{ $item['full_address'] ?? '' }}', area_lat_long: '{{ $item['area_lat_long'] ?? '' }}' })">
+                            <button type="button" class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-3 border-0"
+                                onclick="saveLocation('{{ $item['type'] }}', '{{ $item['location_name'] }}', {{ $item['latitude'] }}, {{ $item['longitude'] }}, { full_address: '{{ $item['full_address'] ?? '' }}', area_lat_long: '{{ $item['area_lat_long'] ?? '' }}' })">
                                 <i class="fas fa-history text-muted"></i>
                                 <div class="text-start">
                                     <div class="fw-bold small">{{ $item['location_name'] }}</div>
@@ -107,6 +107,7 @@
         border: none;
         z-index: 1060 !important;
     }
+
     .extra-small {
         font-size: 0.7rem;
     }
@@ -134,7 +135,8 @@
         if (!input) return;
 
         const autocomplete = new google.maps.places.Autocomplete(input, {
-            // types: ['(regions)'],
+            // fields: ['geometry'],
+            // fields: ['place_id', 'name', 'geometry', 'formatted_address', 'types'],
             componentRestrictions: {
                 country: 'in'
             }
