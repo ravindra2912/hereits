@@ -104,4 +104,28 @@ class Business extends Model
     {
         return $this->hasMany(Favorite::class, 'favorite_item_id', 'id')->where('favorite_type', 'business');
     }
+
+    /**
+     * Scope a query to filter businesses by distance.
+     */
+    public function scopeNearby($query, $latitude, $longitude, $radius = 5)
+    {
+        $haversine = "(6371 * acos(cos(radians($latitude)) * cos(radians(latitude)) * cos(radians(longitude) - radians($longitude)) + sin(radians($latitude)) * sin(radians(latitude))))";
+
+        return $query->selectRaw("*, $haversine AS distance")
+            ->having("distance", "<=", $radius)
+            ->orderBy('distance');
+    }
+
+    /**
+     * Scope a query to filter businesses within a bounding box.
+     */
+    public function scopeInBoundaries($query, $swLat, $swLng, $neLat, $neLng)
+    {
+        return $query->whereBetween('latitude', [$swLat, $neLat])
+            ->whereBetween('longitude', [$swLng, $neLng]);
+    }
 }
+
+
+

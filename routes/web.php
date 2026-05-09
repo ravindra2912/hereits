@@ -12,6 +12,10 @@ use App\Http\Controllers\Front\Business\ProductController;
 use App\Http\Controllers\Front\Business\ServiceController;
 use App\Http\Controllers\Front\Business\CommonController as BusinessCommonController;
 use App\Http\Controllers\Front\BlogController;
+use App\Http\Controllers\Front\LocationController;
+
+Route::post('/set-location', [LocationController::class, 'setLocation'])->name('set-location');
+
 
 Route::controller(BlogController::class)->name('blog.')->group(function () {
     Route::get('/blogs', 'index')->name('index');

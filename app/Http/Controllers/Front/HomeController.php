@@ -18,6 +18,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Front\LocationController;
+
 
 class HomeController extends Controller
 {
@@ -35,8 +37,23 @@ class HomeController extends Controller
             ['name' => 'More', 'icon' => 'fa-th-large', 'count' => '50+', 'color' => '#64748b'],
         ];
 
-        $featured_businesses = Business::select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
+        $location = LocationController::getUserLocation();
+        // dd($location);
+        $featured_businesses = Business::query()
             ->with(['businessCategory', 'city', 'businessSetting:id,business_id,is_verified'])
+            ->when($location, function ($query) use ($location) {
+                if (!empty($location['area_lat_long'])) {
+                    $coords = explode(',', $location['area_lat_long']);
+                    if (count($coords) === 4) {
+                        return $query->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
+                    }
+                }
+                return $query->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100); // Larger radius for featured if needed
+            })
+            ->when(!$location, function ($query) {
+                return $query->select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
+                    ->orderBy('rating', 'desc');
+            })
             ->when(auth()->check(), function ($query) {
                 $query->withExists(['favorites as is_favorited' => function ($q) {
                     $q->where('user_id', auth()->id());
@@ -46,7 +63,6 @@ class HomeController extends Controller
                 $query->where('visibility', 'public');
             })
             ->where('status', 'active')
-            ->orderBy('rating', 'desc')
             ->take(8)
             ->get();
 
@@ -157,8 +173,23 @@ class HomeController extends Controller
 
     public function businessList(Request $request): View
     {
-        $query = Business::select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
+        $location = LocationController::getUserLocation();
+
+        $query = Business::query()
             ->with(['businessCategory', 'city', 'businessSetting:id,business_id,is_verified'])
+            ->when($location, function ($query) use ($location) {
+                if (!empty($location['area_lat_long'])) {
+                    $coords = explode(',', $location['area_lat_long']);
+                    if (count($coords) === 4) {
+                        return $query->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
+                    }
+                }
+                return $query->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 5);
+            })
+            ->when(!$location, function ($query) {
+                return $query->select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
+                    ->latest();
+            })
             ->when(auth()->check(), function ($query) {
                 $query->withExists(['favorites as is_favorited' => function ($q) {
                     $q->where('user_id', auth()->id());
