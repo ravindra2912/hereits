@@ -43,11 +43,28 @@ class LocationController extends Controller
         }
 
 
-        // Store cookie for 1 week (7 * 24 * 60 minutes)
-        $cookie = cookie('user_location', json_encode($locationData), 7 * 24 * 60);
+        // Manage location history (last 5 unique locations)
+        $history = json_decode(Cookie::get('location_history', '[]'), true);
+        
+        // Remove existing occurrence of this location to move it to top
+        $history = array_filter($history, function($item) use ($request) {
+            return $item['location_name'] !== $request->location_name;
+        });
+
+        // Add new location to the beginning
+        array_unshift($history, $locationData);
+
+        // Keep only last 5
+        $history = array_slice($history, 0, 5);
+
+        // Store cookies for 1 week
+        $locationCookie = cookie('user_location', json_encode($locationData), 7 * 24 * 60);
+        $historyCookie = cookie('location_history', json_encode($history), 7 * 24 * 60);
 
         return response()->json(['status' => 'success', 'message' => 'Location updated successfully'])
-            ->withCookie($cookie);
+            ->withCookie($locationCookie)
+            ->withCookie($historyCookie);
+
     }
 
     /**
