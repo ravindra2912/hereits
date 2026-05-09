@@ -18,9 +18,9 @@
         <div class="row">
             <div class="col-lg-7 text-white py-5">
                 <h1 class="display-3 fw-bold mb-4 animate-up">Find the Best <span class="text-primary-gradient">Local Store</span> Around You</h1>
-                <p class="lead mb-5 opacity-90 animate-up delay-1">Explore top-rated salons, clinics, stores, and experts in your city with ease.</p>
+                <p class="lead mb-1 opacity-90 animate-up delay-1">Explore top-rated salons, clinics, stores, and experts in your city with ease.</p>
 
-                <div class="d-flex flex-wrap gap-3 animate-up delay-2">
+                <div class="d-none d-md-flex flex-wrap gap-3 animate-up delay-2 mt-4">
                     <a href="{{ route('business-list') }}" class="btn btn-primary btn-lg rounded-pill px-5 py-3 fw-bold shadow-lg">
                         <i class="fas fa-compass me-2"></i> Explore Now
                     </a>
@@ -29,7 +29,7 @@
                     </a>
                 </div>
 
-                <div class="mt-5 d-flex flex-wrap gap-4 align-items-center animate-up delay-3">
+                <div class="mt-5 d-none d-md-flex flex-wrap gap-4 align-items-center animate-up delay-3">
                     <div class="d-flex align-items-center gap-2">
                         <i class="fas fa-check-circle text-primary"></i>
                         <small class="opacity-90 fw-bold">Verified Listings</small>
@@ -305,9 +305,9 @@
                     </div>
                 </div>
 
-                <div class="d-flex gap-3">
-                    <a href="{{ route('why-join-with-us') }}" class="btn btn-primary btn-lg rounded-pill px-5">Get Started Free</a>
-                    <a href="{{ route('aboutUs') }}" class="btn btn-outline-light btn-lg rounded-pill px-5">Learn More</a>
+                <div class="d-flex gap-2 gap-sm-3 hero-buttons">
+                    <a href="{{ route('why-join-with-us') }}" class="btn btn-primary btn-lg rounded-pill px-3 px-sm-5 flex-fill flex-sm-none text-nowrap">Get Started Free</a>
+                    <a href="{{ route('aboutUs') }}" class="btn btn-outline-light btn-lg rounded-pill px-3 px-sm-5 flex-fill flex-sm-none text-nowrap">Learn More</a>
                 </div>
             </div>
 
@@ -331,160 +331,7 @@
 
 @endsection
 
-@push('css')
-<style>
-    .hero-wrap {
-        min-height: 80vh;
-        margin-top: -85px;
-        /* Offset for sticky header if needed */
-        padding-top: 85px;
-    }
 
-    .hero-bg img {
-        filter: brightness(0.7);
-    }
-
-    .hero-overlay {
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.4) 100%);
-    }
-
-    .text-primary-gradient {
-        background: var(--primary-gradient);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .search-box-wrap {
-        max-width: 600px;
-    }
-
-    .hover-bg-primary:hover {
-        background-color: var(--primary-color) !important;
-        opacity: 1 !important;
-    }
-
-    .category-card:hover .icon-circle {
-        transform: scale(1.1) rotate(5deg);
-    }
-
-    .animate-up {
-        opacity: 0;
-        animation: fadeInUp 0.8s forwards;
-    }
-
-    .delay-1 {
-        animation-delay: 0.2s;
-    }
-
-    .delay-2 {
-        animation-delay: 0.4s;
-    }
-
-    .delay-3 {
-        animation-delay: 0.6s;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .animate-float {
-        animation: float 6s ease-in-out infinite;
-    }
-
-    @keyframes float {
-
-        0%,
-        100% {
-            transform: translateY(0);
-        }
-
-        50% {
-            transform: translateY(-20px);
-        }
-    }
-
-    .cta-image-wrap img {
-        border: 10px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .shadow-2xl {
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    }
-
-    .bg-success-subtle {
-        background-color: rgba(16, 185, 129, 0.15);
-    }
-
-    .favorite-btn:hover {
-        transform: scale(1.1);
-        background: #fff !important;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    @media (max-width: 575.98px) {
-        .card-body {
-            padding: 0.75rem !important;
-        }
-
-        .business-card-img {
-            height: 120px !important;
-        }
-
-        .card-body h5 {
-            font-size: 0.85rem !important;
-        }
-
-        .card-body p {
-            font-size: 0.7rem !important;
-            margin-bottom: 0.5rem !important;
-        }
-
-        .card-body .badge {
-            font-size: 0.6rem !important;
-            padding: 0.2rem 0.5rem !important;
-        }
-
-        .card-body .btn {
-            padding: 0.3rem 0.8rem !important;
-            font-size: 0.7rem !important;
-        }
-
-        .g-4,
-        .gx-4 {
-            --bs-gutter-x: 0.5rem !important;
-        }
-
-        .g-4,
-        .gy-4 {
-            --bs-gutter-y: 0.5rem !important;
-        }
-
-        .favorite-btn {
-            width: 28px !important;
-            height: 28px !important;
-        }
-
-        .favorite-btn i {
-            font-size: 0.75rem !important;
-        }
-
-        .badge.position-absolute {
-            font-size: 0.6rem !important;
-            padding: 0.2rem 0.5rem !important;
-            margin: 0.5rem !important;
-        }
-    }
-</style>
-@endpush
 
 @push('js')
 @endpush
