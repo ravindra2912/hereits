@@ -1,11 +1,16 @@
+@php
+    $userLocation = App\Http\Controllers\Front\LocationController::getUserLocation();
+@endphp
+
 <!-- Location Selection Modal -->
-<div class="modal fade" id="locationModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="locationModalLabel" aria-hidden="true">
+<div class="modal fade" id="locationModal" @if(!$userLocation) data-bs-backdrop="static" data-bs-keyboard="false" @endif tabindex="-1" aria-labelledby="locationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold" id="locationModalLabel">Select Your Location</h5>
-                <button type="button" class="btn-close d-none" id="closeLocationModal" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close {{ !$userLocation ? 'd-none' : '' }}" id="closeLocationModal" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <div class="modal-body p-4">
                 <p class="text-muted mb-4">Select your location to discover businesses and services near you.</p>
 
@@ -120,15 +125,18 @@
     document.addEventListener('DOMContentLoaded', function() {
         initAutocomplete();
 
-        // Check if location is already set in localStorage (for UI)
-        const savedLocation = localStorage.getItem('user_location_name');
-        if (!savedLocation) {
+        // Check if location is already set
+        const savedLocationName = localStorage.getItem('user_location_name');
+        const hasCookieLocation = @json($userLocation ? true : false);
+
+        if (!savedLocationName && !hasCookieLocation) {
             const locationModal = new bootstrap.Modal(document.getElementById('locationModal'));
             locationModal.show();
-        } else {
-            updateLocationUI(savedLocation);
+        } else if (savedLocationName) {
+            updateLocationUI(savedLocationName);
         }
     });
+
 
     function initAutocomplete() {
         const input = document.getElementById('location-search-input');
