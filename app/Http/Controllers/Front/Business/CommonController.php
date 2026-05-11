@@ -25,7 +25,7 @@ class CommonController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
 
-        $galleries = Gallery::select('id', 'image_url', 'title', 'business_id', 'created_at')
+        $galleries = Gallery::select('id', 'image_url', 'title', 'business_id', 'type', 'created_at')
             ->where('business_id', $business->id)
             ->where('status', 'active')
             ->latest()

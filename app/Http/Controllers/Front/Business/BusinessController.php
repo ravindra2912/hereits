@@ -189,7 +189,7 @@ class BusinessController extends Controller
         }
 
         // Gallery
-        $galleries = Gallery::select('id', 'image_url', 'title', 'business_id')
+        $galleries = Gallery::select('id', 'image_url', 'title', 'business_id', 'type')
             ->where('business_id', $business->id)
             ->where('status', 'active')
             ->latest()

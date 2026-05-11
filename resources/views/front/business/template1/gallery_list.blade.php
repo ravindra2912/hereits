@@ -31,15 +31,16 @@
                 @if($gallery->type == 'image')
                     <a href="{{ getImage($gallery->image_url) }}" class="glightbox" data-gallery="business-gallery" data-title="{{ $gallery->title }}">
                         <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0">
-                            <img src="{{ getImage($gallery->image_url) }}" class="img-fluid w-100 h-100 object-fit-cover" alt="{{ $gallery->title }}" style="min-height: 250px;" loading="lazy">
-                            <div class="gallery-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end" style="background: linear-gradient(transparent, rgba(0,0,0,0.8)); opacity: 0; transition: 0.3s;">
+                            <img src="{{ getImage($gallery->image_url) }}" class="img-fluid w-100 h-100 object-fit-cover transition-all" alt="{{ $gallery->title }}" style="min-height: 250px;" loading="lazy">
+                            <div class="gallery-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end" style="background: linear-gradient(transparent, rgba(0,0,0,0.8)); transition: 0.3s;">
                                 <p class="mb-0 small fw-bold">{{ $gallery->title }}</p>
                             </div>
+                            <span class="badge bg-white text-dark position-absolute top-0 start-0 m-3 shadow-sm"><i class="fas fa-image me-1"></i>Image</span>
                         </div>
                     </a>
                 @elseif($gallery->type == 'video')
                     @php $ytThumb = getYoutubeThumbnail($gallery->image_url); @endphp
-                    <a href="{{ getImage($gallery->image_url) }}" class="glightbox" data-gallery="business-gallery" data-title="{{ $gallery->title }}">
+                    <a href="{{ $gallery->image_url }}" class="glightbox" data-gallery="business-gallery" data-title="{{ $gallery->title }}">
                         <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0 bg-dark d-flex align-items-center justify-content-center" style="min-height: 250px;">
                             @if($ytThumb)
                                 <img src="{{ $ytThumb }}" class="img-fluid w-100 h-100 object-fit-cover opacity-50" alt="{{ $gallery->title }}" style="min-height: 250px;">
@@ -50,16 +51,25 @@
                             <div class="gallery-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end" style="background: linear-gradient(transparent, rgba(0,0,0,0.8)); opacity: 1;">
                                 <p class="mb-0 small fw-bold">{{ $gallery->title }}</p>
                             </div>
-                            <span class="badge bg-danger position-absolute top-0 start-0 m-3 shadow-sm">Video</span>
+                            <span class="badge bg-danger position-absolute top-0 start-0 m-3 shadow-sm"><i class="fas fa-video me-1"></i>Video</span>
                         </div>
                     </a>
                 @else
-                    <a href="{{ getImage($gallery->image_url) }}" target="_blank" download>
+                    @php
+                        $ext = strtolower(pathinfo($gallery->image_url, PATHINFO_EXTENSION));
+                        $docIcon = 'fa-file-alt';
+                        if ($ext == 'pdf') $docIcon = 'fa-file-pdf';
+                        elseif (in_array($ext, ['doc', 'docx'])) $docIcon = 'fa-file-word';
+                        elseif (in_array($ext, ['xls', 'xlsx', 'csv'])) $docIcon = 'fa-file-excel';
+                        elseif (in_array($ext, ['ppt', 'pptx'])) $docIcon = 'fa-file-powerpoint';
+                        elseif (in_array($ext, ['zip', 'rar'])) $docIcon = 'fa-file-archive';
+                    @endphp
+                    <a href="{{ $gallery->image_url }}" target="_blank">
                         <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0 bg-light d-flex flex-column align-items-center justify-content-center p-4 text-center" style="min-height: 250px;">
-                            <i class="fas fa-file-alt fa-4x text-primary mb-3"></i>
+                            <i class="fas {{ $docIcon }} fa-4x text-primary mb-3"></i>
                             <p class="mb-0 fw-bold text-dark">{{ $gallery->title }}</p>
-                            <small class="text-muted mt-2">Click to Download</small>
-                            <span class="badge bg-primary position-absolute top-0 start-0 m-3 shadow-sm">Doc</span>
+                            <small class="text-muted mt-2">Click to View</small>
+                            <span class="badge bg-primary position-absolute top-0 start-0 m-3 shadow-sm"><i class="fas fa-file-contract me-1"></i>Doc</span>
                         </div>
                     </a>
                 @endif

@@ -43,8 +43,17 @@
                         </div>
                     </a>
                 @else
+                    @php
+                        $ext = strtolower(pathinfo($gallery->image_url, PATHINFO_EXTENSION));
+                        $docIcon = 'bi-file-earmark-text';
+                        if ($ext == 'pdf') $docIcon = 'bi-file-earmark-pdf';
+                        elseif (in_array($ext, ['doc', 'docx'])) $docIcon = 'bi-file-earmark-word';
+                        elseif (in_array($ext, ['xls', 'xlsx', 'csv'])) $docIcon = 'bi-file-earmark-excel';
+                        elseif (in_array($ext, ['ppt', 'pptx'])) $docIcon = 'bi-file-earmark-slides';
+                        elseif (in_array($ext, ['zip', 'rar'])) $docIcon = 'bi-file-earmark-zip';
+                    @endphp
                     <a href="{{ $gallery->image_url }}" target="_blank" class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-primary text-decoration-none">
-                        <i class="bi bi-file-earmark-text display-4"></i>
+                        <i class="bi {{ $docIcon }} display-4"></i>
                     </a>
                 @endif
 
