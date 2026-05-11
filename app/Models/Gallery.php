@@ -9,6 +9,7 @@ class Gallery extends Model
     protected $fillable = [
         'business_id',
         'title',
+        'type',
         'image_url',
         'status',
     ];

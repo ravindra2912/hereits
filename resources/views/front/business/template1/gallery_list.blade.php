@@ -28,14 +28,41 @@
         <div class="row g-4">
             @foreach($galleries as $gallery)
             <div class="col-6 col-md-4 col-lg-3">
-                <a href="{{ getImage($gallery->image_url) }}" class="glightbox" data-gallery="business-gallery" data-title="{{ $gallery->title }}">
-                    <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0">
-                        <img src="{{ getImage($gallery->image_url) }}" class="img-fluid w-100 h-100 object-fit-cover" alt="{{ $gallery->title }}" style="min-height: 250px;" loading="lazy">
-                        <div class="gallery-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end" style="background: linear-gradient(transparent, rgba(0,0,0,0.8)); opacity: 0; transition: 0.3s;">
-                            <p class="mb-0 small fw-bold">{{ $gallery->title }}</p>
+                @if($gallery->type == 'image')
+                    <a href="{{ getImage($gallery->image_url) }}" class="glightbox" data-gallery="business-gallery" data-title="{{ $gallery->title }}">
+                        <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0">
+                            <img src="{{ getImage($gallery->image_url) }}" class="img-fluid w-100 h-100 object-fit-cover" alt="{{ $gallery->title }}" style="min-height: 250px;" loading="lazy">
+                            <div class="gallery-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end" style="background: linear-gradient(transparent, rgba(0,0,0,0.8)); opacity: 0; transition: 0.3s;">
+                                <p class="mb-0 small fw-bold">{{ $gallery->title }}</p>
+                            </div>
                         </div>
-                    </div>
-                </a>
+                    </a>
+                @elseif($gallery->type == 'video')
+                    @php $ytThumb = getYoutubeThumbnail($gallery->image_url); @endphp
+                    <a href="{{ getImage($gallery->image_url) }}" class="glightbox" data-gallery="business-gallery" data-title="{{ $gallery->title }}">
+                        <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0 bg-dark d-flex align-items-center justify-content-center" style="min-height: 250px;">
+                            @if($ytThumb)
+                                <img src="{{ $ytThumb }}" class="img-fluid w-100 h-100 object-fit-cover opacity-50" alt="{{ $gallery->title }}" style="min-height: 250px;">
+                                <i class="fas fa-play-circle fa-4x text-white position-absolute top-50 start-50 translate-middle opacity-75"></i>
+                            @else
+                                <i class="fas fa-play-circle fa-4x text-white opacity-75"></i>
+                            @endif
+                            <div class="gallery-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end" style="background: linear-gradient(transparent, rgba(0,0,0,0.8)); opacity: 1;">
+                                <p class="mb-0 small fw-bold">{{ $gallery->title }}</p>
+                            </div>
+                            <span class="badge bg-danger position-absolute top-0 start-0 m-3 shadow-sm">Video</span>
+                        </div>
+                    </a>
+                @else
+                    <a href="{{ getImage($gallery->image_url) }}" target="_blank" download>
+                        <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0 bg-light d-flex flex-column align-items-center justify-content-center p-4 text-center" style="min-height: 250px;">
+                            <i class="fas fa-file-alt fa-4x text-primary mb-3"></i>
+                            <p class="mb-0 fw-bold text-dark">{{ $gallery->title }}</p>
+                            <small class="text-muted mt-2">Click to Download</small>
+                            <span class="badge bg-primary position-absolute top-0 start-0 m-3 shadow-sm">Doc</span>
+                        </div>
+                    </a>
+                @endif
             </div>
             @endforeach
         </div>

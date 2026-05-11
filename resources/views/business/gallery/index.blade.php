@@ -1,9 +1,9 @@
 @extends('business.layouts.main')
-@section('title', 'Gallery List')
+@section('title', 'Gallery')
 @section('content')
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Gallery List</h1>
+    <h1 class="h2">Gallery</h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
@@ -14,129 +14,330 @@
     </div>
 </div>
 
-<div class="card shadow mb-4">
-    <div class="card-header py-3 bg-white d-flex justify-content-between align-items-center">
-        <h5 class="m-0 font-weight-bold text-primary">Gallery Images</h5>
-        <a href="{{ route('business.gallery.create') }}" class="btn btn-primary btn-sm shadow-sm">
-            <i class="bi bi-plus-lg text-white-50"></i> Add Gallery Image
-        </a>
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <h5 class="fw-bold text-dark mb-0">Gallery Items</h5>
+    <button type="button" class="btn btn-primary shadow-sm" onclick="openGalleryModal()">
+        <i class="bi bi-plus-lg me-1"></i> Add Gallery Item
+    </button>
+</div>
+
+<div class="row g-4" id="gallery-grid">
+    @forelse($galleries as $gallery)
+    <div class="col-xl-3 col-lg-4 col-md-6 gallery-item-container" id="gallery-item-{{ $gallery->id }}">
+        <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden gallery-card">
+            <div class="position-relative overflow-hidden" style="height: 200px;">
+                @if($gallery->type == 'image')
+                    <a href="{{ getImage($gallery->image_url) }}" class="glightbox" data-gallery="gallery-preview">
+                        <img src="{{ getImage($gallery->image_url) }}" class="w-100 h-100 object-fit-cover transition-all" alt="{{ $gallery->title }}">
+                    </a>
+                @elseif($gallery->type == 'video')
+                    <a href="{{ $gallery->image_url }}" class="glightbox" data-gallery="gallery-preview">
+                        <div class="w-100 h-100 bg-dark d-flex align-items-center justify-content-center text-white position-relative">
+                            @php $ytThumb = getYoutubeThumbnail($gallery->image_url); @endphp
+                            @if($ytThumb)
+                                <img src="{{ $ytThumb }}" class="w-100 h-100 object-fit-cover opacity-50" alt="{{ $gallery->title }}">
+                                <i class="bi bi-play-circle-fill display-4 position-absolute top-50 start-50 translate-middle"></i>
+                            @else
+                                <i class="bi bi-play-circle-fill display-4"></i>
+                            @endif
+                        </div>
+                    </a>
+                @else
+                    <a href="{{ $gallery->image_url }}" target="_blank" class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-primary text-decoration-none">
+                        <i class="bi bi-file-earmark-text display-4"></i>
+                    </a>
+                @endif
+
+                <div class="gallery-type-badge position-absolute top-0 start-0 m-2">
+                    @if($gallery->type == 'image')
+                        <span class="badge bg-white text-dark shadow-sm px-2 py-1"><i class="bi bi-image me-1"></i>Image</span>
+                    @elseif($gallery->type == 'video')
+                        <span class="badge bg-danger shadow-sm px-2 py-1"><i class="bi bi-camera-video me-1"></i>Video</span>
+                    @else
+                        <span class="badge bg-primary shadow-sm px-2 py-1"><i class="bi bi-file-earmark-arrow-down me-1"></i>Doc</span>
+                    @endif
+                </div>
+
+                <div class="status-badge position-absolute top-0 end-0 m-2">
+                    @if($gallery->status == 'active')
+                        <span class="badge bg-success shadow-sm px-2 py-1">Active</span>
+                    @else
+                        <span class="badge bg-danger shadow-sm px-2 py-1">Inactive</span>
+                    @endif
+                </div>
+            </div>
+
+            <div class="card-body p-3">
+                <h6 class="fw-bold text-dark text-truncate mb-2" title="{{ $gallery->title }}">{{ $gallery->title }}</h6>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-2" onclick="editGallery({{ $gallery->id }})">
+                            <i class="bi bi-pencil me-1"></i> Edit
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="deleteGallery({{ $gallery->id }})">
+                            <i class="bi bi-trash me-1"></i> Delete
+                        </button>
+                    </div>
+                    @if($gallery->type == 'doc')
+                        <a href="{{ $gallery->image_url }}" target="_blank" class="text-primary ms-2" title="Open Link">
+                            <i class="bi bi-box-arrow-up-right"></i>
+                        </a>
+                    @else
+                        <a href="{{ $gallery->type == 'image' ? getImage($gallery->image_url) : $gallery->image_url }}" 
+                           class="text-primary ms-2 glightbox" 
+                           data-gallery="gallery-action-preview"
+                           data-type="{{ $gallery->type == 'image' ? 'image' : 'video' }}"
+                           title="Preview">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card-body">
-        <table class="table table-bordered table-striped table-hover" id="gallery-table" width="100%" cellspacing="0">
-            <thead class="table-light">
-                <tr>
-                    <th width="60">#</th>
-                    <th width="150">Image</th>
-                    <th>Title</th>
-                    <th width="100">Status</th>
-                    <th width="150">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+    @empty
+    <div class="col-12 text-center py-5">
+        <div class="text-muted">
+            <i class="bi bi-images display-1 d-block mb-3 opacity-25"></i>
+            <h4>No gallery items found</h4>
+            <p>Add your first gallery item to showcase your business.</p>
+        </div>
+    </div>
+    @endforelse
+</div>
+
+<!-- Gallery Modal -->
+<div class="modal fade" id="galleryModal" tabindex="-1" aria-labelledby="galleryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-bottom py-3">
+                <h5 class="modal-title fw-bold" id="galleryModalLabel">Add Gallery Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="gallery-form" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" name="_method" id="form-method" value="POST">
+                    <input type="hidden" id="gallery-id">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control rounded-3" name="title" id="title" placeholder="Enter item title" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Type <span class="text-danger">*</span></label>
+                        <select class="form-select rounded-3" name="type" id="type" required onchange="toggleInputType()">
+                            <option value="image" selected>Image</option>
+                            <option value="video">Video</option>
+                            <option value="doc">Document</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3" id="file-input-group">
+                        <label class="form-label fw-bold">File <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control rounded-3" name="file" id="file" accept="image/*">
+                        <small class="text-muted" id="file-help">Max 2MB. formats: jpeg, png, jpg, webp.</small>
+                    </div>
+
+                    <div class="mb-3 d-none" id="link-input-group">
+                        <label class="form-label fw-bold">URL / Link <span class="text-danger">*</span></label>
+                        <input type="url" class="form-control rounded-3" name="link" id="link" placeholder="https://example.com/file">
+                        <small class="text-muted">Enter the direct link to the video or document.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Status <span class="text-danger">*</span></label>
+                        <select class="form-select rounded-3" name="status" id="status" required>
+                            @foreach (config('const.gallery_status') as $value)
+                            <option value="{{ $value }}">{{ $value }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary rounded-pill py-2 fw-bold" id="save-btn">
+                            <span id="save-loader" class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
+                            Save Gallery Item
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
+
 @endsection
 
 @push('style')
-<link rel="stylesheet" href="{{ asset('assets/business/css/datatables-combined.min.css') }}?v={{ filemtime(public_path('assets/business/css/datatables-combined.min.css')) }}" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+<style>
+    .gallery-card {
+        transition: all 0.3s ease;
+    }
+    .gallery-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    .gallery-card:hover img {
+        transform: scale(1.05);
+    }
+    .transition-all {
+        transition: all 0.5s ease;
+    }
+    .border-dashed {
+        border-style: dashed !important;
+    }
+</style>
 @endpush
 
 @push('js')
-<script src="{{ asset('assets/business/js/datatables-combined.min.js') }}?v={{ filemtime(public_path('assets/business/js/datatables-combined.min.js')) }}"></script>
 <!-- Sweet Alert -->
 <script src="{{ asset('assets/common/js/sweetalert2.min.js') }}"></script>
 
+<!-- GLightbox -->
+<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+
 <script>
-    $(function() {
-        var table = $('#gallery-table').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: "{{ route('business.gallery.index') }}",
-            lengthChange: false,
-            pageLength: 15,
-            language: {
-                search: "_INPUT_",
-                searchPlaceholder: "Search gallery...",
-                lengthMenu: "Show _MENU_ entries",
-                info: "Showing _START_ to _END_ of _TOTAL_ images",
-                infoEmpty: "Showing 0 to 0 of 0 images",
-                infoFiltered: "(filtered from _MAX_ total images)",
-                zeroRecords: "No matching images found",
-                emptyTable: "No gallery images available"
+    const lightbox = GLightbox({
+        selector: '.glightbox',
+        touchNavigation: true,
+        loop: true,
+        autoplayVideos: true
+    });
+
+    const galleryModal = new bootstrap.Modal(document.getElementById('galleryModal'));
+    const form = $('#gallery-form');
+
+    function toggleInputType() {
+        const type = $('#type').val();
+        if (type === 'image') {
+            $('#file-input-group').removeClass('d-none');
+            $('#link-input-group').addClass('d-none');
+            $('#file').prop('required', !$('#gallery-id').val());
+            $('#link').prop('required', false);
+        } else {
+            $('#file-input-group').addClass('d-none');
+            $('#link-input-group').removeClass('d-none');
+            $('#file').prop('required', false);
+            $('#link').prop('required', true);
+        }
+    }
+
+    function openGalleryModal() {
+        form[0].reset();
+        $('#gallery-id').val('');
+        $('#form-method').val('POST');
+        $('#galleryModalLabel').text('Add Gallery Item');
+        $('#save-btn').html('Save Gallery Item');
+        toggleInputType();
+        galleryModal.show();
+    }
+
+    function editGallery(id) {
+        $.ajax({
+            url: "{{ route('business.gallery.edit', ':id') }}".replace(':id', id),
+            type: "GET",
+            dataType: "json",
+            success: function(response) {
+                if (response.success) {
+                    const data = response.data;
+                    $('#gallery-id').val(data.id);
+                    $('#form-method').val('PUT');
+                    $('#title').val(data.title);
+                    $('#type').val(data.type);
+                    $('#status').val(data.status);
+                    
+                    if (data.type !== 'image') {
+                        $('#link').val(data.image_url);
+                    } else {
+                        $('#link').val('');
+                    }
+
+                    $('#galleryModalLabel').text('Edit Gallery Item');
+                    $('#save-btn').html('Update Gallery Item');
+                    toggleInputType();
+                    galleryModal.show();
+                }
+            }
+        });
+    }
+
+    form.on('submit', function(e) {
+        e.preventDefault();
+        const id = $('#gallery-id').val();
+        const url = id ? "{{ route('business.gallery.update', ':id') }}".replace(':id', id) : "{{ route('business.gallery.store') }}";
+        
+        const formData = new FormData(this);
+        
+        $('#save-btn').prop('disabled', true);
+        $('#save-loader').removeClass('d-none');
+
+        $.ajax({
+            url: url,
+            type: "POST", // Always POST with _method spoofing
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(result) {
+                if (result.success) {
+                    galleryModal.hide();
+                    toastr.success(result.message);
+                    location.reload();
+                } else {
+                    if(typeof result.message === 'object'){
+                        Object.values(result.message).forEach(err => toastr.error(err));
+                    } else {
+                        toastr.error(result.message);
+                    }
+                }
             },
-            responsive: true,
-            autoWidth: false,
-            columns: [{
-                    data: 'DT_RowIndex',
-                    name: 'DT_RowIndex',
-                    orderable: false,
-                    searchable: false,
-                    className: "text-center"
-                },
-                {
-                    data: 'image',
-                    name: 'image',
-                    orderable: false,
-                    searchable: false,
-                    className: "text-center"
-                },
-                {
-                    data: 'title',
-                    name: 'title'
-                },
-                {
-                    data: 'status',
-                    name: 'status',
-                    className: "text-center"
-                },
-                {
-                    data: 'action',
-                    name: 'action',
-                    orderable: false,
-                    searchable: false,
-                    className: "text-center"
-                },
-            ]
+            error: function() {
+                toastr.error('Something went wrong');
+            },
+            complete: function() {
+                $('#save-btn').prop('disabled', false);
+                $('#save-loader').addClass('d-none');
+            }
         });
     });
 
     function deleteGallery(id) {
         Swal.fire({
-                title: 'Are you sure?',
-                text: "You want to delete this gallery image?",
-                icon: 'warning',
-                allowOutsideClick: false,
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, Delete',
-                cancelButtonText: 'Cancel',
-            })
-            .then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url: "{{ route('business.gallery.destroy', ':id') }}".replace(':id', id),
-                        type: "DELETE",
-                        dataType: "json",
-                        headers: {
-                            'X-CSRF-TOKEN': "{{ csrf_token() }}"
-                        },
-                        success: function(result) {
-                            if (result.success) {
-                                $('#gallery-table').DataTable().ajax.reload();
-                                Swal.fire('Deleted!', result.message, 'success');
-                            } else {
-                                Swal.fire('Error', result.message, 'error');
-                            }
-                        },
-                        error: function(e) {
-                            Swal.fire('Error', 'Something went wrong', 'error');
+            title: 'Are you sure?',
+            text: "You want to delete this gallery item?",
+            icon: 'warning',
+            allowOutsideClick: false,
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, Delete',
+            cancelButtonText: 'Cancel',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ route('business.gallery.destroy', ':id') }}".replace(':id', id),
+                    type: "DELETE",
+                    dataType: "json",
+                    headers: {
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}"
+                    },
+                    success: function(result) {
+                        if (result.success) {
+                            $('#gallery-item-' + id).fadeOut(400, function() {
+                                $(this).remove();
+                                if ($('.gallery-item-container').length === 0) {
+                                    location.reload();
+                                }
+                            });
+                            toastr.success(result.message);
+                        } else {
+                            toastr.error(result.message);
                         }
-                    });
-                }
-            })
+                    }
+                });
+            }
+        });
     }
 </script>
 @endpush

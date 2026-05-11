@@ -15,32 +15,9 @@ class GalleryController extends Controller
      */
     public function index()
     {
-        if (request()->ajax()) {
-            $business_id = Auth::user()->business_id;
-            $data = Gallery::where('business_id', $business_id);
-            return datatables()->of($data)
-                ->addIndexColumn()
-                ->addColumn('image', function ($row) {
-                    return '<img src="' . getImage($row->image_url) . '" class="rounded" style="width: 100px; height: 60px; object-fit: cover;">';
-                })
-                ->addColumn('status', function ($row) {
-                    if ($row->status == 'active') {
-                        return '<span class="badge bg-success">Active</span>';
-                    } else {
-                        return '<span class="badge bg-danger">Inactive</span>';
-                    }
-                })
-                ->addColumn('action', function ($row) {
-                    $btn = '<div class="btn-group">';
-                    $btn .= '<a href="' . route('business.gallery.edit', $row->id) . '" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>';
-                    $btn .= '<button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteGallery(' . $row->id . ')"><i class="bi bi-trash"></i></button>';
-                    $btn .= '</div>';
-                    return $btn;
-                })
-                ->rawColumns(['image', 'status', 'action'])
-                ->make(true);
-        }
-        return view('business.gallery.index');
+        $business_id = Auth::user()->business_id;
+        $galleries = Gallery::where('business_id', $business_id)->latest()->get();
+        return view('business.gallery.index', compact('galleries'));
     }
 
     /**
@@ -63,9 +40,15 @@ class GalleryController extends Controller
         try {
             $rules = [
                 'title' => 'required|string|max:255',
-                'image' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+                'type' => 'required|in:image,video,doc',
                 'status' => 'required',
             ];
+
+            if ($request->type == 'image') {
+                $rules['file'] = 'required|image|mimes:jpeg,png,jpg,webp|max:2048';
+            } else {
+                $rules['link'] = 'required|url';
+            }
 
             $validator = Validator::make($request->all(), $rules);
 
@@ -73,23 +56,26 @@ class GalleryController extends Controller
                 $message = $validator->errors();
             } else {
                 $image_url = '';
-                if ($request->hasFile('image')) {
-                    $image_url = fileUploadStorage($request->file('image'), 'gallery', 800, 600);
+                if ($request->type == 'image' && $request->hasFile('file')) {
+                    $image_url = fileUploadStorage($request->file('file'), 'gallery', 800, 600);
+                } else {
+                    $image_url = $request->link;
                 }
 
                 Gallery::create([
                     'business_id' => Auth::user()->business_id,
                     'title' => $request->title,
+                    'type' => $request->type,
                     'image_url' => $image_url,
                     'status' => $request->status,
                 ]);
 
                 $success = true;
-                $message = 'Gallery image created successfully.';
+                $message = 'Gallery item created successfully.';
             }
         } catch (\Exception $e) {
             $message = $e->getMessage();
-            if (isset($image_url)) {
+            if (isset($image_url) && !filter_var($image_url, FILTER_VALIDATE_URL)) {
                 fileRemoveStorage($image_url);
             }
         }
@@ -103,6 +89,9 @@ class GalleryController extends Controller
     public function edit($id)
     {
         $gallery = Gallery::where('id', $id)->where('business_id', Auth::user()->business_id)->firstOrFail();
+        if (request()->ajax()) {
+            return response()->json(['success' => true, 'data' => $gallery]);
+        }
         return view('business.gallery.edit', compact('gallery'));
     }
 
@@ -120,37 +109,50 @@ class GalleryController extends Controller
 
             $rules = [
                 'title' => 'required|string|max:255',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+                'type' => 'required|in:image,video,doc',
                 'status' => 'required',
             ];
+
+            if ($request->type == 'image') {
+                $rules['file'] = 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048';
+            } else {
+                $rules['link'] = 'required|url';
+            }
 
             $validator = Validator::make($request->all(), $rules);
 
             if ($validator->fails()) {
                 $message = $validator->errors();
             } else {
-                if ($request->hasFile('image')) {
-                    $oldimg = $gallery->image_url;
-                    $newimg = fileUploadStorage($request->file('image'), 'gallery', 800, 600);
-                    $gallery->image_url = $newimg;
+                $image_url = $gallery->image_url;
+                if ($request->type == 'image') {
+                    if ($request->hasFile('file')) {
+                        $oldimg = $gallery->image_url;
+                        $image_url = fileUploadStorage($request->file('file'), 'gallery', 800, 600);
+                        
+                        if (isset($oldimg) && !filter_var($oldimg, FILTER_VALIDATE_URL)) {
+                            fileRemoveStorage($oldimg);
+                        }
+                    }
+                } else {
+                    // For video/doc, if it was previously an uploaded file, remove it
+                    if (!filter_var($gallery->image_url, FILTER_VALIDATE_URL)) {
+                        fileRemoveStorage($gallery->image_url);
+                    }
+                    $image_url = $request->link;
                 }
 
                 $gallery->title = $request->title;
+                $gallery->type = $request->type;
+                $gallery->image_url = $image_url;
                 $gallery->status = $request->status;
                 $gallery->save();
 
-                if (isset($oldimg)) {
-                    fileRemoveStorage($oldimg);
-                }
-
                 $success = true;
-                $message = 'Gallery image updated successfully.';
+                $message = 'Gallery item updated successfully.';
             }
         } catch (\Exception $e) {
             $message = $e->getMessage();
-            if (isset($newimg)) {
-                fileRemoveStorage($newimg);
-            }
         }
 
         return response()->json(['success' => $success, 'message' => $message, 'redirect' => $redirect]);
@@ -165,6 +167,6 @@ class GalleryController extends Controller
         fileRemoveStorage($gallery->image_url);
         $gallery->delete();
 
-        return response()->json(['success' => true, 'message' => 'Gallery image deleted successfully.']);
+        return response()->json(['success' => true, 'message' => 'Gallery item deleted successfully.']);
     }
 }
