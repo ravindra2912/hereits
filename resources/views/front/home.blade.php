@@ -61,8 +61,8 @@
             @foreach($categories as $cat)
             <div class="col-lg-2 col-md-4 col-6">
                 <a href="{{ route('business-list', ['category' => $cat['slug']]) }}" class="category-card text-center d-block text-decoration-none group p-4 rounded-4 bg-white shadow-sm hover-lift transition-all">
-                    <div class="icon-circle mb-3 mx-auto d-flex align-items-center justify-content-center rounded-circle transition-all" style="width: 70px; height: 70px; background-color: {{ $cat['color'] }}15; color: {{ $cat['color'] }};">
-                        <i class="fas {{ $cat['icon'] }} fs-3"></i>
+                    <div class="icon-circle mb-3 mx-auto d-flex align-items-center justify-content-center rounded-circle transition-all" style="width: 70px; height: 70px; background-color: {{ $cat['color'] }}15; color: {{ $cat['color'] }}; overflow: hidden;">
+                        <img src="{{ $cat['image'] }}" class="w-100 h-100 object-fit-cover p-2" alt="{{ $cat['name'] }}">
                     </div>
                     <h6 class="fw-bold text-dark mb-1">{{ $cat['name'] }}</h6>
                     <small class="text-muted">{{ $cat['count'] }} Businesses</small>

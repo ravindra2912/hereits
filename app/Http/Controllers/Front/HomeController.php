@@ -51,7 +51,6 @@ class HomeController extends Controller
                         if (isset($location['latitude']) && isset($location['longitude'])) {
                             return $q->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100);
                         }
-                        return $q->where('city_id', $location['city_id'] ?? 0);
                     });
             })
             ->withCount(['businesses' => function ($query) use ($location) {
@@ -66,19 +65,17 @@ class HomeController extends Controller
                         if (isset($location['latitude']) && isset($location['longitude'])) {
                             return $q->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100);
                         }
-                        return $q->where('city_id', $location['city_id'] ?? 0);
                     });
             }])
             ->take(6)
             ->get()
-            ->map(function ($cat) use ($categoryStyles) {
-                $style = $categoryStyles[$cat->name] ?? ['icon' => 'fa-th-large', 'color' => '#64748b'];
+            ->map(function ($cat) {
                 return [
                     'name' => $cat->name,
                     'slug' => $cat->slug,
-                    'icon' => $style['icon'],
+                    'image' => getImage($cat->image),
                     'count' => $cat->businesses_count,
-                    'color' => $style['color']
+                    'color' => '#64748b'
                 ];
             });
 
