@@ -230,35 +230,17 @@ class HomeController extends Controller
                 }
                 return $query->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 5);
             })
-            ->when(!$location, function ($query) {
-                return $query->select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
-                    ->latest();
-            })
             ->when(auth()->check(), function ($query) {
                 $query->withExists(['favorites as is_favorited' => function ($q) {
                     $q->where('user_id', auth()->id());
                 }]);
             })
-            ->where('status', 'active');
+            ->where('status', 'active')
+            ->addSelect(['id', 'name', 'slug', 'business_logo', 'area', 'city_id', 'business_category_id', 'rating']);
 
         if ($request->has('category')) {
             $query->whereHas('businessCategory', function ($q) use ($request) {
                 $q->where('slug', $request->category);
-            });
-        }
-
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('area', 'like', "%{$search}%")
-                    ->orWhere('address', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->has('city')) {
-            $query->whereHas('city', function ($q) use ($request) {
-                $q->where('name', $request->city);
             });
         }
 

@@ -36,10 +36,25 @@
                 <div class="mb-3">
 
                     <!-- Auto Detect Button -->
-                    <button class="btn btn-primary w-100 rounded-pill py-3 mb-4 d-flex align-items-center justify-content-center gap-2 shadow-sm transition-all" onclick="detectUserLocation()">
+                    <button class="btn btn-primary w-100 rounded-pill py-3 mb-3 d-flex align-items-center justify-content-center gap-2 shadow-sm transition-all" onclick="detectUserLocation()">
                         <i class="fas fa-crosshairs"></i>
                         <span class="fw-semibold">Use Current Location</span>
                     </button>
+
+                    <!-- Radius Selector -->
+                    @if($userLocation && $userLocation['type'] === 'current_location')
+                    <div class="mb-4 text-center px-2 radius-selector">
+                        <label class="form-label extra-small fw-bold text-muted text-uppercase mb-2">Search Radius ({{ $userLocation['radius'] ?? 5 }} km)</label>
+                        <div class="d-flex justify-content-between align-items-center gap-2 bg-light p-1 rounded-pill shadow-sm">
+                            @foreach([5, 10, 15, 20] as $r)
+                            <div class="flex-grow-1">
+                                <input type="radio" class="btn-check" name="location-radius" id="radius-{{ $r }}" value="{{ $r }}" @if(($userLocation['radius'] ?? 5) == $r) checked @endif onchange="updateSelectedRadius({{ $r }})">
+                                <label class="btn btn-outline-primary border-0 rounded-pill w-100 py-2 extra-small fw-bold" for="radius-{{ $r }}">{{ $r }}km</label>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endif
 
                     <!-- Location History -->
                     @php
@@ -115,6 +130,31 @@
 
     .extra-small {
         font-size: 0.7rem;
+    }
+
+    /* Radius Selector Hover Fixes */
+    .radius-selector .btn-check:checked + .btn-outline-primary {
+        background-color: var(--primary-color) !important;
+        color: white !important;
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 2px 5px rgba(99, 102, 241, 0.2);
+    }
+
+    .radius-selector .btn-outline-primary {
+        color: var(--text-muted) !important;
+        border: none !important;
+        background: transparent !important;
+        transition: all 0.2s ease;
+    }
+
+    .radius-selector .btn-outline-primary:hover {
+        background-color: rgba(99, 102, 241, 0.1) !important;
+        color: var(--primary-color) !important;
+    }
+
+    .radius-selector .bg-light {
+        background-color: #f1f5f9 !important;
+        border: 1px solid #e2e8f0;
     }
 </style>
 
@@ -279,6 +319,8 @@
     async function detectUserLocation() {
         const btn = event.currentTarget;
         const originalContent = btn.innerHTML;
+        const radiusEl = document.querySelector('input[name="location-radius"]:checked');
+        const selectedRadius = radiusEl ? radiusEl.value : 5;
 
         if (navigator.geolocation) {
             btn.disabled = true;
@@ -318,12 +360,12 @@
                                 const name = area && city ? `${area}, ${city}` : (city || area || "Current Location");
                                 const fullAddress = results[0].formatted_address;
                                 saveLocation('current_location', name, lat, lng, {
-                                    radius: 5,
+                                    radius: selectedRadius,
                                     full_address: fullAddress
                                 });
                             } else {
                                 saveLocation('current_location', 'Current Location', lat, lng, {
-                                    radius: 5
+                                    radius: selectedRadius
                                 });
                             }
                         });
@@ -342,6 +384,18 @@
             );
         } else {
             toastr.error('Geolocation is not supported by your browser.');
+        }
+    }
+
+    function updateSelectedRadius(radius) {
+        const userLocation = @json($userLocation);
+        if (userLocation && userLocation.type === 'current_location') {
+            saveLocation('current_location', userLocation.location_name, userLocation.latitude, userLocation.longitude, {
+                radius: radius,
+                full_address: userLocation.full_address
+            });
+        } else {
+            toastr.info(`Radius set to ${radius}km. Click "Use Current Location" to apply.`);
         }
     }
 
