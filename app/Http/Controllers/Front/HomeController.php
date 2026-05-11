@@ -28,18 +28,62 @@ class HomeController extends Controller
      */
     public function index(Request $request): View
     {
-        $categories = [
-            ['name' => 'Salons', 'icon' => 'fa-scissors', 'count' => '1.2k+', 'color' => '#f59e0b'],
-            ['name' => 'Clinics', 'icon' => 'fa-stethoscope', 'count' => '850+', 'color' => '#10b981'],
-            ['name' => 'Retail', 'icon' => 'fa-shopping-bag', 'count' => '2.4k+', 'color' => '#3b82f6'],
-            ['name' => 'Dining', 'icon' => 'fa-utensils', 'count' => '1.8k+', 'color' => '#ef4444'],
-            ['name' => 'Fitness', 'icon' => 'fa-dumbbell', 'count' => '600+', 'color' => '#8b5cf6'],
-            ['name' => 'More', 'icon' => 'fa-th-large', 'count' => '50+', 'color' => '#64748b'],
+        $location = LocationController::getUserLocation();
+
+        $categoryStyles = [
+            'Salons' => ['icon' => 'fa-scissors', 'color' => '#f59e0b'],
+            'Clinics' => ['icon' => 'fa-stethoscope', 'color' => '#10b981'],
+            'Retail' => ['icon' => 'fa-shopping-bag', 'color' => '#3b82f6'],
+            'Dining' => ['icon' => 'fa-utensils', 'color' => '#ef4444'],
+            'Fitness' => ['icon' => 'fa-dumbbell', 'color' => '#8b5cf6'],
         ];
 
-        $location = LocationController::getUserLocation();
-        // dd($location);
+        $categories = BusinessCategory::where('status', 'active')
+            ->whereHas('businesses', function ($query) use ($location) {
+                $query->where('status', 'active')
+                    ->when($location, function ($q) use ($location) {
+                        if (!empty($location['area_lat_long'])) {
+                            $coords = explode(',', $location['area_lat_long']);
+                            if (count($coords) === 4) {
+                                return $q->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
+                            }
+                        }
+                        if (isset($location['latitude']) && isset($location['longitude'])) {
+                            return $q->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100);
+                        }
+                        return $q->where('city_id', $location['city_id'] ?? 0);
+                    });
+            })
+            ->withCount(['businesses' => function ($query) use ($location) {
+                $query->where('status', 'active')
+                    ->when($location, function ($q) use ($location) {
+                        if (!empty($location['area_lat_long'])) {
+                            $coords = explode(',', $location['area_lat_long']);
+                            if (count($coords) === 4) {
+                                return $q->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
+                            }
+                        }
+                        if (isset($location['latitude']) && isset($location['longitude'])) {
+                            return $q->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100);
+                        }
+                        return $q->where('city_id', $location['city_id'] ?? 0);
+                    });
+            }])
+            ->take(6)
+            ->get()
+            ->map(function ($cat) use ($categoryStyles) {
+                $style = $categoryStyles[$cat->name] ?? ['icon' => 'fa-th-large', 'color' => '#64748b'];
+                return [
+                    'name' => $cat->name,
+                    'slug' => $cat->slug,
+                    'icon' => $style['icon'],
+                    'count' => $cat->businesses_count,
+                    'color' => $style['color']
+                ];
+            });
+
         $featured_businesses = Business::query()
+            ->select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
             ->with(['businessCategory', 'city', 'businessSetting:id,business_id,is_verified'])
             ->when($location, function ($query) use ($location) {
                 if (!empty($location['area_lat_long'])) {
@@ -48,12 +92,15 @@ class HomeController extends Controller
                         return $query->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
                     }
                 }
-                return $query->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100); // Larger radius for featured if needed
+                if (isset($location['latitude']) && isset($location['longitude'])) {
+                    return $query->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100); // Larger radius for featured if needed
+                }
+                return $query->where('city_id', $location['city_id'] ?? 0);
             })
             ->when(!$location, function ($query) {
-                return $query->select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
-                    ->orderBy('rating', 'desc');
+                return $query->orderBy('rating', 'desc');
             })
+
             ->when(auth()->check(), function ($query) {
                 $query->withExists(['favorites as is_favorited' => function ($q) {
                     $q->where('user_id', auth()->id());

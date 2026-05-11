@@ -119,11 +119,39 @@
 </style>
 
 
-<script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAP_KEY') }}&libraries=places"></script>
+<script>
+    (g => {
+        var h, a, k, p = "The Google Maps JavaScript API",
+            c = "google",
+            l = "importLibrary",
+            q = "__ib__",
+            m = document,
+            b = window;
+        b = b[c] || (b[c] = {});
+        var d = b.maps || (b.maps = {}),
+            r = new Set,
+            e = new URLSearchParams,
+            u = () => h || (h = new Promise(async (f, n) => {
+                await (a = m.createElement("script"));
+                e.set("libraries", [...r] + "");
+                for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
+                e.set("callback", c + ".maps." + q);
+                a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
+                d[q] = f;
+                a.onerror = () => h = n(Error(p + " could not load."));
+                a.nonce = m.querySelector("script[nonce]")?.nonce || "";
+                m.head.append(a)
+            }));
+        d[l] ? console.warn(p + " only loads once. Re-referencing library %s.", r) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))
+    })({
+        key: "{{ env('GOOGLE_MAP_KEY') }}",
+        v: "weekly",
+    });
+</script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        initAutocomplete();
+    document.addEventListener('DOMContentLoaded', async function() {
+        await initAutocomplete();
 
         // Check if location is already set
         const savedLocationName = localStorage.getItem('user_location_name');
@@ -138,21 +166,21 @@
     });
 
 
-    function initAutocomplete() {
+    async function initAutocomplete() {
         const input = document.getElementById('location-search-input');
         if (!input) return;
 
-        const autocomplete = new google.maps.places.Autocomplete(input, {
-            // fields: ['geometry'],
-            // fields: ['place_id', 'name', 'geometry', 'formatted_address', 'types'],
-            componentRestrictions: {
-                country: 'in'
-            }
-        });
+        try {
+            const { Autocomplete } = await google.maps.importLibrary("places");
+            const autocomplete = new Autocomplete(input, {
+                componentRestrictions: { country: 'in' },
+                fields: ['geometry', 'address_components', 'formatted_address', 'name']
+            });
 
-        autocomplete.addListener('place_changed', function() {
-            const place = autocomplete.getPlace();
-            if (!place.geometry) return;
+            autocomplete.addListener('place_changed', function() {
+                const place = autocomplete.getPlace();
+                if (!place.geometry) return;
+
 
             const lat = place.geometry.location.lat();
             const lng = place.geometry.location.lng();
@@ -190,10 +218,12 @@
                 full_address: fullAddress,
                 area_lat_long: areaLatLong
             });
-        });
-
-
+            });
+        } catch (e) {
+            console.error("Autocomplete failed to load:", e);
+        }
     }
+
 
     function saveLocation(type, name, lat, lng, extra = {}) {
 
@@ -246,7 +276,7 @@
         });
     }
 
-    function detectUserLocation() {
+    async function detectUserLocation() {
         const btn = event.currentTarget;
         const originalContent = btn.innerHTML;
 
@@ -255,47 +285,54 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Detecting...';
 
             navigator.geolocation.getCurrentPosition(
-                (position) => {
+                async (position) => {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
 
-                    const geocoder = new google.maps.Geocoder();
-                    geocoder.geocode({
-                        location: {
-                            lat,
-                            lng
-                        }
-                    }, (results, status) => {
-                        if (status === "OK" && results[0]) {
-                            let area = '';
-                            let city = '';
+                    try {
+                        const { Geocoder } = await google.maps.importLibrary("geocoding");
+                        const geocoder = new Geocoder();
 
-                            for (const component of results[0].address_components) {
-                                if (component.types.includes('sublocality_level_1')) {
-                                    area = component.long_name;
-                                }
-                                if (component.types.includes('locality')) {
-                                    city = component.long_name;
-                                }
-                                if (!area && component.types.includes('sublocality')) {
-                                    area = component.long_name;
-                                }
+                        geocoder.geocode({
+                            location: {
+                                lat,
+                                lng
                             }
+                        }, (results, status) => {
+                            if (status === "OK" && results[0]) {
+                                let area = '';
+                                let city = '';
 
-                            const name = area && city ? `${area}, ${city}` : (city || area || "Current Location");
-                            const fullAddress = results[0].formatted_address;
-                            saveLocation('current_location', name, lat, lng, {
-                                radius: 5,
-                                full_address: fullAddress
-                            });
-                        } else {
-                            saveLocation('current_location', 'Current Location', lat, lng, {
-                                radius: 5
-                            });
-                        }
-                    });
+                                for (const component of results[0].address_components) {
+                                    if (component.types.includes('sublocality_level_1')) {
+                                        area = component.long_name;
+                                    }
+                                    if (component.types.includes('locality')) {
+                                        city = component.long_name;
+                                    }
+                                    if (!area && component.types.includes('sublocality')) {
+                                        area = component.long_name;
+                                    }
+                                }
 
-
+                                const name = area && city ? `${area}, ${city}` : (city || area || "Current Location");
+                                const fullAddress = results[0].formatted_address;
+                                saveLocation('current_location', name, lat, lng, {
+                                    radius: 5,
+                                    full_address: fullAddress
+                                });
+                            } else {
+                                saveLocation('current_location', 'Current Location', lat, lng, {
+                                    radius: 5
+                                });
+                            }
+                        });
+                    } catch (e) {
+                        console.error("Geocoding failed:", e);
+                        toastr.error("Failed to load geocoding service.");
+                        btn.disabled = false;
+                        btn.innerHTML = originalContent;
+                    }
                 },
                 (error) => {
                     btn.disabled = false;

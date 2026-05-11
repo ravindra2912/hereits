@@ -58,28 +58,18 @@
         </div>
 
         <div class="row g-4">
-            @php
-            $categories = [
-            ['name' => 'Salons & Spa', 'icon' => 'fa-scissors', 'color' => '#6366f1', 'count' => '120+ Businesses'],
-            ['name' => 'Clinics', 'icon' => 'fa-stethoscope', 'color' => '#10b981', 'count' => '85+ Doctors'],
-            ['name' => 'Retail Stores', 'icon' => 'fa-shopping-bag', 'color' => '#f59e0b', 'count' => '200+ Shops'],
-            ['name' => 'Restaurants', 'icon' => 'fa-utensils', 'color' => '#ef4444', 'count' => '150+ Places'],
-            ['name' => 'Electronics', 'icon' => 'fa-laptop', 'color' => '#8b5cf6', 'count' => '40+ Stores'],
-            ['name' => 'Education', 'icon' => 'fa-graduation-cap', 'color' => '#06b6d4', 'count' => '30+ Institutes'],
-            ];
-            @endphp
-
             @foreach($categories as $cat)
             <div class="col-lg-2 col-md-4 col-6">
-                <a href="#" class="category-card text-center d-block text-decoration-none group p-4 rounded-4 bg-white shadow-sm hover-lift transition-all">
+                <a href="{{ route('business-list', ['category' => $cat['slug']]) }}" class="category-card text-center d-block text-decoration-none group p-4 rounded-4 bg-white shadow-sm hover-lift transition-all">
                     <div class="icon-circle mb-3 mx-auto d-flex align-items-center justify-content-center rounded-circle transition-all" style="width: 70px; height: 70px; background-color: {{ $cat['color'] }}15; color: {{ $cat['color'] }};">
                         <i class="fas {{ $cat['icon'] }} fs-3"></i>
                     </div>
                     <h6 class="fw-bold text-dark mb-1">{{ $cat['name'] }}</h6>
-                    <small class="text-muted">{{ $cat['count'] }}</small>
+                    <small class="text-muted">{{ $cat['count'] }} Businesses</small>
                 </a>
             </div>
             @endforeach
+
         </div>
     </div>
 </section>

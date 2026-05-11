@@ -14,4 +14,8 @@ class BusinessCategory extends Model
         'deduct_credit_per_self_appointment',
         'status',
     ];
+    public function businesses()
+    {
+        return $this->hasMany(Business::class, 'business_category_id', 'id');
+    }
 }

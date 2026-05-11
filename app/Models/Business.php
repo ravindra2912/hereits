@@ -112,10 +112,12 @@ class Business extends Model
     {
         $haversine = "(6371 * acos(cos(radians($latitude)) * cos(radians(latitude)) * cos(radians(longitude) - radians($longitude)) + sin(radians($latitude)) * sin(radians(latitude))))";
 
-        return $query->selectRaw("*, $haversine AS distance")
-            ->having("distance", "<=", $radius)
+        return $query->addSelect(\Illuminate\Support\Facades\DB::raw("$haversine AS distance"))
+            ->whereRaw("$haversine <= ?", [$radius])
             ->orderBy('distance');
     }
+
+
 
     /**
      * Scope a query to filter businesses within a bounding box.
