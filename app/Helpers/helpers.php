@@ -88,6 +88,12 @@ function fileUploadStorage($imageObject, $directory = "", $width = "", $hieght =
 function getImage($url = "", $type = '')
 {
     if (str_contains($url, 'https://') || str_contains($url, 'http://')) {
+        // Check if it's a YouTube URL
+        $ytId = getYoutubeId($url);
+        if ($ytId) {
+            return "https://img.youtube.com/vi/$ytId/hqdefault.jpg";
+        }
+
         try {
             $response = Http::timeout(2)->head($url);
             if ($response->ok()) {
@@ -112,8 +118,17 @@ function getImage($url = "", $type = '')
 
 function getYoutubeId($url)
 {
-    preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', $url, $match);
+    preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|shorts/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', $url, $match);
     return $match[1] ?? null;
+}
+
+function getGalleryVideoUrl($url)
+{
+    $id = getYoutubeId($url);
+    if ($id) {
+        return "https://www.youtube.com/watch?v=$id";
+    }
+    return $url;
 }
 
 function getYoutubeThumbnail($url)

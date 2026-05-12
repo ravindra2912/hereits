@@ -23,7 +23,10 @@
                             <div class="d-flex flex-wrap gap-3 align-items-center" id="current-images-container">
                                 @forelse ($product->images as $image)
                                 <div class="position-relative" id="image-container-{{ $image->id }}">
-                                    <img src="{{ getImage($image->image_url) }}" class="rounded border" style="width: 100px; height: 100px; object-fit: cover;" loading="lazy">
+                                    <img src="{{ getImage($image->image_url) }}" class="rounded border" style="width: 100px; height: 100px; object-fit: cover; {{ $image->type == 'video' ? 'opacity: 0.8; background: #000;' : '' }}" loading="lazy">
+                                    @if($image->type == 'video')
+                                    <i class="bi bi-play-circle-fill position-absolute top-50 start-50 translate-middle text-white fs-4"></i>
+                                    @endif
                                     <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 p-0 px-1 delete-current-image" data-id="{{ $image->id }}">
                                         <i class="bi bi-trash small"></i>
                                     </button>
@@ -31,10 +34,10 @@
                                 @empty
                                 @endforelse
 
-                                <label for="images" class="d-flex justify-content-center align-items-center border rounded bg-light text-primary cursor-pointer hover-shadow {{ $product->images->count() >= $image_limit ? 'img-hide' : '' }}" style="width: 100px; height: 100px; border-style: dashed !important; cursor: pointer;" id="add-image-btn">
+                                <div class="d-flex justify-content-center align-items-center border rounded bg-light text-primary cursor-pointer hover-shadow {{ $product->images->count() >= $image_limit ? 'img-hide' : '' }}" style="width: 100px; height: 100px; border-style: dashed !important; cursor: pointer;" id="add-image-btn" onclick="openMediaModal()">
                                     <i class="bi bi-plus-lg fs-3"></i>
                                     <input type="file" class="img-hide" id="images" name="images[]" multiple accept="image/*">
-                                </label>
+                                </div>
                             </div>
                             <small class="text-muted d-block mt-2">Max {{ $image_limit }} images allowed.</small>
                         </div>
@@ -110,6 +113,46 @@
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Media Modal -->
+<div class="modal fade" id="productMediaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-bottom py-3">
+                <h5 class="modal-title fw-bold">Add Media</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="media-type-selector">
+                    <div class="d-grid gap-3">
+                        <button type="button" class="btn btn-outline-primary py-3 rounded-3 d-flex align-items-center justify-content-center gap-2" onclick="selectMediaType('image')">
+                            <i class="bi bi-image fs-4"></i>
+                            <span class="fw-bold">Upload Image</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger py-3 rounded-3 d-flex align-items-center justify-content-center gap-2" onclick="selectMediaType('video')">
+                            <i class="bi bi-youtube fs-4"></i>
+                            <span class="fw-bold">YouTube Video</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="video-input-section" class="d-none">
+                    <label class="form-label fw-bold small text-uppercase">YouTube URL <span class="text-danger">*</span></label>
+                    <div class="input-group mb-2">
+                        <input type="url" class="form-control" id="product_video_url" placeholder="Paste link here...">
+                        <button class="btn btn-primary" type="button" onclick="submitVideoUrl()">Add</button>
+                    </div>
+                    <small class="text-muted d-block mb-3" style="font-size: 0.75rem;">Only YouTube links are accepted.</small>
+                    <div class="text-center">
+                        <button type="button" class="btn btn-link btn-sm text-decoration-none text-muted" onclick="backToMediaType()">
+                            <i class="bi bi-arrow-left me-1"></i> Back
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -295,16 +338,18 @@
                     if (response.success && response.images) {
                         // Loop through uploaded images and add them to DOM
                         $.each(response.images, function(i, image) {
+                            var playIcon = image.is_video ? '<i class="bi bi-play-circle-fill position-absolute top-50 start-50 translate-middle text-white fs-4"></i>' : '';
                             var newImageHtml = `
     <div class="position-relative" id="image-container-${image.id}">
-        <img src="${image.url}" class="rounded border" style="width: 100px; height: 100px; object-fit: cover;">
+        <img src="${image.url}" class="rounded border" style="width: 100px; height: 100px; object-fit: cover; ${image.is_video ? 'opacity: 0.8; background: #000;' : ''}">
+        ${playIcon}
         <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 p-0 px-1" onclick="deleteImage(${image.id})">
             <i class="bi bi-trash small"></i>
         </button>
     </div>
     `;
-                            // Append before the add button label
-                            $('#current-images-container label[for="images"]').before(newImageHtml);
+                            // Append before the add button div
+                            $('#add-image-btn').before(newImageHtml);
                         });
 
                         // Check new count
@@ -312,6 +357,8 @@
                         if (newCount >= imageLimit) {
                             $('#add-image-btn').addClass('img-hide');
                         }
+
+                        $('#productMediaModal').modal('hide');
                     } else {
                         Swal.fire('Error', 'Error uploading images', 'error');
                     }
@@ -327,5 +374,86 @@
             $(this).val('');
         }
     });
+
+    const mediaModal = new bootstrap.Modal(document.getElementById('productMediaModal'));
+
+    function openMediaModal() {
+        backToMediaType();
+        mediaModal.show();
+    }
+
+    function selectMediaType(type) {
+        if (type === 'image') {
+            $('#images').click();
+        } else {
+            $('#media-type-selector').addClass('d-none');
+            $('#video-input-section').removeClass('d-none');
+        }
+    }
+
+    function backToMediaType() {
+        $('#media-type-selector').removeClass('d-none');
+        $('#video-input-section').addClass('d-none');
+        $('#product_video_url').val('');
+    }
+
+    function submitVideoUrl() {
+        var url = $('#product_video_url').val();
+        if (!url) {
+            Swal.fire('Error', 'Please enter a YouTube URL', 'error');
+            return;
+        }
+
+        var ytRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/.*$/;
+        if (!ytRegex.test(url)) {
+            Swal.fire('Error', 'Please enter a valid YouTube URL', 'error');
+            return;
+        }
+
+        showLoader();
+
+        $.ajax({
+            url: "{{ route('business.product.image.store') }}",
+            type: "POST",
+            data: {
+                product_id: "{{ $product->id }}",
+                video_url: url,
+                _token: "{{ csrf_token() }}"
+            },
+            success: function(response) {
+                hideLoader();
+                if (response.success && response.images) {
+                    $.each(response.images, function(i, image) {
+                        var playIcon = '<i class="bi bi-play-circle-fill position-absolute top-50 start-50 translate-middle text-white fs-4"></i>';
+                        var newImageHtml = `
+<div class="position-relative" id="image-container-${image.id}">
+    <img src="${image.url}" class="rounded border" style="width: 100px; height: 100px; object-fit: cover; opacity: 0.8; background: #000;">
+    ${playIcon}
+    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 p-0 px-1" onclick="deleteImage(${image.id})">
+        <i class="bi bi-trash small"></i>
+    </button>
+</div>
+`;
+                        $('#add-image-btn').before(newImageHtml);
+                    });
+
+                    var newCount = $('#current-images-container .position-relative').length;
+                    if (newCount >= imageLimit) {
+                        $('#add-image-btn').addClass('img-hide');
+                    }
+
+                    mediaModal.hide();
+                    Swal.fire('Success', 'Video added successfully', 'success');
+                } else {
+                    Swal.fire('Error', response.message || 'Error adding video', 'error');
+                }
+            },
+            error: function(xhr) {
+                hideLoader();
+                var msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error adding video';
+                Swal.fire('Error', msg, 'error');
+            }
+        });
+    }
 </script>
 @endpush

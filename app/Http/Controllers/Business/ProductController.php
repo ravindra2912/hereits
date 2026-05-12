@@ -314,47 +314,68 @@ class ProductController extends Controller
     {
         $request->validate([
             'product_id' => 'required|exists:products,id',
-            'images' => 'required|array',
-            'images.*' => 'required|image|mimes:jpeg,png,jpg,webp',
+            'images' => 'nullable|array',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,webp',
+            'video_url' => ['nullable', 'url', 'regex:/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/.*$/'],
         ]);
 
         try {
             DB::beginTransaction();
             $product = Product::where('id', $request->product_id)->where('business_id', Auth::user()->business_id)->lockForUpdate()->firstOrFail();
 
-            $currentCount = $product->images()->count();
+            $currentCount = $product->images->count();
             $limit = config('const.product_images_upload_limit');
 
             if ($currentCount >= $limit) {
                 return response()->json(['success' => false, 'message' => 'You can only upload up to ' . $limit . ' images.'], 422);
             }
 
-            // Check if new images would exceed limit
-            $newImagesCount = count($request->file('images'));
+            // Check if new images/videos would exceed limit
+            $newImagesCount = ($request->hasFile('images') ? count($request->file('images')) : 0) + ($request->filled('video_url') ? 1 : 0);
             if ($currentCount + $newImagesCount > $limit) {
                 return response()->json(['success' => false, 'message' => 'You can only upload ' . ($limit - $currentCount) . ' more image(s).'], 422);
             }
 
             $uploadedImages = [];
 
-            foreach ($request->file('images') as $image) {
-                $path = fileUploadStorage($image, 'product', 900, 900);
+            // Handle Images
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $path = fileUploadStorage($image, 'product', 900, 900);
 
+                    $productImage = ProductImage::create([
+                        'product_id' => $product->id,
+                        'type' => 'image',
+                        'image_url' => $path,
+                    ]);
+
+                    $uploadedImages[] = [
+                        'id' => $productImage->id,
+                        'url' => getImage($productImage->image_url),
+                    ];
+                }
+            }
+
+            // Handle Video URL
+            if ($request->filled('video_url')) {
                 $productImage = ProductImage::create([
                     'product_id' => $product->id,
-                    'image_url' => $path,
+                    'type' => 'video',
+                    'image_url' => $request->video_url,
                 ]);
 
                 $uploadedImages[] = [
                     'id' => $productImage->id,
-                    'url' => getImage($productImage->image_url),
+                    'url' => getYoutubeThumbnail($request->video_url) ?? getImage(null),
+                    'is_video' => true
                 ];
             }
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Images uploaded successfully.',
+                'message' => 'Media uploaded successfully.',
                 'images' => $uploadedImages,
             ]);
         } catch (\Exception $e) {

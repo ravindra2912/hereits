@@ -11,6 +11,7 @@
 @section('content')
 
 @push('style')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
 <style>
     .product-carousel-img {
         height: 450px;
@@ -145,8 +146,25 @@
                 <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
                     <div class="carousel-inner rounded-4 overflow-hidden bg-light">
                         @forelse($product->images as $key => $image)
+                        @php 
+                            $ytId = getYoutubeId($image->image_url);
+                            $isMediaVideo = ($image->type == 'video' || $ytId);
+                        @endphp
                         <div class="carousel-item {{ $key == 0 ? 'active' : '' }}">
-                            <img src="{{ getImage($image->image_url) }}" class="d-block w-100 product-carousel-img" alt="{{ $product->name }}">
+                            @if($isMediaVideo && $ytId)
+                            <div class="ratio ratio-16x9 d-flex align-items-center justify-content-center bg-dark product-carousel-img">
+                                <a href="{{ getGalleryVideoUrl($image->image_url) }}" class="glightbox w-100 h-100 d-flex align-items-center justify-content-center position-relative text-decoration-none" data-gallery="business-gallery" data-type="video">
+                                    <img src="{{ getImage($image->image_url) }}" class="w-100 h-100 object-fit-cover opacity-50" alt="{{ $product->name }}">
+                                    <i class="fas fa-play-circle fa-5x text-white position-absolute top-50 start-50 translate-middle opacity-75"></i>
+                                    <span class="badge bg-danger position-absolute top-0 start-0 m-3 shadow-sm" style="z-index: 11;"><i class="fas fa-video me-1"></i>Video</span>
+                                </a>
+                            </div>
+                            @else
+                            <a href="{{ getImage($image->image_url) }}" class="glightbox w-100 h-100 d-block position-relative" data-gallery="business-gallery" data-type="image">
+                                <img src="{{ getImage($image->image_url) }}" class="d-block w-100 product-carousel-img" alt="{{ $product->name }}">
+                                <span class="badge bg-white text-dark position-absolute top-0 start-0 m-3 shadow-sm" style="z-index: 11;"><i class="fas fa-image me-1"></i>Image</span>
+                            </a>
+                            @endif
                         </div>
                         @empty
                         <div class="carousel-item active">
@@ -167,10 +185,16 @@
                 @if($product->images->count() > 1)
                 <div class="d-flex gap-2 p-3 overflow-auto justify-content-center">
                     @foreach($product->images as $key => $image)
-                    <img src="{{ getImage($image->image_url) }}"
-                        class="thumb-img rounded-3 {{ $key == 0 ? 'active' : '' }}"
-                        data-bs-target="#productCarousel"
-                        data-bs-slide-to="{{ $key }}">
+                    @php $ytIdThumb = getYoutubeId($image->image_url); @endphp
+                    <div class="position-relative">
+                        <img src="{{ getImage($image->image_url) }}"
+                            class="thumb-img rounded-3 {{ $key == 0 ? 'active' : '' }}"
+                            data-bs-target="#productCarousel"
+                            data-bs-slide-to="{{ $key }}">
+                        @if($image->type == 'video' || $ytIdThumb)
+                        <i class="fas fa-play-circle position-absolute top-50 start-50 translate-middle text-white shadow-sm pointer-none" style="pointer-events: none;"></i>
+                        @endif
+                    </div>
                     @endforeach
                 </div>
                 @endif
@@ -329,8 +353,16 @@
 </div>
 
 @push('js')
+<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
 <script>
     $(document).ready(function() {
+        const lightbox = GLightbox({
+            selector: '.glightbox',
+            touchNavigation: true,
+            loop: true,
+            autoplayVideos: true
+        });
+
         // Quantity Buttons
         $('.detail-qty-plus').on('click', function() {
             let input = $('.detail-quantity-input');

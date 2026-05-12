@@ -46,6 +46,8 @@ class GalleryController extends Controller
 
             if ($request->type == 'image') {
                 $rules['file'] = 'required|image|mimes:jpeg,png,jpg,webp|max:2048';
+            } elseif ($request->type == 'video') {
+                $rules['link'] = ['required', 'url', 'regex:/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/.*$/'];
             } else {
                 $rules['link'] = 'required|url';
             }
@@ -115,6 +117,8 @@ class GalleryController extends Controller
 
             if ($request->type == 'image') {
                 $rules['file'] = 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048';
+            } elseif ($request->type == 'video') {
+                $rules['link'] = ['required', 'url', 'regex:/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/.*$/'];
             } else {
                 $rules['link'] = 'required|url';
             }

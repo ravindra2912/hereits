@@ -27,51 +27,51 @@
         <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden gallery-card">
             <div class="position-relative overflow-hidden" style="height: 200px;">
                 @if($gallery->type == 'image')
-                    <a href="{{ getImage($gallery->image_url) }}" class="glightbox" data-gallery="gallery-preview">
-                        <img src="{{ getImage($gallery->image_url) }}" class="w-100 h-100 object-fit-cover transition-all" alt="{{ $gallery->title }}">
-                    </a>
+                <a href="{{ getImage($gallery->image_url) }}" class="glightbox" data-gallery="gallery-preview">
+                    <img src="{{ getImage($gallery->image_url) }}" class="w-100 h-100 object-fit-cover transition-all" alt="{{ $gallery->title }}">
+                </a>
                 @elseif($gallery->type == 'video')
-                    <a href="{{ $gallery->image_url }}" class="glightbox" data-gallery="gallery-preview">
-                        <div class="w-100 h-100 bg-dark d-flex align-items-center justify-content-center text-white position-relative">
-                            @php $ytThumb = getYoutubeThumbnail($gallery->image_url); @endphp
-                            @if($ytThumb)
-                                <img src="{{ $ytThumb }}" class="w-100 h-100 object-fit-cover opacity-50" alt="{{ $gallery->title }}">
-                                <i class="bi bi-play-circle-fill display-4 position-absolute top-50 start-50 translate-middle"></i>
-                            @else
-                                <i class="bi bi-play-circle-fill display-4"></i>
-                            @endif
-                        </div>
-                    </a>
+                <a href="{{ getGalleryVideoUrl($gallery->image_url) }}" class="glightbox" data-gallery="gallery-preview">
+                    <div class="w-100 h-100 bg-dark d-flex align-items-center justify-content-center text-white position-relative">
+                        @php $ytThumb = getYoutubeThumbnail($gallery->image_url); @endphp
+                        @if($ytThumb)
+                        <img src="{{ $ytThumb }}" class="w-100 h-100 object-fit-cover opacity-50" alt="{{ $gallery->title }}">
+                        <i class="bi bi-play-circle-fill display-4 position-absolute top-50 start-50 translate-middle"></i>
+                        @else
+                        <i class="bi bi-play-circle-fill display-4"></i>
+                        @endif
+                    </div>
+                </a>
                 @else
-                    @php
-                        $ext = strtolower(pathinfo($gallery->image_url, PATHINFO_EXTENSION));
-                        $docIcon = 'bi-file-earmark-text';
-                        if ($ext == 'pdf') $docIcon = 'bi-file-earmark-pdf';
-                        elseif (in_array($ext, ['doc', 'docx'])) $docIcon = 'bi-file-earmark-word';
-                        elseif (in_array($ext, ['xls', 'xlsx', 'csv'])) $docIcon = 'bi-file-earmark-excel';
-                        elseif (in_array($ext, ['ppt', 'pptx'])) $docIcon = 'bi-file-earmark-slides';
-                        elseif (in_array($ext, ['zip', 'rar'])) $docIcon = 'bi-file-earmark-zip';
-                    @endphp
-                    <a href="{{ $gallery->image_url }}" target="_blank" class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-primary text-decoration-none">
-                        <i class="bi {{ $docIcon }} display-4"></i>
-                    </a>
+                @php
+                $ext = strtolower(pathinfo($gallery->image_url, PATHINFO_EXTENSION));
+                $docIcon = 'bi-file-earmark-text';
+                if ($ext == 'pdf') $docIcon = 'bi-file-earmark-pdf';
+                elseif (in_array($ext, ['doc', 'docx'])) $docIcon = 'bi-file-earmark-word';
+                elseif (in_array($ext, ['xls', 'xlsx', 'csv'])) $docIcon = 'bi-file-earmark-excel';
+                elseif (in_array($ext, ['ppt', 'pptx'])) $docIcon = 'bi-file-earmark-slides';
+                elseif (in_array($ext, ['zip', 'rar'])) $docIcon = 'bi-file-earmark-zip';
+                @endphp
+                <a href="{{ $gallery->image_url }}" target="_blank" class="w-100 h-100 bg-light d-flex align-items-center justify-content-center text-primary text-decoration-none">
+                    <i class="bi {{ $docIcon }} display-4"></i>
+                </a>
                 @endif
 
                 <div class="gallery-type-badge position-absolute top-0 start-0 m-2">
                     @if($gallery->type == 'image')
-                        <span class="badge bg-white text-dark shadow-sm px-2 py-1"><i class="bi bi-image me-1"></i>Image</span>
+                    <span class="badge bg-white text-dark shadow-sm px-2 py-1"><i class="bi bi-image me-1"></i>Image</span>
                     @elseif($gallery->type == 'video')
-                        <span class="badge bg-danger shadow-sm px-2 py-1"><i class="bi bi-camera-video me-1"></i>Video</span>
+                    <span class="badge bg-danger shadow-sm px-2 py-1"><i class="bi bi-camera-video me-1"></i>Video</span>
                     @else
-                        <span class="badge bg-primary shadow-sm px-2 py-1"><i class="bi bi-file-earmark-arrow-down me-1"></i>Doc</span>
+                    <span class="badge bg-primary shadow-sm px-2 py-1"><i class="bi bi-file-earmark-arrow-down me-1"></i>Doc</span>
                     @endif
                 </div>
 
                 <div class="status-badge position-absolute top-0 end-0 m-2">
                     @if($gallery->status == 'active')
-                        <span class="badge bg-success shadow-sm px-2 py-1">Active</span>
+                    <span class="badge bg-success shadow-sm px-2 py-1">Active</span>
                     @else
-                        <span class="badge bg-danger shadow-sm px-2 py-1">Inactive</span>
+                    <span class="badge bg-danger shadow-sm px-2 py-1">Inactive</span>
                     @endif
                 </div>
             </div>
@@ -88,17 +88,17 @@
                         </button>
                     </div>
                     @if($gallery->type == 'doc')
-                        <a href="{{ $gallery->image_url }}" target="_blank" class="text-primary ms-2" title="Open Link">
-                            <i class="bi bi-box-arrow-up-right"></i>
-                        </a>
+                    <a href="{{ $gallery->image_url }}" target="_blank" class="text-primary ms-2" title="Open Link">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
                     @else
-                        <a href="{{ $gallery->type == 'image' ? getImage($gallery->image_url) : $gallery->image_url }}" 
-                           class="text-primary ms-2 glightbox" 
-                           data-gallery="gallery-action-preview"
-                           data-type="{{ $gallery->type == 'image' ? 'image' : 'video' }}"
-                           title="Preview">
-                            <i class="bi bi-eye"></i>
-                        </a>
+                    <a href="{{ $gallery->type == 'image' ? getImage($gallery->image_url) : getGalleryVideoUrl($gallery->image_url) }}"
+                        class="text-primary ms-2 glightbox"
+                        data-gallery="gallery-action-preview"
+                        data-type="{{ $gallery->type == 'image' ? 'image' : 'video' }}"
+                        title="Preview">
+                        <i class="bi bi-eye"></i>
+                    </a>
                     @endif
                 </div>
             </div>
@@ -150,9 +150,9 @@
                     </div>
 
                     <div class="mb-3 d-none" id="link-input-group">
-                        <label class="form-label fw-bold">URL / Link <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold" id="link-label">URL / Link <span class="text-danger">*</span></label>
                         <input type="url" class="form-control rounded-3" name="link" id="link" placeholder="https://example.com/file">
-                        <small class="text-muted">Enter the direct link to the video or document.</small>
+                        <small class="text-muted" id="link-help">Enter the direct link to the video or document.</small>
                     </div>
 
                     <div class="mb-3">
@@ -184,16 +184,20 @@
     .gallery-card {
         transition: all 0.3s ease;
     }
+
     .gallery-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
     }
+
     .gallery-card:hover img {
         transform: scale(1.05);
     }
+
     .transition-all {
         transition: all 0.5s ease;
     }
+
     .border-dashed {
         border-style: dashed !important;
     }
@@ -230,6 +234,16 @@
             $('#link-input-group').removeClass('d-none');
             $('#file').prop('required', false);
             $('#link').prop('required', true);
+
+            if (type === 'video') {
+                $('#link-label').html('YouTube URL <span class="text-danger">*</span>');
+                $('#link').attr('placeholder', 'https://www.youtube.com/watch?v=...');
+                $('#link-help').text('Only YouTube videos are allowed.');
+            } else {
+                $('#link-label').html('Document Link <span class="text-danger">*</span>');
+                $('#link').attr('placeholder', 'https://example.com/document.pdf');
+                $('#link-help').text('Enter the direct link to the document.');
+            }
         }
     }
 
@@ -256,7 +270,7 @@
                     $('#title').val(data.title);
                     $('#type').val(data.type);
                     $('#status').val(data.status);
-                    
+
                     if (data.type !== 'image') {
                         $('#link').val(data.image_url);
                     } else {
@@ -274,11 +288,23 @@
 
     form.on('submit', function(e) {
         e.preventDefault();
+
+        const type = $('#type').val();
+        const link = $('#link').val();
+
+        if (type === 'video') {
+            const ytRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/.*$/;
+            if (!ytRegex.test(link)) {
+                toastr.error('Please enter a valid YouTube URL');
+                return;
+            }
+        }
+
         const id = $('#gallery-id').val();
         const url = id ? "{{ route('business.gallery.update', ':id') }}".replace(':id', id) : "{{ route('business.gallery.store') }}";
-        
+
         const formData = new FormData(this);
-        
+
         $('#save-btn').prop('disabled', true);
         $('#save-loader').removeClass('d-none');
 
@@ -294,7 +320,7 @@
                     toastr.success(result.message);
                     location.reload();
                 } else {
-                    if(typeof result.message === 'object'){
+                    if (typeof result.message === 'object') {
                         Object.values(result.message).forEach(err => toastr.error(err));
                     } else {
                         toastr.error(result.message);

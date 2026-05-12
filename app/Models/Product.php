@@ -34,12 +34,12 @@ class Product extends Model
 
     public function images()
     {
-        return $this->hasMany(ProductImage::class);
+        return $this->hasMany(ProductImage::class)->orderBy('sort_order');
     }
 
     public function firstImage()
     {
-        return $this->hasOne(ProductImage::class)->orderBy('sort_order');
+        return $this->hasOne(ProductImage::class)->where('type', 'image')->orderBy('sort_order');
     }
 
     public function favorites()

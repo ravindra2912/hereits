@@ -40,7 +40,7 @@
                     </a>
                 @elseif($gallery->type == 'video')
                     @php $ytThumb = getYoutubeThumbnail($gallery->image_url); @endphp
-                    <a href="{{ $gallery->image_url }}" class="glightbox" data-gallery="business-gallery" data-title="{{ $gallery->title }}">
+                    <a href="{{ getGalleryVideoUrl($gallery->image_url) }}" class="glightbox" data-gallery="business-gallery" data-title="{{ $gallery->title }}" data-type="video">
                         <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0 bg-dark d-flex align-items-center justify-content-center" style="min-height: 250px;">
                             @if($ytThumb)
                                 <img src="{{ $ytThumb }}" class="img-fluid w-100 h-100 object-fit-cover opacity-50" alt="{{ $gallery->title }}" style="min-height: 250px;">
