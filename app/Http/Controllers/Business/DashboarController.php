@@ -18,7 +18,7 @@ class DashboarController extends Controller
      */
     public function index(Request $request): View
     {
-        $businessDetails = Business::select('id', 'status', 'name')
+        $businessDetails = Business::select('id', 'status', 'name', 'slug')
             ->with([
                 'businessSetting' => function ($q) {
                     $q->select('business_id', 'is_ecommerce_system', 'is_service_system', 'is_appointment_system', 'is_appointment_with_department');

@@ -253,6 +253,68 @@
       </a>
     </div>
   </div>
+
+  <!-- Floating Share Button -->
+  <div class="floating-share-btn shadow-lg" data-bs-toggle="modal" data-bs-target="#shareDashboardModal" title="Share Business">
+    <i class="bi bi-share-fill"></i>
+  </div>
+
+  <!-- Share Modal -->
+  <div class="modal fade" id="shareDashboardModal" tabindex="-1" aria-labelledby="shareDashboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold" id="shareDashboardModalLabel">Share Business</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="text-muted mb-4">Share your business link with customers to grow your reach.</p>
+
+          <label class="form-label small fw-bold text-uppercase text-muted">Public URL</label>
+          <div class="mb-4">
+            <input type="text" id="shareUrlInput" class="form-control form-control-lg bg-light" value="{{ route('business-details', $businessDetails->slug) }}" readonly>
+          </div>
+
+          <div class="d-grid gap-3">
+            <button type="button" class="btn btn-outline-success rounded-pill py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#whatsappShareModal">
+              <i class="bi bi-whatsapp me-2"></i>Share on WhatsApp
+            </button>
+            <button type="button" class="btn btn-outline-primary rounded-pill py-2 fw-bold" id="copyShareLink">
+              <i class="bi bi-link-45deg me-2"></i>Copy Link
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WhatsApp Share Modal -->
+  <div class="modal fade" id="whatsappShareModal" tabindex="-1" aria-labelledby="whatsappShareModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold" id="whatsappShareModalLabel">Share via WhatsApp</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="text-muted mb-4">Enter the contact number (with country code) to share your business link.</p>
+          <div class="mb-3">
+            <label for="whatsappNumber" class="form-label small fw-bold text-uppercase text-muted">Contact Number</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0"><i class="bi bi-telephone"></i></span>
+              <input type="number" class="form-control bg-light border-start-0" id="whatsappNumber" placeholder="Enter contact number here">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-top-0 pt-0">
+          <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success rounded-pill px-4 fw-bold" id="submitWhatsappShare">
+            <i class="bi bi-share me-2"></i>Share
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -294,6 +356,74 @@
   .col-card:hover .card {
     border-bottom: 4px solid var(--primary-color) !important;
   }
+
+  .floating-share-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1050;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 10px 20px rgba(13, 110, 253, 0.3);
+  }
+
+  .floating-share-btn:hover {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 15px 30px rgba(13, 110, 253, 0.4);
+    color: white;
+  }
+
+  @media (max-width: 767.98px) {
+    .floating-share-btn {
+      bottom: 20px;
+      right: 20px;
+      width: 55px;
+      height: 55px;
+      font-size: 22px;
+    }
+  }
 </style>
+
+@push('js')
+<script>
+  $(document).ready(function() {
+    $('#copyShareLink').click(function() {
+      var url = $('#shareUrlInput').val();
+      var $temp = $("<input>");
+      $("body").append($temp);
+      $temp.val(url).select();
+      document.execCommand("copy");
+      $temp.remove();
+      toastr.success("Link copied to clipboard");
+    });
+
+    $('#submitWhatsappShare').click(function() {
+      var number = $('#whatsappNumber').val();
+      var url = $('#shareUrlInput').val();
+
+      if (!number) {
+        toastr.error("Please enter a contact number");
+        return;
+      }
+
+      number = number.replace(/\D/g, '');
+      var whatsappUrl = "https://wa.me/91" + number + "?text=" + encodeURIComponent("Check out my business: " + url);
+      window.open(whatsappUrl, '_blank');
+
+      var modal = bootstrap.Modal.getInstance(document.getElementById('whatsappShareModal'));
+      modal.hide();
+    });
+  });
+</script>
+@endpush
 
 @endsection

@@ -310,11 +310,19 @@
           @php
           $expertAvailability = isExpertAvailable($experts[0]->id, $business->id);
           @endphp
-          <div class="position-absolute top-0 start-0 m-3">
+          <div class="position-absolute top-0 start-0 m-3 d-flex flex-column gap-2 align-items-start">
             @if($expertAvailability['status'] == 'open')
             <span class="badge bg-white text-success shadow-sm rounded-pill fw-bold px-3 py-2 border">
               <i class="fas fa-circle small me-1"></i> Available Now
             </span>
+            @if(isset($expertAvailability['data']))
+            <div class="live-token-container live-token-container-lg shadow-sm mt-2" title="Current Token being served">
+                <div class="live-token-label">
+                    <span class="live-dot-pulsing"></span> LIVE TOKEN
+                </div>
+                <div class="live-token-number">{{ $expertAvailability['data']->token_number }}</div>
+            </div>
+            @endif
             @elseif($expertAvailability['status'] == 'break')
             <span class="badge bg-white text-warning shadow-sm rounded-pill fw-bold px-3 py-2 border">
               <i class="fas fa-coffee small me-1"></i> On Break

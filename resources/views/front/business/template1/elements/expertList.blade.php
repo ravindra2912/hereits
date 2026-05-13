@@ -4,15 +4,23 @@
         <a href="{{ route('expert', [$expert->business->slug, $expert->slug]) }}" class="text-decoration-none">
             <div class="card-modern p-3 hover-lift h-100">
                 <div class="d-flex align-items-center">
-                    <!-- Expert Image -->
+                    <!-- Expert Image & Favorite -->
                     <div class="flex-shrink-0 me-3 position-relative">
                         <img src="{{ getImage($expert->expert_image, 'expert') }}"
                             alt="{{ $expert->expert_name }}"
                             class="rounded-circle shadow-sm object-fit-cover border border-2 border-light expert-thumb"
                             loading="lazy">
 
-                        <!-- Simple Online/Status Dot -->
-                        <!-- Simple Online/Status Dot -->
+                        <!-- Favorite Button (Left Overlay) -->
+                        <button type="button" class="favorite-btn position-absolute top-0 start-0 m-0 rounded-circle border-0 d-flex align-items-center justify-content-center shadow-sm toggle-favorite-btn"
+                            data-item-id="{{ $expert->id }}"
+                            data-business-id="{{ $expert->business_id }}"
+                            data-type="expert"
+                            style="width: 26px; height: 26px; background: white; z-index: 10; transition: all 0.3s ease; left: 0px !important; top: 0px !important;">
+                            <i class="{{ $expert->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }}" style="font-size: 0.75rem;"></i>
+                        </button>
+
+                        <!-- Availability Dot -->
                         @php
                         $expertAvailability = isExpertAvailable($expert->id, $expert->business_id);
                         @endphp
@@ -23,7 +31,6 @@
                         @else
                         <div class="position-absolute bottom-0 end-0 p-1 bg-danger border border-white rounded-circle" data-bs-toggle="tooltip" title="Closed"></div>
                         @endif
-
                     </div>
 
                     <!-- Expert Info -->
@@ -31,10 +38,10 @@
                         <h5 class="fw-bold text-dark mb-1 text-truncate">{{ $expert->expert_name }}</h5>
 
                         @if(isset($expert->title) && !empty($expert->title))
-                        <p class="text-muted small mb-1 text-truncate">{{ $expert->title }}</p>
+                        <p class="text-muted small mb-2 text-truncate">{{ $expert->title }}</p>
                         @endif
 
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
                             <span class="badge bg-light text-dark border">
                                 <i class="fas fa-star text-warning me-1"></i> {{ $expert->rating }}
                             </span>
@@ -44,19 +51,21 @@
                         </div>
                     </div>
 
-                    <!-- Availability/Action (Compact) -->
-                    <div class="ms-3 text-end d-flex flex-column align-items-end gap-2">
-                        <button type="button" class="favorite-btn rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
-                            data-item-id="{{ $expert->id }}"
-                            data-business-id="{{ $expert->business_id }}"
-                            data-type="expert"
-                            style="width: 32px; height: 32px; background: rgba(0,0,0,0.05); z-index: 10; transition: all 0.3s ease;">
-                            <i class="{{ $expert->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-6"></i>
-                        </button>
-                        <span class="btn btn-outline-primary btn-sm rounded-pill fw-bold d-none d-sm-block">
-                            Book
-                        </span>
+                    <!-- Live Token (Right Side) -->
+                    @if($expertAvailability['status'] == 'open' && isset($expertAvailability['data']))
+                    <div class="ms-3">
+                        <div class="live-token-container shadow-sm">
+                            <div class="live-token-label">
+                                <span class="live-dot-pulsing"></span> LIVE TOKEN
+                            </div>
+                            <div class="live-token-number">{{ $expertAvailability['data']->token_number }}</div>
+                        </div>
                     </div>
+                    @else
+                    <div class="ms-3 text-end">
+                        <i class="fas fa-chevron-right text-muted opacity-25"></i>
+                    </div>
+                    @endif
                 </div>
             </div>
         </a>
