@@ -572,6 +572,13 @@
             placeholder: $(this).data('placeholder') || 'Select an option',
             allowClear: true
         });
+
+        @if(!Auth::check())
+            $('#authModal').modal('show');
+            if (typeof switchAuthSection === 'function') {
+                switchAuthSection('login');
+            }
+        @endif
     });
 </script>
 @endpush

@@ -172,7 +172,8 @@ class ProductController extends Controller
         }])->firstOrFail();
         $categories = getProductCategory();
         $image_limit = config('const.product_images_upload_limit');
-        return view('business.product.edit', compact('product', 'categories', 'image_limit'));
+        $video_limit = config('const.product_videos_upload_limit');
+        return view('business.product.edit', compact('product', 'categories', 'image_limit', 'video_limit'));
     }
 
     /**
@@ -323,23 +324,21 @@ class ProductController extends Controller
             DB::beginTransaction();
             $product = Product::where('id', $request->product_id)->where('business_id', Auth::user()->business_id)->lockForUpdate()->firstOrFail();
 
-            $currentCount = $product->images->count();
-            $limit = config('const.product_images_upload_limit');
+            $currentImagesCount = $product->images()->where('type', 'image')->count();
+            $currentVideosCount = $product->images()->where('type', 'video')->count();
 
-            if ($currentCount >= $limit) {
-                return response()->json(['success' => false, 'message' => 'You can only upload up to ' . $limit . ' images.'], 422);
-            }
-
-            // Check if new images/videos would exceed limit
-            $newImagesCount = ($request->hasFile('images') ? count($request->file('images')) : 0) + ($request->filled('video_url') ? 1 : 0);
-            if ($currentCount + $newImagesCount > $limit) {
-                return response()->json(['success' => false, 'message' => 'You can only upload ' . ($limit - $currentCount) . ' more image(s).'], 422);
-            }
+            $imageLimit = config('const.product_images_upload_limit');
+            $videoLimit = config('const.product_videos_upload_limit');
 
             $uploadedImages = [];
 
             // Handle Images
             if ($request->hasFile('images')) {
+                $newImagesCount = count($request->file('images'));
+                if ($currentImagesCount + $newImagesCount > $imageLimit) {
+                    return response()->json(['success' => false, 'message' => 'You can only upload ' . ($imageLimit - $currentImagesCount) . ' more image(s).'], 422);
+                }
+
                 foreach ($request->file('images') as $image) {
                     $path = fileUploadStorage($image, 'product', 900, 900);
 
@@ -358,6 +357,10 @@ class ProductController extends Controller
 
             // Handle Video URL
             if ($request->filled('video_url')) {
+                if ($currentVideosCount + 1 > $videoLimit) {
+                    return response()->json(['success' => false, 'message' => 'You can only add up to ' . $videoLimit . ' video links.'], 422);
+                }
+
                 $productImage = ProductImage::create([
                     'product_id' => $product->id,
                     'type' => 'video',

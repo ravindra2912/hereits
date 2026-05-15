@@ -69,6 +69,7 @@ return [
 
     "product_price_type" => ['FixPrice' => 'Fixed Price', 'PriceInRange' => 'Price Range', 'WithoutPrice' => 'Without Price'],
     "product_images_upload_limit" => 4,
+    "product_videos_upload_limit" => 2,
 
     "service_price_type" => ['FixPrice' => 'Fixed Price', 'PriceInRange' => 'Price Range', 'WithoutPrice' => 'Without Price'],
     "service_status" => ['active', 'in-active'],

@@ -34,12 +34,12 @@
                                 @empty
                                 @endforelse
 
-                                <div class="d-flex justify-content-center align-items-center border rounded bg-light text-primary cursor-pointer hover-shadow {{ $product->images->count() >= $image_limit ? 'img-hide' : '' }}" style="width: 100px; height: 100px; border-style: dashed !important; cursor: pointer;" id="add-image-btn" onclick="openMediaModal()">
+                                <div class="d-flex justify-content-center align-items-center border rounded bg-light text-primary cursor-pointer hover-shadow {{ ($product->images()->where('type', 'image')->count() >= $image_limit && $product->images()->where('type', 'video')->count() >= $video_limit) ? 'img-hide' : '' }}" style="width: 100px; height: 100px; border-style: dashed !important; cursor: pointer;" id="add-image-btn" onclick="openMediaModal()">
                                     <i class="bi bi-plus-lg fs-3"></i>
                                     <input type="file" class="img-hide" id="images" name="images[]" multiple accept="image/*">
                                 </div>
                             </div>
-                            <small class="text-muted d-block mt-2">Max {{ $image_limit }} images allowed.</small>
+                            <small class="text-muted d-block mt-2">Max {{ $image_limit }} images and {{ $video_limit }} video links allowed.</small>
                         </div>
 
                         <div class="col-md-4 mb-3">
@@ -129,14 +129,20 @@
             <div class="modal-body p-4">
                 <div id="media-type-selector">
                     <div class="d-grid gap-3">
-                        <button type="button" class="btn btn-outline-primary py-3 rounded-3 d-flex align-items-center justify-content-center gap-2" onclick="selectMediaType('image')">
-                            <i class="bi bi-image fs-4"></i>
-                            <span class="fw-bold">Upload Image</span>
-                        </button>
-                        <button type="button" class="btn btn-outline-danger py-3 rounded-3 d-flex align-items-center justify-content-center gap-2" onclick="selectMediaType('video')">
-                            <i class="bi bi-youtube fs-4"></i>
-                            <span class="fw-bold">YouTube Video</span>
-                        </button>
+                        <div class="media-option">
+                            <button type="button" class="btn btn-outline-primary py-3 w-100 rounded-3 d-flex align-items-center justify-content-center gap-2" onclick="selectMediaType('image')">
+                                <i class="bi bi-image fs-4"></i>
+                                <span class="fw-bold">Upload Image</span>
+                            </button>
+                            <div id="image-limit-msg" class="text-danger small text-center mt-1 d-none fw-bold">Limit reached: Max {{ $image_limit }} images allowed.</div>
+                        </div>
+                        <div class="media-option">
+                            <button type="button" class="btn btn-outline-danger py-3 w-100 rounded-3 d-flex align-items-center justify-content-center gap-2" onclick="selectMediaType('video')">
+                                <i class="bi bi-youtube fs-4"></i>
+                                <span class="fw-bold">YouTube Video</span>
+                            </button>
+                            <div id="video-limit-msg" class="text-danger small text-center mt-1 d-none fw-bold">Limit reached: Max {{ $video_limit }} videos allowed.</div>
+                        </div>
                     </div>
                 </div>
 
@@ -240,6 +246,7 @@
 </style>
 <script>
     var imageLimit = "{{ $image_limit }}";
+    var videoLimit = "{{ $video_limit }}";
     $(document).on('click', '.delete-current-image', function() {
         var id = $(this).data('id');
         deleteImage(id);
@@ -270,9 +277,11 @@
                         hideLoader();
                         $('#image-container-' + id).remove();
 
-                        // Check count and show add button if less than 5
-                        var imageCount = $('#current-images-container .position-relative').length;
-                        if (imageCount < imageLimit) {
+                        // Check counts and show add button if either limit is not reached
+                        var imageCount = $('#current-images-container .position-relative:not(:has(.bi-play-circle-fill))').length;
+                        var videoCount = $('#current-images-container .bi-play-circle-fill').length;
+                        
+                        if (imageCount < imageLimit || videoCount < videoLimit) {
                             $('#add-image-btn').removeClass('img-hide');
                         }
 
@@ -296,7 +305,7 @@
         var productId = "{{ $product->id }}";
 
         // Count current images
-        var currentImageCount = $('#current-images-container .position-relative').length;
+        var currentImageCount = $('#current-images-container .position-relative:not(:has(.bi-play-circle-fill))').length;
 
         if (currentImageCount >= imageLimit) {
             Swal.fire('Limit Reached', 'You can upload a maximum of ' + imageLimit + ' images.', 'warning');
@@ -352,9 +361,11 @@
                             $('#add-image-btn').before(newImageHtml);
                         });
 
-                        // Check new count
-                        var newCount = $('#current-images-container .position-relative').length;
-                        if (newCount >= imageLimit) {
+                        // Check new counts
+                        var newImageCount = $('#current-images-container .position-relative:not(:has(.bi-play-circle-fill))').length;
+                        var newVideoCount = $('#current-images-container .bi-play-circle-fill').length;
+                        
+                        if (newImageCount >= imageLimit && newVideoCount >= videoLimit) {
                             $('#add-image-btn').addClass('img-hide');
                         }
 
@@ -378,14 +389,40 @@
     const mediaModal = new bootstrap.Modal(document.getElementById('productMediaModal'));
 
     function openMediaModal() {
+        var imageCount = $('#current-images-container .position-relative:not(:has(.bi-play-circle-fill))').length;
+        var videoCount = $('#current-images-container .bi-play-circle-fill').length;
+
+        if (imageCount >= imageLimit) {
+            $('#image-limit-msg').removeClass('d-none');
+        } else {
+            $('#image-limit-msg').addClass('d-none');
+        }
+
+        if (videoCount >= videoLimit) {
+            $('#video-limit-msg').removeClass('d-none');
+        } else {
+            $('#video-limit-msg').addClass('d-none');
+        }
+
         backToMediaType();
         mediaModal.show();
     }
 
     function selectMediaType(type) {
+        var imageCount = $('#current-images-container .position-relative:not(:has(.bi-play-circle-fill))').length;
+        var videoCount = $('#current-images-container .bi-play-circle-fill').length;
+
         if (type === 'image') {
+            if (imageCount >= imageLimit) {
+                Swal.fire('Limit Reached', 'You can upload a maximum of ' + imageLimit + ' images.', 'warning');
+                return;
+            }
             $('#images').click();
         } else {
+            if (videoCount >= videoLimit) {
+                Swal.fire('Limit Reached', 'You can add up to ' + videoLimit + ' video links.', 'warning');
+                return;
+            }
             $('#media-type-selector').addClass('d-none');
             $('#video-input-section').removeClass('d-none');
         }
@@ -437,8 +474,10 @@
                         $('#add-image-btn').before(newImageHtml);
                     });
 
-                    var newCount = $('#current-images-container .position-relative').length;
-                    if (newCount >= imageLimit) {
+                    var newImageCount = $('#current-images-container .position-relative:not(:has(.bi-play-circle-fill))').length;
+                    var newVideoCount = $('#current-images-container .bi-play-circle-fill').length;
+                    
+                    if (newImageCount >= imageLimit && newVideoCount >= videoLimit) {
                         $('#add-image-btn').addClass('img-hide');
                     }
 
