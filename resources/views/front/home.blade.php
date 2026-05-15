@@ -10,7 +10,7 @@
 <!-- 1. Hero / Banner Section -->
 <section class="hero-wrap d-flex align-items-center position-relative overflow-hidden">
     <div class="hero-bg position-absolute top-0 start-0 w-100 h-100">
-        <img src="{{ asset('assets/front/img/homepage/hero.png') }}" class="w-100 h-100 object-fit-cover" alt="Hero Banner">
+        <img src="{{ asset('assets/front/img/homepage/hero.webp') }}" class="w-100 h-100 object-fit-cover" alt="Hero Banner">
         <div class="hero-overlay position-absolute top-0 start-0 w-100 h-100"></div>
     </div>
 
@@ -24,7 +24,7 @@
                     <a href="{{ route('business-list') }}" class="btn btn-primary btn-lg rounded-pill px-5 py-3 fw-bold shadow-lg">
                         <i class="fas fa-compass me-2"></i> Explore Now
                     </a>
-                    <a href="{{ route('why-join-with-us') }}" class="btn btn-outline-light btn-lg rounded-pill px-5 py-3 fw-bold">
+                    <a href="{{ route('register.business') }}" class="btn btn-outline-light btn-lg rounded-pill px-5 py-3 fw-bold">
                         <i class="fas fa-plus-circle me-2"></i> List Your Business
                     </a>
                 </div>
@@ -306,14 +306,14 @@
                 </div>
 
                 <div class="d-flex gap-2 gap-sm-3 hero-buttons">
-                    <a href="{{ route('why-join-with-us') }}" class="btn btn-primary btn-lg rounded-pill px-3 px-sm-5 flex-fill flex-sm-none text-nowrap">Get Started Free</a>
+                    <a href="{{ route('register.business') }}" class="btn btn-primary btn-lg rounded-pill px-3 px-sm-5 flex-fill flex-sm-none text-nowrap">Get Started Free</a>
                     <a href="{{ route('aboutUs') }}" class="btn btn-outline-light btn-lg rounded-pill px-3 px-sm-5 flex-fill flex-sm-none text-nowrap">Learn More</a>
                 </div>
             </div>
 
             <div class="col-lg-5 offset-lg-1">
                 <div class="cta-image-wrap position-relative">
-                    <img src="{{ asset('assets/front/img/homepage/store.png') }}" class="img-fluid rounded-5 shadow-2xl animate-float" alt="Grow your business">
+                    <img src="{{ asset('assets/front/img/homepage/store.webp') }}" class="img-fluid rounded-5 shadow-2xl animate-float" alt="Grow your business">
                     <div class="cta-floating-card p-3 bg-white rounded-4 shadow-lg position-absolute bottom-0 start-0 mb-n4 ms-n4 d-flex align-items-center gap-3 animate-up">
                         <div class="bg-success p-2 rounded-circle">
                             <i class="fa fa-chart-line fs-4 text-white"></i>
