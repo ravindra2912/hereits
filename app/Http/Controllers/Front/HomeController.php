@@ -236,7 +236,7 @@ class HomeController extends Controller
                 }]);
             })
             ->where('status', 'active')
-            ->addSelect(['id', 'name', 'slug', 'business_logo', 'area', 'city_id', 'business_category_id', 'rating']);
+            ->addSelect(['id', 'name', 'slug', 'business_image', 'area', 'city_id', 'business_category_id', 'rating']);
 
         if ($request->has('category')) {
             $query->whereHas('businessCategory', function ($q) use ($request) {
