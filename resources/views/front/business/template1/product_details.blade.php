@@ -138,17 +138,17 @@
 </script>
 @endpush
 
-<div class="container py-5 mt-5">
+<div class="container py-5 mt-lg-5 mt-3">
     <div class="row g-5">
         <!-- Gallery Section -->
-        <div class="col-lg-6">
+        <div class="col-lg-6 mt-0">
             <div class="bg-white rounded-4 shadow-sm p-2">
                 <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
                     <div class="carousel-inner rounded-4 overflow-hidden bg-light">
                         @forelse($product->images as $key => $image)
-                        @php 
-                            $ytId = getYoutubeId($image->image_url);
-                            $isMediaVideo = ($image->type == 'video' || $ytId);
+                        @php
+                        $ytId = getYoutubeId($image->image_url);
+                        $isMediaVideo = ($image->type == 'video' || $ytId);
                         @endphp
                         <div class="carousel-item {{ $key == 0 ? 'active' : '' }}">
                             @if($isMediaVideo && $ytId)
@@ -203,7 +203,7 @@
         </div>
 
         <!-- content Section -->
-        <div class="col-lg-6">
+        <div class="col-lg-6 mt-lg-0 mt-3 pt-2">
             <div class="ps-lg-4">
                 <nav aria-label="breadcrumb" class="mb-3">
                     <ol class="breadcrumb small">
