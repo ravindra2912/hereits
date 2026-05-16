@@ -190,7 +190,8 @@
                         <img src="{{ getImage($image->image_url) }}"
                             class="thumb-img rounded-3 {{ $key == 0 ? 'active' : '' }}"
                             data-bs-target="#productCarousel"
-                            data-bs-slide-to="{{ $key }}">
+                            data-bs-slide-to="{{ $key }}"
+                            loading="lazy">
                         @if($image->type == 'video' || $ytIdThumb)
                         <i class="fas fa-play-circle position-absolute top-50 start-50 translate-middle text-white shadow-sm pointer-none" style="pointer-events: none;"></i>
                         @endif
@@ -302,7 +303,7 @@
                 <!-- Seller Info -->
                 <div class="trust-card rounded-4 p-4 d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-3">
-                        <img src="{{ getImage($business->business_image) }}" class="rounded-circle border border-white shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
+                        <img src="{{ getImage($business->business_image) }}" class="rounded-circle border border-white shadow-sm" style="width: 60px; height: 60px; object-fit: cover;" loading="lazy">
                         <div>
                             <span class="text-muted small d-block">Store Information</span>
                             <h6 class="fw-bold mb-0">{{ $business->name }}</h6>
@@ -323,7 +324,7 @@
             <div class="col-6 col-md-3">
                 <div class="card border-0 shadow-sm h-100 rounded-4 overflow-hidden related-card">
                     <a href="{{ route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $related->slug]) }}" class="position-relative d-block">
-                        <img src="{{ getImage($related->firstImage?->image_url) }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ $related->name }}">
+                        <img src="{{ getImage($related->firstImage?->image_url) }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ $related->name }}" loading="lazy">
                         <button type="button" class="favorite-btn position-absolute top-0 end-0 m-2 rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
                             data-item-id="{{ $related->id }}"
                             data-business-id="{{ $business->id }}"

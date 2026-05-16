@@ -294,44 +294,59 @@ class ExpertController extends Controller
         try {
             DB::beginTransaction();
             $rules = [
-                'day' => 'required',
+                'day' => 'required|string',
                 'start_time' => 'required',
                 'end_time' => 'required|after:start_time',
+                'timing_id' => 'nullable|exists:business_timings,id',
+                'apply_to_all' => 'nullable|boolean'
             ];
             $validator = Validator::make($request->all(), $rules);
-            if ($validator->fails()) { // Validation fails
-                $message = $validator->errors();
-            } else {
+            if ($validator->fails()) {
+                return response()->json(['success' => false, 'message' => $validator->errors()]);
+            }
 
-                $conflict = BusinessTiming::where('business_id', getBusinessId())
-                    ->where('day', $request->day)
-                    ->lockForUpdate()
+            $business_id = getBusinessId();
+            $days = $request->has('apply_to_all') && $request->apply_to_all ? config('const.week_day_name') : [$request->day];
+            
+            foreach ($days as $day) {
+                // Check for conflict
+                $conflictQuery = BusinessTiming::where('business_id', $business_id)
+                    ->where('day', $day)
                     ->where('expert_id', $id)
                     ->where(function ($query) use ($request) {
-                        $query->where(function ($q) use ($request) {
-                            $q->where('start_time', '<', $request->end_time)
-                                ->where('end_time', '>', $request->start_time);
-                        });
-                    })
-                    ->exists();
+                        $query->where('start_time', '<', $request->end_time)
+                            ->where('end_time', '>', $request->start_time);
+                    });
 
-                if ($conflict) {
-                    $message = "The selected time overlaps with an existing schedule on {$request->day}.";
-                } else {
-
-                    $insert = new BusinessTiming();
-                    $insert->business_id = getBusinessId();
-                    $insert->expert_id = $id;
-                    $insert->day = $request->day;
-                    $insert->start_time = $request->start_time;
-                    $insert->end_time = $request->end_time;
-                    $insert->save();
-
-                    $success = true;
-                    $message = 'Time add successfully.';
-                    DB::commit();
+                if ($request->filled('timing_id') && $day == $request->day) {
+                    $conflictQuery->where('id', '!=', $request->timing_id);
                 }
+
+                if ($conflictQuery->exists()) {
+                    if ($request->has('apply_to_all') && $request->apply_to_all) {
+                        continue; // Skip days with conflicts when applying to all
+                    }
+                    return response()->json(['success' => false, 'message' => "The selected time overlaps with an existing schedule on {$day}."]);
+                }
+
+                if ($request->filled('timing_id') && $day == $request->day) {
+                    $timing = BusinessTiming::findOrFail($request->timing_id);
+                } else {
+                    $timing = new BusinessTiming();
+                    $timing->business_id = $business_id;
+                    $timing->expert_id = $id;
+                }
+
+                $timing->day = $day;
+                $timing->start_time = $request->start_time;
+                $timing->end_time = $request->end_time;
+                $timing->save();
             }
+
+            DB::commit();
+            $success = true;
+            $message = $request->filled('timing_id') ? 'Time updated successfully.' : 'Time added successfully.';
+            
         } catch (\Exception $e) {
             DB::rollBack();
             $message = $e->getMessage();

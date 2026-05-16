@@ -62,7 +62,7 @@
             <div class="col-lg-2 col-md-4 col-6">
                 <a href="{{ route('business-list', ['category' => $cat['slug']]) }}" class="category-card text-center d-block text-decoration-none group p-4 rounded-4 bg-white shadow-sm hover-lift transition-all">
                     <div class="icon-circle mb-3 mx-auto d-flex align-items-center justify-content-center rounded-circle transition-all" style="width: 70px; height: 70px; background-color: {{ $cat['color'] }}15; color: {{ $cat['color'] }}; overflow: hidden;">
-                        <img src="{{ $cat['image'] }}" class="w-100 h-100 object-fit-cover p-2" alt="{{ $cat['name'] }}">
+                        <img src="{{ $cat['image'] }}" class="w-100 h-100 object-fit-cover p-2" alt="{{ $cat['name'] }}" loading="lazy">
                     </div>
                     <h6 class="fw-bold text-dark mb-1">{{ $cat['name'] }}</h6>
                     <small class="text-muted">{{ $cat['count'] }} Businesses</small>
@@ -90,7 +90,7 @@
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="card border-0 shadow-sm rounded-4 overflow-hidden hover-lift h-100 transition-all">
                     <a href="{{ route('business-details', $business->slug) }}" class="position-relative overflow-hidden d-block business-card-img" style="height: 200px;">
-                        <img src="{{ getImage($business->business_image) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}">
+                        <img src="{{ getImage($business->business_image) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}" loading="lazy">
                         <span class="badge bg-success position-absolute top-0 end-0 m-3 rounded-pill px-3">Open</span>
 
                         @guest
@@ -210,7 +210,7 @@
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="card border-0 shadow-sm rounded-4 overflow-hidden hover-lift h-100 transition-all bg-white">
                     <a href="{{ route('business-details', $business->slug) }}" class="position-relative overflow-hidden d-block business-card-img" style="height: 200px;">
-                        <img src="{{ getImage($business->business_image) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}">
+                        <img src="{{ getImage($business->business_image) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}" loading="lazy">
                         <span class="badge bg-success position-absolute top-0 end-0 m-3 rounded-pill px-3">Open</span>
 
                         <div class="position-absolute top-0 start-0 m-3">
@@ -313,7 +313,7 @@
 
             <div class="col-lg-5 offset-lg-1">
                 <div class="cta-image-wrap position-relative">
-                    <img src="{{ asset('assets/front/img/homepage/store.webp') }}" class="img-fluid rounded-5 shadow-2xl animate-float" alt="Grow your business">
+                    <img src="{{ asset('assets/front/img/homepage/store.webp') }}" class="img-fluid rounded-5 shadow-2xl animate-float" alt="Grow your business" loading="lazy">
                     <div class="cta-floating-card p-3 bg-white rounded-4 shadow-lg position-absolute bottom-0 start-0 mb-n4 ms-n4 d-flex align-items-center gap-3 animate-up">
                         <div class="bg-success p-2 rounded-circle">
                             <i class="fa fa-chart-line fs-4 text-white"></i>

@@ -204,7 +204,7 @@
         @foreach($details['productCategories'] as $category)
         <a href="{{ route('business-products', ['business_slug' => $business->slug, 'category_id' => $category->id]) }}" class="text-decoration-none text-center d-flex flex-column align-items-center flex-shrink-0 hover-lift category-item category-item-link">
           <div class="rounded-circle mb-2 d-flex align-items-center justify-content-center bg-white overflow-hidden category-image-wrapper">
-            <img src="{{ getImage($category->image_url) }}" alt="{{ $category->name }}" class="w-100 h-100 object-fit-cover" draggable="false">
+            <img src="{{ getImage($category->image_url) }}" alt="{{ $category->name }}" class="w-100 h-100 object-fit-cover" draggable="false" loading="lazy">
           </div>
           <span class="text-dark small fw-medium text-truncate w-100" title="{{ $category->name }}">{{ $category->name }}</span>
         </a>
@@ -249,7 +249,7 @@
         @foreach($details['serviceCategories'] as $category)
         <a href="{{ route('business-services', ['business_slug' => $business->slug, 'category_id' => $category->id]) }}" class="text-decoration-none text-center d-flex flex-column align-items-center flex-shrink-0 hover-lift category-item category-item-link">
           <div class="rounded-circle mb-2 d-flex align-items-center justify-content-center bg-white overflow-hidden category-image-wrapper">
-            <img src="{{ getImage($category->image_url) }}" alt="{{ $category->name }}" class="w-100 h-100 object-fit-cover" draggable="false">
+            <img src="{{ getImage($category->image_url) }}" alt="{{ $category->name }}" class="w-100 h-100 object-fit-cover" draggable="false" loading="lazy">
           </div>
           <span class="text-dark small fw-medium text-truncate w-100" title="{{ $category->name }}">{{ $category->name }}</span>
         </a>
@@ -453,7 +453,7 @@
         <a href="{{ getGalleryVideoUrl($gallery->image_url) }}" class="glightbox" data-gallery="business-home-gallery" data-title="{{ $gallery->title }}">
           <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0 bg-dark d-flex align-items-center justify-content-center" style="min-height: 200px;">
             @if($ytThumb)
-            <img src="{{ $ytThumb }}" class="img-fluid w-100 h-100 object-fit-cover opacity-50" alt="{{ $gallery->title }}" style="min-height: 200px;">
+            <img src="{{ $ytThumb }}" class="img-fluid w-100 h-100 object-fit-cover opacity-50" alt="{{ $gallery->title }}" style="min-height: 200px;" loading="lazy">
             <i class="fas fa-play-circle fa-3x text-white position-absolute top-50 start-50 translate-middle opacity-75"></i>
             @else
             <i class="fas fa-play-circle fa-3x text-white opacity-75"></i>

@@ -75,7 +75,7 @@
 
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Contact Number <span class="text-danger">*</span></label>
+                                <label class="form-label">Whatsapp Number <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control required numeric" name="business_contact" id="business_contact" placeholder="+91 99999 00000" required>
                             </div>
                         </div>
