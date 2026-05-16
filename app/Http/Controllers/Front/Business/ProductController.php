@@ -30,7 +30,7 @@ class ProductController extends Controller
         $query = Product::select('id', 'name', 'slug', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'category_id', 'business_id')
             ->where('business_id', $business->id)
             ->where('status', 'active')
-            ->with(['firstImage:id,product_id,image_url', 'category:id,name'])
+            ->with(['firstTwoImages:id,product_id,image_url', 'category:id,name'])
             ->when(auth()->check(), function ($query) {
                 $query->withExists(['favorites as is_favorited' => function ($q) {
                     $q->where('user_id', auth()->id());
@@ -76,7 +76,7 @@ class ProductController extends Controller
             ->where('business_id', $business->id)
             ->where('id', '!=', $product->id)
             ->where('status', 'active')
-            ->with(['firstImage:id,product_id,image_url'])
+            ->with(['firstTwoImages:id,product_id,image_url'])
             ->when(auth()->check(), function ($query) {
                 $query->withExists(['favorites as is_favorited' => function ($q) {
                     $q->where('user_id', auth()->id());

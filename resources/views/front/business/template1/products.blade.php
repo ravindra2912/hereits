@@ -7,6 +7,50 @@
 'state' => isset($business->state) && !empty($business->state->name) ? $business->state->name : '',
 'position' => $business->latitude . ':' . $business->longitude
 ]])
+@push('style')
+<style>
+    .product-card-img-container {
+        position: relative;
+        aspect-ratio: 1/1;
+        overflow: hidden;
+        width: 100%;
+    }
+    .product-card-img-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    }
+    .secondary-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        z-index: 1;
+    }
+    .primary-image {
+        position: relative;
+        z-index: 2;
+    }
+    .has-hover-image:hover .primary-image {
+        opacity: 0 !important;
+    }
+    .has-hover-image:hover .secondary-image {
+        opacity: 1 !important;
+    }
+    .hover-lift:hover .card-img-top {
+        transform: scale(1.05);
+    }
+    .product-name-link h6 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        height: 2.5em;
+        line-height: 1.25em;
+    }
+</style>
+@endpush
 
 @section('content')
 <div class="container py-4">
@@ -34,13 +78,20 @@
     <div class="row g-4">
         @foreach($products as $product)
         <div class="col-6 col-sm-4 col-md-3 col-lg-3">
-            <div class="card h-100 border-0 shadow-sm hover-lift rounded-4 overflow-hidden">
+            <div class="card h-100 border-0 shadow-sm hover-lift rounded-4 overflow-hidden {{ $product->firstTwoImages->count() > 1 ? 'has-hover-image' : '' }}">
                 <a href="{{ route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $product->slug]) }}" class="text-decoration-none">
                     <div class="position-relative">
-                        <img src="{{ getImage($product->firstImage?->image_url) }}"
-                            class="card-img-top object-fit-cover"
+                    <div class="product-card-img-container">
+                        <img src="{{ getImage($product->firstTwoImages->first()?->image_url) }}"
+                            class="card-img-top primary-image"
                             alt="{{ $product->name }}"
-                            style="aspect-ratio: 1/1; width: 100%;" loading="lazy">
+                            loading="lazy">
+                        @if($product->firstTwoImages->count() > 1)
+                        <img src="{{ getImage($product->firstTwoImages[1]->image_url) }}"
+                            class="card-img-top secondary-image"
+                            alt="{{ $product->name }}"
+                            loading="lazy">
+                        @endif
                         @if($product->category)
                         <span class="badge bg-white text-dark position-absolute top-0 start-0 m-2 shadow-sm border small text-truncate" style="max-width: calc(100% - 1rem); display: inline-block;">{{ $product->category->name }}</span>
                         @endif
@@ -53,17 +104,18 @@
                             <i class="{{ $product->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-6"></i>
                         </button>
                     </div>
+                </div>
                 </a>
 
                 <div class="card-body p-3 d-flex flex-column">
-                    <a href="{{ route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $product->slug]) }}" class="text-decoration-none">
-                        <h6 class="card-title fw-bold mb-1 text-truncate text-dark" title="{{ $product->name }}">{{ $product->name }}</h6>
+                    <a href="{{ route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $product->slug]) }}" class="text-decoration-none product-name-link">
+                        <h6 class="card-title fw-bold mb-1 text-dark" title="{{ $product->name }}">{{ $product->name }}</h6>
                     </a>
 
                     <div class="mt-auto">
-                        <div class="fw-bold text-primary mb-2">
+                        <div class="fw-bold text-primary mb-2 text-truncate" style="font-size: 0.9rem;">
                             @if($product->price_type == 'FixPrice')
-                            <span>₹{{ $product->sell_price }}</span> <span class="text-decoration-line-through text-muted small">₹{{ $product->price }}</span>
+                            <span>₹{{ $product->sell_price }}</span> <span class="text-decoration-line-through text-muted extra-small">₹{{ $product->price }}</span>
                             @elseif($product->price_type == 'PriceInRange')
                             ₹{{ $product->min_price }} - ₹{{ $product->max_price }}
                             @else
@@ -79,7 +131,7 @@
                             data-price-type="{{ $product->price_type }}"
                             data-min-price="{{ $product->min_price ?? 0 }}"
                             data-max-price="{{ $product->max_price ?? 0 }}"
-                            data-image="{{ getImage($product->firstImage?->image_url) }}">
+                            data-image="{{ getImage($product->firstTwoImages->first()?->image_url) }}">
                             <span class="small">Add to Cart</span>
                         </button>
                         <!-- <button class="btn btn-outline-dark btn_sm w-100 rounded-pill click-action py-2" data-type="product" data-id="{{ $product->id }}">

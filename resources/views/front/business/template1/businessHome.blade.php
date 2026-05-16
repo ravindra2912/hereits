@@ -21,6 +21,14 @@
   .transition-all {
     transition: all 0.5s ease;
   }
+
+  .has-hover-image:hover .primary-image {
+    opacity: 0 !important;
+  }
+
+  .has-hover-image:hover .secondary-image {
+    opacity: 1 !important;
+  }
 </style>
 @endpush
 

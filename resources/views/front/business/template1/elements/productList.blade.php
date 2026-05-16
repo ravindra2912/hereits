@@ -2,15 +2,26 @@
 <div class="row g-4">
     @foreach($products as $product)
     <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-        <div class="card h-100 border-0 shadow-sm hover-lift">
+        <div class="card h-100 border-0 shadow-sm hover-lift {{ $product->firstTwoImages->count() > 1 ? 'has-hover-image' : '' }}">
             <a href="{{ route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $product->slug]) }}" class="text-decoration-none">
                 <div class="position-relative">
-                    <img src="{{ getImage($product->firstImage?->image_url) }}"
-                        class="w-100 h-100 object-fit-cover transition product-img-aspect"
-                        alt="{{ $product->name }}" loading="lazy">
+                    <div class="product-card-img-container" style="position: relative; aspect-ratio: 1/1; overflow: hidden; width: 100%;">
+                        <img src="{{ getImage($product->firstTwoImages->first()?->image_url) }}"
+                            class="card-img-top primary-image"
+                            alt="{{ $product->name }}"
+                            style="width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s ease-in-out;"
+                            loading="lazy">
+                        @if($product->firstTwoImages->count() > 1)
+                        <img src="{{ getImage($product->firstTwoImages[1]->image_url) }}"
+                            class="card-img-top secondary-image"
+                            alt="{{ $product->name }}"
+                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s ease-in-out; z-index: 1;"
+                            loading="lazy">
+                        @endif
+                    </div>
 
                     @if($product->category)
-                    <span class="badge bg-white text-dark position-absolute top-0 start-0 m-2 shadow-sm border text-truncate product-cat-badge">{{ $product->category->name }}</span>
+                    <span class="badge bg-white text-dark position-absolute top-0 start-0 m-2 shadow-sm border text-truncate product-cat-badge" style="z-index: 3;">{{ $product->category->name }}</span>
                     @endif
 
                     <button type="button" class="favorite-btn position-absolute top-0 end-0 m-2 rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
@@ -25,18 +36,18 @@
 
             <div class="card-body p-3 d-flex flex-column">
                 <a href="{{ route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $product->slug]) }}" class="text-decoration-none">
-                    <h6 class="card-title fw-bold mb-1 text-truncate text-dark" title="{{ $product->name }}">{{ $product->name }}</h6>
+                    <h6 class="card-title fw-bold mb-1 text-dark" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.5em; line-height: 1.25em;" title="{{ $product->name }}">{{ $product->name }}</h6>
                 </a>
                 <p class="small text-muted mb-2 text-truncate">{{ $product->description }}</p>
 
                 <div class="mt-auto d-flex justify-content-between align-items-center">
-                    <div class="fw-bold text-primary">
+                    <div class="fw-bold text-primary text-truncate" style="font-size: 0.85rem;">
                         @if($product->price_type == 'FixPrice')
-                        <span>₹{{ $product->sell_price }}</span> <span class="text-decoration-line-through text-muted small">₹{{ $product->price }}</span>
+                        <span>₹{{ $product->sell_price }}</span> <span class="text-decoration-line-through text-muted extra-small">₹{{ $product->price }}</span>
                         @elseif($product->price_type == 'PriceInRange')
                         ₹{{ $product->min_price }} - ₹{{ $product->max_price }}
                         @else
-                        Contact for Price
+                        Contact Price
                         @endif
                     </div>
                 </div>

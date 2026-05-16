@@ -103,7 +103,7 @@ class BusinessController extends Controller
             $details['categoriesWithProducts'] = Category::select('id', 'name', 'image_url', 'business_id')
                 ->with(['products' => function ($query) {
                     $query->select('id', 'name', 'slug', 'description', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'category_id', 'business_id')
-                        ->with(['firstImage:id,product_id,image_url', 'category:id,name'])
+                        ->with(['firstTwoImages:id,product_id,image_url', 'category:id,name'])
                         ->when(auth()->check(), function ($query) {
                             $query->withExists(['favorites as is_favorited' => function ($q) {
                                 $q->where('user_id', auth()->id());
@@ -123,7 +123,7 @@ class BusinessController extends Controller
 
             if ($details['categoriesWithProducts']->count() == 0) {
                 $details['products'] = Product::select('id', 'name', 'slug', 'description', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'category_id', 'business_id')
-                    ->with(['firstImage:id,product_id,image_url', 'category:id,name'])
+                    ->with(['firstTwoImages:id,product_id,image_url', 'category:id,name'])
                     ->when(auth()->check(), function ($query) {
                         $query->withExists(['favorites as is_favorited' => function ($q) {
                             $q->where('user_id', auth()->id());

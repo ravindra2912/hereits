@@ -88,12 +88,47 @@
         font-size: 0.7rem;
     }
 
-    .related-card {
-        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
     .related-card:hover {
         transform: translateY(-5px);
+    }
+
+    .related-card .product-card-img-container {
+        position: relative;
+        aspect-ratio: 1/1;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .related-card .product-card-img-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+    }
+
+    .related-card .secondary-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        z-index: 1;
+    }
+
+    .related-card .primary-image {
+        position: relative;
+        z-index: 2;
+    }
+
+    .has-hover-image:hover .primary-image {
+        opacity: 0 !important;
+    }
+
+    .has-hover-image:hover .secondary-image {
+        opacity: 1 !important;
+    }
+
+    .related-card:hover .card-img-top {
+        transform: scale(1.05);
     }
 
     /* Mobile Responsive Adjustments */
@@ -322,9 +357,20 @@
         <div class="row g-4">
             @foreach($relatedProducts as $related)
             <div class="col-6 col-md-3">
-                <div class="card border-0 shadow-sm h-100 rounded-4 overflow-hidden related-card">
+                <div class="card border-0 shadow-sm h-100 rounded-4 overflow-hidden related-card {{ $related->firstTwoImages->count() > 1 ? 'has-hover-image' : '' }}">
                     <a href="{{ route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $related->slug]) }}" class="position-relative d-block">
-                        <img src="{{ getImage($related->firstImage?->image_url) }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ $related->name }}" loading="lazy">
+                        <div class="product-card-img-container">
+                            <img src="{{ getImage($related->firstTwoImages->first()?->image_url) }}"
+                                class="card-img-top primary-image"
+                                alt="{{ $related->name }}"
+                                loading="lazy">
+                            @if($related->firstTwoImages->count() > 1)
+                            <img src="{{ getImage($related->firstTwoImages[1]->image_url) }}"
+                                class="card-img-top secondary-image"
+                                alt="{{ $related->name }}"
+                                loading="lazy">
+                            @endif
+                        </div>
                         <button type="button" class="favorite-btn position-absolute top-0 end-0 m-2 rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
                             data-item-id="{{ $related->id }}"
                             data-business-id="{{ $business->id }}"
@@ -334,8 +380,8 @@
                         </button>
                     </a>
                     <div class="card-body p-3">
-                        <h6 class="fw-bold mb-1 text-truncate text-dark">{{ $related->name }}</h6>
-                        <div class="text-primary fw-bold">
+                        <h6 class="fw-bold mb-1 text-dark" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.5em; line-height: 1.25em;">{{ $related->name }}</h6>
+                        <div class="text-primary fw-bold text-truncate" style="font-size: 0.85rem;">
                             @if($related->price_type == 'FixPrice')
                             ₹{{ $related->sell_price }}
                             @elseif($related->price_type == 'PriceInRange')
