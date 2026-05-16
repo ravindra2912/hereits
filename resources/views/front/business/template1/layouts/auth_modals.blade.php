@@ -38,6 +38,16 @@
                             <span class="btn-loader d-none" id="loader"><i class="fas fa-spinner fa-spin me-2"></i> Processing...</span>
                         </button>
                     </form>
+
+                    <div class="position-relative mb-4">
+                        <hr class="text-muted opacity-25">
+                        <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 small text-muted">OR</span>
+                    </div>
+
+                    <a href="{{ route('auth.google') }}" class="btn btn-outline-dark w-100 py-3 rounded-pill fw-bold shadow-sm mb-4 d-flex align-items-center justify-content-center gap-3 hover-lift">
+                        <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" alt="Google" style="width: 20px;">
+                        <span>Continue with Google</span>
+                    </a>
                     <div class="text-center">
                         <p class="small text-muted mb-0">Don't have an account? <span class="text-primary fw-bold text-decoration-none cursor-pointer switch-pane" data-target="register-pane">Register Here</span></p>
                     </div>
@@ -79,6 +89,16 @@
                             <span class="btn-loader d-none" id="loader"><i class="fas fa-spinner fa-spin me-2"></i> Processing...</span>
                         </button>
                     </form>
+
+                    <div class="position-relative mb-4">
+                        <hr class="text-muted opacity-25">
+                        <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 small text-muted">OR</span>
+                    </div>
+
+                    <a href="{{ route('auth.google') }}" class="btn btn-outline-dark w-100 py-3 rounded-pill fw-bold shadow-sm mb-4 d-flex align-items-center justify-content-center gap-3 hover-lift">
+                        <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" alt="Google" style="width: 20px;">
+                        <span>Continue with Google</span>
+                    </a>
                     <div class="text-center">
                         <p class="small text-muted mb-0">Already have an account? <span class="text-primary fw-bold text-decoration-none cursor-pointer switch-pane" data-target="login-pane">Login Now</span></p>
                     </div>

@@ -34,6 +34,16 @@
                             <span id="loader" class="d-none">Logging in...</span>
                         </button>
                     </form>
+
+                    <div class="position-relative mb-4">
+                        <hr class="text-muted opacity-25">
+                        <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 small text-muted">OR</span>
+                    </div>
+
+                    <a href="{{ route('auth.google') }}" class="btn btn-outline-dark w-100 py-3 rounded-3 fw-bold shadow-sm mb-4 d-flex align-items-center justify-content-center gap-3">
+                        <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" alt="Google" style="width: 20px;">
+                        <span>Continue with Google</span>
+                    </a>
                     <div class="text-center mt-4">
                         <p class="mb-0">Don't have an account?
                             <span onclick="switchAuthSection('register')" class="text-primary fw-bold text-decoration-none cursor-pointer">Register Now</span>
@@ -76,6 +86,16 @@
                             <span id="loader" class="d-none">Creating account...</span>
                         </button>
                     </form>
+
+                    <div class="position-relative mb-4">
+                        <hr class="text-muted opacity-25">
+                        <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 small text-muted">OR</span>
+                    </div>
+
+                    <a href="{{ route('auth.google') }}" class="btn btn-outline-dark w-100 py-3 rounded-3 fw-bold shadow-sm mb-4 d-flex align-items-center justify-content-center gap-3">
+                        <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" alt="Google" style="width: 20px;">
+                        <span>Continue with Google</span>
+                    </a>
                     <div class="text-center mt-4">
                         <p class="mb-0">Already have an account? <span onclick="switchAuthSection('login')" class="text-primary fw-bold text-decoration-none cursor-pointer">Login Here</span></p>
                     </div>
