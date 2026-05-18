@@ -183,8 +183,20 @@ class BusinessCategoryController extends Controller
         try {
             $delete = BusinessCategory::find($id);
             if ($delete) {
+                if ($delete->businesses()->exists()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This category cannot be deleted because there are businesses listed under it.',
+                        'data' => $data,
+                        'redirect' => $redirect
+                    ]);
+                }
+
                 fileRemoveStorage($delete->image);
                 $delete->delete();
+
+                Cache::forget('BusinessCategory');
+
                 $success = true;
                 $message = 'Business category deleted successfully.';
             }
