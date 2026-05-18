@@ -26,7 +26,7 @@
                     </a>
                     <a href="{{ route('why-join-with-us') }}" class="btn btn-outline-light btn-lg rounded-pill px-5 py-3 fw-bold">
                         <i class="fas fa-plus-circle me-2"></i>
-                        @if(Auth::user()->role == 'Business')
+                        @if(Auth::user() && Auth::user()->role == 'Business')
                         List you another business
                         @else
                         List Your Business
