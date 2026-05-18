@@ -814,3 +814,10 @@ function checkPosPermission($permission)
     $posPermissions = $permissions['pos_permission'] ?? [];
     return !empty($posPermissions[$permission]);
 }
+
+function getSiteSetting()
+{
+    return Cache::rememberForever('site_setting', function () {
+        return \App\Models\SiteSetting::first();
+    });
+}

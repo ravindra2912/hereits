@@ -336,6 +336,10 @@ class AuthController extends Controller
                 updateBusinessSeo($insert->id);
 
                 $business_category = BusinessCategory::select('deduct_credit_per_self_appointment', 'deduct_credit_per_customer_appointment')->first($request->business_category_id);
+                
+                $site_setting = getSiteSetting();
+                $free_trial_days = $site_setting->free_trial_days ?? 7;
+
                 // assign appoinment system to business
                 BusinessSetting::create([
                     'business_id' => $insert->id,
@@ -345,7 +349,7 @@ class AuthController extends Controller
                     'credit' => 30,
                     'deduct_credit_per_self_appointment' => $business_category->deduct_credit_per_self_appointment ?? 1,
                     'deduct_credit_per_customer_appointment' => $business_category->deduct_credit_per_customer_appointment ?? 1,
-                    'subscription_expiry_date' => Carbon::now()->addDays(7),
+                    'subscription_expiry_date' => Carbon::now()->addDays($free_trial_days),
                 ]);
 
                 // add business and expert timing

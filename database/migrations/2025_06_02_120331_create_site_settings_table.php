@@ -19,6 +19,7 @@ return new class extends Migration
             $table->double('charge_place_order_on_website', 4, 2)->default(0.1)->comment('Charge for placing order on website');
             $table->double('charge_place_order_on_pos', 4, 2)->default(0.05)->comment('Charge for placing order on pos');
             $table->string('payment_gateway', 20)->default('cashfree')->comment('default payment gateway');
+            $table->integer('free_trial_days')->default(7)->comment('Free trial period in days');
             $table->timestamps();
         });
     }

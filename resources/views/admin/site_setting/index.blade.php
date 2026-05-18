@@ -70,6 +70,15 @@
                         </div>
                         <small class="text-muted mt-2 d-block px-2">Credits deducted from business for each POS order.</small>
                     </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Free Trial Period (Days)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light rounded-start-pill border-end-0 px-3"><i class="bi bi-calendar-event"></i></span>
+                            <input type="number" name="free_trial_days" class="form-control border-start-0 rounded-end-pill px-3" value="{{ $setting->free_trial_days ?? 7 }}" required>
+                        </div>
+                        <small class="text-muted mt-2 d-block px-2">Default free trial duration for new business subscriptions.</small>
+                    </div>
                 </div>
 
                 <div class="mt-5 border-top pt-4 text-end">

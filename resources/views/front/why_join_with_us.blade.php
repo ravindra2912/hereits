@@ -16,6 +16,10 @@
 
 @section('content')
 
+@php
+    $free_trial_days = getSiteSetting()->free_trial_days ?? 7;
+@endphp
+
 <!-- 1. Hero Section -->
 <section class="hero-section py-5 position-relative overflow-hidden">
     <div class="container py-lg-5">
@@ -33,7 +37,9 @@
                     Manage appointments, sell products, and list your services—all from one powerful platform. Join thousands of businesses today.
                 </p>
                 <div class="d-flex gap-3 flex-column flex-sm-row">
-                    <a href="{{ route('register.business') }}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">Start Free Trial</a>
+                    <a href="{{ route('register.business') }}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
+                        {{ $free_trial_days > 0 ? "Start {$free_trial_days} Day Free Trial" : "Get Started" }}
+                    </a>
                     <a href="#how-it-works" class="btn btn-outline-dark btn-lg rounded-pill px-5">How It Works</a>
                 </div>
                 <div class="mt-5 d-flex align-items-center gap-4">
@@ -101,6 +107,60 @@
         </div>
     </div>
 </section>
+
+@if(isset($plans) && $plans->count() > 0)
+<!-- 10.5. Pricing Section -->
+<section id="pricing" class="py-5 bg-white">
+    <div class="container py-lg-5">
+        <div class="text-center mb-5">
+            <h6 class="text-primary fw-bold text-uppercase ls-1 mb-2">Pricing Plans</h6>
+            <h2 class="fw-bold display-5 mb-3">Choose the Right <span class="text-primary">Plan for Your Business</span></h2>
+            <p class="text-secondary mx-auto" style="max-width: 600px;">
+                Transparent pricing with no hidden fees. Select a plan that fits your growth ambitions.
+            </p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            @foreach($plans as $plan)
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow-sm rounded-4 p-4 p-lg-5 text-center transition-all hover-lift @if($loop->iteration == 2) border-primary border-top border-5 @endif">
+                    @if($loop->iteration == 2)
+                    <div class="position-absolute top-0 start-50 translate-middle">
+                        <span class="badge bg-primary rounded-pill px-3 py-2 shadow-sm">MOST POPULAR</span>
+                    </div>
+                    @endif
+
+                    <h4 class="fw-bold mb-2">{{ $plan->name }}</h4>
+                    <div class="mb-4">
+                        <span class="display-4 fw-bold text-dark">₹{{ number_format($plan->price, 0) }}</span>
+                        <span class="text-secondary">/{{ $plan->duration }} {{ $plan->duration > 1 ? 'Months' : 'Month' }}</span>
+                    </div>
+
+                    <p class="text-secondary mb-4">{{ $plan->description }}</p>
+
+                    @if($plan->benefits)
+                    <ul class="list-unstyled mb-5 text-start">
+                        @foreach(explode(",", $plan->benefits) as $benefit)
+                        <li class="mb-3 d-flex align-items-start">
+                            <i class="fas fa-check-circle text-success mt-1 me-3"></i>
+                            <span>{{ trim($benefit) }}</span>
+                        </li>
+                        @endforeach
+                    </ul>
+                    @endif
+
+                    <div class="mt-auto">
+                        <a href="{{ route('register.business', ['plan_id' => $plan->id]) }}" class="btn @if($loop->iteration == 2) btn-primary @else btn-outline-primary @endif btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                            {{ $free_trial_days > 0 ? "Start {$free_trial_days} Day Free Trial" : "Get Started" }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+</section>
+@endif
 
 <!-- 3. Appointment Module Features -->
 <section class="py-5">
@@ -348,59 +408,7 @@
     </div>
 </section>
 
-@if(isset($plans) && $plans->count() > 0)
-<!-- 10.5. Pricing Section -->
-<section id="pricing" class="py-5 bg-white">
-    <div class="container py-lg-5">
-        <div class="text-center mb-5">
-            <h6 class="text-primary fw-bold text-uppercase ls-1 mb-2">Pricing Plans</h6>
-            <h2 class="fw-bold display-5 mb-3">Choose the Right <span class="text-primary">Plan for Your Business</span></h2>
-            <p class="text-secondary mx-auto" style="max-width: 600px;">
-                Transparent pricing with no hidden fees. Select a plan that fits your growth ambitions.
-            </p>
-        </div>
 
-        <div class="row g-4 justify-content-center">
-            @foreach($plans as $plan)
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 border-0 shadow-sm rounded-4 p-4 p-lg-5 text-center transition-all hover-lift @if($loop->iteration == 2) border-primary border-top border-5 @endif">
-                    @if($loop->iteration == 2)
-                    <div class="position-absolute top-0 start-50 translate-middle">
-                        <span class="badge bg-primary rounded-pill px-3 py-2 shadow-sm">MOST POPULAR</span>
-                    </div>
-                    @endif
-
-                    <h4 class="fw-bold mb-2">{{ $plan->name }}</h4>
-                    <div class="mb-4">
-                        <span class="display-4 fw-bold text-dark">₹{{ number_format($plan->price, 0) }}</span>
-                        <span class="text-secondary">/{{ $plan->duration }} {{ $plan->duration > 1 ? 'Months' : 'Month' }}</span>
-                    </div>
-
-                    <p class="text-secondary mb-4">{{ $plan->description }}</p>
-
-                    @if($plan->benefits)
-                    <ul class="list-unstyled mb-5 text-start">
-                        @foreach(explode(",", $plan->benefits) as $benefit)
-                        <li class="mb-3 d-flex align-items-start">
-                            <i class="fas fa-check-circle text-success mt-1 me-3"></i>
-                            <span>{{ trim($benefit) }}</span>
-                        </li>
-                        @endforeach
-                    </ul>
-                    @endif
-
-                    <div class="mt-auto">
-                        <a href="{{ route('register.business', ['plan_id' => $plan->id]) }}" class="btn @if($loop->iteration == 2) btn-primary @else btn-outline-primary @endif btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
-                            Start Free Trial
-                        </a>
-                    </div>
-                </div>
-            </div>
-            @endforeach
-        </div>
-    </div>
-</section>
-@endif
 
 <!-- 10. Latest Blogs -->
 @if(isset($blogs) && $blogs->count() > 0)
@@ -449,7 +457,9 @@
             <div class="position-relative" style="z-index: 1;">
                 <h2 class="fw-bold mb-3 text-white display-5">Ready to Grow Your Business?</h2>
                 <p class="lead text-white mb-5">Join thousands of businesses transforming their operations today.</p>
-                <a href="{{ route('register.business') }}" class="btn btn-light btn-lg rounded-pill px-5 py-3 shadow-lg">Start Free Trial</a>
+                <a href="{{ route('register.business') }}" class="btn btn-light btn-lg rounded-pill px-5 py-3 shadow-lg">
+                    {{ $free_trial_days > 0 ? "Start {$free_trial_days} Day Free Trial" : "Get Started" }}
+                </a>
                 <p class="mt-3 small text-white opacity-75">No credit card required &bull; Cancel anytime</p>
             </div>
         </div>

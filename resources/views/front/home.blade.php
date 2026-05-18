@@ -24,8 +24,13 @@
                     <a href="{{ route('business-list') }}" class="btn btn-primary btn-lg rounded-pill px-5 py-3 fw-bold shadow-lg">
                         <i class="fas fa-compass me-2"></i> Explore Now
                     </a>
-                    <a href="{{ route('register.business') }}" class="btn btn-outline-light btn-lg rounded-pill px-5 py-3 fw-bold">
-                        <i class="fas fa-plus-circle me-2"></i> List Your Business
+                    <a href="{{ route('why-join-with-us') }}" class="btn btn-outline-light btn-lg rounded-pill px-5 py-3 fw-bold">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        @if(Auth::user()->role == 'Business')
+                        List you another business
+                        @else
+                        List Your Business
+                        @endif
                     </a>
                 </div>
 
@@ -306,7 +311,7 @@
                 </div>
 
                 <div class="d-flex gap-2 gap-sm-3 hero-buttons">
-                    <a href="{{ route('register.business') }}" class="btn btn-primary btn-lg rounded-pill px-3 px-sm-5 flex-fill flex-sm-none text-nowrap">Get Started Free</a>
+                    <a href="{{ route('why-join-with-us') }}" class="btn btn-primary btn-lg rounded-pill px-3 px-sm-5 flex-fill flex-sm-none text-nowrap">Get Started Free</a>
                     <a href="{{ route('aboutUs') }}" class="btn btn-outline-light btn-lg rounded-pill px-3 px-sm-5 flex-fill flex-sm-none text-nowrap">Learn More</a>
                 </div>
             </div>

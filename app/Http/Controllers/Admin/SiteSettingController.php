@@ -29,6 +29,7 @@ class SiteSettingController extends Controller
                 'charge_place_order_on_website' => 'required|numeric|min:0',
                 'charge_place_order_on_pos' => 'required|numeric|min:0',
                 'payment_gateway' => 'required|in:' . implode(',', config('const.payment_gateway')),
+                'free_trial_days' => 'required|integer|min:0',
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -48,7 +49,10 @@ class SiteSettingController extends Controller
             $setting->charge_place_order_on_website = $request->charge_place_order_on_website;
             $setting->charge_place_order_on_pos = $request->charge_place_order_on_pos;
             $setting->payment_gateway = $request->payment_gateway;
+            $setting->free_trial_days = $request->free_trial_days;
             $setting->save();
+
+            \Illuminate\Support\Facades\Cache::forget('site_setting');
 
             $success = true;
             $message = 'Site settings updated successfully.';

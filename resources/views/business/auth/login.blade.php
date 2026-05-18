@@ -473,7 +473,16 @@
         </button>
       </form>
 
-      <div class="register-prompt fadeIn delay-2">
+      <div class="divider fadeIn delay-2">
+        <span>or</span>
+      </div>
+
+      <a href="{{ route('auth.google') }}" class="btn-login fadeIn delay-2" style="background-color: white; color: var(--secondary-color); border: 1.5px solid #e2e8f0; text-decoration: none;">
+        <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="Google" style="width: 20px; height: 20px;">
+        Sign In with Google
+      </a>
+
+      <div class="register-prompt fadeIn delay-3">
         <p>Don't have a business account? <br><br>
           <a href="{{ route('register.business') }}" class="register-link">Register Your Business</a>
         </p>

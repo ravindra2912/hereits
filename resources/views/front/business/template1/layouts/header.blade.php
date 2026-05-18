@@ -147,6 +147,14 @@
                                 <span>My Account</span>
                             </a>
                         </li>
+                        @if(Auth::user()->role == 'Business')
+                        <li>
+                            <a class="dropdown-item py-2 d-flex align-items-center gap-3" href="{{ route('business.dashboard') }}">
+                                <i class="fas fa-chart-line text-muted"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        @endif
                         <li>
                             <hr class="dropdown-divider opacity-50">
                         </li>
