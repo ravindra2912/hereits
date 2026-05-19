@@ -191,6 +191,11 @@
             @endguest
           </div>
         </div>
+        <div class="col-lg-4 d-none d-lg-block text-center text-lg-end">
+          <div class="d-inline-block position-relative rounded-4 overflow-hidden shadow-lg border border-3 border-white border-opacity-25 hover-lift" style="width: 320px; height: 320px;">
+            <img src="{{ getImage($business->business_image) }}" alt="{{ $business->name }}" class="w-100 h-100 object-fit-cover">
+          </div>
+        </div>
       </div>
     </div>
     @endif
