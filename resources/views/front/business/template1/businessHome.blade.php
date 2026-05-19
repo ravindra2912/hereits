@@ -191,7 +191,7 @@
             @endguest
           </div>
         </div>
-        <div class="col-lg-4 d-none d-lg-block text-center text-lg-end">
+        <div class="col-lg-4 d-none d-lg-block text-center">
           <div class="d-inline-block position-relative rounded-4 overflow-hidden shadow-lg border border-3 border-white border-opacity-25 hover-lift" style="width: 320px; height: 320px;">
             <img src="{{ getImage($business->business_image) }}" alt="{{ $business->name }}" class="w-100 h-100 object-fit-cover">
           </div>
@@ -330,10 +330,10 @@
             </span>
             @if(isset($expertAvailability['data']))
             <div class="live-token-container live-token-container-lg shadow-sm mt-2" title="Current Token being served">
-                <div class="live-token-label">
-                    <span class="live-dot-pulsing"></span> LIVE TOKEN
-                </div>
-                <div class="live-token-number">{{ $expertAvailability['data']->token_number }}</div>
+              <div class="live-token-label">
+                <span class="live-dot-pulsing"></span> LIVE TOKEN
+              </div>
+              <div class="live-token-number">{{ $expertAvailability['data']->token_number }}</div>
             </div>
             @endif
             @elseif($expertAvailability['status'] == 'break')
