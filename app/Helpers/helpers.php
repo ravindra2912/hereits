@@ -94,14 +94,20 @@ function getImage($url = "", $type = '')
             return "https://img.youtube.com/vi/$ytId/hqdefault.jpg";
         }
 
-        try {
-            $response = Http::timeout(2)->head($url);
-            if ($response->ok()) {
-                return $url;
+        return Cache::remember('valid_image_' . md5($url), 86400, function () use ($url, $type) {
+            try {
+                $response = Http::timeout(2)->head($url);
+                if ($response->ok()) {
+                    return $url;
+                }
+            } catch (\Exception $e) {
+                Log::warning("Could not resolve image URL: " . $url . " - Error: " . $e->getMessage());
             }
-        } catch (\Exception $e) {
-            Log::warning("Could not resolve image URL: " . $url . " - Error: " . $e->getMessage());
-        }
+            if ($type == 'expert') {
+                return asset('assets/images/expert.webp');
+            }
+            return asset('assets/images/default.png');
+        });
     } else {
         $image = "storage/" . $url;
         if (!empty($url)) {
@@ -210,7 +216,9 @@ function getCities($state_id = 12)
     if (empty($state_id)) {
         $state_id = 12;
     }
-    return City::where('state_id', $state_id)->get();
+    return Cache::remember('getCities_' . $state_id, 1440, function () use ($state_id) {
+        return City::where('state_id', $state_id)->get();
+    });
 }
 
 function generateUniqueSlug($model, $name, $field = 'slug', $business_id = null)

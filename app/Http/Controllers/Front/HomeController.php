@@ -38,77 +38,88 @@ class HomeController extends Controller
             'Fitness' => ['icon' => 'fa-dumbbell', 'color' => '#8b5cf6'],
         ];
 
-        $categories = BusinessCategory::where('status', 'active')
-            ->whereHas('businesses', function ($query) use ($location) {
-                $query->where('status', 'active')
-                    ->when($location, function ($q) use ($location) {
-                        if (!empty($location['area_lat_long'])) {
-                            $coords = explode(',', $location['area_lat_long']);
-                            if (count($coords) === 4) {
-                                return $q->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
+        $cacheKey = 'categories_list_' . ($location ? md5(json_encode($location)) : 'default');
+        $categories = Cache::remember($cacheKey, 500, function () use ($location) {
+            return BusinessCategory::where('status', 'active')
+                ->whereHas('businesses', function ($query) use ($location) {
+                    $query->where('status', 'active')
+                        ->when($location, function ($q) use ($location) {
+                            if (!empty($location['area_lat_long'])) {
+                                $coords = explode(',', $location['area_lat_long']);
+                                if (count($coords) === 4) {
+                                    return $q->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
+                                }
                             }
-                        }
-                        if (isset($location['latitude']) && isset($location['longitude'])) {
-                            return $q->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100);
-                        }
-                    });
-            })
-            ->withCount(['businesses' => function ($query) use ($location) {
-                $query->where('status', 'active')
-                    ->when($location, function ($q) use ($location) {
-                        if (!empty($location['area_lat_long'])) {
-                            $coords = explode(',', $location['area_lat_long']);
-                            if (count($coords) === 4) {
-                                return $q->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
+                            if (isset($location['latitude']) && isset($location['longitude'])) {
+                                return $q->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100);
                             }
-                        }
-                        if (isset($location['latitude']) && isset($location['longitude'])) {
-                            return $q->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100);
-                        }
-                    });
-            }])
-            ->take(6)
-            ->get()
-            ->map(function ($cat) {
-                return [
-                    'name' => $cat->name,
-                    'slug' => $cat->slug,
-                    'image' => getImage($cat->image),
-                    'count' => $cat->businesses_count,
-                    'color' => '#64748b'
-                ];
-            });
+                        });
+                })
+                ->withCount(['businesses' => function ($query) use ($location) {
+                    $query->where('status', 'active')
+                        ->when($location, function ($q) use ($location) {
+                            if (!empty($location['area_lat_long'])) {
+                                $coords = explode(',', $location['area_lat_long']);
+                                if (count($coords) === 4) {
+                                    return $q->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
+                                }
+                            }
+                            if (isset($location['latitude']) && isset($location['longitude'])) {
+                                return $q->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100);
+                            }
+                        });
+                }])
+                ->take(6)
+                ->get()
+                ->map(function ($cat) {
+                    return [
+                        'name' => $cat->name,
+                        'slug' => $cat->slug,
+                        'image' => getImage($cat->image),
+                        'count' => $cat->businesses_count,
+                        'color' => '#64748b'
+                    ];
+                });
+        });
 
-        $featured_businesses = Business::query()
-            ->select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
-            ->with(['businessCategory', 'city', 'businessSetting:id,business_id,is_verified'])
-            ->when($location, function ($query) use ($location) {
-                if (!empty($location['area_lat_long'])) {
-                    $coords = explode(',', $location['area_lat_long']);
-                    if (count($coords) === 4) {
-                        return $query->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
+        $featuredKey = 'featured_businesses_' . ($location ? md5(json_encode($location)) : 'default');
+        $featured_businesses = Cache::remember($featuredKey, 500, function () use ($location) {
+            return Business::query()
+                ->select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'area', 'business_image', 'business_logo', 'business_category_id', 'address')
+                ->with(['businessCategory', 'city', 'businessSetting:id,business_id,is_verified'])
+                ->when($location, function ($query) use ($location) {
+                    if (!empty($location['area_lat_long'])) {
+                        $coords = explode(',', $location['area_lat_long']);
+                        if (count($coords) === 4) {
+                            return $query->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
+                        }
                     }
-                }
-                if (isset($location['latitude']) && isset($location['longitude'])) {
-                    return $query->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100); // Larger radius for featured if needed
-                }
-                return $query->where('city_id', $location['city_id'] ?? 0);
-            })
-            ->when(!$location, function ($query) {
-                return $query->orderBy('rating', 'desc');
-            })
+                    if (isset($location['latitude']) && isset($location['longitude'])) {
+                        return $query->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100); // Larger radius for featured if needed
+                    }
+                    return $query->where('city_id', $location['city_id'] ?? 0);
+                })
+                ->when(!$location, function ($query) {
+                    return $query->orderBy('rating', 'desc');
+                })
+                ->whereHas('businessSetting', function ($query) {
+                    $query->where('visibility', 'public');
+                })
+                ->where('status', 'active')
+                ->take(8)
+                ->get();
+        });
 
-            ->when(auth()->check(), function ($query) {
-                $query->withExists(['favorites as is_favorited' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }]);
-            })
-            ->whereHas('businessSetting', function ($query) {
-                $query->where('visibility', 'public');
-            })
-            ->where('status', 'active')
-            ->take(8)
-            ->get();
+        if (auth()->check()) {
+            $favoriteBusinessIds = Favorite::where('user_id', auth()->id())
+                ->where('favorite_type', 'business')
+                ->pluck('favorite_item_id')
+                ->toArray();
+
+            foreach ($featured_businesses as $business) {
+                $business->is_favorited = in_array($business->id, $favoriteBusinessIds);
+            }
+        }
 
         $favorite_businesses = collect();
         if (auth()->check()) {
@@ -117,13 +128,14 @@ class HomeController extends Controller
                 ->whereHas('favorites', function ($query) {
                     $query->where('user_id', auth()->id());
                 })
-                ->withExists(['favorites as is_favorited' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }])
                 ->where('status', 'active')
                 ->latest()
                 ->take(4)
                 ->get();
+
+            foreach ($favorite_businesses as $business) {
+                $business->is_favorited = true;
+            }
         }
 
         return view('front.home', compact('categories', 'featured_businesses', 'favorite_businesses'));
@@ -133,26 +145,30 @@ class HomeController extends Controller
     {
         $businessCategory = getBusinessCategory();
 
-        $businesses = Business::select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'business_image', 'business_logo', 'business_category_id')
-            ->with(['businessCategory', 'city'])
-            ->whereHas('businessSetting', function ($query) {
-                $query->where('is_verified', true);
-            })
-            ->where('rating', '>', 3)
-            ->where('status', 'active')
-            ->orderBy('rating', 'desc')
-            ->take(4)
-            ->get();
+        $businesses = Cache::remember('why_join_businesses', 3600, function () {
+            return Business::select('id', 'name', 'slug', 'business_type', 'rating', 'city_id', 'business_image', 'business_logo', 'business_category_id')
+                ->with(['businessCategory', 'city'])
+                ->whereHas('businessSetting', function ($query) {
+                    $query->where('is_verified', true);
+                })
+                ->where('rating', '>', 3)
+                ->where('status', 'active')
+                ->orderBy('rating', 'desc')
+                ->take(4)
+                ->get();
+        });
 
-        $blogs = Blog::where('status', 'active')
-            ->orderBy('published_at', 'desc')
-            ->take(4)
-            ->get();
+        $blogs = Cache::remember('why_join_blogs', 3600, function () {
+            return Blog::where('status', 'active')
+                ->orderBy('published_at', 'desc')
+                ->take(4)
+                ->get();
+        });
 
         $plans = Plan::where('plan_type', 'subscription')
-            ->where('status', 'active')
-            ->orderBy('price', 'asc')
-            ->get();
+                ->where('status', 'active')
+                ->orderBy('price', 'asc')
+                ->get();
 
         return view('front.why_join_with_us', compact('businesses', 'businessCategory', 'blogs', 'plans'));
     }
@@ -230,11 +246,6 @@ class HomeController extends Controller
                 }
                 return $query->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 5);
             })
-            ->when(auth()->check(), function ($query) {
-                $query->withExists(['favorites as is_favorited' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }]);
-            })
             ->where('status', 'active')
             ->addSelect(['id', 'name', 'slug', 'business_image', 'area', 'city_id', 'business_category_id', 'rating']);
 
@@ -245,6 +256,18 @@ class HomeController extends Controller
         }
 
         $businesses = $query->latest()->paginate(12);
+
+        if (auth()->check()) {
+            $favoriteBusinessIds = Favorite::where('user_id', auth()->id())
+                ->where('favorite_type', 'business')
+                ->pluck('favorite_item_id')
+                ->toArray();
+
+            $businesses->getCollection()->each(function ($business) use ($favoriteBusinessIds) {
+                $business->is_favorited = in_array($business->id, $favoriteBusinessIds);
+            });
+        }
+
         return view('front.business_list', compact('businesses'));
     }
 
