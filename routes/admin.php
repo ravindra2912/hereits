@@ -59,8 +59,10 @@ Route::name('admin.')->group(function () {
         Route::resource('blog', BlogController::class);
         Route::controller(BusinessController::class)->group(function () {
             Route::get('business/pending/list', 'pendingBusinesses')->name('business.pendings');
+            Route::get('business/expired/list', 'expiredBusinesses')->name('business.expired');
             Route::post('business/change/status', 'changeBusinessStatus')->name('business.change.status');
         });
+
 
 
         Route::resource('businesscategory', BusinessCategoryController::class);

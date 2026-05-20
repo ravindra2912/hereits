@@ -14,13 +14,17 @@
       <i class="bi bi-grid me-2"></i>Business Category
     </a>
 
-    <a href="{{ route('admin.business.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.business*') && !request()->routeIs('admin.businesscategory*') ? 'active' : '' }}">
+    <a href="{{ route('admin.business.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.business*') && !request()->routeIs('admin.businesscategory*') && !request()->routeIs('admin.business.pendings*') && !request()->routeIs('admin.business.expired*') ? 'active' : '' }}">
       <i class="bi bi-shop me-2"></i>Business
-      <!-- </a>
+    </a>
 
     <a href="{{ route('admin.business.pendings') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.business.pendings*') ? 'active' : '' }}">
-      <i class="bi bi-shop me-2"></i>Pending Business
-    </a> -->
+      <i class="bi bi-hourglass-split me-2"></i>Pending Business
+    </a>
+
+    <a href="{{ route('admin.business.expired') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.business.expired*') ? 'active' : '' }}">
+      <i class="bi bi-calendar-x me-2"></i>Expired Business
+    </a>
 
 
       <a href="{{ route('admin.plan.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.plan*') ? 'active' : '' }}">

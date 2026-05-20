@@ -1,86 +1,75 @@
 @extends('admin.layouts.main')
-@section('title', 'Pending Business')
+@section('title', 'Expired Business')
 
 @push('style')
 <link rel="stylesheet" href="{{ asset('assets/admin/css/datatables-combined.min.css') }}?v={{ filemtime(public_path('assets/admin/css/datatables-combined.min.css')) }}" />
+<style>
+  .badge-expiry {
+    font-size: 0.85rem;
+    padding: 0.35em 0.65em;
+    font-weight: 500;
+  }
+</style>
 @endpush
 
 @section('content')
 
-
-<!-- Content Header (Page header) -->
-<div class="content-header">
-  <div class="container-fluid">
-    <div class="row mb-2">
-      <div class="col-sm-6">
-        <h1 class="m-0">Pending business list</h1>
-      </div><!-- /.col -->
-      <div class="col-sm-6">
-        <ol class="breadcrumb float-sm-right">
-          <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item active">Pending business list</li>
-        </ol>
-      </div><!-- /.col -->
-    </div><!-- /.row -->
-  </div><!-- /.container-fluid -->
-</div>
-<!-- /.content-header -->
-
-
-<!-- Main content -->
-<section class="content">
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-12">
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title">Pending business list</h3>
-
-          </div>
-          <!-- /.card-header -->
-          <div class="card-body table-responsive">
-
-            <table class="table table-hover text-nowrap" width="100%" cellspacing="0" id="data-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Image</th>
-                  <th width="15%">Business name</th>
-                  <th>Owner</th>
-                  <th>Business Category</th>
-                  <th width="15%">Address</th>
-                  <th>Contact</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-
-              </tbody>
-            </table>
-          </div>
-          <!-- /.card-body -->
-        </div>
-        <!-- /.card -->
-      </div>
-    </div>
-
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2 text-dark"><i class="bi bi-calendar-x me-2 text-danger"></i>Expired Businesses</h1>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}" class="text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item"><a href="{{ route('admin.business.index') }}" class="text-decoration-none">Business</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Expired</li>
+      </ol>
+    </nav>
   </div>
-</section>
-<!-- /.content -->
+</div>
+
+<div class="card shadow mb-4 border-0 rounded-3">
+  <div class="card-header py-3 d-flex justify-content-between align-items-center bg-white border-bottom">
+    <h5 class="m-0 font-weight-bold text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Businesses with Expired/Due Dates</h5>
+    <a href="{{ route('admin.business.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back to All
+    </a>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped table-hover align-middle" id="data-table" width="100%" cellspacing="0">
+        <thead class="table-light text-secondary">
+          <tr>
+            <th>ID</th>
+            <th>Image</th>
+            <th width="15%">Business Name</th>
+            <th>Owner</th>
+            <th>Category</th>
+            <th>Subscription Expiry</th>
+            <th>Product Expiry</th>
+            <th>Service Expiry</th>
+            <th>Status</th>
+            <th class="text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <!-- Business Info Modal -->
 <div class="modal fade" id="businessInfoModal" tabindex="-1" aria-labelledby="businessInfoModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
+    <div class="modal-content border-0 shadow-lg rounded-3">
+      <div class="modal-header bg-danger text-white">
         <h5 class="modal-title" id="businessInfoModalLabel"><i class="bi bi-info-circle me-2"></i>Business Information</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-0">
         <div class="p-4" id="modalLoader">
           <div class="text-center py-5">
-            <div class="spinner-border text-primary" role="status">
+            <div class="spinner-border text-danger" role="status">
               <span class="visually-hidden">Loading...</span>
             </div>
           </div>
@@ -89,9 +78,10 @@
           <div class="row g-0">
             <div class="col-md-4 bg-light border-end p-4 text-center">
               <img id="view_business_logo" src="" class="img-fluid rounded-circle shadow-sm border mb-2" style="width: 100px; height: 100px; object-fit: cover;" title="Business Logo">
+              <small class="text-muted d-block mb-1">Business Logo</small>
               <div class="mb-3">
-                <small class="text-muted d-block mb-1">Banner Image</small>
                 <img id="view_business_banner" src="" class="img-fluid rounded border shadow-sm" style="width: 100%; height: 120px; object-fit: cover;">
+                <small class="text-muted d-block mb-1">Banner Image</small>
               </div>
               <h5 id="view_business_name" class="fw-bold mb-1"></h5>
               <p id="view_business_category" class="text-muted small mb-1"></p>
@@ -140,7 +130,7 @@
                 </div>
                 <div class="col-md-6 mb-2">
                   <small class="text-muted d-block">Business Type</small>
-                  <span id="view_business_type" class="badge bg-info text-dark"></span>
+                  <span id="view_business_type" class="fw-bold"></span>
                 </div>
                 <div class="col-md-12 mb-2">
                   <small class="text-muted d-block">Address</small>
@@ -185,7 +175,7 @@
       </div>
       <div class="modal-footer bg-light">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <a id="view_edit_link" href="#" class="btn btn-primary">Edit Business</a>
+        <a id="view_edit_link" href="#" class="btn btn-danger">Edit Business Settings</a>
       </div>
     </div>
   </div>
@@ -195,7 +185,6 @@
 
 @push('js')
 <script src="{{ asset('assets/admin/js/datatables-combined.min.js') }}?v={{ filemtime(public_path('assets/admin/js/datatables-combined.min.js')) }}"></script>
-<!-- Sweet Alert -->
 <script src="{{ asset('assets/admin/js/sweetalert2.min.js') }}"></script>
 
 <script type="text/javascript">
@@ -204,10 +193,27 @@
     table = $('#data-table').DataTable({
       processing: true,
       serverSide: true,
-      ajax: "{{ route('admin.business.pendings') }}",
+      ajax: "{{ route('admin.business.expired') }}",
       order: [
         [0, 'desc']
       ],
+      pageLength: 10,
+      lengthMenu: [
+        [10, 25, 50, 100],
+        [10, 25, 50, 100]
+      ],
+      language: {
+        search: "_INPUT_",
+        searchPlaceholder: "Search expired businesses...",
+        lengthMenu: "Show _MENU_ entries",
+        info: "Showing _START_ to _END_ of _TOTAL_ businesses",
+        infoEmpty: "Showing 0 to 0 of 0 businesses",
+        infoFiltered: "(filtered from _MAX_ total businesses)",
+        zeroRecords: "No matching expired businesses found",
+        emptyTable: "No expired businesses available"
+      },
+      responsive: true,
+      autoWidth: false,
       columns: [{
           data: 'id',
           name: 'id',
@@ -217,35 +223,54 @@
           data: 'img',
           name: 'img',
           orderable: false,
-          searchable: false
+          searchable: false,
+          className: 'text-center'
         },
         {
           data: 'name',
-          name: 'name'
-        }, {
+          name: 'name',
+          className: 'fw-bold',
+          orderable: false,
+        },
+        {
           data: 'owner',
-          name: 'owner.first_name'
-        }, {
+          name: 'owner.first_name',
+          orderable: false,
+        },
+        {
           data: 'category',
-          name: 'businessCategory.name'
+          name: 'businessCategory.name',
+          orderable: false,
         },
         {
-          data: 'address',
-          name: 'address'
+          data: 'subscription_expiry',
+          name: 'businessSetting.subscription_expiry_date',
+          className: 'text-center',
+          orderable: true
         },
         {
-          data: 'contact',
-          name: 'contact'
+          data: 'product_expiry',
+          name: 'businessSetting.product_limit_expiry_date',
+          className: 'text-center',
+          orderable: true
+        },
+        {
+          data: 'service_expiry',
+          name: 'businessSetting.service_limit_expiry_date',
+          className: 'text-center',
+          orderable: true
         },
         {
           data: 'status',
-          name: 'status'
+          name: 'status',
+          className: 'text-center'
         },
         {
           data: 'action',
           name: 'action',
           orderable: false,
-          searchable: false
+          searchable: false,
+          className: 'text-center'
         },
       ]
     });
@@ -327,58 +352,5 @@
       });
     });
   });
-
-
-  // delete user
-  function changeStatus(id) {
-    Swal.fire({
-        title: 'Are you sure?',
-        icon: 'error',
-        html: "You want to change the status of this business?",
-        allowOutsideClick: false,
-        showCancelButton: true,
-        confirmButtonText: 'Change',
-        cancelButtonText: 'Cancel',
-      })
-      .then((result) => {
-        if (result.isConfirmed) {
-          $.ajax({
-            url: "{{ route('admin.business.change.status') }}",
-            type: "POST",
-            data: {
-              'business_id': id,
-              'status': 'active'
-            },
-            dataType: "json",
-            headers: {
-              'X-CSRF-TOKEN': "{{ csrf_token() }}"
-            },
-            beforeSend: function() {
-              $('.btn_action-' + id + ' #buttonText').addClass('d-none');
-              $('.btn_action-' + id + ' #loader').removeClass('d-none');
-              $('.btn_action-' + id).prop('disabled', true);
-            },
-            success: function(result) {
-              if (result.success) {
-                toastr.success(result.message);
-                table.ajax.reload(null, false);
-              } else {
-                toastr.error(result.message);
-              }
-              $('.btn_action-' + id + ' #buttonText').removeClass('d-none');
-              $('.btn_action-' + id + ' #loader').addClass('d-none');
-              $('.btn_action-' + id).prop('disabled', false);
-            },
-            error: function(e) {
-              toastr.error('Somthing Wrong');
-              console.log(e);
-              $('.btn_action-' + id + ' #buttonText').removeClass('d-none');
-              $('.btn_action-' + id + ' #loader').addClass('d-none');
-              $('.btn_action-' + id).prop('disabled', false);
-            }
-          });
-        }
-      })
-  }
 </script>
 @endpush

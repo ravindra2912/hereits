@@ -483,4 +483,74 @@ class BusinessController extends Controller
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
+
+    public function expiredBusinesses(Request $request)
+    {
+        if ($request->ajax()) {
+            $today = \Carbon\Carbon::today()->toDateString();
+
+            $data = Business::with(['owner', 'businessCategory', 'businessSetting'])
+                ->select('businesses.id', 'businesses.owner_id', 'businesses.business_category_id', 'businesses.slug', 'businesses.name', 'businesses.business_image', 'businesses.business_logo', 'businesses.address', 'businesses.contact', 'businesses.status')
+                ->whereHas('businessSetting', function ($q) use ($today) {
+                    $q->where(function ($query) use ($today) {
+                        $query->whereNotNull('subscription_expiry_date')
+                            ->where('subscription_expiry_date', '<=', $today);
+                    })
+                    ->orWhere(function ($query) use ($today) {
+                        $query->whereNotNull('product_limit_expiry_date')
+                            ->where('product_limit_expiry_date', '<=', $today);
+                    })
+                    ->orWhere(function ($query) use ($today) {
+                        $query->whereNotNull('service_limit_expiry_date')
+                            ->where('service_limit_expiry_date', '<=', $today);
+                    });
+                });
+
+            return Datatables::of($data)
+                ->addIndexColumn()
+                ->addColumn('owner', function ($row) {
+                    return isset($row->owner) && !empty($row->owner->first_name) ? $row->owner->first_name : '';
+                })
+                ->addColumn('category', function ($row) {
+                    return isset($row->businessCategory) && !empty($row->businessCategory->name) ? $row->businessCategory->name : '';
+                })
+                ->addColumn('img', function ($row) {
+                    return '<div class="text-center d-flex gap-2 justify-content-center">
+                        <img src="' . getImage($row->business_logo) . '" class="avatar-img rounded-circle border" style="width: 40px; height: 40px; object-fit: cover;" title="Logo" />
+                        <img src="' . getImage($row->business_image) . '" class="avatar-img rounded border" style="width: 40px; height: 40px; object-fit: cover;" title="Image" />
+                    </div>';
+                })
+                ->addColumn('subscription_expiry', function ($row) {
+                    $date = $row->businessSetting->subscription_expiry_date ?? null;
+                    if (!$date) return '<span class="text-muted">N/A</span>';
+                    $isExpired = $date <= \Carbon\Carbon::today()->toDateString();
+                    return '<span class="badge bg-' . ($isExpired ? 'danger' : 'success') . '">' . $date . '</span>';
+                })
+                ->addColumn('product_expiry', function ($row) {
+                    $date = $row->businessSetting->product_limit_expiry_date ?? null;
+                    if (!$date) return '<span class="text-muted">N/A</span>';
+                    $isExpired = $date <= \Carbon\Carbon::today()->toDateString();
+                    return '<span class="badge bg-' . ($isExpired ? 'danger' : 'success') . '">' . $date . '</span>';
+                })
+                ->addColumn('service_expiry', function ($row) {
+                    $date = $row->businessSetting->service_limit_expiry_date ?? null;
+                    if (!$date) return '<span class="text-muted">N/A</span>';
+                    $isExpired = $date <= \Carbon\Carbon::today()->toDateString();
+                    return '<span class="badge bg-' . ($isExpired ? 'danger' : 'success') . '">' . $date . '</span>';
+                })
+                ->addColumn('status', function ($row) {
+                    return '<span class="badge bg-' . ($row->status == 'active' ? 'success' : 'warning') . '">' . ucfirst($row->status) . '</span>';
+                })
+                ->addColumn('action', function ($row) {
+                    return ' <div class="text-center">
+                    <a href="javascript:void(0)" class="btn btn-outline-info btn-sm show-business-info" data-id="' . $row->id . '" title="View Info"><i class="bi bi-eye"></i></a>
+                    <a href="' . route('admin.business.edit', $row->id) . '" class="btn btn-outline-primary btn-sm" title="Edit"><i class="bi bi-pencil-square"></i></a>
+                    <a href="' . route('business-details', ['business_slug' => $row->slug]) . '" target="_blank" class="btn btn-outline-success btn-sm" title="Redirect to business"><i class="bi bi-box-arrow-in-right"></i></a>
+                    </div>';
+                })
+                ->rawColumns(['action', 'owner', 'img', 'subscription_expiry', 'product_expiry', 'service_expiry', 'status'])
+                ->make(true);
+        }
+        return view('admin.business.expiredList');
+    }
 }
