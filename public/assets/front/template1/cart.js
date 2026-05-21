@@ -42,6 +42,7 @@ $(document).ready(function () {
                     minPrice: parseFloat(product.minPrice) || 0,
                     maxPrice: parseFloat(product.maxPrice) || 0,
                     image: product.image,
+                    slug: product.slug || '',
                     qty: qty
                 });
             }
@@ -116,12 +117,19 @@ $(document).ready(function () {
                         priceDisplay = `Contact Price`;
                     }
 
+                    let productLink = '';
+                    if (item.slug) {
+                        const productUrl = `${window.location.origin}/${this.businessSlug}/product/${item.slug}`;
+                        productLink = `<a href="${productUrl}" class="cart-item-link" target="_blank"><i class="fas fa-external-link-alt"></i> View Product</a>`;
+                    }
+
                     $container.append(`
                         <div class="cart-item">
                             <img src="${item.image}" alt="${item.name}">
                             <div class="cart-item-info">
                                 <h6>${item.name}</h6>
                                 <div class="price">${priceDisplay}</div>
+                                ${productLink}
                                 <div class="cart-qty">
                                     <button class="qty-minus" data-id="${item.id}">-</button>
                                     <span>${item.qty}</span>
@@ -154,7 +162,8 @@ $(document).ready(function () {
                     priceType: btn.data('price-type'),
                     minPrice: btn.data('min-price'),
                     maxPrice: btn.data('max-price'),
-                    image: btn.data('image')
+                    image: btn.data('image'),
+                    slug: btn.data('slug') || ''
                 };
                 self.addItem(product, qty);
 
@@ -232,8 +241,16 @@ $(document).ready(function () {
                     itemLineTotal = '';
                 }
 
+                let productUrl = '';
+                if (item.slug) {
+                    productUrl = `${window.location.origin}/${this.businessSlug}/product/${item.slug}`;
+                }
+
                 message += `${index + 1}. ${item.name}\n`;
                 message += `   Qty: ${item.qty} x ${itemPrice}${itemLineTotal}\n`;
+                if (productUrl) {
+                    message += `   Link: ${productUrl}\n`;
+                }
             });
 
             message += `--------------------------\n`;

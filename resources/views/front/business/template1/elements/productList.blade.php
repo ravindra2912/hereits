@@ -56,6 +56,7 @@
                     data-type="product"
                     data-id="{{ $product->id }}"
                     data-name="{{ $product->name }}"
+                    data-slug="{{ $product->slug }}"
                     data-price="{{ $product->sell_price ?? 0 }}"
                     data-price-type="{{ $product->price_type }}"
                     data-min-price="{{ $product->min_price ?? 0 }}"
