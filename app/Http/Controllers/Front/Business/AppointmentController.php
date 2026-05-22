@@ -32,6 +32,9 @@ class AppointmentController extends Controller
             ->firstOrFail();
 
         $setting = getBusinessSettings($business->id);
+        if ($setting->subscription_expiry_date <= now()) {
+            return abort(404);
+        }
 
         $departments = array();
         if ($setting->is_appointment_with_department) {
@@ -102,6 +105,11 @@ class AppointmentController extends Controller
             ->firstOrFail();
 
         if ($expert) {
+            $setting = getBusinessSettings($expert->business_id);
+            if ($setting->subscription_expiry_date <= now()) {
+                return abort(404);
+            }
+
             // review and rating count
             $expert->ReviewAndRating = ReviewAndRating::select(
                 DB::raw('SUM(CASE WHEN rating = "1" THEN 1 ELSE 0 END) as reviewCount1'),
@@ -123,14 +131,11 @@ class AppointmentController extends Controller
             }
 
             $expert->timing = isExpertAvailable($expert->id);
-
-            $setting = getBusinessSettings($expert->business_id);
-
             $expertTimings = $expert->timings->groupBy('day');
 
             return view('front.business.template1.appointment.expert', compact('expert', 'timeSlots', 'setting', 'expertTimings'));
         } else {
-            return view('errors.404');
+            return abort(404);
         }
     }
 

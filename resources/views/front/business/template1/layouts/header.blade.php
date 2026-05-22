@@ -1,3 +1,6 @@
+@php
+    $isSubscriptionActive = $isSubscriptionActive ?? (!empty($setting->subscription_expiry_date) && \Carbon\Carbon::parse($setting->subscription_expiry_date) >= now());
+@endphp
 <!-- Top Info Bar -->
 <div class="bg-dark text-white py-2 small d-none d-lg-block">
     <div class="container">
@@ -66,6 +69,7 @@
             @endif
 
             <!-- Universal Search Box (Handles both Desktop & Mobile) -->
+            @if($isSubscriptionActive)
             <div class="header-search-container mx-lg-4 order-lg-1 position-relative" id="universalSearchBox">
                 <form action="#" method="GET" class="d-flex align-items-center gap-2 w-100" id="searchForm">
                     <button type="button" class="btn btn-link text-dark p-0 d-lg-none" id="closeSearch">
@@ -83,6 +87,7 @@
             <button class="btn btn-link text-dark p-1 order-2 order-lg-0 ms-auto ms-lg-0 me-lg-0 d-lg-none" id="mobileSearchTrigger">
                 <i class="fas fa-search fs-5"></i>
             </button>
+            @endif
 
             <!-- Spacer for mobile -->
             <div class="d-lg-none order-2" style="width: 10px;"></div>
@@ -96,19 +101,19 @@
                 </li>
 
                 <!-- Dynamic Module Links -->
-                @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
+                @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system && $isSubscriptionActive)
                 <li class="nav-item">
                     <a class="nav-link fw-500 {{ request()->routeIs('business-products') ? 'active text-primary' : '' }}" href="{{ route('business-products', ['business_slug' => $business->slug]) }}">Products</a>
                 </li>
                 @endif
 
-                @if(isset($setting->is_service_system) && $setting->is_service_system)
+                @if(isset($setting->is_service_system) && $setting->is_service_system && $isSubscriptionActive)
                 <li class="nav-item">
                     <a class="nav-link fw-500 {{ request()->routeIs('business-services') ? 'active text-primary' : '' }}" href="{{ route('business-services', ['business_slug' => $business->slug]) }}">Services</a>
                 </li>
                 @endif
 
-                @if(isset($setting) && $setting->is_appointment_system)
+                @if(isset($setting) && $setting->is_appointment_system && $isSubscriptionActive)
                 <li class="nav-item">
                     <a class="nav-link fw-500 {{ request()->routeIs('expert.list') ? 'active text-primary' : '' }}" href="{{ route('expert.list', $business->slug) }}">Experts</a>
                 </li>
@@ -204,7 +209,7 @@
                 </a>
             </li>
 
-            @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
+            @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system && $isSubscriptionActive)
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('business-products') ? 'active' : '' }}" href="{{ route('business-products', ['business_slug' => $business->slug]) }}">
                     <i class="fas fa-box me-2"></i>Products
@@ -212,7 +217,7 @@
             </li>
             @endif
 
-            @if(isset($setting->is_service_system) && $setting->is_service_system)
+            @if(isset($setting->is_service_system) && $setting->is_service_system && $isSubscriptionActive)
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('business-services') ? 'active' : '' }}" href="{{ route('business-services', ['business_slug' => $business->slug]) }}">
                     <i class="fas fa-concierge-bell me-2"></i>Services
@@ -220,7 +225,7 @@
             </li>
             @endif
 
-            @if(isset($setting) && $setting->is_appointment_system)
+            @if(isset($setting) && $setting->is_appointment_system && $isSubscriptionActive)
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('expert.list') ? 'active' : '' }}" href="{{ route('expert.list', $business->slug) }}">
                     <i class="fas fa-user-tie me-2"></i>Experts

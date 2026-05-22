@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Front\Business;
 
 use App\Models\Business;
+use App\Models\Favorite;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,27 +24,49 @@ class ProductController extends Controller
 
         $setting = getBusinessSettings($business->id);
 
-        if (!$setting->is_ecommerce_system) {
+        if (!$setting->is_ecommerce_system && $setting->subscription_expiry_date <= now()) {
             return abort(404);
+        }
+
+        $limit = 24;
+        $isProductLimitExpired = $setting->product_limit_expiry_date <= now();
+        if ($isProductLimitExpired) {
+            $siteSetting = getSiteSetting();
+            $limit = $siteSetting->free_product_limit;
         }
 
         $query = Product::select('id', 'name', 'slug', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'category_id', 'business_id')
             ->where('business_id', $business->id)
             ->where('status', 'active')
-            ->with(['firstTwoImages:id,product_id,image_url', 'category:id,name'])
-            ->when(auth()->check(), function ($query) {
-                $query->withExists(['favorites as is_favorited' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }]);
-            });
+            ->with(['firstTwoImages:id,product_id,image_url', 'category:id,name']);
 
-        if ($request->has('category_id') && !empty($request->category_id)) {
+        if ($request->has('category_id') && !empty($request->category_id) && $isProductLimitExpired == false) {
             $query->where('category_id', $request->category_id);
         }
 
-        $products = $query->paginate(24);
+        $categories = [];
+        if (!$isProductLimitExpired) {
+            $products = $query->paginate($limit);
+            $categories = getProductCategory($business->id);
+        } else {
+            $products = $query->take($limit)->get();
+        }
 
-        $categories = getProductCategory($business->id);
+        // In-memory favorite check — replaces N per-row EXISTS subqueries with 1 pluck query
+        if (auth()->check()) {
+            $favoriteProductIds = Favorite::where('user_id', auth()->id())
+                ->where('favorite_type', 'product')
+                ->pluck('favorite_item_id')
+                ->toArray();
+
+            $collection = $products instanceof \Illuminate\Pagination\LengthAwarePaginator
+                ? $products->getCollection()
+                : $products;
+
+            $collection->each(function ($product) use ($favoriteProductIds) {
+                $product->is_favorited = in_array($product->id, $favoriteProductIds);
+            });
+        }
 
         return view('front.business.template1.products', compact('business', 'products', 'setting', 'categories'));
     }
@@ -54,11 +77,6 @@ class ProductController extends Controller
             ->with(['business', 'category', 'images' => function ($query) {
                 $query->orderBy('sort_order', 'asc')->select('id', 'product_id', 'image_url');
             }])
-            ->when(auth()->check(), function ($query) {
-                $query->withExists(['favorites as is_favorited' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }]);
-            })
             ->whereHas('business', function ($q) use ($business_slug) {
                 $q->where('slug', $business_slug)
                     ->whereHas('businessSetting', function ($query) {
@@ -70,6 +88,9 @@ class ProductController extends Controller
 
         $business = $product->business;
         $setting = getBusinessSettings($business->id);
+        if ($setting->subscription_expiry_date <= now()) {
+            return abort(404);
+        }
 
         // Sidebar/Related products or other info could be added here
         $relatedProducts = Product::select('id', 'name', 'slug', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'business_id')
@@ -77,14 +98,23 @@ class ProductController extends Controller
             ->where('id', '!=', $product->id)
             ->where('status', 'active')
             ->with(['firstTwoImages:id,product_id,image_url'])
-            ->when(auth()->check(), function ($query) {
-                $query->withExists(['favorites as is_favorited' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }]);
-            })
             ->inRandomOrder()
             ->limit(4)
             ->get();
+
+        // In-memory favorite check — 1 query instead of N+1 EXISTS subqueries
+        if (auth()->check()) {
+            $favoriteProductIds = Favorite::where('user_id', auth()->id())
+                ->where('favorite_type', 'product')
+                ->pluck('favorite_item_id')
+                ->toArray();
+
+            $product->is_favorited = in_array($product->id, $favoriteProductIds);
+
+            $relatedProducts->each(function ($p) use ($favoriteProductIds) {
+                $p->is_favorited = in_array($p->id, $favoriteProductIds);
+            });
+        }
 
         return view('front.business.template1.product_details', compact('product', 'business', 'setting', 'relatedProducts'));
     }

@@ -77,9 +77,11 @@
             @endforeach
         </div>
 
+        @if($services instanceof \Illuminate\Pagination\LengthAwarePaginator && $services->hasPages())
         <div class="mt-5 d-flex justify-content-center">
             {{ $services->appends(request()->query())->links('pagination::bootstrap-5') }}
         </div>
+        @endif
         @else
         <div class="text-center py-5">
             <div class="mb-4 text-muted opacity-25">

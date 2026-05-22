@@ -145,10 +145,11 @@
         @endforeach
     </div>
 
+    @if($products instanceof \Illuminate\Pagination\LengthAwarePaginator && $products->hasPages())
     <div class="d-flex justify-content-center mt-5">
-        <!-- {{ $products->links('pagination::bootstrap-5') }} -->
         {{ $products->appends(request()->query())->links('pagination::bootstrap-5') }}
     </div>
+    @endif
     @else
     <div class="text-center py-5">
         <div class="mb-3">

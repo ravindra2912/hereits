@@ -131,19 +131,19 @@
             </div>
             @endif
 
-            @if(isset($setting->is_appointment_system) && $setting->is_appointment_system)
+            @if(isset($setting->is_appointment_system) && $setting->is_appointment_system && $isSubscriptionActive)
             <div class="d-flex align-items-center">
               <i class="fas fa-users text-primary fa-lg me-2"></i>
               <span>Expert Staff</span>
             </div>
             @endif
-            @if(isset($setting->is_service_system) && $setting->is_service_system)
+            @if(isset($setting->is_service_system) && $setting->is_service_system && $isSubscriptionActive)
             <div class="d-flex align-items-center">
               <i class="fas fa-tools text-primary fa-lg me-2"></i>
               <span>Quality Service</span>
             </div>
             @endif
-            @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
+            @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system && $isSubscriptionActive)
             <div class="d-flex align-items-center">
               <i class="fas fa-box-open text-primary fa-lg me-2"></i>
               <span>Quality Products</span>
@@ -153,15 +153,15 @@
 
           <!-- CTA Buttons -->
           <div class="d-flex flex-wrap gap-3">
-            @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
+            @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system && $isSubscriptionActive)
             <a href="#products" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
               Shop Now
             </a>
-            @elseif(isset($setting->is_service_system) && $setting->is_service_system)
+            @elseif(isset($setting->is_service_system) && $setting->is_service_system && $isSubscriptionActive)
             <a href="#services" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
               Book Service
             </a>
-            @elseif(isset($setting->is_appointment_system) && $setting->is_appointment_system)
+            @elseif(isset($setting->is_appointment_system) && $setting->is_appointment_system && $isSubscriptionActive)
             <a href="#experts-list" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
               Book Appointment
             </a>
@@ -205,7 +205,7 @@
   <div id="about" class="container py-5 position-relative z-10">
 
     <!-- Products Section (E-commerce) -->
-    @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
+    @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system && $isSubscriptionActive)
 
     <!-- Product Categories (Scrollable) -->
     @if(isset($details['productCategories']) && $details['productCategories']->count() > 0)
@@ -250,7 +250,7 @@
     @endif
 
     <!-- Services Section -->
-    @if(isset($setting->is_service_system) && $setting->is_service_system)
+    @if(isset($setting->is_service_system) && $setting->is_service_system && $isSubscriptionActive)
 
     <!-- Service Categories (Scrollable) -->
     @if(isset($details['serviceCategories']) && $details['serviceCategories']->count() > 0)
@@ -298,7 +298,7 @@
 
 
 
-  @if(isset($setting->is_appointment_system) && $setting->is_appointment_system && isset($experts) && $experts->count() > 0)
+  @if(isset($setting->is_appointment_system) && $setting->is_appointment_system && $isSubscriptionActive && isset($experts) && $experts->count() > 0)
   <!-- Appointment/Experts Section -->
   <div id="experts-list" class="mb-5 section-scroll container">
     <div class="d-flex justify-content-between align-items-center mb-4">

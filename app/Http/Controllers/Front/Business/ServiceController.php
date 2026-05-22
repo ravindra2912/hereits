@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Front\Business;
 
 use App\Models\Business;
+use App\Models\Favorite;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -22,25 +23,51 @@ class ServiceController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
 
+        $setting = getBusinessSettings($business->id);
+
+        if (!$setting->is_service_system || $setting->subscription_expiry_date <= now()) {
+            return abort(404);
+        }
+
+        $limit = 12;
+        $isServiceLimitExpired = $setting->service_limit_expiry_date <= now();
+        if ($isServiceLimitExpired) {
+            $siteSetting = getSiteSetting();
+            $limit = $siteSetting->free_service_limit;
+        }
+
         $query = Service::select('id', 'name', 'slug', 'description', 'price_type', 'price', 'max_price', 'min_price', 'category_id', 'image_url', 'business_id')
             ->with(['category:id,name'])
             ->where('business_id', $business->id)
-            ->where('status', 'active')
-            ->when(auth()->check(), function ($query) {
-                $query->withExists(['favorites as is_favorited' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }]);
-            });
+            ->where('status', 'active');
 
-        if ($request->has('category_id') && !empty($request->category_id)) {
+        if ($request->has('category_id') && !empty($request->category_id) && $isServiceLimitExpired == false) {
             $query->where('category_id', $request->category_id);
         }
 
-        $services = $query->paginate(12);
+        $categories = [];
+        if (!$isServiceLimitExpired) {
+            $services = $query->paginate($limit);
+            $categories = getServiceCategory($business->id);
+        } else {
+            $services = $query->take($limit)->get();
+        }
 
-        $categories = getServiceCategory($business->id);
+        // In-memory favorite check
+        if (auth()->check()) {
+            $favoriteServiceIds = Favorite::where('user_id', auth()->id())
+                ->where('favorite_type', 'service')
+                ->pluck('favorite_item_id')
+                ->toArray();
 
-        $setting = getBusinessSettings($business->id);
+            $collection = $services instanceof \Illuminate\Pagination\LengthAwarePaginator
+                ? $services->getCollection()
+                : $services;
+
+            $collection->each(function ($service) use ($favoriteServiceIds) {
+                $service->is_favorited = in_array($service->id, $favoriteServiceIds);
+            });
+        }
 
         return view('front.business.template1.service_list', compact('business', 'services', 'setting', 'categories'));
     }
@@ -56,13 +83,13 @@ class ServiceController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
 
+        $setting = getBusinessSettings($business->id);
+        if ($setting->subscription_expiry_date <= now()) {
+            return abort(404);
+        }
+
         $service = Service::where('business_id', $business->id)
             ->where('slug', $service_slug)
-            ->when(auth()->check(), function ($query) {
-                $query->withExists(['favorites as is_favorited' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }]);
-            })
             ->where('status', 'active')
             ->firstOrFail();
 
@@ -70,16 +97,23 @@ class ServiceController extends Controller
         $recommendedServices = Service::where('business_id', $business->id)
             ->where('id', '!=', $service->id)
             ->where('status', 'active')
-            ->when(auth()->check(), function ($query) {
-                $query->withExists(['favorites as is_favorited' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }]);
-            })
             ->inRandomOrder()
             ->limit(4)
             ->get();
 
-        $setting = getBusinessSettings($business->id);
+        // In-memory favorite check
+        if (auth()->check()) {
+            $favoriteServiceIds = Favorite::where('user_id', auth()->id())
+                ->where('favorite_type', 'service')
+                ->pluck('favorite_item_id')
+                ->toArray();
+
+            $service->is_favorited = in_array($service->id, $favoriteServiceIds);
+
+            $recommendedServices->each(function ($s) use ($favoriteServiceIds) {
+                $s->is_favorited = in_array($s->id, $favoriteServiceIds);
+            });
+        }
 
         return view('front.business.template1.service_details', compact('business', 'service', 'setting', 'recommendedServices'));
     }
