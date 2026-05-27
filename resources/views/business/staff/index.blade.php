@@ -10,9 +10,11 @@
 <div class="card border-0 shadow-sm rounded-4 mb-4">
     <div class="card-header py-3 ps-4 d-flex justify-content-between align-items-center bg-white border-bottom-0">
         <h5 class="m-0 font-weight-bold text-dark">Staff Management</h5>
+        @if(checkBusinessPermission('store_management', 'staff', 'add'))
         <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" onclick="openCreateModal()">
             <i class="bi bi-plus-circle me-1"></i> Add Staff
         </button>
+        @endif
     </div>
     <div class="card-body p-4">
         <div class="table-responsive mt-3">

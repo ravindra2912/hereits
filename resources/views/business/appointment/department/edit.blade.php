@@ -37,10 +37,12 @@
 
           <div class="d-flex justify-content-end">
             <button class="btn btn-secondary me-2" type="button" onclick="history.back()">Back</button>
+            @if(checkBusinessPermission('appointments', 'department', 'update'))
             <button class="btn btn-primary btn_action" type="submit">
               <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
               <span id="buttonText">Update</span>
             </button>
+            @endif
           </div>
         </form>
       </div>

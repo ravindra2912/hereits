@@ -90,8 +90,8 @@ class PosAuthController extends Controller
     {
         Auth::guard('pos')->logout();
 
-        // Remove POS-specific session keys only
-        $request->session()->forget('pos_permissions');
+        // Remove session permission keys
+        $request->session()->forget(['permissions', 'role_name', 'business_name']);
 
         // Regenerate the session ID for security without clearing other guard data
         $request->session()->regenerate();

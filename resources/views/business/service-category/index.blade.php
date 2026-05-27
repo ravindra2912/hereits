@@ -23,12 +23,16 @@
     <div class="card-header py-3 ps-4 d-flex justify-content-between align-items-center bg-white border-bottom-0">
         <h5 class="m-0 font-weight-bold text-dark">Category Management</h5>
         <div>
+            @if(checkBusinessPermission('service', 'categories', 'update'))
             <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 me-2" onclick="openReorderModal()">
                 <i class="bi bi-arrow-down-up me-1"></i> Reorder
             </button>
+            @endif
+            @if(checkBusinessPermission('service', 'categories', 'add'))
             <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" onclick="openCreateModal()">
                 <i class="bi bi-plus-circle me-1"></i> Add Category
             </button>
+            @endif
         </div>
     </div>
     <div class="card-body p-4">
@@ -91,7 +95,7 @@
                 </div>
                 <div class="modal-footer border-top-0 pb-4 px-4">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold btn_action">
+                    <button type="submit" id="submit-category-btn" class="btn btn-primary rounded-pill px-4 fw-bold btn_action">
                         <span id="loader" class="spinner-border spinner-border-sm d-none me-1" role="status" aria-hidden="true"></span>
                         <span id="buttonText">Save Changes</span>
                     </button>
@@ -196,6 +200,11 @@
     });
 
     function openCreateModal() {
+        @if(checkBusinessPermission('service', 'categories', 'add'))
+        $('#submit-category-btn').show();
+        @else
+        $('#submit-category-btn').hide();
+        @endif
         $('#categoryModalLabel').text('Add Service Category');
         $('#categoryForm').attr('action', "{{ route('business.service-category.store') }}");
         $('#formMethod').val('POST');
@@ -207,6 +216,11 @@
     }
 
     function editCategory(id) {
+        @if(checkBusinessPermission('service', 'categories', 'update'))
+        $('#submit-category-btn').show();
+        @else
+        $('#submit-category-btn').hide();
+        @endif
         let url = "{{ route('business.service-category.edit', ':id') }}".replace(':id', id);
         $.get(url, function(response) {
             if (response.success) {

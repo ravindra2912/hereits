@@ -71,7 +71,9 @@
             </div>
 
             <div class="mt-4">
+                @if(checkBusinessPermission('store_management', 'role', 'update'))
                 <button type="submit" class="btn btn-primary">Update Role</button>
+                @endif
                 <a href="{{ route('business.role.index') }}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>

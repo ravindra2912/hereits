@@ -25,16 +25,19 @@ class RoleController extends Controller
                     return '<span class="badge rounded-pill ' . $class . ' px-3 py-1 small">' . $label . '</span>';
                 })
                 ->addColumn('action', function ($row) {
-                    $url = route('business.role.destroy', $row->id);
-                    $url = "'" . $url . "'";
-                    return '
-                    <div class="btn-group">
-                        <button onclick="editRole(' . $row->id . ')" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2">Edit</button>
-                        <button onclick="destroy(' . $url . ', ' . $row->id . ')" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm btn_delete-' . $row->id . '" title="Delete">
-                            <i id="buttonText" class="bi bi-trash text-danger"></i>
-                            <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                        </button>
-                    </div>';
+                    $html = '<div class="btn-group">';
+                    if (checkBusinessPermission('store_management', 'role', 'update') || checkBusinessPermission('store_management', 'role', 'view')) {
+                        $html .= '<button onclick="editRole(' . $row->id . ')" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2">Edit</button>';
+                    }
+                    if (checkBusinessPermission('store_management', 'role', 'delete')) {
+                        $url = "'" . route('business.role.destroy', $row->id) . "'";
+                        $html .= '<button onclick="destroy(' . $url . ', ' . $row->id . ')" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm btn_delete-' . $row->id . '" title="Delete">
+                                    <i id="buttonText" class="bi bi-trash text-danger"></i>
+                                    <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                  </button>';
+                    }
+                    $html .= '</div>';
+                    return $html;
                 })
                 ->rawColumns(['action', 'pos_access'])
                 ->make(true);
@@ -75,6 +78,35 @@ class RoleController extends Controller
                     'permissions' => [
                         'pos_access' => $request->has('pos_access'),
                         'pos_permission' => $request->pos_permission ?? [],
+                        'business_access' => $request->has('business_access'),
+                        'business_permissions' => [
+                            'customers' => $request->input('business_permissions.customers', 'no'),
+                            'analytics' => $request->input('business_permissions.analytics', 'no'),
+                            'home_management' => $request->input('business_permissions.home_management', 'no'),
+                            'appointments' => [
+                                'access' => $request->input('business_permissions.appointments.access', 'no'),
+                                'department' => $request->input('business_permissions.appointments.department', []),
+                                'experts' => $request->input('business_permissions.appointments.experts', []),
+                                'appointments' => $request->input('business_permissions.appointments.appointments', []),
+                            ],
+                            'product' => [
+                                'access' => $request->input('business_permissions.product.access', 'no'),
+                                'categories' => $request->input('business_permissions.product.categories', []),
+                                'products' => $request->input('business_permissions.product.products', []),
+                            ],
+                            'service' => [
+                                'access' => $request->input('business_permissions.service.access', 'no'),
+                                'categories' => $request->input('business_permissions.service.categories', []),
+                                'service_list' => $request->input('business_permissions.service.service_list', []),
+                            ],
+                            'store_management' => [
+                                'access' => $request->input('business_permissions.store_management.access', 'no'),
+                                'role' => $request->input('business_permissions.store_management.role', []),
+                                'staff' => $request->input('business_permissions.store_management.staff', []),
+                                'timing' => $request->input('business_permissions.store_management.timing', []),
+                                'gallery' => $request->input('business_permissions.store_management.gallery', []),
+                            ],
+                        ]
                     ],
                 ]);
 
@@ -132,6 +164,35 @@ class RoleController extends Controller
                     'permissions' => [
                         'pos_access' => $request->has('pos_access'),
                         'pos_permission' => $request->pos_permission ?? [],
+                        'business_access' => $request->has('business_access'),
+                        'business_permissions' => [
+                            'customers' => $request->input('business_permissions.customers', 'no'),
+                            'analytics' => $request->input('business_permissions.analytics', 'no'),
+                            'home_management' => $request->input('business_permissions.home_management', 'no'),
+                            'appointments' => [
+                                'access' => $request->input('business_permissions.appointments.access', 'no'),
+                                'department' => $request->input('business_permissions.appointments.department', []),
+                                'experts' => $request->input('business_permissions.appointments.experts', []),
+                                'appointments' => $request->input('business_permissions.appointments.appointments', []),
+                            ],
+                            'product' => [
+                                'access' => $request->input('business_permissions.product.access', 'no'),
+                                'categories' => $request->input('business_permissions.product.categories', []),
+                                'products' => $request->input('business_permissions.product.products', []),
+                            ],
+                            'service' => [
+                                'access' => $request->input('business_permissions.service.access', 'no'),
+                                'categories' => $request->input('business_permissions.service.categories', []),
+                                'service_list' => $request->input('business_permissions.service.service_list', []),
+                            ],
+                            'store_management' => [
+                                'access' => $request->input('business_permissions.store_management.access', 'no'),
+                                'role' => $request->input('business_permissions.store_management.role', []),
+                                'staff' => $request->input('business_permissions.store_management.staff', []),
+                                'timing' => $request->input('business_permissions.store_management.timing', []),
+                                'gallery' => $request->input('business_permissions.store_management.gallery', []),
+                            ],
+                        ]
                     ],
                 ]);
 

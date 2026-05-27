@@ -50,26 +50,44 @@ class AuthController extends Controller
 
     public function store(LoginRequest $request): RedirectResponse
     {
-
-        $user = User::with('getBusinessDetails:id,owner_id,name,business_image')->where('email', $request->email)->where('role', 'Business')->first();
+        $user = User::where('email', $request->email)->first();
         if ($user && Hash::check($request['password'], $user->password)) {
+            $isBusinessOwner = ($user->role === 'Business');
+            $isStaff = \App\Models\BusinessUser::where('user_id', $user->id)->exists();
 
-            if ($user->business_id == null) {
-                $business = Business::select('id', 'owner_id', 'name', 'business_image')
-                    ->with(['businessSetting:id,business_id,subscription_expiry_date'])
-                    ->where('owner_id', $user->id)->first();
-                if ($business) {
-                    $user->business_id = $business->id;
+            if (!$isBusinessOwner && !$isStaff) {
+                return redirect()->back()->with('error', 'You do not have access to the business panel.');
+            }
+
+            if ($isBusinessOwner) {
+                if ($user->business_id == null) {
+                    $business = Business::select('id', 'owner_id', 'name', 'business_image')
+                        ->with(['businessSetting:id,business_id,subscription_expiry_date'])
+                        ->where('owner_id', $user->id)->first();
+                    if ($business) {
+                        $user->business_id = $business->id;
+                        $user->save();
+                        $user->getBusinessDetails = $business;
+                    } else {
+                        return redirect()->back()->with('error', 'Business not found!');
+                    }
+                }
+            } else {
+                // For staff, get and sync their associated business ID context
+                $businessUser = \App\Models\BusinessUser::where('user_id', $user->id)->first();
+                if ($businessUser) {
+                    $user->business_id = $businessUser->business_id;
                     $user->save();
-
-                    $user->getBusinessDetails = $business;
                 } else {
-                    return redirect()->back()->with('error', 'Business not found!');
+                    return redirect()->back()->with('error', 'No associated business found for staff!');
                 }
             }
-            $request->authenticate();
 
+            $request->authenticate();
             $request->session()->regenerate();
+
+            // Synchronize permissions to session immediately upon successful login
+            $user->syncPermissionsToSession($user->business_id);
 
             return redirect()->intended(route('business.dashboard', absolute: false));
         } else {

@@ -44,7 +44,7 @@
     </div>
     @endif
 
-    @if ($businessSettings->is_appointment_system)
+    @if ($businessSettings->is_appointment_system && checkBusinessPermission('appointments', 'appointments', 'view'))
     <div class="col-xl-3 col-md-6 col-6 mb-4">
       <a href="{{ route('business.appointment.bookings.index') }}" class="text-decoration-none col-card">
         <div class="card border-0 shadow-sm h-100 rounded-4 transition-all hover-lift">
@@ -60,7 +60,7 @@
     </div>
     @endif
 
-    @if ($businessSettings->is_ecommerce_system)
+    @if ($businessSettings->is_ecommerce_system && checkBusinessPermission('product', 'products', 'view'))
     <div class="col-xl-3 col-md-6 col-6 mb-4">
       <a href="{{ route('business.product.index') }}" class="text-decoration-none col-card">
         <div class="card border-0 shadow-sm h-100 rounded-4 transition-all hover-lift">
@@ -76,7 +76,7 @@
     </div>
     @endif
 
-    @if ($businessSettings->is_service_system)
+    @if ($businessSettings->is_service_system && checkBusinessPermission('service', 'service_list', 'view'))
     <div class="col-xl-3 col-md-6 col-6 mb-4">
       <a href="{{ route('business.service.index') }}" class="text-decoration-none col-card">
         <div class="card border-0 shadow-sm h-100 rounded-4 transition-all hover-lift">
@@ -92,6 +92,7 @@
     </div>
     @endif
 
+    @if (checkBusinessPermission('customers'))
     <div class="col-xl-3 col-md-6 col-6 mb-4">
       <a href="{{ route('business.appointment.customers.index') }}" class="text-decoration-none col-card">
         <div class="card border-0 shadow-sm h-100 rounded-4 transition-all hover-lift">
@@ -105,6 +106,7 @@
         </div>
       </a>
     </div>
+    @endif
 
   </div>
 
@@ -113,7 +115,8 @@
     <div class="col-12">
       <div class="sidebar-heading text-secondary text-uppercase fw-bold mb-3" style="font-size: 0.85rem; letter-spacing: 1px;">Management Tools</div>
     </div>
-    @if ($businessSettings->is_appointment_system)
+
+    @if ($businessSettings->is_appointment_system && checkBusinessPermission('appointments', 'experts', 'view'))
     <div class="col-lg-3 col-md-4 col-6 mb-4">
       <a href="{{ route('business.appointment.expert.index') }}" class="text-decoration-none">
         <div class="card border-0 shadow-sm rounded-4 hover-lift">
@@ -124,7 +127,9 @@
         </div>
       </a>
     </div>
-    @if ($businessSettings->is_appointment_with_department)
+    @endif
+
+    @if ($businessSettings->is_appointment_system && $businessSettings->is_appointment_with_department && checkBusinessPermission('appointments', 'department', 'view'))
     <div class="col-lg-3 col-md-4 col-6 mb-4">
       <a href="{{ route('business.appointment.department.index') }}" class="text-decoration-none">
         <div class="card border-0 shadow-sm rounded-4 hover-lift">
@@ -136,18 +141,8 @@
       </a>
     </div>
     @endif
-    @endif
 
-    <!-- <div class="col-lg-3 col-md-4 col-6 mb-4">
-      <a href="{{ route('business.banner.index') }}" class="text-decoration-none">
-        <div class="card border-0 shadow-sm rounded-4 hover-lift">
-          <div class="card-body p-3 text-center">
-            <i class="bi bi-images fs-3 text-secondary mb-2 d-xl-block"></i>
-            <span class="d-block fw-bold text-dark small">Banners</span>
-          </div>
-        </div>
-      </a>
-    </div> -->
+    @if (checkBusinessPermission('store_management', 'gallery', 'view'))
     <div class="col-lg-3 col-md-4 col-6 mb-4">
       <a href="{{ route('business.gallery.index') }}" class="text-decoration-none">
         <div class="card border-0 shadow-sm rounded-4 hover-lift">
@@ -158,6 +153,9 @@
         </div>
       </a>
     </div>
+    @endif
+
+    @if (checkBusinessPermission('analytics'))
     <div class="col-lg-3 col-md-4 col-6 mb-4">
       <a href="{{ route('business.analytics') }}" class="text-decoration-none">
         <div class="card border-0 shadow-sm rounded-4 hover-lift">
@@ -168,6 +166,8 @@
         </div>
       </a>
     </div>
+    @endif
+
   </div>
 
   <!-- Settings Group -->
@@ -175,6 +175,8 @@
     <div class="col-12">
       <div class="sidebar-heading text-secondary text-uppercase fw-bold mb-3" style="font-size: 0.85rem; letter-spacing: 1px;">Configuration</div>
     </div>
+
+    @if (Auth::user()->role === 'Business')
     <div class="col-md-4 mb-4">
       <a href="{{ route('business.setting.business') }}" class="text-decoration-none">
         <div class="card border-0 shadow-sm rounded-4 bg-light hover-lift">
@@ -190,6 +192,9 @@
         </div>
       </a>
     </div>
+    @endif
+
+    @if (checkBusinessPermission('store_management', 'timing', 'view'))
     <div class="col-md-4 mb-4">
       <a href="{{ route('business.setting.business.timing') }}" class="text-decoration-none">
         <div class="card border-0 shadow-sm rounded-4 bg-light hover-lift">
@@ -205,6 +210,8 @@
         </div>
       </a>
     </div>
+    @endif
+
     <div class="col-md-4 mb-4">
       <a href="{{ route('business.setting.profile') }}" class="text-decoration-none">
         <div class="card border-0 shadow-sm rounded-4 bg-light hover-lift">
@@ -221,6 +228,7 @@
       </a>
     </div>
 
+    @if (Auth::user()->role === 'Business')
     <div class="col-md-4 mb-4">
       <a href="{{ route('business.setting.business.configuration') }}" class="text-decoration-none">
         <div class="card border-0 shadow-sm rounded-4 bg-light hover-lift">
@@ -236,6 +244,7 @@
         </div>
       </a>
     </div>
+    @endif
 
     <div class="col-md-4 mb-4">
       <a href="{{ route('business.setting.business.share') }}" class="text-decoration-none">

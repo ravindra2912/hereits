@@ -17,9 +17,11 @@
 <div class="card shadow mb-4">
   <div class="card-header py-3 bg-white d-flex justify-content-between align-items-center">
     <h5 class="m-0 font-weight-bold text-primary">Experts</h5>
+    @if(checkBusinessPermission('appointments', 'experts', 'add'))
     <a href="{{ route('business.appointment.expert.create') }}" class="btn btn-primary btn-sm shadow-sm">
       <i class="bi bi-plus-lg text-white-50"></i> Add Expert
     </a>
+    @endif
   </div>
   <div class="card-body">
     <input type="hidden" id="is_appointment_with_department" value="{{ $businessSetting->is_appointment_with_department }}" />

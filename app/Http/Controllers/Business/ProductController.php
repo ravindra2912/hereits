@@ -74,8 +74,12 @@ class ProductController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<div class="btn-group">';
-                    $btn .= '<a href="' . route('business.product.edit', $row->id) . '" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2">Edit</a>';
-                    $btn .= '<button type="button" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm" onclick="deleteProduct(' . $row->id . ')" title="Delete Product"><i class="bi bi-trash text-danger"></i></button>';
+                    if (checkBusinessPermission('product', 'products', 'update') || checkBusinessPermission('product', 'products', 'view')) {
+                        $btn .= '<a href="' . route('business.product.edit', $row->id) . '" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2">Edit</a>';
+                    }
+                    if (checkBusinessPermission('product', 'products', 'delete')) {
+                        $btn .= '<button type="button" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm" onclick="deleteProduct(' . $row->id . ')" title="Delete Product"><i class="bi bi-trash text-danger"></i></button>';
+                    }
                     $btn .= '</div>';
                     return $btn;
                 })

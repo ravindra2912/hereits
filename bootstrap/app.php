@@ -12,6 +12,7 @@ use App\Http\Middleware\Expert;
 use App\Http\Middleware\CheckBusinessModule;
 use App\Http\Middleware\MinifyHtml;
 use App\Http\Middleware\POS;
+use App\Http\Middleware\CheckBusinessPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -36,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'front' => Front::class,
             'pos' => POS::class,
             'checkModule' => CheckBusinessModule::class,
+            'checkBusinessPerm' => CheckBusinessPermission::class,
         ]);
 
         $middleware->redirectTo(

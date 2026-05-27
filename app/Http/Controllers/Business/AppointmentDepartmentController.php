@@ -35,15 +35,19 @@ class AppointmentDepartmentController extends Controller
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    $url = route('business.appointment.department.destroy', $row->id);
-                    $url = "'" . $url . "'";
-                    return ' <div class="text-center">
-                    <a href="' . route('business.appointment.department.edit', $row->id) . '" class="btn btn-outline-primary btn-sm" title="Edit"><i class="bi bi-pencil"></i></a>
-                    <button onclick="destroy(' . $url . ', ' . $row->id . ')" class="btn btn-outline-danger btn-sm ms-1 btn_delete-' . $row->id . '" title="Delete">
-                        <i id="buttonText" class="bi bi-trash"></i>
-                        <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                    </button>
-                    </div>';
+                    $html = '<div class="text-center">';
+                    if (checkBusinessPermission('appointments', 'department', 'update') || checkBusinessPermission('appointments', 'department', 'view')) {
+                        $html .= '<a href="' . route('business.appointment.department.edit', $row->id) . '" class="btn btn-outline-primary btn-sm" title="Edit"><i class="bi bi-pencil"></i></a>';
+                    }
+                    if (checkBusinessPermission('appointments', 'department', 'delete')) {
+                        $url = "'" . route('business.appointment.department.destroy', $row->id) . "'";
+                        $html .= '<button onclick="destroy(' . $url . ', ' . $row->id . ')" class="btn btn-outline-danger btn-sm ms-1 btn_delete-' . $row->id . '" title="Delete">
+                                    <i id="buttonText" class="bi bi-trash"></i>
+                                    <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                  </button>';
+                    }
+                    $html .= '</div>';
+                    return $html;
                 })
                 ->rawColumns(['action'])
                 ->make(true);

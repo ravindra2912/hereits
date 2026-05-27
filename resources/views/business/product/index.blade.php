@@ -23,12 +23,16 @@
                     <i class="bi bi-bar-chart-fill me-1 text-primary"></i> {{ $totalProducts }} / {{ $limit }} <span class="d-none d-sm-inline">Limit</span>
                 </span>
                 @if($businessSetting->is_product_import_export)
-                <a href="{{ route('business.product.export') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm" title="Export Products">
-                    <i class="bi bi-download me-1"></i> <span class="d-none d-lg-inline">Export</span>
-                </a>
-                <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#importProductModal" title="Import Products">
-                    <i class="bi bi-upload me-1"></i> <span class="d-none d-lg-inline">Import</span>
-                </button>
+                    @if(checkBusinessPermission('product', 'products', 'view'))
+                    <a href="{{ route('business.product.export') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm" title="Export Products">
+                        <i class="bi bi-download me-1"></i> <span class="d-none d-lg-inline">Export</span>
+                    </a>
+                    @endif
+                    @if(checkBusinessPermission('product', 'products', 'add'))
+                    <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#importProductModal" title="Import Products">
+                        <i class="bi bi-upload me-1"></i> <span class="d-none d-lg-inline">Import</span>
+                    </button>
+                    @endif
                 @endif
             </div>
             <div class="d-flex gap-2 flex-grow-1 flex-md-grow-0">
@@ -37,9 +41,11 @@
                     <i class="bi bi-cart-plus me-1"></i> <span class="d-none d-sm-inline">Buy More</span>
                 </a>
                 @else
-                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm flex-fill" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                    <i class="bi bi-plus-lg me-1"></i> <span class="d-none d-sm-inline">Add Product</span>
-                </button>
+                    @if(checkBusinessPermission('product', 'products', 'add'))
+                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm flex-fill" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                        <i class="bi bi-plus-lg me-1"></i> <span class="d-none d-sm-inline">Add Product</span>
+                    </button>
+                    @endif
                 @endif
             </div>
         </div>

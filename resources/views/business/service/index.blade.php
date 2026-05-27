@@ -29,9 +29,11 @@
                     <i class="bi bi-cart-plus me-1"></i> <span class="d-none d-sm-inline">Buy More</span>
                 </a>
                 @else
-                <a href="{{ route('business.service.create') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm flex-fill">
-                    <i class="bi bi-plus-lg me-1"></i> <span class="d-none d-sm-inline">Add Service</span>
-                </a>
+                    @if(checkBusinessPermission('service', 'service_list', 'add'))
+                    <a href="{{ route('business.service.create') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm flex-fill">
+                        <i class="bi bi-plus-lg me-1"></i> <span class="d-none d-sm-inline">Add Service</span>
+                    </a>
+                    @endif
                 @endif
             </div>
         </div>

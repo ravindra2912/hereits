@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Business;
 
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use App\Http\Controllers\Controller;
@@ -20,8 +21,8 @@ class ProductCategoryController extends Controller
                     ->where('type', 'Products')
                     ->orderBy('sort_order', 'asc')
                     ->get(['id', 'name', 'image_url']);
-                
-                foreach($categories as $cat) {
+
+                foreach ($categories as $cat) {
                     $cat->image_url = getImage($cat->image_url);
                 }
 
@@ -42,16 +43,19 @@ class ProductCategoryController extends Controller
                     return '<span class="badge rounded-pill ' . $class . ' px-3 py-1 small">' . ucfirst($row->status) . '</span>';
                 })
                 ->addColumn('action', function ($row) {
-                    $url = route('business.product-category.destroy', $row->id);
-                    $url = "'" . $url . "'";
-                    return ' 
-                    <div class="btn-group">
-                        <button onclick="editCategory(' . $row->id . ')" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2">Edit</button>
-                        <button onclick="destroy(' . $url . ', ' . $row->id . ')" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm btn_delete-' . $row->id . '" title="Delete">
-                            <i id="buttonText" class="bi bi-trash text-danger"></i>
-                            <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                        </button>
-                    </div>';
+                    $html = '<div class="btn-group">';
+                    if (checkBusinessPermission('product', 'categories', 'update') || checkBusinessPermission('product', 'categories', 'view')) {
+                        $html .= '<button onclick="editCategory(' . $row->id . ')" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2">Edit</button>';
+                    }
+                    if (checkBusinessPermission('product', 'categories', 'delete')) {
+                        $url = "'" . route('business.product-category.destroy', $row->id) . "'";
+                        $html .= '<button onclick="destroy(' . $url . ', ' . $row->id . ')" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm btn_delete-' . $row->id . '" title="Delete">
+                                    <i id="buttonText" class="bi bi-trash text-danger"></i>
+                                    <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                  </button>';
+                    }
+                    $html .= '</div>';
+                    return $html;
                 })
                 ->rawColumns(['action', 'status', 'image'])
                 ->make(true);
@@ -178,6 +182,15 @@ class ProductCategoryController extends Controller
         $data = array();
 
         try {
+            $productCount = Product::where('category_id', $id)->count();
+            if ($productCount > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete this category because ' . $productCount . ' product(s) are linked to it.',
+                    'redirect' => $redirect
+                ]);
+            }
+
             DB::beginTransaction();
             $delete = Category::where('business_id', getBusinessId())->where('type', 'Products')->find($id);
             if ($delete) {

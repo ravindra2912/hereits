@@ -20,9 +20,11 @@
             <div class="card border-0 shadow-sm rounded-4 h-100 transition-all hover-shadow">
                 <div class="card-header bg-white border-bottom-0 pt-4 px-4 d-flex justify-content-between align-items-center">
                     <h5 class="fw-bold mb-0 text-dark">{{ $day->day }}</h5>
+                    @if(checkBusinessPermission('store_management', 'timing', 'add'))
                     <button type="button" class="btn btn-primary btn-sm rounded-circle shadow-sm" onclick="addTiming('{{ $day->day }}')" title="Add Time Slot">
                         <i class="bi bi-plus-lg"></i>
                     </button>
+                    @endif
                 </div>
                 <div class="card-body px-4 pb-4">
                     <div class="timing-list mt-2">
@@ -34,15 +36,19 @@
                                 </span>
                             </div>
                             <div class="btn-group">
+                                @if(checkBusinessPermission('store_management', 'timing', 'update') || checkBusinessPermission('store_management', 'timing', 'view'))
                                 <button class="btn btn-sm btn-outline-primary border-0 rounded-circle me-1" 
                                     onclick="editTiming({{ json_encode($time) }})" title="Edit">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
+                                @endif
+                                @if(checkBusinessPermission('store_management', 'timing', 'delete'))
                                 <button class="btn btn-sm btn-outline-danger border-0 rounded-circle btn_delete-{{ $time->id }}" 
                                     onclick="destroy({{ $time->id }})" title="Delete">
                                     <i class="bi bi-trash" id="buttonText"></i>
                                     <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                                 </button>
+                                @endif
                             </div>
                         </div>
                         @empty
@@ -101,7 +107,7 @@
             </div>
             <div class="modal-footer border-top-0 px-4 pb-4">
                 <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-primary rounded-pill px-4 btn_action shadow-sm">
+                <button type="submit" id="submit-timing-btn" class="btn btn-primary rounded-pill px-4 btn_action shadow-sm">
                     <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                     <span id="buttonText">Save Timing</span>
                 </button>
@@ -136,6 +142,11 @@
     const timingModal = new bootstrap.Modal(timingModalElement);
 
     function addTiming(day) {
+        @if(checkBusinessPermission('store_management', 'timing', 'add'))
+        $('#submit-timing-btn').show();
+        @else
+        $('#submit-timing-btn').hide();
+        @endif
         $('#timing-form')[0].reset();
         $('#timing_id').val('');
         $('#week_day').val(day).prop('readonly', false);
@@ -145,6 +156,11 @@
     }
 
     function editTiming(time) {
+        @if(checkBusinessPermission('store_management', 'timing', 'update'))
+        $('#submit-timing-btn').show();
+        @else
+        $('#submit-timing-btn').hide();
+        @endif
         $('#timing-form')[0].reset();
         $('#timing_id').val(time.id);
         $('#week_day').val(time.day);

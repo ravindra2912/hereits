@@ -108,26 +108,32 @@ class AppointmentBookingController extends Controller
                 ->addColumn('action', function ($row) {
                     $btn = '<div class="d-flex justify-content-end gap-2">';
 
-                    if (Carbon::parse($row->booking_date)->toDateString() == now()->toDateString()) {
-                        if ($row->status == 'pending') {
-                            $btn .= '<button class="ststus_chenge_btn btn btn-primary btn-sm rounded-pill px-3" data-id="' . $row->id . '" data-status="confirmed">Accept</button>';
-                            $btn .= '<button class="ststus_chenge_btn btn btn-outline-danger btn-sm rounded-pill px-3" data-id="' . $row->id . '" data-status="cancel">Cancel</button>';
-                        } else if ($row->status == 'confirmed') {
-                            $btn .= '<button class="ststus_chenge_btn btn btn-primary btn-sm rounded-pill px-3" data-id="' . $row->id . '" data-status="in_progress">Start</button>';
-                            $btn .= '<button class="ststus_chenge_btn btn btn-outline-danger btn-sm rounded-pill px-3" data-id="' . $row->id . '" data-status="cancel">Cancel</button>';
-                        } else if ($row->status == 'in_progress') {
-                            $btn .= '<button class="ststus_chenge_btn btn btn-success btn-sm rounded-pill px-3" data-id="' . $row->id . '" data-status="completed">Complete</button>';
-                            $btn .= '<button class="ststus_chenge_btn btn btn-outline-primary btn-sm rounded-pill px-3" data-id="' . $row->id . '" data-status="completeAndNext">Complete & Next</button>';
+                    if (checkBusinessPermission('appointments', 'appointments', 'update')) {
+                        if (Carbon::parse($row->booking_date)->toDateString() == now()->toDateString()) {
+                            if ($row->status == 'pending') {
+                                $btn .= '<button class="ststus_chenge_btn btn btn-primary btn-sm rounded-pill px-3" data-id="' . $row->id . '" data-status="confirmed">Accept</button>';
+                                $btn .= '<button class="ststus_chenge_btn btn btn-outline-danger btn-sm rounded-pill px-3" data-id="' . $row->id . '" data-status="cancel">Cancel</button>';
+                            } else if ($row->status == 'confirmed') {
+                                $btn .= '<button class="ststus_chenge_btn btn btn-primary btn-sm rounded-pill px-3" data-id="' . $row->id . '" data-status="in_progress">Start</button>';
+                                $btn .= '<button class="ststus_chenge_btn btn btn-outline-danger btn-sm rounded-pill px-3" data-id="' . $row->id . '" data-status="cancel">Cancel</button>';
+                            } else if ($row->status == 'in_progress') {
+                                $btn .= '<button class="ststus_chenge_btn btn btn-success btn-sm rounded-pill px-3" data-id="' . $row->id . '" data-status="completed">Complete</button>';
+                                $btn .= '<button class="ststus_chenge_btn btn btn-outline-primary btn-sm rounded-pill px-3" data-id="' . $row->id . '" data-status="completeAndNext">Complete & Next</button>';
+                            }
                         }
                     }
 
-                    $btn .= '<a href="' . route('business.appointment.bookings.edit', $row->id) . '" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm" title="Edit"><i class="bi bi-pencil-square text-primary"></i></a>';
+                    if (checkBusinessPermission('appointments', 'appointments', 'update') || checkBusinessPermission('appointments', 'appointments', 'view')) {
+                        $btn .= '<a href="' . route('business.appointment.bookings.edit', $row->id) . '" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm" title="Edit"><i class="bi bi-pencil-square text-primary"></i></a>';
+                    }
 
-                    $url = route('business.appointment.bookings.destroy', $row->id);
-                    $btn .= '<button onclick="destroy(\'' . $url . '\', ' . $row->id . ')" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm btn_delete-' . $row->id . '" title="Delete">
-                                <i id="buttonText" class="bi bi-trash text-danger"></i>
-                                <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                            </button>';
+                    if (checkBusinessPermission('appointments', 'appointments', 'delete')) {
+                        $url = route('business.appointment.bookings.destroy', $row->id);
+                        $btn .= '<button onclick="destroy(\'' . $url . '\', ' . $row->id . ')" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm btn_delete-' . $row->id . '" title="Delete">
+                                    <i id="buttonText" class="bi bi-trash text-danger"></i>
+                                    <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                </button>';
+                    }
 
                     $btn .= '</div>';
                     return $btn;

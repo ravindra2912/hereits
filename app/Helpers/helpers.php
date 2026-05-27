@@ -812,7 +812,7 @@ function getPosBusinessId()
  */
 function checkPosPermission($permission)
 {
-    $permissions = session('pos_permissions', []);
+    $permissions = session('permissions', []);
     if (isset($permissions['all_access']) && $permissions['all_access']) {
         return true;
     }
@@ -821,6 +821,74 @@ function checkPosPermission($permission)
     // Flattened structure check (the keys in pos_permission are the permission codes)
     $posPermissions = $permissions['pos_permission'] ?? [];
     return !empty($posPermissions[$permission]);
+}
+
+/**
+ * Check if the authenticated user has a specific Business panel permission.
+ * 
+ * @param string $module The main module/setting (e.g. 'customers', 'appointments', 'store_management')
+ * @param string|null $submodule The sub-feature (e.g. 'department', 'role')
+ * @param string|null $action The action to check ('view', 'add', 'update', 'delete')
+ * @return bool
+ */
+function checkBusinessPermission($module, $submodule = null, $action = null)
+{
+    $user = Auth::user();
+    if (!$user) {
+        return false;
+    }
+
+    // Owner has full access to everything in the business panel
+    if ($user->role === 'Business') {
+        return true;
+    }
+
+    // Ensure session permissions are populated
+    if (!session()->has('permissions')) {
+        $user->syncPermissionsToSession();
+    }
+
+    $permissions = session('permissions', []);
+    if (isset($permissions['all_access']) && $permissions['all_access']) {
+        return true;
+    }
+
+    // Check if business access is globally allowed
+    $businessAccess = $permissions['business_access'] ?? false;
+    if (!$businessAccess) {
+        return false;
+    }
+
+    $businessPermissions = $permissions['business_permissions'] ?? [];
+    if (empty($businessPermissions)) {
+        return false;
+    }
+
+    // 1. If only module is checked (e.g. general module like 'customers' or 'analytics')
+    if ($submodule === null && $action === null) {
+        if (isset($businessPermissions[$module])) {
+            return $businessPermissions[$module] === 'yes';
+        }
+        return false;
+    }
+
+    // 2. If it's a module with sub-features
+    if (isset($businessPermissions[$module])) {
+        $moduleData = $businessPermissions[$module];
+
+        // Ensure module has general access allowed
+        if (!isset($moduleData['access']) || $moduleData['access'] !== 'yes') {
+            return false;
+        }
+
+        // If checking sub-module with specific action
+        if ($submodule !== null && $action !== null) {
+            $actions = $moduleData[$submodule] ?? [];
+            return is_array($actions) && in_array($action, $actions);
+        }
+    }
+
+    return false;
 }
 
 function getSiteSetting()

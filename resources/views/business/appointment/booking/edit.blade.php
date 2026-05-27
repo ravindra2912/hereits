@@ -158,10 +158,12 @@
 
             <div class="d-flex justify-content-end gap-2 mt-4 border-top pt-3">
                 <button class="btn btn-light border" type="button" onclick="history.back()">Cancel</button>
+                @if(checkBusinessPermission('appointments', 'appointments', 'update'))
                 <button class="btn btn-primary btn_action px-4" type="submit">
                     <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                     <span id="buttonText">Update Appointment</span>
                 </button>
+                @endif
             </div>
 
         </form>

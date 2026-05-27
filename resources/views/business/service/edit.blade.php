@@ -125,10 +125,12 @@
                         </div>
                         <div class="card-footer bg-white py-3 text-end">
                             <a href="{{ route('business.service.index') }}" class="btn btn-light border px-4 me-2">Cancel</a>
+                            @if(checkBusinessPermission('service', 'service_list', 'update'))
                             <button type="submit" class="btn btn-primary px-5 btn_action">
                                 <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                                 <span id="buttonText">Update Service</span>
                             </button>
+                            @endif
                         </div>
                     </div>
                 </div>

@@ -68,8 +68,12 @@ class ServiceController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<div class="btn-group">';
-                    $btn .= '<a href="' . route('business.service.edit', $row->id) . '" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2">Edit</a>';
-                    $btn .= '<button type="button" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm" onclick="deleteService(' . $row->id . ')" title="Delete Service"><i class="bi bi-trash text-danger"></i></button>';
+                    if (checkBusinessPermission('service', 'service_list', 'update') || checkBusinessPermission('service', 'service_list', 'view')) {
+                        $btn .= '<a href="' . route('business.service.edit', $row->id) . '" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2">Edit</a>';
+                    }
+                    if (checkBusinessPermission('service', 'service_list', 'delete')) {
+                        $btn .= '<button type="button" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm" onclick="deleteService(' . $row->id . ')" title="Delete Service"><i class="bi bi-trash text-danger"></i></button>';
+                    }
                     $btn .= '</div>';
                     return $btn;
                 })

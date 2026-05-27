@@ -51,16 +51,16 @@ class ExpertController extends Controller
                     return isset($row->department) ? $row->department->department_name : '';
                 })
                 ->addColumn('action', function ($row) {
-                    $url = route('business.appointment.expert.destroy', $row->id);
-                    $url = "'" . $url . "'";
                     $whatsappMessage = "Hello " . $row->expert_name . "! \n\nManage your professional profile and appointments on Hereits.\n\nLogin to Expert Dashboard: https://hereits.com/expert-manager/login\nEmail: " . $row->email . "\n\nUse your assigned password to access your dashboard. \n\nBest Regards,\nTeam Hereits";
                     $whatsappUrl = "https://api.whatsapp.com/send?text=" . urlencode($whatsappMessage);
 
-                    $html = ' <div class="text-center">
-                    <a href="' . $whatsappUrl . '" target="_blank" class="btn btn-outline-success btn-sm" title="Share on WhatsApp"><i class="bi bi-whatsapp"></i></a>
-                    <a href="' . route('business.appointment.expert.edit', $row->id) . '" class="btn btn-outline-primary btn-sm ms-1" title="Edit"><i class="bi bi-pencil"></i></a>';
-                    $html .= '<a href="' . route('business.appointment.expert.timing', $row->id) . '" class="btn btn-outline-danger btn-sm ms-1" title="Timing"><i class="bi bi-clock"></i></a>
-                    </div>';
+                    $html = '<div class="text-center">';
+                    $html .= '<a href="' . $whatsappUrl . '" target="_blank" class="btn btn-outline-success btn-sm" title="Share on WhatsApp"><i class="bi bi-whatsapp"></i></a>';
+                    if (checkBusinessPermission('appointments', 'experts', 'update') || checkBusinessPermission('appointments', 'experts', 'view')) {
+                        $html .= '<a href="' . route('business.appointment.expert.edit', $row->id) . '" class="btn btn-outline-primary btn-sm ms-1" title="Edit"><i class="bi bi-pencil"></i></a>';
+                        $html .= '<a href="' . route('business.appointment.expert.timing', $row->id) . '" class="btn btn-outline-danger btn-sm ms-1" title="Timing"><i class="bi bi-clock"></i></a>';
+                    }
+                    $html .= '</div>';
                     return $html;
                 })
                 ->rawColumns(['action', 'department', 'image', 'status'])
@@ -307,7 +307,7 @@ class ExpertController extends Controller
 
             $business_id = getBusinessId();
             $days = $request->has('apply_to_all') && $request->apply_to_all ? config('const.week_day_name') : [$request->day];
-            
+
             foreach ($days as $day) {
                 // Check for conflict
                 $conflictQuery = BusinessTiming::where('business_id', $business_id)
@@ -346,7 +346,6 @@ class ExpertController extends Controller
             DB::commit();
             $success = true;
             $message = $request->filled('timing_id') ? 'Time updated successfully.' : 'Time added successfully.';
-            
         } catch (\Exception $e) {
             DB::rollBack();
             $message = $e->getMessage();

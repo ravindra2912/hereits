@@ -16,9 +16,11 @@
 
 <div class="mb-4 d-flex justify-content-between align-items-center">
     <h5 class="fw-bold text-dark mb-0">Gallery Items</h5>
+    @if(checkBusinessPermission('store_management', 'gallery', 'add'))
     <button type="button" class="btn btn-primary shadow-sm" onclick="openGalleryModal()">
         <i class="bi bi-plus-lg me-1"></i> Add Gallery Item
     </button>
+    @endif
 </div>
 
 <div class="row g-4" id="gallery-grid">
@@ -80,12 +82,16 @@
                 <h6 class="fw-bold text-dark text-truncate mb-2" title="{{ $gallery->title }}">{{ $gallery->title }}</h6>
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div class="btn-group">
+                        @if(checkBusinessPermission('store_management', 'gallery', 'update') || checkBusinessPermission('store_management', 'gallery', 'view'))
                         <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-2" onclick="editGallery({{ $gallery->id }})">
                             <i class="bi bi-pencil me-1"></i> Edit
                         </button>
+                        @endif
+                        @if(checkBusinessPermission('store_management', 'gallery', 'delete'))
                         <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="deleteGallery({{ $gallery->id }})">
                             <i class="bi bi-trash me-1"></i> Delete
                         </button>
+                        @endif
                     </div>
                     @if($gallery->type == 'doc')
                     <a href="{{ $gallery->image_url }}" target="_blank" class="text-primary ms-2" title="Open Link">
@@ -248,6 +254,11 @@
     }
 
     function openGalleryModal() {
+        @if(checkBusinessPermission('store_management', 'gallery', 'add'))
+        $('#save-btn').show();
+        @else
+        $('#save-btn').hide();
+        @endif
         form[0].reset();
         $('#gallery-id').val('');
         $('#form-method').val('POST');
@@ -258,6 +269,11 @@
     }
 
     function editGallery(id) {
+        @if(checkBusinessPermission('store_management', 'gallery', 'update'))
+        $('#save-btn').show();
+        @else
+        $('#save-btn').hide();
+        @endif
         $.ajax({
             url: "{{ route('business.gallery.edit', ':id') }}".replace(':id', id),
             type: "GET",

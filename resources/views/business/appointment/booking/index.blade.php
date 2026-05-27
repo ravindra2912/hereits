@@ -23,12 +23,16 @@
         <i class="bi bi-filter"></i> Filters
       </button>
 
+      @if(checkBusinessPermission('appointments', 'appointments', 'view'))
       <button id="export_btn" class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-sm flex-fill flex-sm-grow-0">
         <i class="bi bi-file-earmark-spreadsheet me-1"></i> <span class="d-none d-sm-inline">Export</span>
       </button>
+      @endif
+      @if(checkBusinessPermission('appointments', 'appointments', 'add'))
       <a href="{{ route('business.appointment.bookings.create') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm flex-fill flex-sm-grow-0">
         <i class="bi bi-plus-lg me-1"></i> <span class="d-none d-sm-inline">Add Booking</span>
       </a>
+      @endif
     </div>
   </div>
   <div class="card-body p-0">

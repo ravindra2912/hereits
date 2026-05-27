@@ -27,7 +27,7 @@ class POS
         }
 
         // Sync permissions if not in session
-        if (!session()->has('pos_permissions') || !session()->has('pos_role_name') || !session()->has('pos_business_name')) {
+        if (!session()->has('permissions') || !session()->has('role_name') || !session()->has('business_name')) {
             $user->syncPermissionsToSession();
         }
 

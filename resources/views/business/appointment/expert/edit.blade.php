@@ -146,10 +146,12 @@
 
           <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
             <button class="btn btn-light border px-4" type="button" onclick="history.back()">Cancel</button>
+            @if(checkBusinessPermission('appointments', 'experts', 'update'))
             <button class="btn btn-primary px-4 btn_action" type="submit">
               <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
               <span id="buttonText">Update Expert Profile</span>
             </button>
+            @endif
           </div>
         </div>
       </div>

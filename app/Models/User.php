@@ -94,33 +94,33 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the POS permissions for the user from session.
-     * 
+     * Get the permissions for the user from session.
+     *
      * @return array
      */
     public function getPosPermissionsAttribute()
     {
-        return session('pos_permissions', []);
+        return session('permissions', []);
     }
 
     /**
-     * Get the POS role name for the user from session.
-     * 
+     * Get the business panel role name for the user from session.
+     *
      * @return string
      */
     public function getRoleNameAttribute()
     {
-        return session('pos_role_name', $this->role == 'Business' ? 'Business Owner' : 'Staff Member');
+        return session('role_name', $this->role == 'Business' ? 'Business Owner' : 'Staff Member');
     }
 
     /**
-     * Get the current POS business name from session.
-     * 
+     * Get the current business name from session.
+     *
      * @return string
      */
     public function getBusinessNameAttribute()
     {
-        return session('pos_business_name', 'My Business');
+        return session('business_name', 'My Business');
     }
 
     public function syncPermissionsToSession($businessId = null)
@@ -156,8 +156,9 @@ class User extends Authenticatable
                 $businessName = $businessUser->business->name ?? 'My Business';
             }
         }
-        session(['pos_permissions' => $permissions]);
-        session(['pos_role_name' => $roleName]);
-        session(['pos_business_name' => $businessName]);
+        // Unified session keys used by both business and POS panels
+        session(['permissions'   => $permissions]);
+        session(['role_name'     => $roleName]);
+        session(['business_name' => $businessName]);
     }
 }

@@ -27,17 +27,21 @@
                                     @if($image->type == 'video')
                                     <i class="bi bi-play-circle-fill position-absolute top-50 start-50 translate-middle text-white fs-4"></i>
                                     @endif
+                                    @if(checkBusinessPermission('product', 'products', 'update'))
                                     <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 p-0 px-1 delete-current-image" data-id="{{ $image->id }}">
                                         <i class="bi bi-trash small"></i>
                                     </button>
+                                    @endif
                                 </div>
                                 @empty
                                 @endforelse
 
+                                @if(checkBusinessPermission('product', 'products', 'update'))
                                 <div class="d-flex justify-content-center align-items-center border rounded bg-light text-primary cursor-pointer hover-shadow {{ ($product->images()->where('type', 'image')->count() >= $image_limit && $product->images()->where('type', 'video')->count() >= $video_limit) ? 'img-hide' : '' }}" style="width: 100px; height: 100px; border-style: dashed !important; cursor: pointer;" id="add-image-btn" onclick="openMediaModal()">
                                     <i class="bi bi-plus-lg fs-3"></i>
                                     <input type="file" class="img-hide" id="images" name="images[]" multiple accept="image/*">
                                 </div>
+                                @endif
                             </div>
                             <small class="text-muted d-block mt-2">Max {{ $image_limit }} images and {{ $video_limit }} video links allowed.</small>
                         </div>
@@ -106,10 +110,12 @@
 
                         <div class="col-12 text-end">
                             <button type="button" class="btn btn-secondary me-2" onclick="history.back()">Back</button>
+                            @if(checkBusinessPermission('product', 'products', 'update'))
                             <button type="submit" class="btn btn-primary btn_action">
                                 <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                                 <span id="buttonText">Update Product</span>
                             </button>
+                            @endif
                         </div>
                     </div>
                 </form>
@@ -195,6 +201,7 @@
             }
         }
 
+        @if(checkBusinessPermission('product', 'products', 'update'))
         // Initialize SortableJS
         var el = document.getElementById('current-images-container');
         var sortable = Sortable.create(el, {
@@ -232,6 +239,7 @@
                 });
             }
         });
+        @endif
     });
 </script>
 <style>

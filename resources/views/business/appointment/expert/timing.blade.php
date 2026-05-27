@@ -25,9 +25,11 @@
             <div class="card border-0 shadow-sm rounded-4 h-100 transition-all hover-shadow">
                 <div class="card-header bg-white border-bottom-0 pt-4 px-4 d-flex justify-content-between align-items-center">
                     <h5 class="fw-bold mb-0 text-dark">{{ $day->day }}</h5>
+                    @if(checkBusinessPermission('appointments', 'experts', 'update'))
                     <button type="button" class="btn btn-primary btn-sm rounded-circle shadow-sm" onclick="addTiming('{{ $day->day }}')" title="Add Time Slot">
                         <i class="bi bi-plus-lg"></i>
                     </button>
+                    @endif
                 </div>
                 <div class="card-body px-4 pb-4">
                     <div class="timing-list mt-2">
@@ -38,6 +40,7 @@
                                     {{ get_time($time->start_time) }} - {{ get_time($time->end_time) }}
                                 </span>
                             </div>
+                            @if(checkBusinessPermission('appointments', 'experts', 'update'))
                             <div class="btn-group">
                                 <button class="btn btn-sm btn-outline-primary border-0 rounded-circle me-1" 
                                     onclick="editTiming({{ json_encode($time) }})" title="Edit">
@@ -49,6 +52,7 @@
                                     <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                                 </button>
                             </div>
+                            @endif
                         </div>
                         @empty
                         <div class="text-center py-4 rounded-3 border-dashed" style="border: 2px dashed #dee2e6;">
@@ -106,10 +110,12 @@
             </div>
             <div class="modal-footer border-top-0 px-4 pb-4">
                 <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                @if(checkBusinessPermission('appointments', 'experts', 'update'))
                 <button type="submit" class="btn btn-primary rounded-pill px-4 btn_action shadow-sm">
                     <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                     <span id="buttonText">Save Timing</span>
                 </button>
+                @endif
             </div>
         </form>
     </div>

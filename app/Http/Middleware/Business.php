@@ -19,20 +19,29 @@ class Business
         // dd(Auth::user());
         // return $next($request);
         if (Auth::check()) {
-            if (Auth::user()->role != 'Business') {
+            $user = Auth::user();
+            $isBusinessOwner = ($user->role === 'Business');
+            $isStaff = \App\Models\BusinessUser::where('user_id', $user->id)
+                ->where('business_id', $user->business_id)
+                ->exists();
+
+            if (!$isBusinessOwner && !$isStaff) {
                 if ($request->ajax()) {
                     return response()->json(['success' => false, 'message' => 'Un-Authenticated Access', 'data' => array()]);
                 } else {
                     return redirect()->route('business.login');
                 }
             } else {
-                //check subscription is expired
-                // if (Auth::user()->getBusinessDetails->subscription_expiry_date < now()) {
-                // if (!$request->routeIs('business.subscription')) {
-                //     return redirect()->route('business.subscription');
-                // }
-                // }
-                if (Auth::user()->getBusinessDetails->status == 'baned' || Auth::user()->getBusinessDetails->status == 'in-active') {
+                // Ensure permissions are synchronized to session
+                if (!session()->has('permissions')) {
+                    $user->syncPermissionsToSession();
+                }
+
+                $business = $isBusinessOwner 
+                    ? $user->getBusinessDetails 
+                    : \App\Models\Business::find($user->business_id);
+
+                if ($business && ($business->status == 'baned' || $business->status == 'in-active')) {
                     exit('Your business is not active, Please contact to Admin');
                 }
                 return $next($request);
