@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\PurchaseHistoryController;
 use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\TransactionController;
+use App\Http\Controllers\Admin\UserCreditTransactionController;
 
 Route::name('admin.')->group(function () {
     Route::controller(CommonController::class)->group(function () {
@@ -53,6 +54,8 @@ Route::name('admin.')->group(function () {
             Route::post('approve/{id}', 'approve')->name('approve');
             Route::post('reject/{id}', 'reject')->name('reject');
         });
+
+        Route::get('user-credit-transactions', [UserCreditTransactionController::class, 'index'])->name('user-credit-transactions.index');
 
         Route::resource('business', BusinessController::class);
         Route::post('blog/upload-image', [BlogController::class, 'uploadImage'])->name('blog.uploadImage');

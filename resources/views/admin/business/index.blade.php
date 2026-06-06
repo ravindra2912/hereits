@@ -123,6 +123,10 @@
                   <small class="text-muted d-block">Business Type</small>
                   <span id="view_business_type" class="fw-bold"></span>
                 </div>
+                <div class="col-md-6 mb-2">
+                  <small class="text-muted d-block">Referral Code</small>
+                  <span id="view_business_code" class="fw-bold"></span>
+                </div>
                 <div class="col-md-12 mb-2">
                   <small class="text-muted d-block">Address</small>
                   <span id="view_business_address" class="fw-bold"></span>
@@ -280,6 +284,7 @@
             $('#view_business_status').text(business.status.toUpperCase()).removeClass('bg-success bg-warning').addClass(statusClass);
 
             $('#view_business_contact').text(business.contact || 'N/A');
+            $('#view_business_code').text(business.user_referral_code || 'N/A');
             var fullAddress = business.address || '';
             if (business.city) fullAddress += ', ' + business.city.name;
             if (business.state) fullAddress += ', ' + business.state.name;

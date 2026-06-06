@@ -91,6 +91,34 @@
                 </select>
               </div>
             </div>
+
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Referral Code</label>
+                @if($user->referral_code)
+                  {{-- Already set: show read-only + copy button --}}
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-gift"></i></span>
+                    <input type="text" class="form-control bg-light font-monospace fw-semibold"
+                      id="referral_code_display" value="{{ $user->referral_code }}" readonly />
+                    <button class="btn btn-outline-secondary" type="button" id="copyReferralBtn"
+                      title="Copy referral code" onclick="copyReferralCode()">
+                      <i class="bi bi-clipboard" id="copyReferralIcon"></i>
+                    </button>
+                  </div>
+                  <div class="form-text text-muted"><i class="bi bi-lock me-1"></i>Auto-generated. Read-only.</div>
+                @else
+                  {{-- Not set yet: allow admin to enter manually --}}
+                  <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-gift"></i></span>
+                    <input type="text" class="form-control font-monospace fw-semibold text-uppercase"
+                      name="referral_code" id="referral_code_display"
+                      value="" placeholder="e.g. JOHN1234" maxlength="20" />
+                  </div>
+                  <div class="form-text text-warning"><i class="bi bi-exclamation-triangle me-1"></i>No code yet. You may set one manually or leave blank to auto-generate.</div>
+                @endif
+              </div>
+            </div>
           </div>
         </div>
 
@@ -191,6 +219,21 @@
       icon.classList.remove("bi-eye-slash");
       icon.classList.add("bi-eye");
     }
+  }
+
+  function copyReferralCode() {
+    var code = document.getElementById('referral_code_display').value;
+    if (!code || code === '—') return;
+    navigator.clipboard.writeText(code).then(function () {
+      var icon = document.getElementById('copyReferralIcon');
+      var btn  = document.getElementById('copyReferralBtn');
+      icon.classList.replace('bi-clipboard', 'bi-clipboard-check');
+      btn.classList.replace('btn-outline-secondary', 'btn-success');
+      setTimeout(function () {
+        icon.classList.replace('bi-clipboard-check', 'bi-clipboard');
+        btn.classList.replace('btn-success', 'btn-outline-secondary');
+      }, 2000);
+    });
   }
 </script>
 @endpush

@@ -336,4 +336,24 @@ class AccountController extends Controller
 
         return view('front.account.favorites', compact('businesses', 'experts', 'products', 'services'));
     }
+
+    public function referral(): View
+    {
+        $referredBusinesses = Business::select('id', 'name', 'created_at')
+            ->where('user_referral_code', Auth::user()->referral_code)
+            ->get();
+        return view('front.account.referral', compact('referredBusinesses'));
+    }
+
+    public function credits(): View
+    {
+        $transactions = \App\Models\UserCreditTransaction::with(['business' => function($q) {
+                $q->select('id', 'name', 'slug');
+            }])
+            ->select('id', 'type', 'amount', 'reference_type', 'reference_id', 'created_at')
+            ->where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+        return view('front.account.credits', compact('transactions'));
+    }
 }

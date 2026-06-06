@@ -3,12 +3,16 @@
 namespace App\Traits;
 
 use App\Models\Purchase;
+use App\Models\Business;
 use App\Models\BusinessSetting;
 use App\Models\Transactions;
 use App\Models\Coupon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Business\PurchaseSuccessMail;
+use App\Models\User;
+use App\Models\UserCreditTransaction;
+use App\Repositories\UserCreditTransactionRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -106,6 +110,30 @@ trait BusinessTraits
             $type = $purchase->plan_type;
             if ($type == 'subscription') {
                 $settings->update(['subscription_expiry_date' => $purchase->end_date]);
+
+                // Check referral: single JOIN query instead of two separate queries
+                $refUser = User::select('users.id')
+                    ->join('businesses', 'businesses.user_referral_code', '=', 'users.referral_code')
+                    ->where('businesses.id', $purchase->business_id)
+                    ->first();
+
+                if ($refUser) {
+                    // exists() is faster than count() — award credit only on first subscription
+                    $isFirstSubscription = !Purchase::where('business_id', $purchase->business_id)
+                        ->where('plan_type', 'subscription')
+                        ->where('status', 'paid')
+                        ->where('id', '!=', $purchase->id)
+                        ->exists();
+
+                    if ($isFirstSubscription) {
+                        app(UserCreditTransactionRepository::class)->addCredit(
+                            $refUser->id,
+                            UserCreditTransaction::REF_BUSINESS_SUBSCRIPTION,
+                            $purchase->business_id,
+                            99
+                        );
+                    }
+                }
             } else if ($type == 'product' || $type == 'service') {
                 $field = ($type == 'product') ? 'product_limit' : 'service_limit';
                 $expiry_field = ($type == 'product') ? 'product_limit_expiry_date' : 'service_limit_expiry_date';

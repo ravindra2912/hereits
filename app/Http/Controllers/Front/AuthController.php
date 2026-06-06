@@ -288,6 +288,7 @@ class AuthController extends Controller
                 'city_id' => 'required|exists:cities,id',
                 'area' => 'required',
                 'pincode' => 'required',
+                'user_referral_code' => 'nullable|exists:users,referral_code',
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -330,13 +331,14 @@ class AuthController extends Controller
 
                 $insert->pincode = $request->pincode;
                 $insert->status = 'active';
+                $insert->user_referral_code = $request->user_referral_code;
 
                 $insert->save();
 
                 updateBusinessSeo($insert->id);
 
                 $business_category = BusinessCategory::select('deduct_credit_per_self_appointment', 'deduct_credit_per_customer_appointment')->first($request->business_category_id);
-                
+
                 $site_setting = getSiteSetting();
                 $free_trial_days = $site_setting->free_trial_days ?? 7;
 
@@ -353,8 +355,8 @@ class AuthController extends Controller
                 ]);
 
                 // add business and expert timing
-                $start = '08:00'; // 8 AM
-                $end = '20:00';   // 8 PM
+                $start = '09:00'; // 9 AM
+                $end = '21:00';   // 9 PM
                 foreach (config('const.week_day_name') as $day) {
                     // Add for business
                     $businessTime = new BusinessTiming();

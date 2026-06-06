@@ -15,6 +15,19 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, SoftDeletes, HasApiTokens;
 
+    protected static function booted()
+    {
+        static::creating(function ($user) {
+            if (empty($user->referral_code)) {
+                $namePart = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $user->first_name ?? 'USER'), 0, 6));
+                do {
+                    $code = $namePart . rand(1000, 9999);
+                } while (static::where('referral_code', $code)->exists());
+                $user->referral_code = $code;
+            }
+        });
+    }
+
     /**
      * The attributes that are mass assignable.
      *
@@ -32,6 +45,7 @@ class User extends Authenticatable
         'business_id',
         'role',
         'status',
+        'referral_code',
     ];
 
     /**
@@ -72,6 +86,18 @@ class User extends Authenticatable
         return $this->hasMany(AppointmentBooking::class, 'user_id');
     }
 
+    public function creditTransactions()
+    {
+        return $this->hasMany(UserCreditTransaction::class, 'user_id');
+    }
+
+    public function getAvailableCreditsAttribute()
+    {
+        $credits = $this->creditTransactions()->where('type', 'credit')->sum('amount');
+        $debits = $this->creditTransactions()->where('type', 'debit')->sum('amount');
+        return $credits - $debits;
+    }
+
     //+++++++++++++++ For api responce ================
     public function apiObject(): array
     {
@@ -83,7 +109,8 @@ class User extends Authenticatable
             'email' => $this->email,
             'contact' => (int)$this->contact,
             'dob' => $this->dob,
-            'gender' => $this->gender
+            'gender' => $this->gender,
+            'referral_code' => $this->referral_code,
         ];
 
         return $data;

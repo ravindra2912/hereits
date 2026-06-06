@@ -103,6 +103,13 @@
                                 </select>
                             </div>
                         </div>
+
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label">Referral Code <span class="text-muted">(Optional)</span></label>
+                                <input type="text" class="form-control" name="user_referral_code" id="user_referral_code" placeholder="Enter referral code if you have one">
+                            </div>
+                        </div>
                     </div>
                 </div>
 

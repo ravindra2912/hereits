@@ -159,6 +159,7 @@ class UsersController extends Controller
                 'gender' => 'nullable',
                 'role' => 'required',
                 'status' => 'required',
+                'referral_code' => 'nullable|string|max:20|unique:users,referral_code,' . $id,
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -184,6 +185,12 @@ class UsersController extends Controller
                 $update->gender = $request->gender;
                 $update->role = $request->role;
                 $update->status = $request->status;
+
+                // Only set referral_code when it was blank and admin provided one
+                if (empty($update->referral_code) && $request->filled('referral_code')) {
+                    $update->referral_code = strtoupper($request->referral_code);
+                }
+
                 $update->save();
 
                 // Remove old uploaded image if exist

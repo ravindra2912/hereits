@@ -27,51 +27,55 @@
     </a>
 
 
-      <a href="{{ route('admin.plan.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.plan*') ? 'active' : '' }}">
-        <i class="bi bi-card-list me-2"></i>Plans
+    <a href="{{ route('admin.plan.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.plan*') ? 'active' : '' }}">
+      <i class="bi bi-card-list me-2"></i>Plans
+    </a>
+
+    <a href="{{ route('admin.coupon.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.coupon*') ? 'active' : '' }}">
+      <i class="bi bi-ticket-perforated me-2"></i>Coupon
+    </a>
+
+    <a href="{{ route('admin.purchase-history.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.purchase-history*') ? 'active' : '' }}">
+      <i class="bi bi-clock-history me-2"></i>Purchase History
+    </a>
+
+    <a href="{{ route('admin.user-credit-transactions.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.user-credit-transactions*') ? 'active' : '' }}">
+      <i class="bi bi-coin me-2"></i>User Credit History
+    </a>
+
+    <a href="{{ route('admin.transactions.pending') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.transactions.pending*') ? 'active' : '' }}">
+      <i class="bi bi-patch-check me-2"></i>Pending Payments
+    </a>
+
+    <a href="{{ route('admin.blog.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.blog*') ? 'active' : '' }}">
+      <i class="bi bi-journal-richtext me-2"></i>Blog
+    </a>
+
+    <a href="{{ route('admin.lagel-pages') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.lagel-pages*') ? 'active' : '' }}">
+      <i class="bi bi-file-earmark-text me-2"></i>Legal Pages
+    </a>
+
+
+    <a href="{{ route('admin.faq.index') }}" class="list-group-item list-group-item-action second-text {{ Route::is('admin.faq.index') ? 'active' : '' }}">
+      <i class="bi bi-question-circle me-2"></i>FAQ
+    </a>
+
+
+    <!-- Settings Dropdown logic in BS5 usually handled differently or just flat list -->
+    <a href="#settingsSubmenu" class="list-group-item list-group-item-action second-text fw-bold" data-bs-toggle="collapse" role="button" aria-expanded="{{ request()->routeIs('admin.setting*') ? 'true' : 'false' }}">
+      <i class="bi bi-gear me-2"></i>Settings
+    </a>
+    <div class="collapse {{ request()->routeIs('admin.setting*') || request()->routeIs('admin.site-setting*') ? 'show' : '' }}" id="settingsSubmenu">
+      <a href="{{ route('admin.setting.profile') }}" class="list-group-item list-group-item-action second-text ps-5 {{ request()->routeIs('admin.setting.profile*') ? 'active' : '' }}">
+        <i class="bi bi-person me-2"></i>Profile
       </a>
-
-      <a href="{{ route('admin.coupon.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.coupon*') ? 'active' : '' }}">
-        <i class="bi bi-ticket-perforated me-2"></i>Coupon
+      <a href="{{ route('admin.site-setting.index') }}" class="list-group-item list-group-item-action second-text ps-5 {{ request()->routeIs('admin.site-setting*') ? 'active' : '' }}">
+        <i class="bi bi-globe me-2"></i>Site Setting
       </a>
+    </div>
 
-      <a href="{{ route('admin.purchase-history.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.purchase-history*') ? 'active' : '' }}">
-        <i class="bi bi-clock-history me-2"></i>Purchase History
-      </a>
-
-      <a href="{{ route('admin.transactions.pending') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.transactions.pending*') ? 'active' : '' }}">
-        <i class="bi bi-patch-check me-2"></i>Pending Payments
-      </a>
-
-      <a href="{{ route('admin.blog.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.blog*') ? 'active' : '' }}">
-        <i class="bi bi-journal-richtext me-2"></i>Blog
-      </a>
-
-      <a href="{{ route('admin.lagel-pages') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.lagel-pages*') ? 'active' : '' }}">
-        <i class="bi bi-file-earmark-text me-2"></i>Legal Pages
-      </a>
-
-
-      <a href="{{ route('admin.faq.index') }}" class="list-group-item list-group-item-action second-text {{ Route::is('admin.faq.index') ? 'active' : '' }}">
-        <i class="bi bi-question-circle me-2"></i>FAQ
-      </a>
-
-
-      <!-- Settings Dropdown logic in BS5 usually handled differently or just flat list -->
-      <a href="#settingsSubmenu" class="list-group-item list-group-item-action second-text fw-bold" data-bs-toggle="collapse" role="button" aria-expanded="{{ request()->routeIs('admin.setting*') ? 'true' : 'false' }}">
-        <i class="bi bi-gear me-2"></i>Settings
-      </a>
-      <div class="collapse {{ request()->routeIs('admin.setting*') || request()->routeIs('admin.site-setting*') ? 'show' : '' }}" id="settingsSubmenu">
-        <a href="{{ route('admin.setting.profile') }}" class="list-group-item list-group-item-action second-text ps-5 {{ request()->routeIs('admin.setting.profile*') ? 'active' : '' }}">
-          <i class="bi bi-person me-2"></i>Profile
-        </a>
-        <a href="{{ route('admin.site-setting.index') }}" class="list-group-item list-group-item-action second-text ps-5 {{ request()->routeIs('admin.site-setting*') ? 'active' : '' }}">
-          <i class="bi bi-globe me-2"></i>Site Setting
-        </a>
-      </div>
-
-      <a href="{{ route('admin.logout') }}" class="list-group-item list-group-item-action text-danger fw-bold">
-        <i class="bi bi-power me-2"></i>Logout
-      </a>
+    <a href="{{ route('admin.logout') }}" class="list-group-item list-group-item-action text-danger fw-bold">
+      <i class="bi bi-power me-2"></i>Logout
+    </a>
   </div>
 </div>

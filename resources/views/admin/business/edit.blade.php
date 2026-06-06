@@ -133,6 +133,12 @@
             </select>
           </div>
         </div>
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label class="form-label small fw-bold">Referral Code</label>
+            <input type="text" class="form-control" value="{{ $business->user_referral_code }}" name="user_referral_code" placeholder="Referral Code (Optional)" />
+          </div>
+        </div>
         <div class="col-md-3">
           <div class="mb-3">
             <label class="form-label small fw-bold">Current Status <span class="text-danger">*</span></label>

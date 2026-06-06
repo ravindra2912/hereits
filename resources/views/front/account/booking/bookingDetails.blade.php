@@ -3,7 +3,7 @@
 @section('title', 'Booking Details')
 
 @section('content')
-<div class="bg-light py-5">
+<div class="bg-light pb-5 pt-3 pt-lg-5">
     <div class="container">
         <div class="row g-4">
             <!-- User Sidebar -->

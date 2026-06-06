@@ -101,6 +101,13 @@
                 <input type="text" class="form-control required" name="contact" placeholder="Contact" />
               </div>
             </div>
+
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Referral Code</label>
+                <input type="text" class="form-control" name="user_referral_code" placeholder="Referral Code (Optional)" />
+              </div>
+            </div>
           </div>
         </div>
       </div>

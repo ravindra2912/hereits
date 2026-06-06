@@ -96,6 +96,7 @@ class BusinessController extends Controller
                 'pincode' => 'required',
                 'status' => 'required',
                 'rating' => 'nullable|numeric|min:0|max:5',
+                'user_referral_code' => 'nullable|exists:users,referral_code',
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -127,6 +128,7 @@ class BusinessController extends Controller
                 $insert->pincode = $request->pincode;
                 $insert->status = $request->status;
                 $insert->rating = $request->rating ?? 0;
+                $insert->user_referral_code = $request->user_referral_code;
                 $insert->save();
 
                 //change user role to seller
@@ -173,7 +175,8 @@ class BusinessController extends Controller
             'city_id',
             'state_id',
             'pincode',
-            'rating'
+            'rating',
+            'user_referral_code'
         )->with([
             'owner' => function ($q) {
                 $q->select('id', 'first_name', 'last_name', 'contact');
@@ -246,6 +249,7 @@ class BusinessController extends Controller
                 'pincode' => 'required',
                 'status' => 'required',
                 'rating' => 'nullable|numeric|min:0|max:5',
+                'user_referral_code' => 'nullable|exists:users,referral_code',
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -298,6 +302,7 @@ class BusinessController extends Controller
                 $update->pincode = $request->pincode;
                 $update->status = $request->status;
                 $update->rating = $request->rating ?? 0;
+                $update->user_referral_code = $request->user_referral_code;
                 $update->save();
 
                 // BusinessSetting::where('business_id', $id)->update([

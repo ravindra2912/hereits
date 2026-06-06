@@ -104,6 +104,8 @@ Route::middleware(['web', 'front'])->group(function () {
         Route::post('booking/cancel', 'bookingCancel')->name('booking.cancel');
         Route::post('booking/review', 'bookingReview')->name('booking.review');
         Route::get('favorites', 'favorites')->name('favorites');
+        Route::get('referral', 'referral')->name('referral');
+        Route::get('credits', 'credits')->name('credits');
     });
 });
 
