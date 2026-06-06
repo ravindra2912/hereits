@@ -321,15 +321,15 @@ class AccountController extends Controller
         $businesses = Business::whereIn('id', $groupedIds['business'])
             ->with(['businessCategory', 'city', 'businessSetting'])
             ->get();
-            
+
         $experts = Expert::whereIn('id', $groupedIds['expert'])
             ->with(['business', 'department'])
             ->get();
-            
+
         $products = Product::whereIn('id', $groupedIds['product'])
             ->with(['business', 'firstImage'])
             ->get();
-            
+
         $services = Service::whereIn('id', $groupedIds['service'])
             ->with(['business'])
             ->get();
@@ -340,6 +340,7 @@ class AccountController extends Controller
     public function referral(): View
     {
         $referredBusinesses = Business::select('id', 'name', 'created_at')
+            ->whereNotNull('user_referral_code')
             ->where('user_referral_code', Auth::user()->referral_code)
             ->get();
         return view('front.account.referral', compact('referredBusinesses'));
@@ -347,9 +348,9 @@ class AccountController extends Controller
 
     public function credits(): View
     {
-        $transactions = \App\Models\UserCreditTransaction::with(['business' => function($q) {
-                $q->select('id', 'name', 'slug');
-            }])
+        $transactions = \App\Models\UserCreditTransaction::with(['business' => function ($q) {
+            $q->select('id', 'name', 'slug');
+        }])
             ->select('id', 'type', 'amount', 'reference_type', 'reference_id', 'created_at')
             ->where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')
