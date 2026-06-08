@@ -7,6 +7,10 @@
 
 @section('content')
 
+@php
+    $businessSettings = getBusinessSettings();
+@endphp
+
 <div class="card border-0 shadow-sm rounded-4 mb-4">
     <div class="card-header py-3 ps-4 d-flex justify-content-between align-items-center bg-white border-bottom-0">
         <h5 class="m-0 font-weight-bold text-dark">Role Management</h5>
@@ -23,6 +27,7 @@
                     <tr>
                         <th class="ps-4 py-3 text-secondary text-uppercase small fw-bold border-0" width="80">S.No</th>
                         <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Role Name</th>
+                        <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Business Panel Access</th>
                         <th class="py-3 text-secondary text-uppercase small fw-bold border-0">POS Access</th>
                         <th class="pe-4 py-3 text-secondary text-uppercase small fw-bold border-0 text-end">Action</th>
                     </tr>
@@ -126,6 +131,7 @@
                                     </div>
                                 </div>
 
+                                @if ($businessSettings->is_appointment_system)
                                 <!-- Appointments Module -->
                                 <div class="card border border-light-subtle mb-3 shadow-sm rounded-3">
                                     <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
@@ -144,6 +150,7 @@
                                                         <th class="text-center">Add</th>
                                                         <th class="text-center">Update</th>
                                                         <th class="text-center">Delete</th>
+                                                        <th class="text-center">All</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -153,6 +160,7 @@
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[appointments][department][]" value="add" id="perm_appointments_dept_add"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[appointments][department][]" value="update" id="perm_appointments_dept_update"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[appointments][department][]" value="delete" id="perm_appointments_dept_delete"></td>
+                                                        <td class="text-center"><input type="checkbox" class="form-check-input row-all-check"></td>
                                                     </tr>
                                                     <tr class="border-bottom border-light-subtle">
                                                         <td class="fw-semibold text-dark py-2">Experts</td>
@@ -160,6 +168,7 @@
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[appointments][experts][]" value="add" id="perm_appointments_exp_add"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[appointments][experts][]" value="update" id="perm_appointments_exp_update"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[appointments][experts][]" value="delete" id="perm_appointments_exp_delete"></td>
+                                                        <td class="text-center"><input type="checkbox" class="form-check-input row-all-check"></td>
                                                     </tr>
                                                     <tr>
                                                         <td class="fw-semibold text-dark py-2">Appointments</td>
@@ -167,13 +176,16 @@
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[appointments][appointments][]" value="add" id="perm_appointments_app_add"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[appointments][appointments][]" value="update" id="perm_appointments_app_update"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[appointments][appointments][]" value="delete" id="perm_appointments_app_delete"></td>
+                                                        <td class="text-center"><input type="checkbox" class="form-check-input row-all-check"></td>
                                                     </tr>
                                                 </tbody>
                                             </table>
                                         </div>
                                     </div>
                                 </div>
+                                @endif
 
+                                @if ($businessSettings->is_ecommerce_system)
                                 <!-- Product Module -->
                                 <div class="card border border-light-subtle mb-3 shadow-sm rounded-3">
                                     <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
@@ -192,6 +204,7 @@
                                                         <th class="text-center">Add</th>
                                                         <th class="text-center">Update</th>
                                                         <th class="text-center">Delete</th>
+                                                        <th class="text-center">All</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -201,6 +214,7 @@
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[product][categories][]" value="add" id="perm_product_cat_add"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[product][categories][]" value="update" id="perm_product_cat_update"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[product][categories][]" value="delete" id="perm_product_cat_delete"></td>
+                                                        <td class="text-center"><input type="checkbox" class="form-check-input row-all-check"></td>
                                                     </tr>
                                                     <tr>
                                                         <td class="fw-semibold text-dark py-2">Products</td>
@@ -208,13 +222,16 @@
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[product][products][]" value="add" id="perm_product_prod_add"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[product][products][]" value="update" id="perm_product_prod_update"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[product][products][]" value="delete" id="perm_product_prod_delete"></td>
+                                                        <td class="text-center"><input type="checkbox" class="form-check-input row-all-check"></td>
                                                     </tr>
                                                 </tbody>
                                             </table>
                                         </div>
                                     </div>
                                 </div>
+                                @endif
 
+                                @if ($businessSettings->is_service_system)
                                 <!-- Service Module -->
                                 <div class="card border border-light-subtle mb-3 shadow-sm rounded-3">
                                     <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
@@ -233,6 +250,7 @@
                                                         <th class="text-center">Add</th>
                                                         <th class="text-center">Update</th>
                                                         <th class="text-center">Delete</th>
+                                                        <th class="text-center">All</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -242,6 +260,7 @@
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[service][categories][]" value="add" id="perm_service_cat_add"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[service][categories][]" value="update" id="perm_service_cat_update"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[service][categories][]" value="delete" id="perm_service_cat_delete"></td>
+                                                        <td class="text-center"><input type="checkbox" class="form-check-input row-all-check"></td>
                                                     </tr>
                                                     <tr>
                                                         <td class="fw-semibold text-dark py-2">Service List</td>
@@ -249,12 +268,14 @@
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[service][service_list][]" value="add" id="perm_service_list_add"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[service][service_list][]" value="update" id="perm_service_list_update"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[service][service_list][]" value="delete" id="perm_service_list_delete"></td>
+                                                        <td class="text-center"><input type="checkbox" class="form-check-input row-all-check"></td>
                                                     </tr>
                                                 </tbody>
                                             </table>
                                         </div>
                                     </div>
                                 </div>
+                                @endif
 
                                 <!-- Store Management Module -->
                                 <div class="card border border-light-subtle mb-3 shadow-sm rounded-3">
@@ -274,6 +295,7 @@
                                                         <th class="text-center">Add</th>
                                                         <th class="text-center">Update</th>
                                                         <th class="text-center">Delete</th>
+                                                        <th class="text-center">All</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -283,6 +305,7 @@
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[store_management][role][]" value="add" id="perm_store_role_add"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[store_management][role][]" value="update" id="perm_store_role_update"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[store_management][role][]" value="delete" id="perm_store_role_delete"></td>
+                                                        <td class="text-center"><input type="checkbox" class="form-check-input row-all-check"></td>
                                                     </tr>
                                                     <tr class="border-bottom border-light-subtle">
                                                         <td class="fw-semibold text-dark py-2">Staff</td>
@@ -290,6 +313,7 @@
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[store_management][staff][]" value="add" id="perm_store_staff_add"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[store_management][staff][]" value="update" id="perm_store_staff_update"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[store_management][staff][]" value="delete" id="perm_store_staff_delete"></td>
+                                                        <td class="text-center"><input type="checkbox" class="form-check-input row-all-check"></td>
                                                     </tr>
                                                     <tr class="border-bottom border-light-subtle">
                                                         <td class="fw-semibold text-dark py-2">Timing</td>
@@ -297,6 +321,7 @@
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[store_management][timing][]" value="add" id="perm_store_timing_add"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[store_management][timing][]" value="update" id="perm_store_timing_update"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[store_management][timing][]" value="delete" id="perm_store_timing_delete"></td>
+                                                        <td class="text-center"><input type="checkbox" class="form-check-input row-all-check"></td>
                                                     </tr>
                                                     <tr>
                                                         <td class="fw-semibold text-dark py-2">Gallery</td>
@@ -304,6 +329,7 @@
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[store_management][gallery][]" value="add" id="perm_store_gallery_add"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[store_management][gallery][]" value="update" id="perm_store_gallery_update"></td>
                                                         <td class="text-center"><input type="checkbox" class="form-check-input bus-perm-check" name="business_permissions[store_management][gallery][]" value="delete" id="perm_store_gallery_delete"></td>
+                                                        <td class="text-center"><input type="checkbox" class="form-check-input row-all-check"></td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -389,6 +415,11 @@
                     className: 'py-3 fw-bold text-dark'
                 },
                 {
+                    data: 'business_access',
+                    name: 'business_access',
+                    className: 'py-3'
+                },
+                {
                     data: 'pos_access',
                     name: 'pos_access',
                     className: 'py-3'
@@ -427,6 +458,18 @@
                 $('#' + target).slideUp();
             }
         });
+
+        $(document).on('change', '.row-all-check', function() {
+            $(this).closest('tr').find('.bus-perm-check').prop('checked', $(this).is(':checked'));
+        });
+
+        $(document).on('change', '.bus-perm-check', function() {
+            let tr = $(this).closest('tr');
+            if(tr.find('.row-all-check').length > 0) {
+                let allChecked = tr.find('.bus-perm-check:checked').length === tr.find('.bus-perm-check').length;
+                tr.find('.row-all-check').prop('checked', allChecked);
+            }
+        });
     });
 
     function openCreateModal() {
@@ -454,6 +497,7 @@
         $('#business_access').prop('checked', false);
         $('.bus-perm-check').prop('checked', false);
         $('.bus-perm-module-toggle').prop('checked', false);
+        $('.row-all-check').prop('checked', false);
         $('#appointments_section').hide();
         $('#product_section').hide();
         $('#service_section').hide();
@@ -617,6 +661,8 @@
                 } else {
                     $('#store_management_section').hide();
                 }
+
+                $('.bus-perm-check').trigger('change');
 
                 // Reset tabs to show first tab on edit
                 var firstTabEl = document.querySelector('#permissionTabs button[id="business-tab"]');

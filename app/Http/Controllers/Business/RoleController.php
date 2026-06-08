@@ -24,6 +24,12 @@ class RoleController extends Controller
                     $label = $status == 'active' ? 'Yes' : 'No';
                     return '<span class="badge rounded-pill ' . $class . ' px-3 py-1 small">' . $label . '</span>';
                 })
+                ->addColumn('business_access', function ($row) {
+                    $status = (isset($row->permissions['business_access']) && $row->permissions['business_access']) ? 'active' : 'inactive';
+                    $class = $status == 'active' ? 'bg-success' : 'bg-danger';
+                    $label = $status == 'active' ? 'Yes' : 'No';
+                    return '<span class="badge rounded-pill ' . $class . ' px-3 py-1 small">' . $label . '</span>';
+                })
                 ->addColumn('action', function ($row) {
                     $html = '<div class="btn-group">';
                     if (checkBusinessPermission('store_management', 'role', 'update') || checkBusinessPermission('store_management', 'role', 'view')) {
@@ -39,7 +45,7 @@ class RoleController extends Controller
                     $html .= '</div>';
                     return $html;
                 })
-                ->rawColumns(['action', 'pos_access'])
+                ->rawColumns(['action', 'pos_access', 'business_access'])
                 ->make(true);
         }
         return view('business.role.index');
