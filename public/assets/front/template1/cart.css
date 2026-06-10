@@ -92,10 +92,9 @@
 
 @media (max-width: 768px) {
     .floating-cart-btn {
-        /* right: 20px;
-        bottom: 20px; */
         padding: 8px 16px;
-        top: 15%;
+        top: auto;
+        bottom: 60px;
     }
 }
 
@@ -106,6 +105,7 @@
     right: -400px;
     width: 400px;
     height: 100vh;
+    height: 100dvh;
     background: white;
     box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
     z-index: 1100;
@@ -196,8 +196,10 @@
 
 .cart-footer {
     padding: 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid #eee;
     background: #f8f9fa;
+    flex-shrink: 0;
 }
 
 .cart-total {
@@ -235,6 +237,7 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
+    /* margin-bottom: 35px; */
 }
 
 .whatsapp-btn:hover {
