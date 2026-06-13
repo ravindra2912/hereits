@@ -188,6 +188,10 @@ class PaymentController extends Controller
 
                 $transaction->save();
 
+                $purchaseData->update([
+                    'transaction_id' => $transaction->id,
+                ]);
+
                 DB::commit();
                 $success = true;
                 $message = 'Payment submitted successfully!';

@@ -1,30 +1,24 @@
-<!DOCTYPE html>
 @include('emails.header')
 
-<body style="background:#f5f5f5;margin:0;">
-  <center>
-    <table role="presentation" class="email-container">
-      <!-- Header -->
-      <tr>
-        <td class="header">
-          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="Hereits"></a>
-        </td>
-      </tr>
+<!-- Body -->
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td class="p-10" style="padding: 40px;">
+      <h2 style="font-size: 24px; margin-bottom: 16px;">Hi {{ $data['username'] ?? 'User' }},</h2>
+      <p style="font-size: 16px;">We received a request to reset your password for your Hereits account.</p>
+      
+      <div class="text-center" style="margin: 32px 0;">
+        <a href="{{ $data['url'] }}" class="btn" style="display: inline-block; background-color: #2b6be2; color: #ffffff; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: 700;">Reset Password</a>
+      </div>
+      
+      <p style="font-size: 14px; color: #6b7280; margin-bottom: 24px;">If the button doesn't work, copy and paste this link into your browser:<br>
+      <a href="{{ $data['url'] }}" style="color: #2b6be2; word-break: break-all;">{{ $data['url'] }}</a></p>
 
-      <!-- Body -->
-      <tr>
-        <td class="content">
-          <h5>Hi {{ $data['username'] }},</h5>
-          <p>We received a request to reset your password.</p>
-          <p style="margin-top:20px;"> To proceed, click the link below: </p>
-          <a href="{{ $data['url'] }}">{{ $data['url'] }}</a>
-          <p style="margin-top:20px;">Thanks for joining us!</p>
-          <p>– The Hereits Team</p>
-        </td>
-      </tr>
+      <div class="divider" style="border-top: 1px solid #edf2f7; margin: 24px 0;"></div>
+      
+      <p style="font-size: 16px; margin-bottom: 0;">Thanks,<br><strong>The Hereits Team</strong></p>
+    </td>
+  </tr>
+</table>
 
-
-    </table>
-  </center>
-</body>
 @include('emails.footer')

@@ -66,7 +66,7 @@ trait BusinessTraits
             // Send Purchase Success Email
             $purchase->load(['business', 'business.owner']);
             if ($purchase->business && $purchase->business->owner && $purchase->business->owner->email) {
-                Mail::to($purchase->business->owner->email)->send(new PurchaseSuccessMail($purchase));
+                Mail::to($purchase->business->owner->email)->queue(new PurchaseSuccessMail($purchase));
             }
         } catch (\Exception $e) {
             DB::rollBack();

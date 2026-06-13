@@ -20,7 +20,7 @@ class BusinessObserver
             ->find($business->id);
 
         if (isset($business->owner) && !empty($business->owner->email)) {
-            Mail::to($business->owner->email)->send(new BusinessWelcomeMail($business->owner, $business));
+            Mail::to($business->owner->email)->queue(new BusinessWelcomeMail($business->owner, $business));
         }
     }
 

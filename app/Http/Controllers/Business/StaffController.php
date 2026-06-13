@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Business\RoleAssignmentMail;
+use App\Models\Business;
 
 class StaffController extends Controller
 {
@@ -106,6 +109,11 @@ class StaffController extends Controller
                     'user_id' => $user->id,
                     'role_id' => $request->role_id,
                 ]);
+
+                $role = Role::find($request->role_id);
+                $business = Business::find($businessId);
+
+                Mail::to($user->email)->queue(new RoleAssignmentMail($user, $business, $role, $request->password ?? null));
 
                 $success = true;
                 $message = 'Staff added successfully.';

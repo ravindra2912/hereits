@@ -203,6 +203,21 @@
       <i class="bi bi-person-circle me-2"></i>Owner Profile
     </a>
 
+    <div class="px-3 mt-4 mb-3">
+      <div class="card border-0 rounded-4 shadow-sm" style="background: linear-gradient(145deg, #f8f9fa, #ffffff); border: 1px solid #e9ecef !important;">
+        <div class="card-body text-center p-4">
+          <div class="mb-3 d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background-color: rgba(13, 110, 253, 0.1); border-radius: 50%;">
+            <i class="bi bi-shop text-primary fs-4"></i>
+          </div>
+          <h6 class="fw-bold text-dark mb-1">Have multiple stores?</h6>
+          <p class="text-muted small mb-3" style="font-size: 0.8rem;">Expand your reach by listing another business under your account.</p>
+          <a href="{{ route('register.business') }}" target="_blank" class="btn btn-primary w-100 rounded-pill shadow-sm py-2" style="font-size: 0.85rem; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+            <span class="fw-semibold">List Another Business</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
     <a href="{{ route('business.logout') }}" class="list-group-item list-group-item-action second-text text-danger mt-3">
       <i class="bi bi-power me-2"></i>Logout
     </a>
