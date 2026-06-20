@@ -104,6 +104,43 @@
     </div>
   </div>
 
+  @if(isset($currentBusiness) && isset($businesses) && count($businesses) > 1)
+  <div class="modal fade business-switcher-modal" id="businessSwitcherModal" tabindex="-1" aria-labelledby="businessSwitcherModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable business-switcher-modal-dialog">
+      <div class="modal-content business-switcher-modal-content">
+        <div class="modal-header border-0 pb-0">
+          <div>
+            <h5 class="modal-title business-switcher-modal-title" id="businessSwitcherModalLabel">Switch Business</h5>
+            <p class="business-switcher-modal-subtitle mb-0">Choose a business to manage.</p>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body business-switcher-modal-body">
+          <div class="business-switcher-list">
+            @foreach($businesses as $business)
+            <a class="business-switcher-item {{ $currentBusiness->id === $business->id ? 'active' : '' }}" href="{{ route('business.switchBusiness', $business->id) }}">
+              <div class="d-flex align-items-start gap-3">
+                <img src="{{ getImage($business->business_logo) }}" alt="{{ $business->name }}" class="business-switcher-logo" loading="lazy">
+                <div class="business-switcher-meta">
+                  <div class="business-switcher-name">
+                    {{ $business->name }}
+                    @if($currentBusiness->id === $business->id)
+                    <span class="business-switcher-active-badge">Active</span>
+                    @endif
+                  </div>
+                  <div class="business-switcher-address">{{ $business->full_address ?: 'N/A' }}</div>
+                  <div class="business-switcher-contact">{{ $business->contact ?: 'N/A' }}</div>
+                </div>
+              </div>
+            </a>
+            @endforeach
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  @endif
+
   <!-- Bootstrap 5 JS Bundle -->
   <script src="{{ asset('assets/common/js/bootstrap.bundle.min.js') }}?v={{ filemtime(public_path('assets/common/js/bootstrap.bundle.min.js')) }}"></script>
   <!-- jQuery -->

@@ -13,7 +13,7 @@ return [
 
     "contact_info" => [
         "phone" => "8306426026",
-        "email" => "hereitshelp@gmail.com",
+        "email" => " support@hereits.com",
         "address" => "Khar get, Mahuva, Bhavangar Road",
         "upi_id" => "gosaikrishna85-1@okicici",
     ],

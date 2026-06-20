@@ -837,3 +837,106 @@ body.sb-sidenav-toggled #wrapper #sidebar-wrapper {
     display: flex;
     align-items: center;
 }
+
+/* ==========================================================================
+   Custom Text Switch Styles
+   ========================================================================== */
+.form-switch.text-switch .form-check-input {
+    width: 5.5rem;
+    /* Wider to fit text comfortably */
+    height: 1.8rem;
+    position: relative;
+    cursor: pointer;
+    background-color: #fce8e6;
+    /* light red */
+    border-color: #fce8e6;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+    transition: background-position .3s ease-in-out, background-color .3s ease-in-out, border-color .3s ease-in-out;
+}
+
+.form-switch.text-switch .form-check-input:focus {
+    box-shadow: none;
+    border-color: #fce8e6;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}
+
+/* Off state text */
+.form-switch.text-switch .form-check-input:before {
+    content: attr(data-off);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 0.5rem;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #e74a3b;
+    /* darker red for text */
+    transition: opacity 0.3s ease-in-out;
+    opacity: 1;
+}
+
+/* On state text */
+.form-switch.text-switch .form-check-input:after {
+    content: attr(data-on);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 0.8rem;
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #1cc88a;
+    /* darker green for text */
+    transition: opacity 0.3s ease-in-out;
+    opacity: 0;
+}
+
+.form-switch.text-switch .form-check-input:checked {
+    background-color: #e3f9f1;
+    /* light green */
+    border-color: #e3f9f1;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}
+
+.form-switch.text-switch .form-check-input:checked:focus {
+    border-color: #e3f9f1;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}
+
+.form-switch.text-switch .form-check-input:checked:before {
+    opacity: 0;
+}
+
+.form-switch.text-switch .form-check-input:checked:after {
+    opacity: 1;
+}
+
+/* Dark Mode Overrides for Text Switch */
+[data-theme='dark'] .form-switch.text-switch .form-check-input {
+    background-color: rgba(231, 76, 60, 0.3);
+    border-color: rgba(231, 76, 60, 0.3);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23e74c3c'/%3e%3c/svg%3e");
+}
+
+[data-theme='dark'] .form-switch.text-switch .form-check-input:focus {
+    border-color: rgba(231, 76, 60, 0.3);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23e74c3c'/%3e%3c/svg%3e");
+}
+
+[data-theme='dark'] .form-switch.text-switch .form-check-input:before {
+    color: #ff9d9d;
+}
+
+[data-theme='dark'] .form-switch.text-switch .form-check-input:checked {
+    background-color: rgba(0, 188, 140, 0.3);
+    border-color: rgba(0, 188, 140, 0.3);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%232ecc71'/%3e%3c/svg%3e");
+}
+
+[data-theme='dark'] .form-switch.text-switch .form-check-input:checked:focus {
+    border-color: rgba(0, 188, 140, 0.3);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%232ecc71'/%3e%3c/svg%3e");
+}
+
+[data-theme='dark'] .form-switch.text-switch .form-check-input:checked:before {
+    color: #8affbc;
+}

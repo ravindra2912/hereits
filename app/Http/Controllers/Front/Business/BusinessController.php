@@ -51,8 +51,6 @@ class BusinessController extends Controller
     }
     public function template1(Request $request, $business)
     {
-        $business->fulladdress = $this->getBusinessAddress($business);
-
         $setting = getBusinessSettings($business->id);
         $isSubscriptionActive = $setting->subscription_expiry_date > now();
 
@@ -217,19 +215,6 @@ class BusinessController extends Controller
 
     function getBusinessAddress($business): string
     {
-        $address = $business->address;
-        if (isset($business->city) && !empty($business->city->name)) {
-            $address .= ', ' . $business->city->name;
-        }
-        if (isset($business->state) && !empty($business->state->name)) {
-            $address .= ', ' . $business->state->name;
-        }
-        if (isset($business->country) && !empty($business->country->name)) {
-            $address .= ', ' . $business->country->name;
-        }
-        if (isset($business->pincode) && !empty($business->pincode)) {
-            $address .= '-' . $business->pincode;
-        }
-        return $address;
+        return $business->full_address;
     }
 }

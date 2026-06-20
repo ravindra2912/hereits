@@ -49,12 +49,10 @@ function fileRemoveStorage($imageObject)
 function fileUploadStorage($imageObject, $directory = "", $width = "", $hieght = "", $converto = "webp")
 {
     if (!empty($imageObject)) {
-        $imgname = time() . "_" . rand(11111, 99999) . '.' . $imageObject->getClientOriginalExtension();
-        $imageName = $directory . "/" . $imgname;
-
         if ($width != "" && $hieght != "") {
+            $imgname = time() . "_" . rand(11111, 99999) . '.webp';
+            $imageName = $directory . "/" . $imgname;
 
-            // create folder if not exist
             if (!Storage::disk('public')->exists($directory)) {
                 Storage::disk('public')->makeDirectory($directory);
             }
@@ -63,17 +61,14 @@ function fileUploadStorage($imageObject, $directory = "", $width = "", $hieght =
             $image->scale($width, $hieght); //resize
 
             $image->toWebp()->save(public_path('/storage/' . $imageName));
-            // 
-            // if($converto == 'webp'){
-            //     $image->toWebp()->save(public_path('/storage/' . $imageName));
-            // }else if($converto == 'png'){
-            //     $image->toPng()->save(public_path('/storage/' . $imageName));
-            // }else if($converto == 'jpg'){
-            //     dd();
-            //     $image->toJpeg()->save(public_path('/storage/' . $imageName));
-            // }
-
         } else {
+
+            $imgname = time() . "_" . rand(11111, 99999) . '.' . $imageObject->getClientOriginalExtension();
+            $imageName = $directory . "/" . $imgname;
+
+            if (!Storage::disk('public')->exists($directory)) {
+                Storage::disk('public')->makeDirectory($directory);
+            }
 
             $storage = Storage::disk('local');
 

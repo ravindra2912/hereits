@@ -105,6 +105,25 @@ class Business extends Model
         return $this->hasMany(Favorite::class, 'favorite_item_id', 'id')->where('favorite_type', 'business');
     }
 
+    public function getFullAddressAttribute(): string
+    {
+        $parts = array_filter([
+            $this->address,
+            $this->area,
+            $this->city?->name,
+            $this->state?->name,
+            $this->country?->name,
+        ], fn ($value) => filled($value));
+
+        $address = implode(', ', $parts);
+
+        if (filled($this->pincode)) {
+            $address .= $address !== '' ? ' - ' . $this->pincode : $this->pincode;
+        }
+
+        return $address;
+    }
+
     /**
      * Scope a query to filter businesses by distance.
      */

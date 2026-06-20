@@ -1,29 +1,18 @@
 <div class="sidebar bg-white" id="sidebar-wrapper">
-  <div class="sidebar-heading text-center py-4 primary-text fs-4 fw-bold text-uppercase border-bottom text-dark">
-    @php
-    $currentBusiness = Auth::user()->getBusinessDetails;
-    $businesses = Auth::user()->getBusinesses()->whereIn('status', ['active', 'pending'])->get();
-    @endphp
-
+  <div class="sidebar-heading text-center py-2 primary-text fs-4 fw-bold text-uppercase border-bottom text-dark">
     @if(isset($currentBusiness))
     @if(count($businesses) > 1)
-    <div class="dropdown">
-      <a href="#" class="text-decoration-none text-dark dropdown-toggle" id="businessDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        {{ \Illuminate\Support\Str::limit($currentBusiness->name, 11) }}
-      </a>
-      <ul class="dropdown-menu" aria-labelledby="businessDropdown">
-        @foreach($businesses as $business)
-        <li>
-          <a class="dropdown-item" href="{{ route('business.switchBusiness', $business->id) }}">
-            {{ $business->name }}
-          </a>
-        </li>
-        @endforeach
-      </ul>
-    </div>
+    <button type="button" class="business-switcher-trigger btn btn-link text-decoration-none text-dark p-0 border-0" data-bs-toggle="modal" data-bs-target="#businessSwitcherModal">
+      <span class="business-switcher-trigger-content">
+        <img src="{{ getImage($currentBusiness->business_logo) }}" alt="{{ $currentBusiness->name }}" class="business-switcher-trigger-logo" loading="lazy">
+        <span class="business-switcher-trigger-name">{{ \Illuminate\Support\Str::limit($currentBusiness->name, 14) }}</span>
+        <i class="bi bi-chevron-down business-switcher-trigger-icon"></i>
+      </span>
+    </button>
     @else
     <div class="d-flex align-items-center justify-content-center">
-      <span style="font-size: 1rem;">{{ \Illuminate\Support\Str::limit($currentBusiness->name, 20) }}</span>
+      <img src="{{ getImage($currentBusiness->business_logo) }}" alt="{{ $currentBusiness->name }}" class="business-switcher-trigger-logo me-2" loading="lazy">
+      <span class="business-switcher-current">{{ \Illuminate\Support\Str::limit($currentBusiness->name, 20) }}</span>
     </div>
     @endif
     @else
@@ -90,7 +79,7 @@
 
     @if ($businessSettings->is_ecommerce_system && (checkBusinessPermission('product', 'categories', 'view') || checkBusinessPermission('product', 'products', 'view') || Auth::user()->role === 'Business'))
     <div class="sidebar-heading text-secondary text-uppercase fw-bold mt-3 ps-3" style="font-size: 0.75rem;">Product</div>
-    
+
     @if (checkBusinessPermission('product', 'categories', 'view'))
     <a href="{{ route('business.product-category.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('business.product-category.*') ? 'active' : '' }}">
       <i class="bi bi-tags me-2"></i>Categories
