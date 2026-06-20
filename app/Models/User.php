@@ -178,6 +178,13 @@ class User extends Authenticatable
             ->with($businessRelations)
             ->first();
 
+        $currentBusinessData = null;
+
+        if ($currentBusiness) {
+            $currentBusinessData = $currentBusiness->toArray();
+            $currentBusinessData['full_address'] = $currentBusiness->full_address;
+        }
+
         $businesses = $this->getBusinesses()
             ->select($businessColumns)
             ->with($businessRelations)
@@ -185,13 +192,16 @@ class User extends Authenticatable
             ->orderBy('name')
             ->get()
             ->map(function ($business) {
-                return $business->toArray();
+                $businessData = $business->toArray();
+                $businessData['full_address'] = $business->full_address;
+
+                return $businessData;
             })
             ->values()
             ->all();
 
         session([
-            'currentBusiness' => $currentBusiness ? $currentBusiness->toArray() : null,
+            'currentBusiness' => $currentBusinessData,
             'businesses' => $businesses,
         ]);
     }

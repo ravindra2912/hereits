@@ -53,6 +53,17 @@ class AppServiceProvider extends ServiceProvider
             $currentBusiness = session('currentBusiness');
             $businesses = collect(session('businesses', []));
 
+            if (
+                !filled(data_get($currentBusiness, 'full_address'))
+                || $businesses->contains(function ($business) {
+                    return !filled(data_get($business, 'full_address'));
+                })
+            ) {
+                $user->syncBusinessContextToSession();
+                $currentBusiness = session('currentBusiness');
+                $businesses = collect(session('businesses', []));
+            }
+
             $view->with([
                 'currentBusiness' => $currentBusiness ? (object) $currentBusiness : null,
                 'businesses' => $businesses->map(function ($business) {
