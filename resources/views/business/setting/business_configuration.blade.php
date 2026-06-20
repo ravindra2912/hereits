@@ -99,7 +99,7 @@
                 </div>
             </div>
 
-            <div class="business-config-section business-config-section-ecommerce card border-0 shadow-sm rounded-4 overflow-hidden mt-4">
+            <div id="ecommerce-section-card" class="business-config-section business-config-section-ecommerce card border-0 shadow-sm rounded-4 overflow-hidden mt-4 {{ $setting->is_ecommerce_system ? '' : 'd-none' }}">
                 <div class="card-body p-4 p-lg-5">
                     <div class="d-flex align-items-start gap-3 mb-4">
                         <div class="business-config-section-icon bg-success-subtle text-success">
@@ -111,7 +111,7 @@
                         </div>
                     </div>
 
-                    <div id="ecommerce-section-body" class="business-config-section-body {{ $setting->is_ecommerce_system ? '' : 'd-none' }}">
+                    <div id="ecommerce-section-body" class="business-config-section-body">
                         <div class="row g-3">
                             <div class="col-12 col-lg-6">
                                 <div class="business-config-sub-card h-100">
@@ -130,31 +130,12 @@
                                 </div>
                             </div>
 
-                            <div class="col-12 col-lg-6">
-                                <div class="business-config-sub-card h-100">
-                                    <div class="business-config-feature-head">
-                                        <div class="business-config-feature-icon bg-primary-subtle text-primary">
-                                            <i class="bi bi-eye"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="business-config-feature-title mb-0">Business Visibility</h6>
-                                            <p class="business-config-feature-text mb-0">Choose whether the business appears publicly.</p>
-                                        </div>
-                                    </div>
-                                    <div class="business-config-select">
-                                        <select name="visibility" class="form-select business-config-dropdown">
-                                            <option value="public" {{ $setting->visibility == 'public' ? 'selected' : '' }}>Public</option>
-                                            <option value="private" {{ $setting->visibility == 'private' ? 'selected' : '' }}>Private</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="business-config-section business-config-section-appointment card border-0 shadow-sm rounded-4 overflow-hidden mt-4">
+            <div id="appointment-section-card" class="business-config-section business-config-section-appointment card border-0 shadow-sm rounded-4 overflow-hidden mt-4 {{ $setting->is_appointment_system ? '' : 'd-none' }}">
                 <div class="card-body p-4 p-lg-5">
                     <div class="d-flex align-items-start gap-3 mb-4">
                         <div class="business-config-section-icon bg-primary-subtle text-primary">
@@ -166,7 +147,7 @@
                         </div>
                     </div>
 
-                    <div id="appointment-section-body" class="business-config-section-body {{ $setting->is_appointment_system ? '' : 'd-none' }}">
+                    <div id="appointment-section-body" class="business-config-section-body">
                         <div class="row g-3">
                             <div class="col-12 col-lg-6">
                                 <div class="business-config-sub-card h-100">
@@ -204,13 +185,32 @@
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-end mt-4">
-                        <button class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm btn_action" type="submit">
-                            <span id="loader" class="spinner-border spinner-border-sm d-none me-1" role="status" aria-hidden="true"></span>
-                            <span id="buttonText">Save Settings</span>
-                        </button>
+                </div>
+            </div>
+
+            <div class="business-config-sub-card business-config-visibility-card h-100 mt-4">
+                <div class="business-config-feature-head">
+                    <div class="business-config-feature-icon bg-primary-subtle text-primary">
+                        <i class="bi bi-eye"></i>
+                    </div>
+                    <div>
+                        <h6 class="business-config-feature-title mb-0">Business Visibility</h6>
+                        <p class="business-config-feature-text mb-0">Choose whether the business appears publicly.</p>
                     </div>
                 </div>
+                <div class="business-config-select">
+                    <select name="visibility" class="form-select business-config-dropdown">
+                        <option value="public" {{ $setting->visibility == 'public' ? 'selected' : '' }}>Public</option>
+                        <option value="private" {{ $setting->visibility == 'private' ? 'selected' : '' }}>Private</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <button class="btn btn-primary px-4 py-2 rounded-pill fw-bold shadow-sm btn_action" type="submit">
+                    <span id="loader" class="spinner-border spinner-border-sm d-none me-1" role="status" aria-hidden="true"></span>
+                    <span id="buttonText">Save Settings</span>
+                </button>
             </div>
         </form>
     </div>
@@ -222,9 +222,9 @@
 <script>
     $('#is_ecommerce_system').on('change', function() {
         if ($(this).is(':checked')) {
-            $('#ecommerce-section-body').removeClass('d-none').hide().slideDown(200);
+            $('#ecommerce-section-card').removeClass('d-none').hide().slideDown(200);
         } else {
-            $('#ecommerce-section-body').slideUp(200, function() {
+            $('#ecommerce-section-card').slideUp(200, function() {
                 $(this).addClass('d-none').removeAttr('style');
             });
 
@@ -234,9 +234,9 @@
 
     $('#is_appointment_system').on('change', function() {
         if ($(this).is(':checked')) {
-            $('#appointment-section-body').removeClass('d-none').hide().slideDown(200);
+            $('#appointment-section-card').removeClass('d-none').hide().slideDown(200);
         } else {
-            $('#appointment-section-body').slideUp(200, function() {
+            $('#appointment-section-card').slideUp(200, function() {
                 $(this).addClass('d-none').removeAttr('style');
             });
 
