@@ -614,6 +614,201 @@ body {
     color: #ffffff;
 }
 
+.business-config-hero {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.08), rgba(13, 110, 253, 0.02));
+}
+
+.business-config-kicker {
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+}
+
+.business-config-subtitle {
+    color: var(--secondary-color);
+}
+
+.business-config-hero-badge {
+    background: #ffffff;
+    color: var(--primary-color);
+    border: 1px solid rgba(13, 110, 253, 0.12);
+    font-weight: 700;
+    box-shadow: 0 0.5rem 1rem rgba(15, 23, 42, 0.05);
+}
+
+.business-config-shell {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.98));
+    border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.business-config-hero-icon {
+    width: 2.6rem;
+    height: 2.6rem;
+    min-width: 2.6rem;
+    border-radius: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    box-shadow: 0 0.4rem 1rem rgba(13, 110, 253, 0.08);
+}
+
+.business-config-hero-badge {
+    background: #ffffff;
+    color: var(--primary-color);
+    border: 1px solid rgba(13, 110, 253, 0.12);
+    font-weight: 700;
+    box-shadow: 0 0.5rem 1rem rgba(15, 23, 42, 0.05);
+}
+
+.business-config-feature-card,
+.business-config-sub-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(15, 23, 42, 0.09);
+    background: var(--bg-card, #fff);
+    box-shadow: 0 0.75rem 1.5rem rgba(15, 23, 42, 0.04);
+}
+
+.business-config-feature-head {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.business-config-feature-icon {
+    width: 2.7rem;
+    height: 2.7rem;
+    min-width: 2.7rem;
+    border-radius: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+}
+
+.business-config-feature-title {
+    font-weight: 800;
+    color: var(--dark-color);
+}
+
+.business-config-feature-text {
+    color: var(--secondary-color);
+    font-size: 0.85rem;
+}
+
+.business-config-switch {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.business-config-switch.form-switch {
+    padding-left: 0;
+    margin-bottom: 0;
+}
+
+.business-config-switch .form-check-input {
+    width: 3.5rem;
+    height: 1.75rem;
+    cursor: pointer;
+}
+
+.business-config-switch.form-switch .form-check-input {
+    margin-left: 0;
+}
+
+.business-config-select {
+    min-width: 10rem;
+}
+
+.business-config-dropdown {
+    min-width: 10rem;
+    border-radius: 999px;
+    padding-inline: 1rem;
+    font-weight: 700;
+    border-color: var(--border-color, #e2e8f0);
+    background-color: var(--bg-card, #fff);
+}
+
+.business-config-feature-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.18rem 0.55rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.business-config-section {
+    background: var(--bg-card, #fff);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.business-config-section-body {
+    border-left: 3px solid #22c55e;
+    padding-left: 1rem;
+}
+
+.business-config-section-appointment .business-config-section-body {
+    border-left-color: #6366f1;
+}
+
+.business-config-section-icon {
+    width: 2.6rem;
+    height: 2.6rem;
+    min-width: 2.6rem;
+    border-radius: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+}
+
+[data-theme="dark"] .business-config-hero {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.12), rgba(13, 110, 253, 0.03));
+}
+
+[data-theme="dark"] .business-config-hero-badge,
+[data-theme="dark"] .business-config-feature-card,
+[data-theme="dark"] .business-config-sub-card,
+[data-theme="dark"] .business-config-section {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.18);
+}
+
+[data-theme="dark"] .business-config-feature-title,
+[data-theme="dark"] .business-config-hero h4 {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .business-config-feature-text,
+[data-theme="dark"] .business-config-subtitle {
+    color: var(--secondary-color);
+}
+
+[data-theme="dark"] .business-config-dropdown {
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border-color: var(--input-border);
+}
+
+[data-theme="dark"] .business-config-section-body {
+    border-left-color: rgba(34, 197, 94, 0.55);
+}
+
+[data-theme="dark"] .business-config-section-appointment .business-config-section-body {
+    border-left-color: rgba(99, 102, 241, 0.65);
+}
+
 /* ========================================
    Responsive Behavior (Global)
    ======================================== */
