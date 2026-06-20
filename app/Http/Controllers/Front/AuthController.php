@@ -380,6 +380,7 @@ class AuthController extends Controller
                 }
                 Auth::logout();
                 Auth::login($user);
+                $user->syncBusinessContextToSession();
 
                 $success = true;
                 $message = 'Business register successfully.';
