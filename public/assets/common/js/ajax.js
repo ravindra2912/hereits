@@ -2,6 +2,19 @@ $(function () {
 
 	var scrollIntoView = true;
 
+	$(document).on('change', '.status-switch-input', function () {
+		const checkbox = $(this);
+		const form = checkbox.closest('.status-switch-form');
+
+		if (!form.length) {
+			return;
+		}
+
+		form.data('previous-checked', !checkbox.is(':checked'));
+		form.find('input[name="status"]').val(checkbox.is(':checked') ? checkbox.data('active-value') : checkbox.data('inactive-value'));
+		form.trigger('submit');
+	});
+
 	toastr.options = {
 		"closeButton": true,
 		"debug": false,
@@ -96,9 +109,12 @@ $(function () {
 
 
 				} else {
+					if ($(form).hasClass('status-switch-form')) {
+						resetStatusSwitch(form);
+					}
 					error_handler(result.message, form);
 					if (typeof ajaxFailResponce === 'function') {
-						ajaxFailResponce(result);
+						ajaxFailResponce(result, form);
 					}
 
 					//console.log(result.message);
@@ -107,6 +123,9 @@ $(function () {
 			},
 			error: function (xhr, status, error) {
 				console.log(xhr);
+				if ($(form).hasClass('status-switch-form')) {
+					resetStatusSwitch(form);
+				}
 				if (xhr.status === 419) {
 					toastr.error('Your session has expired, please login again');
 					setTimeout(function () {
@@ -121,6 +140,23 @@ $(function () {
 			}
 		});
 	}));
+
+	function resetStatusSwitch(form) {
+		const switchInput = $(form).find('.status-switch-input');
+
+		if (!switchInput.length) {
+			return;
+		}
+
+		const previousChecked = $(form).data('previous-checked');
+
+		if (typeof previousChecked === 'undefined') {
+			return;
+		}
+
+		switchInput.prop('checked', previousChecked);
+		$(form).find('input[name="status"]').val(previousChecked ? switchInput.data('active-value') : switchInput.data('inactive-value'));
+	}
 
 	function error_handler(error, form) {
 		if (typeof error === 'string') {

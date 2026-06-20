@@ -62,9 +62,16 @@ class ServiceController extends Controller
                     }
                 })
                 ->addColumn('status_info', function ($row) {
-                    $class = $row->status == 'active' ? 'bg-success' : 'bg-danger';
-                    $label = $row->status == 'active' ? 'Active' : 'Hidden';
-                    return '<span class="badge rounded-pill ' . $class . ' px-3 py-1 small">' . $label . '</span>';
+                    return renderStatusControl(
+                        route('business.service.status.update', $row->id),
+                        $row->status,
+                        $row->id,
+                        checkBusinessPermission('service', 'service_list', 'update'),
+                        [
+                            'active_label' => 'Active',
+                            'inactive_label' => 'Inactive',
+                        ]
+                    );
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<div class="btn-group">';
@@ -86,6 +93,52 @@ class ServiceController extends Controller
         $limit = $this->getEffectiveLimit($business_id, 'service');
 
         return view('business.service.index', compact('categories', 'totalServices', 'limit'));
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:active,in-active',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $businessId = getBusinessId();
+            $service = Service::where('id', $id)
+                ->where('business_id', $businessId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($service->status === 'in-active' && $request->status === 'active') {
+                $limitCheck = $this->checkListingLimit($businessId, Service::class, 'service');
+
+                if ($limitCheck) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $limitCheck,
+                    ], 422);
+                }
+            }
+
+            $service->status = $request->status;
+            $service->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Service status updated successfully.',
+                'redirect' => route('business.service.index'),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

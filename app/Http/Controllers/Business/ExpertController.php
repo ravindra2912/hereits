@@ -41,8 +41,16 @@ class ExpertController extends Controller
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->editColumn('status', function ($row) {
-                    $status = $row->status == 'active' ? 'success' : 'danger';
-                    return '<span class="badge bg-' . $status . '">' . ucfirst($row->status) . '</span>';
+                    return renderStatusControl(
+                        route('business.appointment.expert.status.update', $row->id),
+                        $row->status,
+                        $row->id,
+                        checkBusinessPermission('appointments', 'experts', 'update'),
+                        [
+                            'active_label' => 'Active',
+                            'inactive_label' => 'Inactive',
+                        ]
+                    );
                 })
                 ->addColumn('image', function ($row) {
                     return '<img class="rounded" src="' . getImage($row->expert_image) . '" style="width: 40px; height: 40px; object-fit: cover;">';
@@ -68,6 +76,40 @@ class ExpertController extends Controller
         }
 
         return view('business.appointment.expert.index', compact('businessSetting'));
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:active,in-active',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $expert = Expert::where('id', $id)
+                ->where('business_id', getBusinessId())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $expert->status = $request->status;
+            $expert->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Expert status updated successfully.',
+                'redirect' => route('business.appointment.expert.index'),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

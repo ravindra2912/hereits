@@ -68,9 +68,16 @@ class ProductController extends Controller
                     }
                 })
                 ->addColumn('status_info', function ($row) {
-                    $class = $row->status == 'active' ? 'bg-success' : 'bg-danger';
-                    $label = $row->status == 'active' ? 'Active' : 'Hidden';
-                    return '<span class="badge rounded-pill ' . $class . ' px-3 py-1 small">' . $label . '</span>';
+                    return renderStatusControl(
+                        route('business.product.status.update', $row->id),
+                        $row->status,
+                        $row->id,
+                        checkBusinessPermission('product', 'products', 'update'),
+                        [
+                            'active_label' => 'Active',
+                            'inactive_label' => 'Inactive',
+                        ]
+                    );
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<div class="btn-group">';
@@ -93,6 +100,52 @@ class ProductController extends Controller
         $limit = $this->getEffectiveLimit($business_id, 'product');
 
         return view('business.product.index', compact('categories', 'totalProducts', 'limit', 'businessSetting'));
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:active,in-active',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $businessId = getBusinessId();
+            $product = Product::where('id', $id)
+                ->where('business_id', $businessId)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($product->status === 'in-active' && $request->status === 'active') {
+                $limitCheck = $this->checkListingLimit($businessId, Product::class, 'product');
+
+                if ($limitCheck) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $limitCheck,
+                    ], 422);
+                }
+            }
+
+            $product->status = $request->status;
+            $product->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product status updated successfully.',
+                'redirect' => route('business.product.index'),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

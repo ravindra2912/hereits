@@ -46,8 +46,10 @@ Route::name('business.')->group(function () {
             Route::get('product/export', [ProductController::class, 'export'])->name('product.export')->middleware('checkBusinessPerm:product,products');
             Route::post('product/import', [ProductController::class, 'import'])->name('product.import')->middleware('checkBusinessPerm:product,products');
             Route::resource('product', ProductController::class)->middleware('checkBusinessPerm:product,products');
+            Route::post('product/status/{id}', [ProductController::class, 'updateStatus'])->name('product.status.update')->middleware('checkBusinessPerm:product,products');
             Route::post('product-category/reorder', [\App\Http\Controllers\Business\ProductCategoryController::class, 'reorder'])->name('product-category.reorder')->middleware('checkBusinessPerm:product,categories');
             Route::resource('product-category', \App\Http\Controllers\Business\ProductCategoryController::class)->middleware('checkBusinessPerm:product,categories');
+            Route::post('product-category/status/{id}', [\App\Http\Controllers\Business\ProductCategoryController::class, 'updateStatus'])->name('product-category.status.update')->middleware('checkBusinessPerm:product,categories');
             Route::resource('order', \App\Http\Controllers\Business\OrderController::class)->middleware('checkBusinessPerm:owner_only');
             Route::post('order/update-status/{id}', [\App\Http\Controllers\Business\OrderController::class, 'updateStatus'])->name('order.update-status')->middleware('checkBusinessPerm:owner_only');
             Route::post('order/update-customer/{id}', [\App\Http\Controllers\Business\OrderController::class, 'updateCustomer'])->name('order.update-customer')->middleware('checkBusinessPerm:owner_only');
@@ -70,8 +72,10 @@ Route::name('business.')->group(function () {
 
         Route::middleware(['checkModule:service'])->group(function () {
             Route::resource('service', ServiceController::class)->middleware('checkBusinessPerm:service,service_list');
+            Route::post('service/status/{id}', [ServiceController::class, 'updateStatus'])->name('service.status.update')->middleware('checkBusinessPerm:service,service_list');
             Route::post('service-category/reorder', [\App\Http\Controllers\Business\ServiceCategoryController::class, 'reorder'])->name('service-category.reorder')->middleware('checkBusinessPerm:service,categories');
             Route::resource('service-category', \App\Http\Controllers\Business\ServiceCategoryController::class)->middleware('checkBusinessPerm:service,categories');
+            Route::post('service-category/status/{id}', [\App\Http\Controllers\Business\ServiceCategoryController::class, 'updateStatus'])->name('service-category.status.update')->middleware('checkBusinessPerm:service,categories');
 
             // Service Plan Routes
             Route::controller(\App\Http\Controllers\Business\ServicePlanController::class)->group(function () {
@@ -100,6 +104,7 @@ Route::name('business.')->group(function () {
                 Route::get('expert/timing/{id}', 'timing')->name('expert.timing');
                 Route::post('expert/timing/{id}', 'timingStore')->name('expert.timing.store');
                 Route::post('expert/Timingdestroy', 'TimingDestroy')->name('expert.timing.destroy');
+                Route::post('expert/status/{id}', 'updateStatus')->name('expert.status.update');
             })->middleware('checkBusinessPerm:appointments,experts');
         });
 

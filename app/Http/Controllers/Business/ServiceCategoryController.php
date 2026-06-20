@@ -39,8 +39,16 @@ class ServiceCategoryController extends Controller
                     return '<img src="' . getImage($row->image_url) . '" class="rounded-circle border shadow-sm" style="width: 70px; height: 70px; object-fit: cover;">';
                 })
                 ->addColumn('status', function ($row) {
-                    $class = $row->status == 'active' ? 'bg-success' : 'bg-danger';
-                    return '<span class="badge rounded-pill ' . $class . ' px-3 py-1 small">' . ucfirst($row->status) . '</span>';
+                    return renderStatusControl(
+                        route('business.service-category.status.update', $row->id),
+                        $row->status,
+                        $row->id,
+                        checkBusinessPermission('service', 'categories', 'update'),
+                        [
+                            'active_label' => 'Active',
+                            'inactive_label' => 'Inactive',
+                        ]
+                    );
                 })
                 ->addColumn('action', function ($row) {
                     $html = '<div class="btn-group">';
@@ -61,6 +69,40 @@ class ServiceCategoryController extends Controller
                 ->make(true);
         }
         return view('business.service-category.index');
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:active,in-active',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $category = Category::where('business_id', getBusinessId())
+                ->where('type', 'Services')
+                ->lockForUpdate()
+                ->findOrFail($id);
+
+            $category->status = $request->status;
+            $category->save();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Service category status updated successfully.',
+                'redirect' => route('business.service-category.index'),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function create()

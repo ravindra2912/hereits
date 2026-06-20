@@ -234,6 +234,33 @@ function generateUniqueSlug($model, $name, $field = 'slug', $business_id = null)
     return $slug;
 }
 
+function renderStatusControl(string $actionUrl, string $currentStatus, $recordId, bool $canUpdate = true, array $labels = []): string
+{
+    $activeValue = $labels['active_value'] ?? 'active';
+    $inactiveValue = $labels['inactive_value'] ?? 'in-active';
+    $activeLabel = $labels['active_label'] ?? 'Active';
+    $inactiveLabel = $labels['inactive_label'] ?? 'Inactive';
+
+    $isActive = $currentStatus === $activeValue;
+
+    if (! $canUpdate) {
+        $badgeClass = $isActive ? 'bg-success' : 'bg-danger';
+        $badgeLabel = $isActive ? $activeLabel : $inactiveLabel;
+
+        return '<span class="badge rounded-pill ' . $badgeClass . ' px-3 py-1 small">' . e($badgeLabel) . '</span>';
+    }
+
+    $switchId = 'status-switch-' . $recordId;
+
+    return '<form action="' . e($actionUrl) . '" method="POST" class="d-inline-flex justify-content-center formaction status-switch-form" data-action="">' .
+        csrf_field() .
+        '<input type="hidden" name="status" value="' . e($currentStatus) . '">' .
+        '<div class="form-check form-switch text-switch mb-0">' .
+        '<input type="checkbox" class="form-check-input status-switch-input" id="' . e($switchId) . '" data-on="' . e($activeLabel) . '" data-off="' . e($inactiveLabel) . '" data-active-value="' . e($activeValue) . '" data-inactive-value="' . e($inactiveValue) . '" ' . ($isActive ? 'checked' : '') . '>' .
+        '</div>' .
+        '</form>';
+}
+
 // function generateUniqueSlug($model, $name, $field = 'slug', $business_id = null)
 // {
 //     $slug = Str::slug($name);
