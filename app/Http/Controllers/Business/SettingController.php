@@ -415,9 +415,7 @@ class SettingController extends Controller
         if ($user) {
             $user->business_id = $business_id;
             $user->save();
-            $user->getBusinessDetails = Business::select('id', 'owner_id', 'name', 'business_image')
-                ->with('businessSetting:business_id,subscription_expiry_date')
-                ->find($business_id);
+            $user->syncBusinessContextToSession();
         }
         Auth::logout();
         Auth::login($user);

@@ -46,42 +46,18 @@ class AppServiceProvider extends ServiceProvider
 
             $user = Auth::user();
 
-            $businessColumns = [
-                'id',
-                'name',
-                'slug',
-                'business_logo',
-                'contact',
-                'address',
-                'area',
-                'city_id',
-                'state_id',
-                'country_id',
-                'pincode',
-                'status',
-            ];
+            if (!session()->has('businesses') || !session()->has('currentBusiness')) {
+                $user->syncBusinessContextToSession();
+            }
 
-            $businessRelations = [
-                'city:id,name',
-                'state:id,name',
-                'country:id,name',
-            ];
-
-            $currentBusiness = $user->getBusinessDetails()
-                ->select($businessColumns)
-                ->with($businessRelations)
-                ->first();
-
-            $businesses = $user->getBusinesses()
-                ->select($businessColumns)
-                ->with($businessRelations)
-                ->whereIn('status', ['active', 'pending'])
-                ->orderBy('name')
-                ->get();
+            $currentBusiness = session('currentBusiness');
+            $businesses = collect(session('businesses', []));
 
             $view->with([
-                'currentBusiness' => $currentBusiness,
-                'businesses' => $businesses,
+                'currentBusiness' => $currentBusiness ? (object) $currentBusiness : null,
+                'businesses' => $businesses->map(function ($business) {
+                    return (object) $business;
+                }),
             ]);
         });
     }

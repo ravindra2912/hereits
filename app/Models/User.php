@@ -150,6 +150,52 @@ class User extends Authenticatable
         return session('business_name', 'My Business');
     }
 
+    public function syncBusinessContextToSession(): void
+    {
+        $businessColumns = [
+            'id',
+            'name',
+            'slug',
+            'business_logo',
+            'contact',
+            'address',
+            'area',
+            'city_id',
+            'state_id',
+            'country_id',
+            'pincode',
+            'status',
+        ];
+
+        $businessRelations = [
+            'city:id,name',
+            'state:id,name',
+            'country:id,name',
+        ];
+
+        $currentBusiness = $this->getBusinessDetails()
+            ->select($businessColumns)
+            ->with($businessRelations)
+            ->first();
+
+        $businesses = $this->getBusinesses()
+            ->select($businessColumns)
+            ->with($businessRelations)
+            ->whereIn('status', ['active', 'pending'])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($business) {
+                return $business->toArray();
+            })
+            ->values()
+            ->all();
+
+        session([
+            'currentBusiness' => $currentBusiness ? $currentBusiness->toArray() : null,
+            'businesses' => $businesses,
+        ]);
+    }
+
     public function syncPermissionsToSession($businessId = null)
     {
         $permissions = [];

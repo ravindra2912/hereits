@@ -86,6 +86,7 @@ class AuthController extends Controller
             $request->authenticate();
             $request->session()->regenerate();
 
+            $user->syncBusinessContextToSession();
             // Synchronize permissions to session immediately upon successful login
             $user->syncPermissionsToSession($user->business_id);
 
@@ -101,10 +102,8 @@ class AuthController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
-
-        // $request->session()->invalidate();
-
-        // $request->session()->regenerateToken();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect()->route('business.login');
     }
