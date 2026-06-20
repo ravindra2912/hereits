@@ -31,7 +31,7 @@
             <div class="card-body p-4 d-flex flex-column justify-content-center">
                 <div class="d-flex align-items-center mb-4">
                     <div class="bg-white bg-opacity-20 rounded-4 p-3 me-3">
-                        <i class="bi bi-calendar-check-fill fs-2"></i>
+                        <i class="bi bi-credit-card-fill credit-balance-icon"></i>
                     </div>
                     <div>
                         <small class="opacity-75 d-block fw-bold text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">Current Balance</small>
