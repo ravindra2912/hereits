@@ -72,9 +72,6 @@
                 <li class="nav-item ms-lg-3">
                     @auth
                     <div class="d-flex align-items-center justify-content-center">
-                        <a href="{{ route('chat.index') }}" class="btn btn-light border rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm me-2" aria-label="Chat" title="Chat" style="width: 35px; height: 35px;">
-                            <i class="bi bi-chat-dots-fill text-dark"></i>
-                        </a>
                         <div class="dropdown">
                             <a href="#" class="d-flex align-items-center text-dark text-decoration-none dropdown-toggle gap-2 py-1 px-2 rounded-pill hover-bg-light transition-all" id="userMenuMain" data-bs-toggle="dropdown" aria-expanded="false">
                                 <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 35px; height: 35px;">
@@ -108,6 +105,9 @@
                                 </li>
                             </ul>
                         </div>
+                        <a href="{{ route('chat.index') }}" class="text-dark d-inline-flex align-items-center justify-content-center ms-3" aria-label="Chat" title="Chat" style="font-size: 1.25rem; text-decoration: none;">
+                            <i class="bi bi-chat-dots-fill"></i>
+                        </a>
                     </div>
                     @else
                     <div class="d-flex flex-column flex-lg-row gap-2 mt-3 mt-lg-0 align-items-center">

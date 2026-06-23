@@ -178,11 +178,14 @@ class ChatController extends Controller
 
         $chatService->markConversationAsRead($conversation, $actor);
 
+        $payload = $chatService->messagePayload($message, $actor);
+        broadcast(new \App\Events\MessageSent($message, $payload))->toOthers();
+
         return response()->json([
             'success' => true,
             'message' => 'Message sent.',
             'data' => [
-                'message' => $chatService->messagePayload($message, $actor),
+                'message' => $payload,
                 'conversation_id' => $conversation->id,
             ],
         ], 201);

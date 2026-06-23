@@ -424,6 +424,8 @@ class ChatService
             'metadata' => $message->metadata ?? [],
             'is_system' => $message->is_system,
             'is_mine' => $message->sender_type === $actor['type'] && (int) $message->sender_id === (int) $actor['id'],
+            'sender_type' => $message->sender_type,
+            'sender_id' => (int) $message->sender_id,
             'sender' => $sender,
             'attachments' => $message->attachments->map(function (ChatMessageAttachment $attachment) {
                 return [

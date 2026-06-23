@@ -45,6 +45,9 @@ if (root) {
     const initialConversations = JSON.parse(root.dataset.initialConversations || '[]');
     let selectedConversationId = Number(root.dataset.selectedConversationId) || 0;
     let selectedFiles = [];
+    let activeSubscriptions = {};
+    const actorId = Number(root.dataset.actorId) || 0;
+    const actorType = root.dataset.actorType || '';
 
     const conversationList = document.getElementById('chatConversationList');
     const conversationSearch = document.getElementById('chatConversationSearch');
@@ -103,6 +106,69 @@ if (root) {
         hasMoreMessages: false,
         isLoadingMessages: false,
         isLoadingConversation: false
+    };
+
+    const handleIncomingRealtimeMessage = (e) => {
+        const msg = e.message;
+        const msgConversationId = Number(e.conversation_id || msg.conversation_id);
+        
+        if (state.activeConversation && Number(state.activeConversation.id) === msgConversationId) {
+            const exists = state.activeConversation.messages.some(m => m.id === msg.id);
+            if (!exists) {
+                state.activeConversation.messages.push(msg);
+                
+                state.conversations = state.conversations.map((conversation) => conversation.id === msgConversationId ? {
+                    ...conversation,
+                    last_message: msg,
+                    last_message_preview: msg.body || msg.action_type || 'Image message',
+                    last_message_at: msg.created_at,
+                    is_unread: false,
+                } : conversation);
+
+                renderConversationList();
+                renderMessages();
+                messageWrapper.scrollTop = messageWrapper.scrollHeight;
+                
+                $.ajax({
+                    url: routeTemplate(endpoints.markRead, msgConversationId),
+                    type: 'POST'
+                });
+            }
+        } else {
+            window.toastr?.info(`New message from ${escapeHtml(msg.sender?.name || 'User')}: ${escapeHtml(msg.body || 'Sent an attachment')}`);
+            
+            const conversation = state.conversations.find(c => Number(c.id) === msgConversationId);
+            if (conversation) {
+                conversation.last_message = msg;
+                conversation.last_message_preview = msg.body || msg.action_type || 'Image message';
+                conversation.last_message_at = msg.created_at;
+                conversation.is_unread = true;
+                
+                state.conversations.sort((a, b) => {
+                    const dateA = new Date(a.last_message_at || a.created_at);
+                    const dateB = new Date(b.last_message_at || b.created_at);
+                    return dateB - dateA;
+                });
+                
+                renderConversationList();
+            } else {
+                fetchConversations();
+            }
+        }
+    };
+
+    const subscribeToConversations = () => {
+        if (!window.Echo) return;
+        
+        state.conversations.forEach((conversation) => {
+            const channelName = `chat.${conversation.id}`;
+            if (!activeSubscriptions[channelName]) {
+                activeSubscriptions[channelName] = window.Echo.private(channelName)
+                    .listen('.message.sent', (e) => {
+                        handleIncomingRealtimeMessage(e);
+                    });
+            }
+        });
     };
 
     const escapeHtml = (value) => String(value ?? '')
@@ -253,7 +319,9 @@ if (root) {
             `;
         }
 
-        const isMine = message.is_mine;
+        const isMine = (message.sender_type && message.sender_id)
+            ? (message.sender_type === actorType && Number(message.sender_id) === actorId)
+            : message.is_mine;
         const bubbleClass = isMine ? 'chat-message-outgoing ms-auto' : 'chat-message-incoming me-auto';
         const textClass = isMine ? 'text-dark' : 'text-dark';
         const metaClass = isMine ? 'text-success-emphasis' : 'text-muted';
@@ -344,6 +412,7 @@ if (root) {
             }
             
             state.isLoadingConversation = false;
+            subscribeToConversations();
             renderConversationList();
             renderMessages();
             messageWrapper.scrollTop = messageWrapper.scrollHeight;
@@ -416,6 +485,7 @@ if (root) {
                 type: 'GET'
             });
             state.conversations = response?.data?.conversations || [];
+            subscribeToConversations();
             renderConversationList();
 
             if (selectedConversationId > 0) {

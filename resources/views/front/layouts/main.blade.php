@@ -29,6 +29,7 @@
 	<title>{{ isset($seo['title']) ? $seo['title'] : trim($__env->yieldContent('meta_title', config('app.name'))) }}</title>
 
 	<meta name="csrf-token" content="{{ csrf_token() }}">
+	<meta name="user-id" content="{{ auth()->check() ? auth()->id() : '' }}">
 
 	<meta name="description" content="{{ isset($seo['description']) ? $seo['description'] : trim($__env->yieldContent('meta_description')) }}">
 	<meta name="keywords" content="{{ isset($seo['keywords']) ? $seo['keywords'] : trim($__env->yieldContent('meta_keywords')) }}">

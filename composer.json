@@ -14,10 +14,12 @@
         "intervention/image-laravel": "^1.5",
         "laravel/framework": "^13.0",
         "laravel/passport": "^13.0",
+        "laravel/reverb": "^1.0",
         "laravel/socialite": "^5.20",
         "laravel/tinker": "^3.0",
         "lcobucci/jwt": "^5.6",
         "maatwebsite/excel": "^3.1",
+        "pusher/pusher-php-server": "*",
         "tightenco/ziggy": "^2.6",
         "torann/geoip": "^3.0",
         "yajra/laravel-datatables": "^13.0"

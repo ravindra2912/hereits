@@ -1,7 +1,7 @@
 @extends($layout)
 
 @section('content')
-<div class="container-fluid chat-page" id="chatPage" data-chat-context="{{ $context }}" data-chat-endpoints='@json($chatEndpoints)' data-selected-conversation-id="{{ $selectedConversationId }}" data-initial-conversations='@json($initialConversations ?? [])'>
+<div class="container-fluid chat-page" id="chatPage" data-chat-context="{{ $context }}" data-chat-endpoints='@json($chatEndpoints)' data-selected-conversation-id="{{ $selectedConversationId }}" data-initial-conversations='@json($initialConversations ?? [])' data-actor-id="{{ $actor['id'] }}" data-actor-type="{{ $actor['type'] }}">
     <div class="row chat-layout">
         <div class="col-12 col-lg-4 mt-0">
             <div class="card border-0 shadow-sm chat-sidebar-card h-100">
