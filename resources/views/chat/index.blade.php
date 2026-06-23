@@ -128,10 +128,27 @@
 
                             <input type="file" class="d-none" id="chatAttachments" accept="image/*" multiple>
 
-                            <div class="d-flex align-items-center gap-2">
-                                <button type="button" class="btn btn-link text-muted p-2 text-decoration-none shadow-none">
-                                    <i class="bi bi-emoji-smile fs-4"></i>
-                                </button>
+                            <!-- Attachment Preview Bar -->
+                            <div class="d-none border-top pt-2 pb-2 px-1" id="chatComposerAttachmentPreview">
+                                <div class="d-flex flex-wrap gap-2 align-items-center" id="chatComposerAttachmentList">
+                                    <!-- Image thumbnails with remove button will be rendered here -->
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center gap-2 position-relative">
+                                <div class="position-relative">
+                                    <button type="button" class="btn btn-link text-muted p-2 text-decoration-none shadow-none" id="chatEmojiButton">
+                                        <i class="bi bi-emoji-smile fs-4"></i>
+                                    </button>
+                                    <div class="card shadow-lg border-0 d-none position-absolute" id="chatEmojiPicker" style="bottom: 50px; left: 0; z-index: 1050; width: 320px; max-height: 250px; overflow-y: auto; border-radius: 12px;">
+                                        <div class="card-header bg-white border-0 py-2 sticky-top">
+                                            <div class="small fw-semibold text-muted">Select Emoji</div>
+                                        </div>
+                                        <div class="card-body p-2 d-flex flex-wrap gap-2 justify-content-center" id="chatEmojiList" style="font-size: 1.35rem; cursor: pointer;">
+                                            <!-- Emojis populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <button type="button" class="btn btn-link text-muted p-2 text-decoration-none shadow-none" id="chatAttachmentButton">
                                     <i class="bi bi-plus-lg fs-4"></i>
@@ -152,6 +169,7 @@
         </div>
     </div>
 </div>
+
 
 <div class="modal fade" id="chatConversationModal" tabindex="-1" aria-labelledby="chatConversationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">

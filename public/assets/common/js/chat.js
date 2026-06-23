@@ -44,6 +44,7 @@ if (root) {
     const endpoints = JSON.parse(root.dataset.chatEndpoints || '{}');
     const initialConversations = JSON.parse(root.dataset.initialConversations || '[]');
     let selectedConversationId = Number(root.dataset.selectedConversationId) || 0;
+    let selectedFiles = [];
 
     const conversationList = document.getElementById('chatConversationList');
     const conversationSearch = document.getElementById('chatConversationSearch');
@@ -77,6 +78,21 @@ if (root) {
     const selectedParticipantsWrap = document.getElementById('chatSelectedParticipants');
     const createConversationButton = document.getElementById('chatCreateConversationButton');
 
+    // Emoji picker and image preview DOM elements
+    const emojiButton = document.getElementById('chatEmojiButton');
+    const emojiPicker = document.getElementById('chatEmojiPicker');
+    const emojiList = document.getElementById('chatEmojiList');
+
+    const imagePreviewModalElement = document.getElementById('chatImagePreviewModal');
+    const imagePreviewModal = imagePreviewModalElement ? new bootstrap.Modal(imagePreviewModalElement) : null;
+    const previewContainer = document.getElementById('chatPreviewContainer');
+    const cancelImagesBtn = document.getElementById('chatCancelImagesBtn');
+    const confirmImagesBtn = document.getElementById('chatConfirmImagesBtn');
+    const imagePreviewCloseBtn = document.getElementById('chatImagePreviewCloseBtn');
+
+    const composerAttachmentPreview = document.getElementById('chatComposerAttachmentPreview');
+    const composerAttachmentList = document.getElementById('chatComposerAttachmentList');
+
     const state = {
         conversations: initialConversations,
         activeConversation: null,
@@ -108,6 +124,13 @@ if (root) {
         ? ['text', 'image']
         : ['text', 'image', 'inquiry', 'place_order'];
     const getCurrentConversationType = () => state.activeConversation?.conversation_type || 'direct';
+
+    const toggleSendButton = () => {
+        const hasText = messageBody.value.trim().length > 0;
+        const hasAttachments = selectedFiles.length > 0;
+        const isActiveConv = !!state.activeConversation;
+        sendButton.disabled = !isActiveConv || (!hasText && !hasAttachments);
+    };
 
     const renderSelectedParticipants = () => {
         if (!state.participants.length) {
@@ -216,7 +239,7 @@ if (root) {
         composerHint.textContent = state.activeConversation.conversation_type === 'group'
             ? 'Group conversations allow text and image only.'
             : 'Direct chats allow text, image, inquiry, and order updates.';
-        sendButton.disabled = false;
+        toggleSendButton();
         updateComposerControls();
     };
 
@@ -535,7 +558,103 @@ if (root) {
         });
     });
 
+    // Emoji Picker initialization and event handlers
+    const popularEmojis = [
+        '😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕',
+        '👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🧠','🫀','🫁','🦷','🦴','👀','👁️','👅','👄',
+        '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','❤️‍🩹','❣️','💕','💞','💓','💗','💖','💘','💝','💟','🌟','⭐','✨','⚡','💥','🔥','🌈','☀️','🌤️','⛅','🌥️','☁️','🌦️','🌧️','⛈️','🌩️','🌨️','❄️','💨','💧','💦','🫧'
+    ];
+
+    if (emojiList) {
+        emojiList.innerHTML = popularEmojis.map(emoji => `<span class="p-1 emoji-item" style="cursor: pointer; user-select: none;">${emoji}</span>`).join('');
+    }
+
+    if (emojiButton && emojiPicker) {
+        emojiButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            emojiPicker.classList.toggle('d-none');
+        });
+
+        // Close emoji picker when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!emojiPicker.classList.contains('d-none') && !emojiPicker.contains(e.target) && e.target !== emojiButton && !emojiButton.contains(e.target)) {
+                emojiPicker.classList.add('d-none');
+            }
+        });
+    }
+
+    if (emojiList) {
+        emojiList.addEventListener('click', (e) => {
+            const emojiSpan = e.target.closest('.emoji-item');
+            if (!emojiSpan) return;
+            const emojiText = emojiSpan.textContent;
+            
+            const startPos = messageBody.selectionStart;
+            const endPos = messageBody.selectionEnd;
+            messageBody.value = messageBody.value.substring(0, startPos) + emojiText + messageBody.value.substring(endPos, messageBody.value.length);
+            messageBody.focus();
+            messageBody.selectionStart = startPos + emojiText.length;
+            messageBody.selectionEnd = startPos + emojiText.length;
+
+            toggleSendButton();
+        });
+    }
+
+    if (messageBody) {
+        messageBody.addEventListener('input', () => {
+            toggleSendButton();
+        });
+    }
+
+    // Selected image/attachment previews helpers
+    const renderComposerPreviews = () => {
+        if (!composerAttachmentPreview || !composerAttachmentList) return;
+        if (selectedFiles.length === 0) {
+            composerAttachmentPreview.classList.add('d-none');
+            composerAttachmentList.innerHTML = '';
+            toggleSendButton();
+            return;
+        }
+
+        composerAttachmentPreview.classList.remove('d-none');
+        composerAttachmentList.innerHTML = selectedFiles.map((file, index) => {
+            const url = URL.createObjectURL(file);
+            return `
+                <div class="position-relative border rounded-3 p-1 bg-white shadow-sm" style="width: 70px; height: 70px;">
+                    <img src="${url}" class="rounded-2 w-100 h-100" style="object-fit: cover;">
+                    <button type="button" class="btn btn-danger btn-sm rounded-circle position-absolute top-0 end-0 d-flex align-items-center justify-content-center chat-remove-composer-image" style="width: 18px; height: 18px; padding: 0; transform: translate(30%, -30%);" data-index="${index}">
+                        <i class="bi bi-x" style="font-size: 12px;"></i>
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        toggleSendButton();
+    };
+
     attachmentButton.addEventListener('click', () => attachmentsInput.click());
+
+    if (attachmentsInput) {
+        attachmentsInput.addEventListener('change', () => {
+            if (attachmentsInput.files && attachmentsInput.files.length > 0) {
+                Array.from(attachmentsInput.files).forEach(file => {
+                    selectedFiles.push(file);
+                });
+                attachmentsInput.value = '';
+                renderComposerPreviews();
+            }
+        });
+    }
+
+    if (composerAttachmentList) {
+        composerAttachmentList.addEventListener('click', (e) => {
+            const removeBtn = e.target.closest('.chat-remove-composer-image');
+            if (!removeBtn) return;
+            const index = parseInt(removeBtn.dataset.index);
+            selectedFiles.splice(index, 1);
+            renderComposerPreviews();
+        });
+    }
 
     composerForm.addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -545,7 +664,7 @@ if (root) {
         }
 
         let determinedType = 'text';
-        if (attachmentsInput.files && attachmentsInput.files.length > 0) {
+        if (selectedFiles.length > 0) {
             determinedType = 'image';
         }
 
@@ -558,7 +677,7 @@ if (root) {
             notes: actionNotes.value || null,
         }));
 
-        Array.from(attachmentsInput.files || []).forEach((file) => formData.append('attachments[]', file));
+        selectedFiles.forEach((file) => formData.append('attachments[]', file));
 
         try {
             const response = await $.ajax({
@@ -584,6 +703,8 @@ if (root) {
                 actionReference.value = '';
                 actionNotes.value = '';
                 attachmentsInput.value = '';
+                selectedFiles = [];
+                renderComposerPreviews();
                 state.currentMessageType = 'text';
                 renderConversationList();
                 renderMessages();
