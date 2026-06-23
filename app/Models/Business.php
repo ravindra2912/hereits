@@ -105,6 +105,16 @@ class Business extends Model
         return $this->hasMany(Favorite::class, 'favorite_item_id', 'id')->where('favorite_type', 'business');
     }
 
+    public function chatParticipants()
+    {
+        return $this->morphMany(ChatConversationParticipant::class, 'participant');
+    }
+
+    public function chatMessages()
+    {
+        return $this->morphMany(ChatMessage::class, 'sender');
+    }
+
     public function getFullAddressAttribute(): string
     {
         $parts = array_filter([

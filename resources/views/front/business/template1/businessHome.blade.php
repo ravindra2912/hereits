@@ -153,6 +153,26 @@
 
           <!-- CTA Buttons -->
           <div class="d-flex flex-wrap gap-3">
+            @auth
+            <a
+              href="{{ route('chat.start', ['participantType' => 'business', 'participantId' => $business->id]) }}"
+              class="btn btn-success btn-lg rounded-pill fw-bold px-4 shadow-lg hover-lift d-inline-flex align-items-center gap-2 text-decoration-none"
+              data-chat-start
+              data-chat-target-type="business"
+              data-chat-target-id="{{ $business->id }}"
+              data-chat-store-url="{{ route('chat.conversations.store') }}"
+              data-chat-index-url="{{ route('chat.index') }}"
+            >
+              <i class="bi bi-chat-dots-fill"></i>
+              Message
+            </a>
+            @else
+            <button type="button" class="btn btn-success btn-lg rounded-pill fw-bold px-4 shadow-lg hover-lift d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')">
+              <i class="bi bi-chat-dots-fill"></i>
+              Message
+            </button>
+            @endauth
+
             @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system && $isSubscriptionActive)
             <a href="#products" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
               Shop Now

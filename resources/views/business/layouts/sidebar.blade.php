@@ -27,6 +27,10 @@
       <i class="bi bi-speedometer2 me-2"></i>Dashboard
     </a>
 
+    <a href="{{ route('business.chat.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('business.chat.*') ? 'active' : '' }}">
+      <i class="bi bi-chat-dots-fill me-2"></i>Chat
+    </a>
+
     @if (checkBusinessPermission('customers'))
     <a href="{{ route('business.appointment.customers.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('business.appointment.customers*') ? 'active' : '' }}">
       <i class="bi bi-people me-2"></i>Customers

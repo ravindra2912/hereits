@@ -120,6 +120,16 @@ class User extends Authenticatable
         return $this->hasMany(BusinessUser::class, 'user_id');
     }
 
+    public function chatParticipants()
+    {
+        return $this->morphMany(ChatConversationParticipant::class, 'participant');
+    }
+
+    public function chatMessages()
+    {
+        return $this->morphMany(ChatMessage::class, 'sender');
+    }
+
     /**
      * Get the permissions for the user from session.
      *

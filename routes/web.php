@@ -13,6 +13,7 @@ use App\Http\Controllers\Front\Business\ServiceController;
 use App\Http\Controllers\Front\Business\CommonController as BusinessCommonController;
 use App\Http\Controllers\Front\BlogController;
 use App\Http\Controllers\Front\LocationController;
+use App\Http\Controllers\ChatController;
 
 Route::post('/set-location', [LocationController::class, 'setLocation'])->name('set-location');
 
@@ -59,6 +60,26 @@ Route::controller(HomeController::class)->group(function () {
     Route::post('/toggle-favorite', 'toggleFavorite')->name('toggle-favorite');
 });
 
+
+Route::middleware(['web', 'front'])->group(function () {
+    Route::prefix('chat')->controller(ChatController::class)->name('chat.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('start/{participantType}/{participantId}', 'startConversation')->name('start');
+        Route::get('conversations', 'conversations')->name('conversations.index');
+        Route::post('conversations', 'storeConversation')->name('conversations.store');
+        Route::get('conversations/{conversation}', 'show')->name('conversations.show');
+        Route::post('conversations/{conversation}/messages', 'storeMessage')->name('conversations.messages.store');
+        Route::post('conversations/{conversation}/read', 'read')->name('conversations.read');
+        Route::post('conversations/{conversation}/clear', 'clear')->name('conversations.clear');
+        Route::delete('conversations/{conversation}', 'destroy')->name('conversations.destroy');
+        Route::post('conversations/{conversation}/leave', 'leave')->name('conversations.leave');
+        Route::post('conversations/{conversation}/block', 'block')->name('conversations.block');
+        Route::post('conversations/{conversation}/update', 'updateGroup')->name('conversations.update');
+        Route::post('conversations/{conversation}/add-member', 'addGroupMember')->name('conversations.add_member');
+        Route::post('conversations/{conversation}/remove-member', 'removeGroupMember')->name('conversations.remove_member');
+        Route::get('participants/search', 'searchParticipants')->name('participants.search');
+    });
+});
 Route::controller(AppointmentController::class)->group(function () {
     Route::get('{business_slug}/experts', 'expertList')->name('expert.list');
     Route::get('{business_slug}/expert/{expert_slug?}', 'index')->name('expert');
@@ -127,3 +148,4 @@ Route::controller(ProductController::class)->group(function () {
     Route::get('{business_slug}/product/{product_slug}', 'productDetails')->name('product-detail');
     Route::get('{business_slug}/products', 'businessProducts')->name('business-products');
 });
+

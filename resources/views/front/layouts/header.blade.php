@@ -71,38 +71,43 @@
                 <!-- Login/Profile (After List Your Business) -->
                 <li class="nav-item ms-lg-3">
                     @auth
-                    <div class="dropdown">
-                        <a href="#" class="d-flex align-items-center text-dark text-decoration-none dropdown-toggle gap-2 py-1 px-2 rounded-pill hover-bg-light transition-all" id="userMenuMain" data-bs-toggle="dropdown" aria-expanded="false">
-                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 35px; height: 35px;">
-                                <i class="fas fa-user-circle fs-5"></i>
-                            </div>
-                            <span class="d-none d-md-inline fw-bold small text-dark">{{ Auth::user()->first_name }}</span>
+                    <div class="d-flex align-items-center justify-content-center">
+                        <a href="{{ route('chat.index') }}" class="btn btn-light border rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm me-2" aria-label="Chat" title="Chat" style="width: 35px; height: 35px;">
+                            <i class="bi bi-chat-dots-fill text-dark"></i>
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2 py-2" aria-labelledby="userMenuMain" style="min-width: 180px;">
-                            <li>
-                                <a class="dropdown-item py-2 d-flex align-items-center gap-3" href="{{ route('account.index') }}">
-                                    <i class="fas fa-user text-muted"></i>
-                                    <span>Account</span>
-                                </a>
-                            </li>
-                            @if(Auth::user()->role == 'Business')
-                            <li>
-                                <a class="dropdown-item py-2 d-flex align-items-center gap-3" href="{{ route('business.dashboard') }}">
-                                    <i class="fas fa-chart-line text-muted"></i>
-                                    <span>Dashboard</span>
-                                </a>
-                            </li>
-                            @endif
-                            <li>
-                                <hr class="dropdown-divider opacity-50">
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2 d-flex align-items-center gap-3 text-danger" href="{{ route('logout') }}">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    <span>Logout</span>
-                                </a>
-                            </li>
-                        </ul>
+                        <div class="dropdown">
+                            <a href="#" class="d-flex align-items-center text-dark text-decoration-none dropdown-toggle gap-2 py-1 px-2 rounded-pill hover-bg-light transition-all" id="userMenuMain" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 35px; height: 35px;">
+                                    <i class="fas fa-user-circle fs-5"></i>
+                                </div>
+                                <span class="d-none d-md-inline fw-bold small text-dark">{{ Auth::user()->first_name }}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2 py-2" aria-labelledby="userMenuMain" style="min-width: 180px;">
+                                <li>
+                                    <a class="dropdown-item py-2 d-flex align-items-center gap-3" href="{{ route('account.index') }}">
+                                        <i class="fas fa-user text-muted"></i>
+                                        <span>Account</span>
+                                    </a>
+                                </li>
+                                @if(Auth::user()->role == 'Business')
+                                <li>
+                                    <a class="dropdown-item py-2 d-flex align-items-center gap-3" href="{{ route('business.dashboard') }}">
+                                        <i class="fas fa-chart-line text-muted"></i>
+                                        <span>Dashboard</span>
+                                    </a>
+                                </li>
+                                @endif
+                                <li>
+                                    <hr class="dropdown-divider opacity-50">
+                                </li>
+                                <li>
+                                    <a class="dropdown-item py-2 d-flex align-items-center gap-3 text-danger" href="{{ route('logout') }}">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Logout</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     @else
                     <div class="d-flex flex-column flex-lg-row gap-2 mt-3 mt-lg-0 align-items-center">
@@ -144,6 +149,12 @@
             @endif
 
             @auth
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center gap-2" href="{{ route('chat.index') }}">
+                    <i class="bi bi-chat-dots-fill"></i>
+                    <span>Chat</span>
+                </a>
+            </li>
             <li class="nav-item mt-3 pt-3 border-top">
                 <div class="d-flex align-items-center gap-3 px-3 py-2 bg-light rounded-3">
                     <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">

@@ -11,6 +11,7 @@ use App\Observers\BusinessObserver;
 use App\Observers\ReviewAndRatingObserver;
 use App\Observers\UserObserver;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -29,6 +30,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Relation::morphMap([
+            'user' => User::class,
+            'business' => Business::class,
+        ]);
+
         ReviewAndRating::observe(ReviewAndRatingObserver::class);
         User::observe(UserObserver::class);
         //AppointmentBooking::observe(AppointmentBookingObserver::class);

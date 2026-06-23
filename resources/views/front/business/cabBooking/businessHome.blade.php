@@ -44,6 +44,28 @@
                 </div>
             </form>
         </div>
+
+        <div class="mt-4">
+            @auth
+            <a
+                href="{{ route('chat.start', ['participantType' => 'business', 'participantId' => $business->id]) }}"
+                class="btn btn-light btn-lg rounded-pill fw-bold px-4 shadow-sm d-inline-flex align-items-center gap-2 text-decoration-none"
+                data-chat-start
+                data-chat-target-type="business"
+                data-chat-target-id="{{ $business->id }}"
+                data-chat-store-url="{{ route('chat.conversations.store') }}"
+                data-chat-index-url="{{ route('chat.index') }}"
+            >
+                <i class="bi bi-chat-dots-fill"></i>
+                Message
+            </a>
+            @else
+            <button type="button" class="btn btn-light btn-lg rounded-pill fw-bold px-4 shadow-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')">
+                <i class="bi bi-chat-dots-fill"></i>
+                Message
+            </button>
+            @endauth
+        </div>
     </div>
 </section>
 

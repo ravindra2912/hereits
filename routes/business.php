@@ -19,6 +19,7 @@ use App\Http\Controllers\Business\SubscriptionPlanController;
 use App\Http\Controllers\Business\CreditController;
 use App\Http\Controllers\Business\PurchaseHistoryController;
 use App\Http\Controllers\Business\GalleryController;
+use App\Http\Controllers\ChatController;
 
 Route::name('business.')->group(function () {
     Route::middleware('web', 'guest')->group(function () {
@@ -30,7 +31,25 @@ Route::name('business.')->group(function () {
     });
 
     Route::middleware(['web', 'business'])->group(function () {
-        Route::controller(DashboarController::class)->group(function () {
+        Route::prefix('chat')->controller(ChatController::class)->name('chat.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('start/{participantType}/{participantId}', 'startConversation')->name('start');
+            Route::get('conversations', 'conversations')->name('conversations.index');
+            Route::post('conversations', 'storeConversation')->name('conversations.store');
+            Route::get('conversations/{conversation}', 'show')->name('conversations.show');
+            Route::post('conversations/{conversation}/messages', 'storeMessage')->name('conversations.messages.store');
+            Route::post('conversations/{conversation}/read', 'read')->name('conversations.read');
+            Route::post('conversations/{conversation}/clear', 'clear')->name('conversations.clear');
+            Route::delete('conversations/{conversation}', 'destroy')->name('conversations.destroy');
+            Route::post('conversations/{conversation}/leave', 'leave')->name('conversations.leave');
+            Route::post('conversations/{conversation}/block', 'block')->name('conversations.block');
+            Route::post('conversations/{conversation}/update', 'updateGroup')->name('conversations.update');
+            Route::post('conversations/{conversation}/add-member', 'addGroupMember')->name('conversations.add_member');
+            Route::post('conversations/{conversation}/remove-member', 'removeGroupMember')->name('conversations.remove_member');
+            Route::get('participants/search', 'searchParticipants')->name('participants.search');
+        });
+
+    Route::controller(DashboarController::class)->group(function () {
             Route::get('dashboard', 'index')->name('dashboard');
             Route::get('analytics', 'analyticsPageView')->name('analytics')->middleware('checkBusinessPerm:analytics');
             Route::get('influencer', 'influencer')->name('influencer');
@@ -181,3 +200,4 @@ Route::name('business.')->group(function () {
         });
     });
 });
+
