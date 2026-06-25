@@ -213,7 +213,7 @@
         </div>
         <div class="col-lg-4 d-none d-lg-block text-center">
           <div class="d-inline-block position-relative rounded-4 overflow-hidden shadow-lg border border-3 border-white border-opacity-25 hover-lift" style="width: 320px; height: 320px;">
-            <img src="{{ getImage($business->business_image) }}" alt="{{ $business->name }}" class="w-100 h-100 object-fit-cover">
+            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image) }}" alt="{{ $business->name }}" class="w-100 h-100 object-fit-cover">
           </div>
         </div>
       </div>
@@ -237,7 +237,7 @@
         @foreach($details['productCategories'] as $category)
         <a href="{{ route('business-products', ['business_slug' => $business->slug, 'category_id' => $category->id]) }}" class="text-decoration-none text-center d-flex flex-column align-items-center flex-shrink-0 hover-lift category-item category-item-link">
           <div class="rounded-circle mb-2 d-flex align-items-center justify-content-center bg-white overflow-hidden category-image-wrapper">
-            <img src="{{ getImage($category->image_url) }}" alt="{{ $category->name }}" class="w-100 h-100 object-fit-cover" draggable="false" loading="lazy">
+            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($category->image_url) }}" alt="{{ $category->name }}" class="w-100 h-100 object-fit-cover" draggable="false" loading="lazy">
           </div>
           <span class="text-dark small fw-medium text-truncate w-100" title="{{ $category->name }}">{{ $category->name }}</span>
         </a>
@@ -282,7 +282,7 @@
         @foreach($details['serviceCategories'] as $category)
         <a href="{{ route('business-services', ['business_slug' => $business->slug, 'category_id' => $category->id]) }}" class="text-decoration-none text-center d-flex flex-column align-items-center flex-shrink-0 hover-lift category-item category-item-link">
           <div class="rounded-circle mb-2 d-flex align-items-center justify-content-center bg-white overflow-hidden category-image-wrapper">
-            <img src="{{ getImage($category->image_url) }}" alt="{{ $category->name }}" class="w-100 h-100 object-fit-cover" draggable="false" loading="lazy">
+            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($category->image_url) }}" alt="{{ $category->name }}" class="w-100 h-100 object-fit-cover" draggable="false" loading="lazy">
           </div>
           <span class="text-dark small fw-medium text-truncate w-100" title="{{ $category->name }}">{{ $category->name }}</span>
         </a>
@@ -337,7 +337,7 @@
       <div class="row g-0">
         <!-- Image Section -->
         <div class="col-md-5 col-lg-4 position-relative expert-hero-image-container">
-          <img src="{{ getImage($experts[0]->expert_image, 'expert') }}" class="img-fluid w-100 h-100 object-fit-cover" alt="{{ $experts[0]->expert_name }}" loading="lazy">
+          <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($experts[0]->expert_image, 'expert') }}" class="img-fluid w-100 h-100 object-fit-cover" alt="{{ $experts[0]->expert_name }}" loading="lazy">
 
           <!-- Status Badge overlay -->
           @php
@@ -441,7 +441,7 @@
       <div class="col-lg-5">
         <div class="position-relative">
           <div class="rounded-4 overflow-hidden shadow-lg hover-lift">
-            <img src="{{ getImage($setting->about_us_image) }}" class="img-fluid w-100" alt="About {{ $business->name }}" loading="lazy">
+            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($setting->about_us_image) }}" class="img-fluid w-100" alt="About {{ $business->name }}" loading="lazy">
           </div>
           <div class="position-absolute top-0 start-0 translate-middle mt-n3 ms-n3 p-4 bg-primary rounded-4 d-none d-lg-block about-decoration"></div>
         </div>
@@ -474,7 +474,7 @@
         @if($gallery->type == 'image')
         <a href="{{ getImage($gallery->image_url) }}" class="glightbox" data-gallery="business-home-gallery" data-title="{{ $gallery->title }}">
           <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0">
-            <img src="{{ getImage($gallery->image_url) }}" class="img-fluid w-100 h-100 object-fit-cover transition-all" alt="{{ $gallery->title }}" loading="lazy" style="min-height: 200px;">
+            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($gallery->image_url) }}" class="img-fluid w-100 h-100 object-fit-cover transition-all" alt="{{ $gallery->title }}" loading="lazy" style="min-height: 200px;">
             <div class="gallery-overlay gallery-item-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end">
               <p class="mb-0 small fw-bold">{{ $gallery->title }}</p>
             </div>

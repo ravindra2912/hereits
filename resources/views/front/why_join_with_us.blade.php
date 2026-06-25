@@ -289,13 +289,13 @@
                 <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden hover-lift">
                     <div class="bg-light position-relative" style="aspect-ratio: 16/9; overflow: hidden;">
                         <!-- Cover Image Placeholder -->
-                        <img src="{{ getImage($item->business_image) }}" alt="Cover" class="w-100 h-100 object-fit-cover" loading="lazy">
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($item->business_image) }}" alt="Cover" class="w-100 h-100 object-fit-cover" loading="lazy">
                         <span class="badge bg-success position-absolute top-0 end-0 m-3">Open</span>
 
                     </div>
                     <div class="card-body pt-0 text-center">
                         <div class="position-relative mx-auto mt-n4 mb-3" style="width: 80px;">
-                            <!-- <img src="{{ getImage($item->business_logo) }}" alt="Logo" class="rounded-circle border border-3 border-white shadow-sm w-100"> -->
+                            <!-- <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($item->business_logo) }}" alt="Logo" class="rounded-circle border border-3 border-white shadow-sm w-100"> -->
                         </div>
                         <h5 class="fw-bold mb-1 d-flex align-items-center justify-content-center gap-1">
                             {{ $item->name }}
@@ -426,7 +426,7 @@
             <div class="col-lg-3 col-md-6">
                 <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden hover-lift transition-all">
                     <div class="overflow-hidden" style="height: 180px;">
-                        <img src="{{ getImage($blog->image) }}" class="w-100 h-100 object-fit-cover transition-all blog-img" alt="{{ $blog->title }}" loading="lazy">
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($blog->image) }}" class="w-100 h-100 object-fit-cover transition-all blog-img" alt="{{ $blog->title }}" loading="lazy">
                     </div>
                     <div class="card-body p-4">
                         <small class="text-primary fw-bold mb-2 d-block">{{ $blog->published_at ? $blog->published_at->format('M d, Y') : $blog->created_at->format('M d, Y') }}</small>

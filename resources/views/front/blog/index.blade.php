@@ -31,7 +31,7 @@
                 <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden hover-lift transition-all">
                     <!-- Image -->
                     <div class="position-relative overflow-hidden" style="height: 220px;">
-                        <img src="{{ getImage($blog->image) }}" class="w-100 h-100 object-fit-cover transition-all" alt="{{ $blog->title }}" loading="lazy">
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($blog->image) }}" class="w-100 h-100 object-fit-cover transition-all" alt="{{ $blog->title }}" loading="lazy">
                         <div class="position-absolute top-0 start-0 m-3">
                             <span class="badge bg-white text-dark shadow-sm py-2 px-3 fw-bold rounded-pill h6 mb-0">
                                 {{ $blog->published_at ? $blog->published_at->format('M d, Y') : $blog->created_at->format('M d, Y') }}

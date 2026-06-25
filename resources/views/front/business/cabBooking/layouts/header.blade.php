@@ -44,7 +44,7 @@
             <!-- Logo & Identity -->
             <a class="navbar-brand d-flex align-items-center gap-2 order-1 order-lg-0 mx-auto mx-lg-0" href="{{ route('business-details', $business->slug) }}">
                 @if ($business->business_logo)
-                <img src="{{ getImage($business->business_logo) }}"
+                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_logo) }}"
                     alt="{{ $business->name }}"
                     class="img-fluid rounded logo-thumb-sm"
                     loading="lazy">
@@ -130,7 +130,7 @@
     <div class="offcanvas-header border-bottom">
         <a href="{{ route('business-details', $business->slug) }}" class="offcanvas-title d-flex align-items-center gap-2" id="businessOffcanvasLabel">
             @if ($business->business_logo)
-            <img src="{{ getImage($business->business_logo) }}" alt="{{ $business->name }}" class="img-fluid rounded offcanvas-logo-sm" loading="lazy">
+            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_logo) }}" alt="{{ $business->name }}" class="img-fluid rounded offcanvas-logo-sm" loading="lazy">
             @else
             <span class="fw-bold fs-5 text-uppercase logo-text-gradient">
                 {{ $business->name }}

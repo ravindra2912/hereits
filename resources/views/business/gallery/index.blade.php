@@ -30,7 +30,7 @@
             <div class="position-relative overflow-hidden" style="height: 200px;">
                 @if($gallery->type == 'image')
                 <a href="{{ getImage($gallery->image_url) }}" class="glightbox" data-gallery="gallery-preview">
-                    <img src="{{ getImage($gallery->image_url) }}" class="w-100 h-100 object-fit-cover transition-all" alt="{{ $gallery->title }}">
+                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($gallery->image_url) }}" class="w-100 h-100 object-fit-cover transition-all" alt="{{ $gallery->title }}">
                 </a>
                 @elseif($gallery->type == 'video')
                 <a href="{{ getGalleryVideoUrl($gallery->image_url) }}" class="glightbox" data-gallery="gallery-preview">

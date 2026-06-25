@@ -74,7 +74,7 @@
                                 <label for="categoryImage"><i class="bi bi-camera-fill"></i></label>
                             </div>
                             <div class="avtar-preview">
-                                <img src="{{ getImage('') }}" id="previewImg" alt="Category Image" />
+                                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage('') }}" id="previewImg" alt="Category Image" />
                             </div>
                         </div>
                         <div class="small text-muted mt-2">Recommended: 200x200px (Optional)</div>

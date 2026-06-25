@@ -28,7 +28,7 @@
         <div class="card-body text-center p-5">
           <div class="position-relative d-inline-block mb-4">
             <div class="avtar" style="width: 150px; height: 150px;">
-              <img src="{{ getImage($user->profile) }}" class="avtar_img rounded-circle img-thumbnail shadow-sm object-fit-cover w-100 h-100" alt="Profile Image" loading="lazy" />
+              <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($user->profile) }}" class="avtar_img rounded-circle img-thumbnail shadow-sm object-fit-cover w-100 h-100" alt="Profile Image" loading="lazy" />
             </div>
             <label for="profile" class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 mb-1 me-1 shadow-sm" style="width: 32px; height: 32px; padding: 0; line-height: 30px;" title="Change Image">
               <i class="bi bi-camera-fill"></i>

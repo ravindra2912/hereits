@@ -38,7 +38,7 @@ $business = $expert->business;
           <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
             <div class="card-body text-center p-4">
               <div class="position-relative d-inline-block mb-3">
-                <img src="{{ getImage($expert->expert_image, 'expert') }}"
+                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($expert->expert_image, 'expert') }}"
                   alt="{{ $expert->expert_name }}"
                   class="rounded-circle shadow-lg border border-3 border-white object-fit-cover expert-profile-img"
                   style="width: 150px; height: 150px;" loading="lazy">

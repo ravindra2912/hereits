@@ -7,7 +7,7 @@
                 <div class="footer-brand-section mb-4">
                     <a href="{{ route('business-details', $business->slug) }}" class="d-inline-block mb-3">
                         @if ($business->business_logo)
-                        <img src="{{ getImage($business->business_logo) }}"
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_logo) }}"
                             alt="{{ $business->name ?? config('app.name') }}"
                             class="footer-logo rounded footer-logo-sm" loading="lazy">
                         @else

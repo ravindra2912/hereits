@@ -48,7 +48,7 @@
             <div class="col-lg-8">
                 @if($blog->image)
                 <div class="mb-5 rounded-5 overflow-hidden shadow-sm">
-                    <img src="{{ getImage($blog->image) }}" class="w-100 img-fluid object-fit-cover" style="height: 500px;" alt="{{ $blog->title }}">
+                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($blog->image) }}" class="w-100 img-fluid object-fit-cover" style="height: 500px;" alt="{{ $blog->title }}">
                 </div>
                 @endif
 
@@ -94,7 +94,7 @@
                             @foreach($relatedBlogs as $rBlog)
                             <a href="{{ route('blog.detail', $rBlog->slug) }}" class="text-decoration-none d-flex gap-3 group">
                                 <div class="rounded-3 overflow-hidden flex-shrink-0" style="width: 80px; height: 80px;">
-                                    <img src="{{ getImage($rBlog->image) }}" class="w-100 h-100 object-fit-cover transition-all group-hover-scale" alt="{{ $rBlog->title }}">
+                                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($rBlog->image) }}" class="w-100 h-100 object-fit-cover transition-all group-hover-scale" alt="{{ $rBlog->title }}">
                                 </div>
                                 <div>
                                     <h6 class="text-dark fw-bold mb-1 lh-sm group-hover-primary transition-all">{{ Str::limit($rBlog->title, 50) }}</h6>

@@ -22,7 +22,7 @@
               <div class="row g-4">
                 <div class="col-12 text-center mb-4">
                   <div class="profile-avatar-edit d-inline-block position-relative">
-                    <img src="{{ getImage($user->profile) }}" class="rounded-pill border border-4 border-white shadow-sm avtar_img" style="width: 150px; height: 150px; object-fit: cover;" loading="lazy">
+                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($user->profile) }}" class="rounded-pill border border-4 border-white shadow-sm avtar_img" style="width: 150px; height: 150px; object-fit: cover;" loading="lazy">
                     <label for="profile_input" class="btn btn-primary btn-sm rounded-circle position-absolute bottom-0 end-0 shadow-sm" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
                       <i class="fas fa-camera text-white"></i>
                     </label>

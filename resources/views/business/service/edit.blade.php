@@ -33,7 +33,7 @@
                         <div class="card-body">
                             <div class="mb-3">
                                 <div id="image-preview" class="mb-3 text-center bg-light rounded d-flex align-items-center justify-content-center border" style="height: 200px; overflow: hidden; cursor: pointer;" onclick="$('#image').click()">
-                                    <img src="{{ getImage($service->image_url) }}" class="img-fluid" id="preview-img" loading="lazy">
+                                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($service->image_url) }}" class="img-fluid" id="preview-img" loading="lazy">
                                 </div>
                                 <div class="d-grid">
                                     <button type="button" class="btn btn-outline-primary mb-2" onclick="$('#image').click()">

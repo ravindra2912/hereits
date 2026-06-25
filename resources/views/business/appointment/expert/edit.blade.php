@@ -36,7 +36,7 @@
                 <label for="profile"><i class="bi bi-pencil-fill"></i></label>
               </div>
               <div class="avtar-preview">
-                <img src="{{ getImage($expert->expert_image) }}" id="preview-image" alt="Expert Image" loading="lazy" />
+                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($expert->expert_image) }}" id="preview-image" alt="Expert Image" loading="lazy" />
               </div>
             </div>
           </div>

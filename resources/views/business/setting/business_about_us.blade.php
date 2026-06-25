@@ -37,7 +37,7 @@
                                         <label for="about_us_image"><i class="bi bi-pencil-fill"></i></label>
                                     </div>
                                     <div class="avtar-preview">
-                                        <img src="{{ getImage($setting->about_us_image) }}" id="about_us_preview" alt="About Us" loading="lazy" />
+                                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($setting->about_us_image) }}" id="about_us_preview" alt="About Us" loading="lazy" />
                                     </div>
                                 </div>
                             </div>

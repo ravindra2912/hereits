@@ -32,7 +32,7 @@
         <div class="col-md-4">
           <div class="text-center mb-4">
             <div class="avtar">
-              <img src="{{ getImage('') }}" class="avtar_img rounded-rect" alt="Category Image" loading="lazy" />
+              <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage('') }}" class="avtar_img rounded-rect" alt="Category Image" loading="lazy" />
               <label for="profile" title="Change Image"><i class="bi bi-pencil-fill"></i></label>
               <input type="file" name="image" class="avtar_input" id="profile" accept="image/png, image/webp, image/jpeg" />
             </div>

@@ -38,7 +38,7 @@
                     <div class="col-md-4">
                         <div class="text-center mb-4">
                             <div class="avtar">
-                                <img src="{{ getImage($blog->image) }}" class="avtar_img" loading="lazy" />
+                                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($blog->image) }}" class="avtar_img" loading="lazy" />
                                 <label for="image" title="Change Image"><i class="bi bi-pencil-fill"></i></label>
                                 <input type="file" name="image" class="avtar_input" id="image"
                                     accept="image/png, image/webp, image/jpeg" />

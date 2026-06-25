@@ -22,7 +22,7 @@
         <div class="row g-5">
             <div class="col-lg-7">
                 <div class="card border-0 shadow-lg overflow-hidden rounded-4">
-                    <img src="{{ getImage($service->image_url) }}" class="img-fluid w-100" alt="{{ $service->name }}" style="max-height: 500px; object-fit: cover;" loading="lazy">
+                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($service->image_url) }}" class="img-fluid w-100" alt="{{ $service->name }}" style="max-height: 500px; object-fit: cover;" loading="lazy">
                 </div>
             </div>
 
@@ -109,7 +109,7 @@
                 <div class="col-md-6 col-lg-3">
                     <div class="card service-card border-0 shadow-sm rounded-4 overflow-hidden">
                         <div class="position-relative overflow-hidden" style="height: 200px;">
-                            <img src="{{ getImage($recommendedService->image_url) }}"
+                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($recommendedService->image_url) }}"
                                 class="w-100 h-100 object-fit-cover"
                                 alt="{{ $recommendedService->name }}" loading="lazy">
                             <div class="position-absolute top-0 end-0 m-3 d-flex flex-column gap-2 align-items-end">

@@ -34,7 +34,7 @@
                     <label for="business_image"><i class="bi bi-pencil-fill"></i></label>
                   </div>
                   <div class="avtar-preview">
-                    <img src="{{ getImage($business->business_image) }}" id="banner_preview" alt="Business Image" loading="lazy" />
+                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image) }}" id="banner_preview" alt="Business Image" loading="lazy" />
                   </div>
                 </div>
               </div>
@@ -48,7 +48,7 @@
                     <label for="business_logo"><i class="bi bi-pencil-fill"></i></label>
                   </div>
                   <div class="avtar-preview">
-                    <img src="{{ getImage($business->business_logo) }}" id="logo_preview" alt="Business Logo" loading="lazy" />
+                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_logo) }}" id="logo_preview" alt="Business Logo" loading="lazy" />
                   </div>
                 </div>
               </div>

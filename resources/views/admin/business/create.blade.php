@@ -50,7 +50,7 @@
             <div class="col-12 text-center mb-4">
               <label class="form-label fw-bold text-muted small text-uppercase">Business Image <span class="text-danger">*</span></label>
               <div class="avtar mx-auto" style="width: 100%; aspect-ratio: 16/9; max-width: 300px;">
-                <img src="{{ getImage('') }}" id="banner_preview" class="avtar_img rounded border w-100 h-100 object-fit-cover shadow-sm" alt="Business Image" loading="lazy" />
+                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage('') }}" id="banner_preview" class="avtar_img rounded border w-100 h-100 object-fit-cover shadow-sm" alt="Business Image" loading="lazy" />
                 <label for="profile" title="Change Image"><i class="bi bi-camera-fill"></i></label>
                 <input type="file" name="business_image" class="avtar_input banner_input" id="profile" accept="image/png, image/webp, image/jpeg" required />
               </div>
@@ -58,7 +58,7 @@
             <div class="col-12 text-center mb-4">
               <label class="form-label fw-bold text-muted small text-uppercase">Business Logo <span class="text-danger">*</span></label>
               <div class="avtar mx-auto" style="width: 120px; height: 120px;">
-                <img src="{{ getImage('') }}" id="logo_preview" class="avtar_img rounded-circle border w-100 h-100 object-fit-cover shadow-sm" alt="Business Logo" loading="lazy" />
+                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage('') }}" id="logo_preview" class="avtar_img rounded-circle border w-100 h-100 object-fit-cover shadow-sm" alt="Business Logo" loading="lazy" />
                 <label for="business_logo" title="Change Logo"><i class="bi bi-camera-fill"></i></label>
                 <input type="file" name="business_logo" class="avtar_input logo_input" id="business_logo" accept="image/png, image/webp, image/jpeg" required />
               </div>

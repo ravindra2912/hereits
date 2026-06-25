@@ -12,7 +12,7 @@
 
                 <div class="text-center mb-4">
                     <div class="position-relative d-inline-block">
-                        <img id="preview_image" src="{{ getImage($expert->expert_image) }}"
+                        <img onerror="this.src='{{ getImage(null) }}'" id="preview_image" src="{{ getImage($expert->expert_image) }}"
                             class="rounded-circle border border-4 border-white shadow-sm object-fit-cover"
                             style="width: 150px; height: 150px;" loading="lazy">
 

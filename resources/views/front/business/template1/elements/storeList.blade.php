@@ -15,7 +15,7 @@
       @if(isset($res->distance) && !empty($res->distance))
       <span class="cf store-fav store-distance border rounded-pill text-nowrap">{{ round($res->distance, 2) }} km</span>
       @endif
-      <a href="{{ route('business-details', ['business_slug' => $res->slug]) }}"><img class="img-fluid rounded align-top store-img" src="{{ getImage($res->business_image) }}" alt="{{ $res->name }}" loading="lazy"></a>
+      <a href="{{ route('business-details', ['business_slug' => $res->slug]) }}"><img onerror="this.src='{{ getImage(null) }}'" class="img-fluid rounded align-top store-img" src="{{ getImage($res->business_image) }}" alt="{{ $res->name }}" loading="lazy"></a>
     </div>
     <div class="col-md-8 col-12 pl-3 pl-md-0 mt-3 mt-md-0">
       <div class="row no-gutters">

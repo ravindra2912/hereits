@@ -74,7 +74,7 @@
             <div class="col-md-12 row">
               <div class="col-md-4 " style="justify-items: center;">
                 <div class="avtar">
-                  <img src="{{ getImage('') }}" class="avtar_img" loading="lazy" />
+                  <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage('') }}" class="avtar_img" loading="lazy" />
                   <label for="profile" title="Change Image"><i class="far fa-edit"></i></label>
                 </div>
                 <input type="file" name="profile" class="avtar_input" id="profile" accept="image/png, image/webp, image/jpeg" />

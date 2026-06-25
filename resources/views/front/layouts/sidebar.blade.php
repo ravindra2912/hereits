@@ -1,7 +1,7 @@
 <aside class="main-sidebar sidebar-light-primary elevation-1">
   <!-- Brand Logo -->
   <div href="{{ route('business.dashboard') }}" class="brand-link">
-    <img src="{{ isset(Auth::user()->getBusinessDetails) ? getImage(Auth::user()->getBusinessDetails->business_image):config('const.site_setting.small_logo') }}" alt="Logo" class="brand-image img-circle elevation-3" style="opacity: .8" loading="lazy">
+    <img onerror="this.src='{{ getImage(null) }}'" src="{{ isset(Auth::user()->getBusinessDetails) ? getImage(Auth::user()->getBusinessDetails->business_image):config('const.site_setting.small_logo') }}" alt="Logo" class="brand-image img-circle elevation-3" style="opacity: .8" loading="lazy">
     <span class="brand-text font-weight-light">{{ isset(Auth::user()->getBusinessDetails) ? Auth::user()->getBusinessDetails->name:'' }}</span>
     <!-- <span><i class="fas fa-random float-right pr-2"></i></span> -->
 
@@ -13,7 +13,7 @@
         @if (isset(Auth::user()->getBusinesses) && count(Auth::user()->getBusinesses) > 0)
         @foreach (Auth::user()->getBusinesses as $business)
         <a class="dropdown-item" href="{{ route('business.switchBusiness', $business->id) }}">
-          <img src="{{ getImage($business->business_image) }}" alt="Logo" class="brand-image img-circle " style="height: 30px; width: 30px; object-fit: cover;" loading="lazy">
+          <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image) }}" alt="Logo" class="brand-image img-circle " style="height: 30px; width: 30px; object-fit: cover;" loading="lazy">
           {{ $business->name }}
         </a>
         <div class="dropdown-divider"></div>

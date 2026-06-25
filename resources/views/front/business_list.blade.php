@@ -13,7 +13,7 @@
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="card border-0 shadow-sm rounded-4 overflow-hidden hover-lift h-100 transition-all">
                             <a href="{{ route('business-details', $business->slug) }}" class="position-relative overflow-hidden d-block business-card-img" style="height: 200px;">
-                                <img src="{{ getImage($business->business_image) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}">
+                                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}">
                                 <span class="badge bg-success position-absolute top-0 end-0 m-3 rounded-pill px-3">Open</span>
                                 
                                 <div class="position-absolute top-0 start-0 m-3">

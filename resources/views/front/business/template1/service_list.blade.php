@@ -40,7 +40,7 @@
                 <div class="card h-100 border-0 shadow-sm hover-lift overflow-hidden">
                     <a href="{{ route('service-details', ['business_slug' => $business->slug, 'service_slug' => $service->slug]) }}" class="text-decoration-none text-dark">
                         <div class="position-relative">
-                            <img src="{{ getImage($service->image_url) }}" class="card-img-top object-fit-cover" alt="{{ $service->name }}" style="aspect-ratio: 16/9;" loading="lazy">
+                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($service->image_url) }}" class="card-img-top object-fit-cover" alt="{{ $service->name }}" style="aspect-ratio: 16/9;" loading="lazy">
                             <div class="position-absolute top-0 start-0 p-3">
                                 @if($service->price_type == 'FixPrice')
                                 <span class="badge bg-primary fs-6 shadow-sm">₹{{ $service->price }}</span>

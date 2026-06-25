@@ -6,13 +6,13 @@
             <a href="{{ route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $product->slug]) }}" class="text-decoration-none">
                 <div class="position-relative">
                     <div class="product-card-img-container" style="position: relative; aspect-ratio: 1/1; overflow: hidden; width: 100%;">
-                        <img src="{{ getImage($product->firstTwoImages->first()?->image_url) }}"
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($product->firstTwoImages->first()?->image_url) }}"
                             class="card-img-top primary-image"
                             alt="{{ $product->name }}"
                             style="width: 100%; height: 100%; object-fit: cover; transition: opacity 0.5s ease-in-out;"
                             loading="lazy">
                         @if($product->firstTwoImages->count() > 1)
-                        <img src="{{ getImage($product->firstTwoImages[1]->image_url) }}"
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($product->firstTwoImages[1]->image_url) }}"
                             class="card-img-top secondary-image"
                             alt="{{ $product->name }}"
                             style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s ease-in-out; z-index: 1;"

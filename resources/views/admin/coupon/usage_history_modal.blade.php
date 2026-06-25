@@ -24,7 +24,7 @@
                     </td>
                     <td>
                         <div class="d-flex align-items-center">
-                            <img src="{{ $purchase->business && $purchase->business->business_logo ? getImage($purchase->business->business_logo) : asset('assets/images/default.png') }}"
+                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ $purchase->business && $purchase->business->business_logo ? getImage($purchase->business->business_logo) : asset('assets/images/default.png') }}"
                                 class="rounded-circle me-2" style="width: 24px; height: 24px; object-fit: cover;">
                             <div class="small fw-bold">{{ $purchase->business->name ?? 'N/A' }}</div>
                         </div>

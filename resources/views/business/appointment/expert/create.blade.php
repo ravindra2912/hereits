@@ -35,7 +35,7 @@
                 <label for="profile"><i class="bi bi-camera-fill"></i></label>
               </div>
               <div class="avtar-preview">
-                <img src="{{ getImage('') }}" id="preview-image" alt="Expert Image" loading="lazy" />
+                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage('') }}" id="preview-image" alt="Expert Image" loading="lazy" />
               </div>
             </div>
             <div class="small text-muted mt-2">Professional photo recommended</div>

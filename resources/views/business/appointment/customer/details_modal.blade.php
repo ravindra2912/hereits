@@ -14,7 +14,7 @@
     <div class="row g-4 mb-4">
         <!-- Profile Info -->
         <div class="col-md-12 text-center mb-3">
-            <img src="{{ getImage($user->profile) }}" class="rounded-circle shadow mb-3" style="width: 100px; height: 100px; object-fit: cover;">
+            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($user->profile) }}" class="rounded-circle shadow mb-3" style="width: 100px; height: 100px; object-fit: cover;">
             <h5 class="fw-bold text-dark mb-1">{{ $user->first_name }} {{ $user->last_name }}</h5>
             <p class="text-muted mb-0">{{ $user->email }}</p>
         </div>

@@ -1,7 +1,7 @@
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 favorite-card">
     <div class="card-body p-3 text-center">
         <div class="position-relative d-inline-block mb-3">
-            <img src="{{ getImage($expert->expert_image, 'expert') }}" class="rounded-circle border border-3 border-white shadow-sm object-fit-cover" style="width: 80px; height: 80px;" alt="{{ $expert->expert_name }}">
+            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($expert->expert_image, 'expert') }}" class="rounded-circle border border-3 border-white shadow-sm object-fit-cover" style="width: 80px; height: 80px;" alt="{{ $expert->expert_name }}">
             <button type="button" class="favorite-btn position-absolute top-0 end-0 rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
                 data-item-id="{{ $expert->id }}"
                 data-business-id="{{ $expert->business_id }}"

@@ -18,7 +18,7 @@
     <div class="account-sidebar shadow-sm rounded-4 border-0 mb-4 overflow-hidden bg-white">
       <div class="p-4 text-center border-bottom bg-light">
         <div class="avatar-container mb-3 position-relative d-inline-block">
-          <img src="{{ getImage(Auth::user()->profile) }}" class="rounded-circle border border-4 border-white shadow-sm" style="width: 100px; height: 100px; object-fit: cover;" alt="{{ Auth::user()->first_name }}" loading="lazy">
+          <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage(Auth::user()->profile) }}" class="rounded-circle border border-4 border-white shadow-sm" style="width: 100px; height: 100px; object-fit: cover;" alt="{{ Auth::user()->first_name }}" loading="lazy">
           <div class="status-indicator"></div>
         </div>
         <h5 class="fw-bold mb-0">{{ Auth::user()->first_name }} {{ Auth::user()->last_name }}</h5>

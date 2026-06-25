@@ -73,7 +73,7 @@
         <div class="col-md-4 text-center">
           <label class="form-label fw-bold text-muted small text-uppercase mb-3 d-block">Business Logo</label>
           <div class="avtar mx-auto bg-light rounded-circle" style="width: 150px; height: 150px;">
-            <img src="{{ getImage($business->business_logo) }}" id="logo_preview" class="avtar_img rounded-circle border border-4 border-white w-100 h-100 object-fit-contain shadow-sm" alt="Business Logo" loading="lazy" />
+            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_logo) }}" id="logo_preview" class="avtar_img rounded-circle border border-4 border-white w-100 h-100 object-fit-contain shadow-sm" alt="Business Logo" loading="lazy" />
             <label for="business_logo" title="Change Logo" class="bg-primary text-white p-2 rounded-circle shadow-sm" style="bottom: 0px; right: 0px;"><i class="bi bi-camera-fill"></i></label>
             <input type="file" name="business_logo" class="avtar_input logo_input" id="business_logo" accept="image/png, image/webp, image/jpeg" />
           </div>
@@ -81,7 +81,7 @@
         <div class="col-md-8">
           <label class="form-label fw-bold text-muted small text-uppercase mb-3 d-block text-center text-md-start">Business Banner</label>
           <div class="avtar mx-left bg-light rounded-4" style="width: 100%; aspect-ratio: 21/9; max-height: 250px;">
-            <img src="{{ getImage($business->business_image) }}" id="banner_preview" class="avtar_img rounded-4 border border-4 border-white w-100 h-100 object-fit-contain shadow-sm" alt="Business Image" loading="lazy" />
+            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image) }}" id="banner_preview" class="avtar_img rounded-4 border border-4 border-white w-100 h-100 object-fit-contain shadow-sm" alt="Business Image" loading="lazy" />
             <label for="profile" title="Change Image" class="bg-primary text-white p-2 rounded-circle shadow-sm" style="top: 10px; right: 10px;"><i class="bi bi-camera-fill"></i></label>
             <input type="file" name="business_image" class="avtar_input banner_input" id="profile" accept="image/png, image/webp, image/jpeg" />
           </div>

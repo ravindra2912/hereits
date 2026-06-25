@@ -6,7 +6,7 @@
                 <div class="d-flex align-items-center">
                     <!-- Expert Image & Favorite -->
                     <div class="flex-shrink-0 me-3 position-relative">
-                        <img src="{{ getImage($expert->expert_image, 'expert') }}"
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($expert->expert_image, 'expert') }}"
                             alt="{{ $expert->expert_name }}"
                             class="rounded-circle shadow-sm object-fit-cover border border-2 border-light expert-thumb"
                             loading="lazy">

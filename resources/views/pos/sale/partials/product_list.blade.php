@@ -7,7 +7,7 @@
         data-price="{{ $product->sell_price }}"
         data-stock="{{ $product->quantity }}"
         data-image="{{ getImage($product->firstImage?->image_url) }}">
-        <img src="{{ getImage($product->firstImage?->image_url) }}" class="product-img" alt="{{ $product->name }}">
+        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($product->firstImage?->image_url) }}" class="product-img" alt="{{ $product->name }}">
         @if($product->quantity < 1)
             <div class="out-of-stock-overlay d-flex align-items-center justify-content-center">
             <span class="badge bg-danger rounded-pill px-3 shadow-lg">Out of Stock</span>

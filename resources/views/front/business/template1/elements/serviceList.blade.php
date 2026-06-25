@@ -15,7 +15,7 @@
                 </div>
                 <div class="d-flex gap-3">
                     <a href="{{ route('service-details', ['business_slug' => $business->slug, 'service_slug' => $service->slug]) }}" class="text-decoration-none">
-                        <img src="{{ getImage($service->image_url) }}"
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($service->image_url) }}"
                             class="object-fit-cover service-img-thumb"
                             alt="{{ $service->name }}"
                             loading="lazy">

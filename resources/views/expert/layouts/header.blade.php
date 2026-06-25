@@ -2,7 +2,7 @@
 <header class="top-header">
     <div class="profile-card" style="cursor:pointer">
         @if(Auth::guard('expert')->user()->expert_image)
-        <img src="{{ getImage(Auth::guard('expert')->user()->expert_image) }}" class="avatar" alt="Avatar" loading="lazy">
+        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage(Auth::guard('expert')->user()->expert_image) }}" class="avatar" alt="Avatar" loading="lazy">
         @else
         <div class="avatar" style="background:#ddd"></div>
         @endif

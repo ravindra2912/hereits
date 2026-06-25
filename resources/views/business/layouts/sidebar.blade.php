@@ -4,14 +4,14 @@
     @if(count($businesses) > 1)
     <button type="button" class="business-switcher-trigger btn btn-link text-decoration-none text-dark p-0 border-0" data-bs-toggle="modal" data-bs-target="#businessSwitcherModal">
       <span class="business-switcher-trigger-content">
-        <img src="{{ getImage($currentBusiness->business_logo) }}" alt="{{ $currentBusiness->name }}" class="business-switcher-trigger-logo" loading="lazy">
+        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($currentBusiness->business_logo) }}" alt="{{ $currentBusiness->name }}" class="business-switcher-trigger-logo" loading="lazy">
         <span class="business-switcher-trigger-name">{{ \Illuminate\Support\Str::limit($currentBusiness->name, 14) }}</span>
         <i class="bi bi-chevron-down business-switcher-trigger-icon"></i>
       </span>
     </button>
     @else
     <div class="d-flex align-items-center justify-content-center">
-      <img src="{{ getImage($currentBusiness->business_logo) }}" alt="{{ $currentBusiness->name }}" class="business-switcher-trigger-logo me-2" loading="lazy">
+      <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($currentBusiness->business_logo) }}" alt="{{ $currentBusiness->name }}" class="business-switcher-trigger-logo me-2" loading="lazy">
       <span class="business-switcher-current">{{ \Illuminate\Support\Str::limit($currentBusiness->name, 20) }}</span>
     </div>
     @endif

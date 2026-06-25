@@ -189,21 +189,21 @@
                             @if($isMediaVideo && $ytId)
                             <div class="ratio ratio-16x9 d-flex align-items-center justify-content-center bg-dark product-carousel-img">
                                 <a href="{{ getGalleryVideoUrl($image->image_url) }}" class="glightbox w-100 h-100 d-flex align-items-center justify-content-center position-relative text-decoration-none" data-gallery="business-gallery" data-type="video">
-                                    <img src="{{ getImage($image->image_url) }}" class="w-100 h-100 object-fit-cover opacity-50" alt="{{ $product->name }}">
+                                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($image->image_url) }}" class="w-100 h-100 object-fit-cover opacity-50" alt="{{ $product->name }}">
                                     <i class="fas fa-play-circle fa-5x text-white position-absolute top-50 start-50 translate-middle opacity-75"></i>
                                     <span class="badge bg-danger position-absolute top-0 start-0 m-3 shadow-sm" style="z-index: 11;"><i class="fas fa-video me-1"></i>Video</span>
                                 </a>
                             </div>
                             @else
                             <a href="{{ getImage($image->image_url) }}" class="glightbox w-100 h-100 d-block position-relative" data-gallery="business-gallery" data-type="image">
-                                <img src="{{ getImage($image->image_url) }}" class="d-block w-100 product-carousel-img" alt="{{ $product->name }}">
+                                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($image->image_url) }}" class="d-block w-100 product-carousel-img" alt="{{ $product->name }}">
                                 <span class="badge bg-white text-dark position-absolute top-0 start-0 m-3 shadow-sm" style="z-index: 11;"><i class="fas fa-image me-1"></i>Image</span>
                             </a>
                             @endif
                         </div>
                         @empty
                         <div class="carousel-item active">
-                            <img src="{{ getImage(null) }}" class="d-block w-100 product-carousel-img" alt="Default Image">
+                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage(null) }}" class="d-block w-100 product-carousel-img" alt="Default Image">
                         </div>
                         @endforelse
                     </div>
@@ -222,7 +222,7 @@
                     @foreach($product->images as $key => $image)
                     @php $ytIdThumb = getYoutubeId($image->image_url); @endphp
                     <div class="position-relative">
-                        <img src="{{ getImage($image->image_url) }}"
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($image->image_url) }}"
                             class="thumb-img rounded-3 {{ $key == 0 ? 'active' : '' }}"
                             data-bs-target="#productCarousel"
                             data-bs-slide-to="{{ $key }}"
@@ -339,7 +339,7 @@
                 <!-- Seller Info -->
                 <div class="trust-card rounded-4 p-4 d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-3">
-                        <img src="{{ getImage($business->business_image) }}" class="rounded-circle border border-white shadow-sm" style="width: 60px; height: 60px; object-fit: cover;" loading="lazy">
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image) }}" class="rounded-circle border border-white shadow-sm" style="width: 60px; height: 60px; object-fit: cover;" loading="lazy">
                         <div>
                             <span class="text-muted small d-block">Store Information</span>
                             <h6 class="fw-bold mb-0">{{ $business->name }}</h6>
@@ -361,12 +361,12 @@
                 <div class="card border-0 shadow-sm h-100 rounded-4 overflow-hidden related-card {{ $related->firstTwoImages->count() > 1 ? 'has-hover-image' : '' }}">
                     <a href="{{ route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $related->slug]) }}" class="position-relative d-block">
                         <div class="product-card-img-container">
-                            <img src="{{ getImage($related->firstTwoImages->first()?->image_url) }}"
+                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($related->firstTwoImages->first()?->image_url) }}"
                                 class="card-img-top primary-image"
                                 alt="{{ $related->name }}"
                                 loading="lazy">
                             @if($related->firstTwoImages->count() > 1)
-                            <img src="{{ getImage($related->firstTwoImages[1]->image_url) }}"
+                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($related->firstTwoImages[1]->image_url) }}"
                                 class="card-img-top secondary-image"
                                 alt="{{ $related->name }}"
                                 loading="lazy">

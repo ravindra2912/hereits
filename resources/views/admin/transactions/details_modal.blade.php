@@ -46,7 +46,7 @@
                 <div class="text-secondary text-uppercase small fw-bold mb-3" style="letter-spacing: 0.5px;">Payment Screenshot proof</div>
                 <div class="text-center bg-white rounded-3 p-2 border overflow-hidden">
                     <a href="{{ getImage($transaction->payment_screen_shot) }}" target="_blank">
-                        <img src="{{ getImage($transaction->payment_screen_shot) }}" class="img-fluid rounded-3 shadow-sm hover-zoom" style="max-height: 400px; width: auto;" alt="Screenshot">
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($transaction->payment_screen_shot) }}" class="img-fluid rounded-3 shadow-sm hover-zoom" style="max-height: 400px; width: auto;" alt="Screenshot">
                     </a>
                 </div>
                 <div class="mt-2 text-center">

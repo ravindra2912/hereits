@@ -43,7 +43,7 @@
                                         <label for="profile"><i class="fas fa-camera"></i></label>
                                     </div>
                                     <div class="avatar-preview">
-                                        <img src="{{ getImage('') }}" class="avtar_img" id="imagePreview" loading="lazy" onclick="document.getElementById('profile').click()" style="cursor: pointer;">
+                                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage('') }}" class="avtar_img" id="imagePreview" loading="lazy" onclick="document.getElementById('profile').click()" style="cursor: pointer;">
                                     </div>
                                     <div class="text-center mt-3">
                                         <span class="small fw-bold text-muted">Business Image <span class="text-danger">*</span></span>
@@ -57,7 +57,7 @@
                                         <label for="logo"><i class="fas fa-camera"></i></label>
                                     </div>
                                     <div class="avatar-preview" style="border-radius: 50%;">
-                                        <img src="{{ getImage('') }}" class="avtar_img" id="logoPreview" loading="lazy" onclick="document.getElementById('logo').click()" style="cursor: pointer;">
+                                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage('') }}" class="avtar_img" id="logoPreview" loading="lazy" onclick="document.getElementById('logo').click()" style="cursor: pointer;">
                                     </div>
                                     <div class="text-center mt-3">
                                         <span class="small fw-bold text-muted">Business Logo <span class="text-danger">*</span></span>

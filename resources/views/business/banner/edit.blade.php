@@ -30,7 +30,7 @@
                         <input type="file" class="form-control" id="image" name="image" accept="image/*">
                         <div class="form-text">Leave blank if you don't want to change the image.</div>
                         <div id="image-preview" class="mt-2">
-                            <img src="{{ getImage($banner->image_url) }}" class="img-fluid rounded border" style="max-height: 200px;" loading="lazy">
+                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($banner->image_url) }}" class="img-fluid rounded border" style="max-height: 200px;" loading="lazy">
                         </div>
                     </div>
 

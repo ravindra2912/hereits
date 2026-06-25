@@ -82,12 +82,12 @@
                 <a href="{{ route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $product->slug]) }}" class="text-decoration-none">
                     <div class="position-relative">
                     <div class="product-card-img-container">
-                        <img src="{{ getImage($product->firstTwoImages->first()?->image_url) }}"
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($product->firstTwoImages->first()?->image_url) }}"
                             class="card-img-top primary-image"
                             alt="{{ $product->name }}"
                             loading="lazy">
                         @if($product->firstTwoImages->count() > 1)
-                        <img src="{{ getImage($product->firstTwoImages[1]->image_url) }}"
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($product->firstTwoImages[1]->image_url) }}"
                             class="card-img-top secondary-image"
                             alt="{{ $product->name }}"
                             loading="lazy">

@@ -31,7 +31,7 @@
         <!-- Avatar Section -->
         <div class="col-md-12 text-center">
           <div class="avtar">
-            <img src="{{ getImage($user->profile) }}" class="avtar_img" alt="Profile Image" loading="lazy" />
+            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($user->profile) }}" class="avtar_img" alt="Profile Image" loading="lazy" />
             <label for="profile" title="Change Image"><i class="bi bi-pencil-fill"></i></label>
           </div>
           <input type="file" name="profile" class="avtar_input" id="profile" accept="image/png, image/webp, image/jpeg" />

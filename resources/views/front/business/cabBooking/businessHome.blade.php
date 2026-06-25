@@ -172,7 +172,7 @@
             <div class="col-lg-6">
                 <div class="about-img-wrapper">
                     <!-- High quality image for about section -->
-                    <img src="{{ !empty($setting->about_us_image) ? getImage($setting->about_us_image) : 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=800&auto=format&fit=crop' }}" alt="About {{ $business->name }}">
+                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ !empty($setting->about_us_image) ? getImage($setting->about_us_image) : 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?q=80&w=800&auto=format&fit=crop' }}" alt="About {{ $business->name }}">
                 </div>
             </div>
 

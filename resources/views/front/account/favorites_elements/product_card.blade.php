@@ -1,6 +1,6 @@
 <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 favorite-card">
     <div class="position-relative" style="height: 140px;">
-        <img src="{{ getImage($product->firstImage?->image_url) }}" class="w-100 h-100 object-fit-cover" alt="{{ $product->name }}">
+        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($product->firstImage?->image_url) }}" class="w-100 h-100 object-fit-cover" alt="{{ $product->name }}">
         <button type="button" class="favorite-btn position-absolute top-0 end-0 m-2 rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
             data-item-id="{{ $product->id }}"
             data-business-id="{{ $product->business_id }}"

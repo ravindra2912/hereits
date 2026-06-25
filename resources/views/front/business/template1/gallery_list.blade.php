@@ -31,7 +31,7 @@
                 @if($gallery->type == 'image')
                     <a href="{{ getImage($gallery->image_url) }}" class="glightbox" data-gallery="business-gallery" data-title="{{ $gallery->title }}">
                         <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0">
-                            <img src="{{ getImage($gallery->image_url) }}" class="img-fluid w-100 h-100 object-fit-cover transition-all" alt="{{ $gallery->title }}" style="min-height: 250px;" loading="lazy">
+                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($gallery->image_url) }}" class="img-fluid w-100 h-100 object-fit-cover transition-all" alt="{{ $gallery->title }}" style="min-height: 250px;" loading="lazy">
                             <div class="gallery-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end" style="background: linear-gradient(transparent, rgba(0,0,0,0.8)); transition: 0.3s;">
                                 <p class="mb-0 small fw-bold">{{ $gallery->title }}</p>
                             </div>

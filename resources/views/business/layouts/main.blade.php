@@ -121,7 +121,7 @@
             @foreach($businesses as $business)
             <a class="business-switcher-item {{ $currentBusiness->id === $business->id ? 'active' : '' }}" href="{{ route('business.switchBusiness', $business->id) }}">
               <div class="d-flex align-items-start gap-3">
-                <img src="{{ getImage($business->business_logo) }}" alt="{{ $business->name }}" class="business-switcher-logo" loading="lazy">
+                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_logo) }}" alt="{{ $business->name }}" class="business-switcher-logo" loading="lazy">
                 <div class="business-switcher-meta">
                   <div class="business-switcher-name">
                     {{ $business->name }}
