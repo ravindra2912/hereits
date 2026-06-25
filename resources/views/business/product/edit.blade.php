@@ -23,7 +23,7 @@
                             <div class="d-flex flex-wrap gap-3 align-items-center" id="current-images-container">
                                 @forelse ($product->images as $image)
                                 <div class="position-relative" id="image-container-{{ $image->id }}">
-                                    <img src="{{ getImage($image->image_url) }}" class="rounded border" style="width: 100px; height: 100px; object-fit: cover; {{ $image->type == 'video' ? 'opacity: 0.8; background: #000;' : '' }}" loading="lazy">
+                                    <img src="{{ getImage($image->image_url) }}" onerror="this.src='{{ getImage(null) }}'" class="rounded border" style="width: 100px; height: 100px; object-fit: cover; {{ $image->type == 'video' ? 'opacity: 0.8; background: #000;' : '' }}" loading="lazy">
                                     @if($image->type == 'video')
                                     <i class="bi bi-play-circle-fill position-absolute top-50 start-50 translate-middle text-white fs-4"></i>
                                     @endif
@@ -288,7 +288,7 @@
                         // Check counts and show add button if either limit is not reached
                         var imageCount = $('#current-images-container .position-relative:not(:has(.bi-play-circle-fill))').length;
                         var videoCount = $('#current-images-container .bi-play-circle-fill').length;
-                        
+
                         if (imageCount < imageLimit || videoCount < videoLimit) {
                             $('#add-image-btn').removeClass('img-hide');
                         }
@@ -372,7 +372,7 @@
                         // Check new counts
                         var newImageCount = $('#current-images-container .position-relative:not(:has(.bi-play-circle-fill))').length;
                         var newVideoCount = $('#current-images-container .bi-play-circle-fill').length;
-                        
+
                         if (newImageCount >= imageLimit && newVideoCount >= videoLimit) {
                             $('#add-image-btn').addClass('img-hide');
                         }
@@ -484,7 +484,7 @@
 
                     var newImageCount = $('#current-images-container .position-relative:not(:has(.bi-play-circle-fill))').length;
                     var newVideoCount = $('#current-images-container .bi-play-circle-fill').length;
-                    
+
                     if (newImageCount >= imageLimit && newVideoCount >= videoLimit) {
                         $('#add-image-btn').addClass('img-hide');
                     }

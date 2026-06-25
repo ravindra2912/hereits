@@ -105,9 +105,9 @@
                                 </li>
                             </ul>
                         </div>
-                        <a href="{{ route('chat.index') }}" class="text-dark d-inline-flex align-items-center justify-content-center ms-3" aria-label="Chat" title="Chat" style="font-size: 1.25rem; text-decoration: none;">
+                        <!-- <a href="{{ route('chat.index') }}" class="text-dark d-inline-flex align-items-center justify-content-center ms-3" aria-label="Chat" title="Chat" style="font-size: 1.25rem; text-decoration: none;">
                             <i class="bi bi-chat-dots-fill"></i>
-                        </a>
+                        </a> -->
                     </div>
                     @else
                     <div class="d-flex flex-column flex-lg-row gap-2 mt-3 mt-lg-0 align-items-center">

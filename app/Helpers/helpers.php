@@ -19,6 +19,7 @@ use App\Models\Business;
 use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Purchase;
+use App\Services\ImageService;
 use App\Traits\GoogleDrive;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -42,79 +43,18 @@ function apiResponce($statuscode, $status, $message, $data = [])
 function fileRemoveStorage($imageObject)
 {
     if ($imageObject != null) {
-        return Storage::disk('local')->delete($imageObject);
+        return (new ImageService)->removeImage($imageObject);
     }
 }
 
 function fileUploadStorage($imageObject, $directory = "", $width = "", $hieght = "", $converto = "webp")
 {
-    if (!empty($imageObject)) {
-        if ($width != "" && $hieght != "") {
-            $imgname = time() . "_" . rand(11111, 99999) . '.webp';
-            $imageName = $directory . "/" . $imgname;
-
-            if (!Storage::disk('public')->exists($directory)) {
-                Storage::disk('public')->makeDirectory($directory);
-            }
-
-            $image = Image::read($imageObject->path());
-            $image->scale($width, $hieght); //resize
-
-            $image->toWebp()->save(public_path('/storage/' . $imageName));
-        } else {
-
-            $imgname = time() . "_" . rand(11111, 99999) . '.' . $imageObject->getClientOriginalExtension();
-            $imageName = $directory . "/" . $imgname;
-
-            if (!Storage::disk('public')->exists($directory)) {
-                Storage::disk('public')->makeDirectory($directory);
-            }
-
-            $storage = Storage::disk('local');
-
-            $uploaded = $storage->put($imageName, file_get_contents($imageObject), 'public');
-        }
-        return $imageName;
-    }
-
-    return "";
+    return (new ImageService)->storeImage($imageObject, $directory, $width, $hieght, $converto);
 }
 
 function getImage($url = "", $type = '')
 {
-    if (str_contains($url, 'https://') || str_contains($url, 'http://')) {
-        // Check if it's a YouTube URL
-        $ytId = getYoutubeId($url);
-        if ($ytId) {
-            return "https://img.youtube.com/vi/$ytId/hqdefault.jpg";
-        }
-
-        return Cache::remember('valid_image_' . md5($url), 86400, function () use ($url, $type) {
-            try {
-                $response = Http::timeout(2)->head($url);
-                if ($response->ok()) {
-                    return $url;
-                }
-            } catch (\Exception $e) {
-                Log::warning("Could not resolve image URL: " . $url . " - Error: " . $e->getMessage());
-            }
-            if ($type == 'expert') {
-                return asset('assets/images/expert.webp');
-            }
-            return asset('assets/images/default.png');
-        });
-    } else {
-        $image = "storage/" . $url;
-        if (!empty($url)) {
-            if (file_exists(public_path($image))) {
-                return asset("storage/" . $url);
-            }
-        }
-    }
-    if ($type == 'expert') {
-        return asset('assets/images/expert.webp');
-    }
-    return asset('assets/images/default.png');
+    return (new ImageService)->getImage($url, $type);
 }
 
 function getYoutubeId($url)
