@@ -57,12 +57,15 @@
 <!-- 2. Business Category Section -->
 <section class="py-5 bg-light">
     <div class="container py-lg-4">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold mb-2">Explore Categories</h2>
-            <p class="text-muted">Find what you need in just one click</p>
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap">
+            <div class="text-nowrap overflow-hidden">
+                <h2 class="fw-bold mb-1 fs-4 fs-md-2">Explore Categories</h2>
+                <p class="text-muted mb-0 small d-none d-sm-block">Find what you need in just one click</p>
+            </div>
+            <a href="{{ route('categories-list') }}" class="btn btn-outline-primary rounded-pill d-inline-flex align-items-center text-nowrap ms-3" style="font-size: 0.85rem; padding: 0.4rem 1rem;">View All <i class="fas fa-arrow-right ms-2"></i></a>
         </div>
 
-        <div class="row g-4">
+        <div class="row g-4 mobile-horizontal-scroll">
             @foreach($categories as $cat)
             <div class="col-lg-2 col-md-4 col-6">
                 <a href="{{ route('business-list', ['category' => $cat['slug']]) }}" class="category-card text-center d-block text-decoration-none group p-4 rounded-4 bg-white shadow-sm hover-lift transition-all">
@@ -336,7 +339,32 @@
 
 @endsection
 
+@push('css')
+<style>
+    @media (max-width: 768px) {
+        .mobile-horizontal-scroll {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 15px !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
 
+        .mobile-horizontal-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .mobile-horizontal-scroll>div {
+            flex: 0 0 auto;
+            width: 150px;
+            padding-left: 5px !important;
+            padding-right: 5px !important;
+        }
+    }
+</style>
+@endpush
 
 @push('js')
 @endpush

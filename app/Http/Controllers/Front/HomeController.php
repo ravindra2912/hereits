@@ -30,14 +30,6 @@ class HomeController extends Controller
     {
         $location = LocationController::getUserLocation();
 
-        $categoryStyles = [
-            'Salons' => ['icon' => 'fa-scissors', 'color' => '#f59e0b'],
-            'Clinics' => ['icon' => 'fa-stethoscope', 'color' => '#10b981'],
-            'Retail' => ['icon' => 'fa-shopping-bag', 'color' => '#3b82f6'],
-            'Dining' => ['icon' => 'fa-utensils', 'color' => '#ef4444'],
-            'Fitness' => ['icon' => 'fa-dumbbell', 'color' => '#8b5cf6'],
-        ];
-
         $cacheKey = 'categories_list_' . ($location ? md5(json_encode($location)) : 'default');
         $categories = Cache::remember($cacheKey, 500, function () use ($location) {
             return BusinessCategory::where('status', 'active')
@@ -166,9 +158,9 @@ class HomeController extends Controller
         });
 
         $plans = Plan::where('plan_type', 'subscription')
-                ->where('status', 'active')
-                ->orderBy('price', 'asc')
-                ->get();
+            ->where('status', 'active')
+            ->orderBy('price', 'asc')
+            ->get();
 
         return view('front.why_join_with_us', compact('businesses', 'businessCategory', 'blogs', 'plans'));
     }
@@ -269,6 +261,58 @@ class HomeController extends Controller
         }
 
         return view('front.business_list', compact('businesses'));
+    }
+
+    public function categoriesList(Request $request): View
+    {
+        $location = LocationController::getUserLocation();
+
+        $cacheKey = 'all_categories_list_' . ($location ? md5(json_encode($location)) : 'default');
+        $categories = Cache::remember($cacheKey, 500, function () use ($location) {
+            return BusinessCategory::where('status', 'active')
+                ->whereHas('businesses', function ($query) use ($location) {
+                    $query->where('status', 'active')
+                        ->when($location, function ($q) use ($location) {
+                            if (!empty($location['area_lat_long'])) {
+                                $coords = explode(',', $location['area_lat_long']);
+                                if (count($coords) === 4) {
+                                    return $q->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
+                                }
+                            }
+                            if (isset($location['latitude']) && isset($location['longitude'])) {
+                                return $q->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100);
+                            }
+                        });
+                })
+                ->withCount(['businesses' => function ($query) use ($location) {
+                    $query->where('status', 'active')
+                        ->when($location, function ($q) use ($location) {
+                            if (!empty($location['area_lat_long'])) {
+                                $coords = explode(',', $location['area_lat_long']);
+                                if (count($coords) === 4) {
+                                    return $q->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
+                                }
+                            }
+                            if (isset($location['latitude']) && isset($location['longitude'])) {
+                                return $q->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100);
+                            }
+                        });
+                }])
+                ->orderBy('businesses_count', 'desc')
+                ->orderBy('name', 'asc')
+                ->get()
+                ->map(function ($cat) {
+                    return [
+                        'name' => $cat->name,
+                        'slug' => $cat->slug,
+                        'image' => getImage($cat->image),
+                        'count' => $cat->businesses_count,
+                        'color' => '#64748b'
+                    ];
+                });
+        });
+
+        return view('front.categories_list', compact('categories'));
     }
 
     public function globalSearch(Request $request)

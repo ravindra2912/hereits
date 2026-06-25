@@ -56,6 +56,7 @@ Route::controller(HomeController::class)->group(function () {
     Route::get('/cancellation-and-refund-policy', 'CancellationAndRefundPolicy')->name('CancellationAndRefundPolicy');
     Route::get('/vendor-policy', 'VendorPolicy')->name('VendorPolicy');
     Route::get('/businesses', 'businessList')->name('business-list');
+    Route::get('/categories', 'categoriesList')->name('categories-list');
     Route::get('/global-search', 'globalSearch')->name('global-search');
     Route::post('/toggle-favorite', 'toggleFavorite')->name('toggle-favorite');
 });
