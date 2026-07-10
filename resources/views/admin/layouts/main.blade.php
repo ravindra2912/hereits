@@ -97,6 +97,7 @@
     });
   </script>
 
+@if(request()->getSchemeAndHttpHost() == 'https://hereits.test')
   <script src="{{ asset('chatbot.js') }}?v={{ filemtime(public_path('chatbot.js')) }}"></script>
   <script>
     const IS_USER_LOGIN = @json(Auth::guard('admin')->check());
@@ -109,9 +110,6 @@
       'role' => Auth::guard('admin')->user()->role,
     ])) : '' }}";
     
-
-    console.log(USER_info)
-    
     const config = {
       isUserLogin: IS_USER_LOGIN,
       userInfo: USER_info,
@@ -122,7 +120,7 @@
       window.initChatbot(config);
     }
   </script>
-
+@endif
 
   @stack('js')
 
