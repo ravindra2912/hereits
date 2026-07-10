@@ -17,6 +17,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/logout', 'logout');
         });
     });
+
+    Route::group(['middleware' => ['auth:ai-agent']], function () {
+        Route::post('/tickets', [\App\Http\Controllers\Api\V1\SupportTicketController::class, 'store']);
+    });
 });
 
 

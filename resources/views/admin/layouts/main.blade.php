@@ -97,6 +97,33 @@
     });
   </script>
 
+  <script src="{{ asset('chatbot.js') }}?v={{ filemtime(public_path('chatbot.js')) }}"></script>
+  <script>
+    const IS_USER_LOGIN = @json(Auth::guard('admin')->check());
+    const USER_info = "{{ Auth::guard('admin')->check() ? Crypt::encryptString(json_encode([
+      'id' => Auth::guard('admin')->user()->id,
+      'first_name' => Auth::guard('admin')->user()->first_name,
+      'last_name' => Auth::guard('admin')->user()->last_name,
+      'email' => Auth::guard('admin')->user()->email,
+      'contact' => Auth::guard('admin')->user()->contact,
+      'role' => Auth::guard('admin')->user()->role,
+    ])) : '' }}";
+    
+
+    console.log(USER_info)
+    
+    const config = {
+      isUserLogin: IS_USER_LOGIN,
+      userInfo: USER_info,
+    }
+
+    window.chatbotConfig = config;
+    if (typeof window.initChatbot === 'function') {
+      window.initChatbot(config);
+    }
+  </script>
+
+
   @stack('js')
 
 </body>

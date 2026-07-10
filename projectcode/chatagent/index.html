@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shoper Ecosystem AI Chat Agent</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #7F00FF;
+            --secondary: #E100FF;
+            --bg-dark: #09090e;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Decorative background glows */
+        .glow-1 {
+            position: absolute;
+            top: -10%;
+            left: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(127, 0, 255, 0.15) 0%, rgba(127, 0, 255, 0) 70%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .glow-2 {
+            position: absolute;
+            bottom: -10%;
+            right: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(225, 0, 255, 0.12) 0%, rgba(225, 0, 255, 0) 70%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            z-index: 2;
+            padding: 40px 20px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 30%, var(--text-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+        }
+
+        h1 span {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 32px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(225, 0, 255, 0.25);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2 svg {
+            width: 24px;
+            height: 24px;
+            fill: var(--secondary);
+        }
+
+        p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 16px;
+            border-radius: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            color: #34d399;
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid var(--card-border);
+        }
+
+        .status-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #9ca3af;
+        }
+
+        .status-badge.online {
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #34d399;
+        }
+
+        .status-badge.online .dot {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        .status-badge.offline {
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #f87171;
+        }
+
+        .status-badge.offline .dot {
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.2);
+            margin-top: 40px;
+            z-index: 2;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="glow-1"></div>
+    <div class="glow-2"></div>
+
+    <div class="container">
+        <header>
+            <h1>Shoper Ecosystem <span>AI Chat Agent</span></h1>
+            <p class="subtitle">A context-aware intelligent support chatbot widget integrated with a Python RAG backend running the Qwen 3.5 Cloud model.</p>
+        </header>
+
+        <div class="grid">
+            <!-- Backend Information Card -->
+            <div class="card">
+                <h2>
+                    <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-4h11v4zm0-5H4V9h11v4zm5 5h-4V9h4v9z"/></svg>
+                    Python RAG Backend
+                </h2>
+                <p>The backend serves RAG queries using Cosine Similarity calculations over your SQLite database. It runs a FastAPI web server on port 8000.</p>
+                <div class="code-block">
+# Run the FastAPI server
+python python/chatbot.py
+                </div>
+                <div class="status-badge offline" id="backend-status">
+                    <span class="dot"></span>
+                    <span id="backend-status-text">Checking server...</span>
+                </div>
+            </div>
+
+            <!-- Ingestion and Data Card -->
+            <div class="card">
+                <h2>
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                    Document Ingestion
+                </h2>
+                <p>Index documents in the <code>documents/</code> directory to construct your SQLite vector database. Supports PDF, TXT, and Markdown files.</p>
+                <div class="code-block">
+# Run document indexing
+python ../ingest.py
+                </div>
+                <p style="font-size: 0.85rem; margin-bottom: 0;">Currently matches embeddings generated by <strong>nomic-embed-text</strong>.</p>
+            </div>
+        </div>
+
+        <footer>
+            &copy; 2026 Shoper Ecosystem. All rights reserved.
+        </footer>
+    </div>
+
+    <!-- Inject the chatbot widget script -->
+    <script src="js/chatbot.js"></script>
+
+    <!-- Script to check status of local python backend -->
+    <script>
+        async function checkBackendStatus() {
+            const badge = document.getElementById("backend-status");
+            const text = document.getElementById("backend-status-text");
+            try {
+                const response = await fetch("http://localhost:8000/api/status");
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === "online") {
+                        badge.className = "status-badge online";
+                        text.innerText = "Backend Server: Online";
+                    } else {
+                        badge.className = "status-badge offline";
+                        text.innerText = "Backend Server: Offline";
+                    }
+                } else {
+                    badge.className = "status-badge offline";
+                    text.innerText = "Backend Server: Offline";
+                }
+            } catch (err) {
+                badge.className = "status-badge offline";
+                text.innerText = "Backend Server: Offline";
+            }
+        }
+
+        // Check initially and then every 5 seconds
+        checkBackendStatus();
+        setInterval(checkBackendStatus, 5000);
+    </script>
+</body>
+</html>

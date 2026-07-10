@@ -1,0 +1,92 @@
+Frequently Asked Questions (FAQ) for Hereits:
+
+General FAQ
+
+Q1. What is Hereits?
+A business management platform to manage appointments, list products/services, and connect with customers online.
+Q2. Who can use Hereits?
+Small and medium businesses: salons, clinics, service providers, consultants, and local stores.
+Q3. Do I need technical knowledge to use Hereits?
+No, Hereits is built to be simple and easy to use.
+Q4. Is Hereits free to use?
+Hereits offers affordable, usage-based pricing. Some features require a paid subscription.
+
+Business FAQ
+
+Q5. How do I register my business on Hereits?
+You can sign up using your email address or Google Sign-In, then add your business details to complete registration.
+Q6. Can I manage multiple businesses with one account?
+Yes, depending on your plan.
+Q7. Can I add multiple experts or staff members?
+Yes, based on your subscription plan.
+Q8. Is my business information visible to customers?
+Only the information you publish is visible to customers.
+
+Appointment FAQ
+
+Q9. How does appointment booking work?
+Customers book available slots, and the system automatically manages confirmations, queues, and notifications.
+Q10. Can I manage appointment queues?
+Yes, Hereits offers smart queue management for high-demand periods.
+Q11. What happens if a customer does not show up?
+You can mark the appointment as a no-show, and the system can advance the queue accordingly.
+Q12. Can experts manage appointments themselves?
+Yes, experts can manage their own appointments through their individual panel.
+Q13. Can customers cancel or reschedule their own appointments?
+Yes, customers can cancel or reschedule directly through their booking confirmation, subject to your business's cancellation window.
+Q14. Can I set a cancellation policy for my business?
+Yes, you can define how close to the appointment time cancellations are allowed.
+
+Services FAQ
+
+Q15. Can I list multiple services on Hereits?
+Yes, along with pricing and descriptions for each.
+Q16. Can I temporarily disable a service?
+Yes, you can do this anytime from your dashboard.
+Q17. Can I update service prices?
+Yes, you can update prices anytime.
+
+Product FAQ
+
+Q18. Can I list my products on Hereits?
+Yes, with images, prices, and descriptions.
+Q19. Is there a limit on product listings?
+This depends on your plan; some plans include free listings.
+Q20. Can customers order products directly?
+This depends on the features enabled for your business.
+Q21. Can I edit or remove products later?
+Yes, you can edit or remove products anytime.
+
+Pricing & Plans FAQ
+
+Q22. What plans does Hereits offer?
+Hereits offers flexible plans based on your business size and needs, from a free starter tier to premium plans with advanced features like multi-staff management and unlimited listings. Visit our Pricing page for full details.
+Q23. What's included in the free plan vs paid plans?
+The free plan lets you list your business and basic services. Paid plans unlock features like multiple staff/expert accounts, unlimited product listings, and appointment queue management.
+Q24. Can I upgrade or downgrade my plan anytime?
+Yes, you can change your plan anytime from your account settings. Changes take effect from your next billing cycle.
+
+Payments & Billing FAQ
+
+Q25. What payment methods does Hereits accept?
+Hereits accepts major debit/credit cards, UPI, and net banking for subscription payments.
+Q26. How does billing work?
+Subscriptions are billed automatically based on your chosen cycle (monthly or annual). You'll receive a notification before each renewal.
+Q27. What is Hereits' refund policy?
+Refunds are handled as per our Refund Policy. [Link to Refund Policy page]
+
+Notifications & Communication FAQ
+Q28. How will I be notified about new bookings?
+You'll receive instant email notifications for new appointments, cancellations, and customer messages.
+Q29. Does Hereits send appointment reminders to customers?
+Yes, customers receive email reminders before their scheduled appointment to reduce no-shows.
+
+For Customers FAQ
+Q30. Is Hereits free for customers to use?
+Yes, browsing businesses and booking appointments on Hereits is completely free for customers.
+Q31. How do I find businesses near me on Hereits?
+Simply search by category or location, and Hereits will show relevant businesses in your area.
+Q32. Do I need an account to book an appointment?
+A basic account (phone number verification) is required to confirm and manage your bookings.
+
+

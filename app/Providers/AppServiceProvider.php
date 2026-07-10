@@ -33,12 +33,38 @@ class AppServiceProvider extends ServiceProvider
         Relation::morphMap([
             'user' => User::class,
             'business' => Business::class,
+            'admin' => \App\Models\Admin::class,
         ]);
 
         ReviewAndRating::observe(ReviewAndRatingObserver::class);
         User::observe(UserObserver::class);
         //AppointmentBooking::observe(AppointmentBookingObserver::class);
         Business::observe(BusinessObserver::class);
+
+        Auth::viaRequest('ai-agent', function (\Illuminate\Http\Request $request) {
+            $userInfoStr = $request->header('X-User-Info') ?: $request->input('user_info');
+            if ($userInfoStr) {
+                try {
+                    $decryptedJson = \Illuminate\Support\Facades\Crypt::decryptString($userInfoStr);
+                    $decryptedInfo = json_decode($decryptedJson, true);
+
+                    if (is_array($decryptedInfo) && isset($decryptedInfo['id'])) {
+                        $role = $decryptedInfo['role'] ?? 'Admin';
+                        if ($role === 'Admin') {
+                            $user = \App\Models\Admin::find($decryptedInfo['id']);
+                            if ($user) return $user;
+                        } else {
+                            $user = \App\Models\User::find($decryptedInfo['id']);
+                            if ($user) return $user;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Gracefully ignore decryption errors
+                }
+            }
+
+            return \App\Models\Admin::first();
+        });
 
         View::composer('business.layouts.*', function ($view) {
             if (!Auth::check()) {

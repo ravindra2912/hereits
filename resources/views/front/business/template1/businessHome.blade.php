@@ -153,7 +153,7 @@
 
           <!-- CTA Buttons -->
           <div class="d-flex flex-wrap gap-3">
-            @auth
+            <!-- @auth
             <a
               href="{{ route('chat.start', ['participantType' => 'business', 'participantId' => $business->id]) }}"
               class="btn btn-success btn-lg rounded-pill fw-bold px-4 shadow-lg hover-lift d-inline-flex align-items-center gap-2 text-decoration-none"
@@ -171,7 +171,7 @@
               <i class="bi bi-chat-dots-fill"></i>
               Message
             </button>
-            @endauth
+            @endauth -->
 
             @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system && $isSubscriptionActive)
             <a href="#products" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
