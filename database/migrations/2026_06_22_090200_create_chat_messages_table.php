@@ -13,9 +13,9 @@ return new class extends Migration
             $table->foreignId('conversation_id')->constrained('chat_conversations')->cascadeOnDelete();
             $table->string('sender_type', 50);
             $table->unsignedBigInteger('sender_id');
-            $table->string('message_type', 20)->index();
+            $table->enum('message_type', ['text', 'image', 'quotation','inquiry', 'order', 'system'])->default('text')->index();
             $table->string('action_type', 30)->nullable()->index();
-            $table->text('body')->nullable();
+            $table->text('body')->nullable(); 
             $table->json('metadata')->nullable();
             $table->unsignedBigInteger('reply_to_message_id')->nullable()->index();
             $table->boolean('is_system')->default(false)->index();

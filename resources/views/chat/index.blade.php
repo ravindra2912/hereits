@@ -291,6 +291,21 @@
         </div>
     </div>
 </div>
+
+{{-- Large Quotation Modal --}}
+<div class="modal fade" id="quotationLargeModal" tabindex="-1" aria-labelledby="quotationLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 p-4 pb-0">
+                <h5 class="modal-title fw-bold" id="quotationLargeModalLabel">Quotation Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="quotation_modal_body">
+                <!-- Content loaded via AJAX -->
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 @push('js')
 <script src="{{ asset('assets/common/js/chat.js') }}?v={{ filemtime(public_path('assets/common/js/chat.js')) }}"></script>

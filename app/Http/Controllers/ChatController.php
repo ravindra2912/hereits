@@ -179,7 +179,7 @@ class ChatController extends Controller
         $chatService->markConversationAsRead($conversation, $actor);
 
         $payload = $chatService->messagePayload($message, $actor);
-        broadcast(new \App\Events\MessageSent($message, $payload))->toOthers();
+        // broadcast(new \App\Events\MessageSent($message, $payload))->toOthers();
 
         return response()->json([
             'success' => true,
@@ -319,5 +319,33 @@ class ChatController extends Controller
                 'conversation' => $chatService->conversationSummary($updatedConversation, $actor)
             ]
         ]);
+    }
+
+    public function showQuotation(Request $request, $id)
+    {
+        $user = auth()->user();
+        
+        $quotation = \App\Models\Quotation::with(['items', 'customer', 'creator', 'order'])->findOrFail($id);
+        
+        // Authorization check
+        $isBusinessOwner = $user->business_id && ((int) $user->business_id === (int) $quotation->business_id);
+        $isCustomer = (int) $user->id === (int) $quotation->customer_id;
+        
+        if (!$isBusinessOwner && !$isCustomer) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        if ($quotation->status === 'inprogress' && $quotation->valid_until && $quotation->valid_until < now()->toDateString()) {
+            $quotation->update(['status' => 'expired']);
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'html' => view('chat.partials.quotation_detail', compact('quotation'))->render()
+            ]);
+        }
+
+        abort(400, 'AJAX request required.');
     }
 }

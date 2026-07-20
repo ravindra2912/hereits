@@ -21,6 +21,12 @@ Route::group(['middleware' => 'web'], function () {
         Route::get('/orders', [PosOrderController::class, 'index'])->name('pos.order.index');
         Route::get('/order/{id}', [PosOrderController::class, 'show'])->name('pos.order.details');
 
+        Route::get('/quotations', [\App\Http\Controllers\POS\PosQuotationController::class, 'index'])->name('pos.quotation.index');
+        Route::post('/quotations', [\App\Http\Controllers\POS\PosQuotationController::class, 'store'])->name('pos.quotation.store');
+        Route::get('/quotation/{id}', [\App\Http\Controllers\POS\PosQuotationController::class, 'show'])->name('pos.quotation.details');
+        Route::post('/quotation/convert/{id}', [\App\Http\Controllers\POS\PosQuotationController::class, 'convertToOrder'])->name('pos.quotation.convert');
+        Route::post('/quotation/cancel/{id}', [\App\Http\Controllers\POS\PosQuotationController::class, 'cancel'])->name('pos.quotation.cancel');
+
         Route::get('/inventory', [\App\Http\Controllers\POS\PosInventoryController::class, 'index'])->name('pos.inventory.index');
         Route::post('/inventory/update-stock', [\App\Http\Controllers\POS\PosInventoryController::class, 'updateStock'])->name('pos.inventory.update');
     });

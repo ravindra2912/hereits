@@ -184,6 +184,10 @@
             </div>
             <div class="modal-footer border-0 p-4 pt-0">
                 <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-none" id="save_quotation_btn">
+                    <span id="quote_btn_text">Save as Quotation</span>
+                    <span id="quote_btn_spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                </button>
                 <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-none" id="place_order_final">
                     <span id="order_btn_text">Place Order & Print</span>
                     <span id="order_btn_spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
@@ -392,6 +396,60 @@
                 });
                 $(this).html('<i class="bi bi-plus-circle me-1"></i> Add More Info (Address)');
             }
+        });
+
+        $('#save_quotation_btn').click(function() {
+            let btn = $(this);
+            let customer_name = $('#customer_name').val();
+            let customer_contact = $('#customer_contact').val();
+            let order_notes = $('#order_notes').val();
+
+            if (!customer_name || !customer_contact) {
+                alert('Please enter customer name and contact details.');
+                return;
+            }
+
+            btn.prop('disabled', true);
+            $('#quote_btn_text').addClass('d-none');
+            $('#quote_btn_spinner').removeClass('d-none');
+
+            $.ajax({
+                url: "{{ route('pos.quotation.store') }}",
+                method: "POST",
+                data: {
+                    customer_name,
+                    customer_contact,
+                    notes: order_notes,
+                    cart: cart
+                },
+                success: function(response) {
+                    if (response.success) {
+                        if (typeof toastr !== 'undefined') toastr.success(response.message);
+                        else alert(response.message);
+
+                        cart = [];
+                        renderCart();
+                        $('#checkoutModal').modal('hide');
+                        $('#checkout_form')[0].reset();
+                        $('#product_search').focus();
+                    } else {
+                        alert(response.message || 'Something went wrong');
+                    }
+                },
+                error: function(xhr) {
+                    let msg = 'Failed to save quotation';
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        msg = Object.values(errors).flat().join('\n');
+                    }
+                    alert(msg);
+                },
+                complete: function() {
+                    btn.prop('disabled', false);
+                    $('#quote_btn_text').removeClass('d-none');
+                    $('#quote_btn_spinner').addClass('d-none');
+                }
+            });
         });
 
         $('#place_order_final').click(function() {

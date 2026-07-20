@@ -333,6 +333,32 @@ if (root) {
             ? `<span class="badge ${isMine ? 'bg-light text-primary' : 'bg-primary-subtle text-primary'} rounded-pill mt-2">${escapeHtml(message.action_type.replace('_', ' '))}</span>`
             : '';
 
+        let quotationBtn = '';
+        if (message.message_type === 'quotation' && message.metadata && message.metadata.quotation_id) {
+            if (actorType === 'business') {
+                quotationBtn = `
+                    <div class="mt-2 text-start">
+                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 chat-view-quotation-btn" data-quotation-id="${message.metadata.quotation_id}">
+                            <i class="bi bi-file-earmark-text me-1"></i> View Quotation
+                        </button>
+                    </div>
+                `;
+            } else {
+                const quoteNoMatch = message.body ? message.body.match(/#[A-Z0-9-]+/) : null;
+                const quotationNo = quoteNoMatch ? quoteNoMatch[0] : '';
+                quotationBtn = `
+                    <div class="mt-2 text-start d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3 chat-view-quotation-btn" data-quotation-id="${message.metadata.quotation_id}">
+                            <i class="bi bi-file-earmark-text me-1"></i> View
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 chat-reply-quotation-btn" data-quotation-no="${quotationNo}">
+                            <i class="bi bi-reply me-1"></i> Reply
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
         return `
             <div class="d-flex ${isMine ? 'justify-content-end' : 'justify-content-start'}">
                 <div class="rounded-4 p-3 chat-message-bubble ${bubbleClass}">
@@ -342,6 +368,7 @@ if (root) {
                     </div>
                     ${message.body ? `<div class="${textClass}">${escapeHtml(message.body)}</div>` : ''}
                     ${actionBadge}
+                    ${quotationBtn}
                     ${attachmentsMarkup}
                 </div>
             </div>
@@ -1228,6 +1255,50 @@ if (root) {
                 : `<i class="bi bi-person-circle fs-4"></i>`;
         } catch (error) {
             window.toastr?.error(error.responseJSON?.message || 'Failed to remove member.');
+        }
+    });
+
+    $(document).on('click', '.chat-view-quotation-btn', function() {
+        var quotationId = $(this).data('quotation-id');
+        $('#quotation_modal_body').html('<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>');
+        $('#quotationLargeModal').modal('show');
+        $.ajax({
+            url: "/chat/quotation/details/" + quotationId,
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    $('#quotation_modal_body').html(response.html);
+                } else {
+                    window.toastr?.error("Failed to load quotation details.");
+                }
+            },
+            error: function(xhr) {
+                window.toastr?.error("Error loading quotation details.");
+            }
+        });
+    });
+
+    $(document).on('click', '#print-modal-quote-btn', function() {
+        var printContents = document.getElementById('quotation_modal_body').innerHTML;
+        var printWindow = window.open('', '_blank');
+        printWindow.document.write('<html><head><title>Quotation</title>');
+        printWindow.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">');
+        printWindow.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">');
+        printWindow.document.write('</head><body onload="window.print(); window.close();">');
+        printWindow.document.write(printContents);
+        printWindow.document.write('</body></html>');
+        printWindow.document.close();
+    });
+
+    $(document).on('click', '.chat-reply-quotation-btn', function() {
+        var quotationNo = $(this).data('quotation-no') || '';
+        var replyText = "Regarding quotation " + quotationNo + ": ";
+        var inputField = $('#chatMessageBody');
+        if (inputField.length) {
+            inputField.val(replyText);
+            inputField.focus();
+            var tempVal = inputField.val();
+            inputField.val('').val(tempVal);
         }
     });
 }

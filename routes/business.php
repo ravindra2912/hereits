@@ -86,6 +86,14 @@ Route::name('business.')->group(function () {
                 Route::get('product-plans', 'index')->name('product.plans');
                 Route::post('product-plans/buy', 'buy')->name('product.plans.buy');
             })->middleware('checkBusinessPerm:owner_only');
+
+            // Quotation Routes
+            Route::get('quotation/search-customer', [\App\Http\Controllers\Business\QuotationController::class, 'searchCustomer'])->name('quotation.search-customer')->middleware('checkBusinessPerm:product,products');
+            Route::get('quotation/search-product', [\App\Http\Controllers\Business\QuotationController::class, 'searchProduct'])->name('quotation.search-product')->middleware('checkBusinessPerm:product,products');
+            Route::resource('quotation', \App\Http\Controllers\Business\QuotationController::class)->middleware('checkBusinessPerm:product,products');
+            Route::post('quotation/convert/{id}', [\App\Http\Controllers\Business\QuotationController::class, 'convertToOrder'])->name('quotation.convert')->middleware('checkBusinessPerm:product,products');
+            Route::post('quotation/cancel/{id}', [\App\Http\Controllers\Business\QuotationController::class, 'cancel'])->name('quotation.cancel')->middleware('checkBusinessPerm:product,products');
+            Route::post('quotation/notify/{id}', [\App\Http\Controllers\Business\QuotationController::class, 'notify'])->name('quotation.notify')->middleware('checkBusinessPerm:product,products');
         });
         Route::resource('banner', BannerController::class)->middleware('checkBusinessPerm:owner_only');
 

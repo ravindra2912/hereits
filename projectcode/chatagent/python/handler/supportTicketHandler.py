@@ -1,11 +1,13 @@
 import json
+import os
 import ssl
 import sys
 import urllib.error
 import urllib.request
 
 def submit_support_ticket(ticket_data, user_info=None):
-    url = "https://hereits.test/api/v1/tickets"
+    base_url = os.environ.get("API_BASE_URL", "https://hereits.test/api/v1/").rstrip("/")
+    url = f"{base_url}/tickets"
     
     ctx = ssl.create_default_context()
     ctx.check_hostname = False

@@ -43,6 +43,8 @@ class StoreChatMessageRequest extends FormRequest
                 ChatService::MESSAGE_IMAGE,
                 ChatService::MESSAGE_INQUIRY,
                 ChatService::MESSAGE_PLACE_ORDER,
+                ChatService::MESSAGE_QUOTATION,
+                ChatService::MESSAGE_ORDER,
             ])],
             'body' => ['nullable', 'string', 'max:5000'],
             'metadata' => ['nullable', 'array'],

@@ -94,6 +94,9 @@
     <a href="{{ route('business.product.index') }}" class="list-group-item list-group-item-action second-text {{ (request()->routeIs('business.product.index') || request()->routeIs('business.product.edit') || request()->routeIs('business.product.create')) ? 'active' : '' }}">
       <i class="bi bi-box-seam me-2"></i>Products
     </a>
+    <a href="{{ route('business.quotation.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('business.quotation.*') ? 'active' : '' }}">
+      <i class="bi bi-file-earmark-text me-2"></i>Quotations
+    </a>
     @endif
 
     @if (Auth::user()->role === 'Business')

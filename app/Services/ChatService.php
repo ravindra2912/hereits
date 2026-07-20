@@ -28,6 +28,8 @@ class ChatService
     public const MESSAGE_IMAGE = 'image';
     public const MESSAGE_INQUIRY = 'inquiry';
     public const MESSAGE_PLACE_ORDER = 'place_order';
+    public const MESSAGE_QUOTATION = 'quotation';
+    public const MESSAGE_ORDER = 'order';
     public const MESSAGE_SYSTEM = 'system';
 
     public function resolveCurrentActor(): array
@@ -126,7 +128,7 @@ class ChatService
     {
         return $conversationType === self::CONVERSATION_GROUP
             ? [self::MESSAGE_TEXT, self::MESSAGE_IMAGE]
-            : [self::MESSAGE_TEXT, self::MESSAGE_IMAGE, self::MESSAGE_INQUIRY, self::MESSAGE_PLACE_ORDER];
+            : [self::MESSAGE_TEXT, self::MESSAGE_IMAGE, self::MESSAGE_INQUIRY, self::MESSAGE_PLACE_ORDER, self::MESSAGE_QUOTATION, self::MESSAGE_ORDER];
     }
 
     public function getConversationOrFail(int $conversationId, array $actor): ChatConversation

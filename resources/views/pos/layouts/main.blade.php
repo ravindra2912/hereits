@@ -48,6 +48,10 @@
                     <i class="bi bi-receipt"></i>
                     <span>Orders</span>
                 </a>
+                <a href="{{ route('pos.quotation.index') }}" class="nav-link {{ request()->routeIs('pos.quotation.*') ? 'active' : '' }}">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Quotations</span>
+                </a>
                 @endif
                 @if(checkPosPermission('view_inventory'))
                 <a href="{{ route('pos.inventory.index') }}" class="nav-link {{ request()->routeIs('pos.inventory.index') ? 'active' : '' }}">
