@@ -78,11 +78,11 @@
 <div class="modal-footer border-0 p-4 pt-0">
     <div class="d-flex justify-content-between w-100 align-items-center">
         <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
-        @if(auth()->user()->business_id)
+        @if(!empty($canEdit))
             <a href="{{ route('business.quotation.edit', $quotation->id) }}" target="_blank" class="btn btn-primary rounded-pill px-4">
                 <i class="bi bi-pencil me-1"></i> Edit Quotation
             </a>
-        @else
+        @elseif($quotation->status === 'inprogress')
             <button type="button" class="btn btn-primary rounded-pill px-4 chat-reply-quotation-btn" data-quotation-no="{{ $quotation->quotation_no }}" data-bs-dismiss="modal">
                 <i class="bi bi-reply me-1"></i> Reply to this Quotation
             </button>

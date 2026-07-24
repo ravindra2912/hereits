@@ -321,9 +321,10 @@ class ChatController extends Controller
         ]);
     }
 
-    public function showQuotation(Request $request, $id)
+    public function showQuotation(Request $request, $id, ChatService $chatService)
     {
         $user = auth()->user();
+        $actor = $chatService->resolveCurrentActor();
         
         $quotation = \App\Models\Quotation::with(['items', 'customer', 'creator', 'order'])->findOrFail($id);
         
@@ -339,10 +340,12 @@ class ChatController extends Controller
             $quotation->update(['status' => 'expired']);
         }
 
+        $canEdit = ($quotation->status === 'inprogress') && ($actor['type'] === 'business') && ($isBusinessOwner || ((int)$user->id === (int)$quotation->created_by_id));
+
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'html' => view('chat.partials.quotation_detail', compact('quotation'))->render()
+                'html' => view('chat.partials.quotation_detail', compact('quotation', 'canEdit'))->render()
             ]);
         }
 

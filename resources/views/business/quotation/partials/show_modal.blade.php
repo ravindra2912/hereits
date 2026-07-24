@@ -183,11 +183,11 @@
         <div class="d-flex gap-2">
             <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
             <button type="button" class="btn btn-outline-primary rounded-pill px-4" id="print-modal-quote-btn" data-id="{{ $quotation->id }}"><i class="bi bi-printer me-1"></i> Print</button>
-            @if(auth()->user()->business_id && $quotation->customer_id)
+            @if(((auth()->user()->business_id && (int)auth()->user()->business_id === (int)$quotation->business_id) || ((int)auth()->user()->id === (int)$quotation->created_by_id)) && $quotation->customer_id)
                 <button type="button" class="btn btn-outline-info rounded-pill px-4 notify-quote-btn" data-id="{{ $quotation->id }}"><i class="bi bi-bell me-1"></i> Notify</button>
             @endif
             
-            @if(auth()->user()->business_id && $quotation->status === 'inprogress')
+            @if(((auth()->user()->business_id && (int)auth()->user()->business_id === (int)$quotation->business_id) || ((int)auth()->user()->id === (int)$quotation->created_by_id)) && $quotation->status === 'inprogress')
                 <button type="button" class="btn btn-outline-primary rounded-pill px-4 edit-quote-btn" data-id="{{ $quotation->id }}"><i class="bi bi-pencil me-1"></i> Edit</button>
                 <button type="button" class="btn btn-success rounded-pill px-4 convert-quote-btn" data-id="{{ $quotation->id }}"><i class="bi bi-cart-plus me-1"></i> Convert to Order</button>
                 <button type="button" class="btn btn-danger rounded-pill px-4 cancel-quote-btn" data-id="{{ $quotation->id }}"><i class="bi bi-x-circle me-1"></i> Cancel</button>
