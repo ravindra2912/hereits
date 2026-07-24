@@ -4,7 +4,9 @@ namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Laravel\Facades\Image;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -124,7 +126,9 @@ class ImageService
                 Storage::disk('public')->makeDirectory($directory);
             }
 
-            $image = Image::read($imageObject->path());
+            $driverClass = config('image.driver', GdDriver::class);
+            $manager = new ImageManager(new $driverClass());
+            $image = $manager->read($imageObject->path());
             $image->scale($width, $height); // resize
 
             if (strtolower($convertTo) === 'webp') {
@@ -222,7 +226,9 @@ class ImageService
             $imgname = time() . "_" . rand(11111, 99999) . '.' . $convertTo;
             $imageName = $directory . "/" . $imgname;
 
-            $image = Image::read($imageObject->path());
+            $driverClass = config('image.driver', GdDriver::class);
+            $manager = new ImageManager(new $driverClass());
+            $image = $manager->read($imageObject->path());
             $image->scale($width, $height); // resize
 
             if (strtolower($convertTo) === 'webp') {
