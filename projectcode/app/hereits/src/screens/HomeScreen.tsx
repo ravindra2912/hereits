@@ -33,7 +33,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const isDarkMode = false;
   const theme = isDarkMode ? darkTheme : lightTheme;
 
-  const { location } = useLocation();
+  const { location, setLocationModalVisible } = useLocation();
 
   const [banners, setBanners] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -42,19 +42,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [refreshing, setRefreshing] = useState(false);
 
   const loadData = async () => {
-    const locParams = location
-      ? {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        radius: location.radius,
-        city_id: location.city_id,
-      }
-      : undefined;
+    const res = await businessService.getHomeData();
 
-    const res = await businessService.getHomeData(locParams);
-    console.log("featured_businesses", res.data.featured_businesses);
-
-    if (res.success && res.data) {
+    if (res && res.success && res.data) {
+      console.log("featured_businesses", res.data.featured_businesses);
       if (res.data.banners?.length) setBanners(res.data.banners);
       if (res.data.categories?.length) setCategories(res.data.categories);
       if (res.data.featured_businesses) setBusinesses(res.data.featured_businesses);
@@ -96,7 +87,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <Text style={[styles.locationLabel, theme.secondaryText]}>
             📍 CURRENT LOCATION
           </Text>
-          <TouchableOpacity onPress={onOpenLocationModal} style={styles.locationSelector}>
+          <TouchableOpacity onPress={() => setLocationModalVisible(true)} style={styles.locationSelector}>
             <Text style={[styles.locationText, theme.primaryText]} numberOfLines={1}>
               {location?.location_name || 'Select Location'}
             </Text>
@@ -108,15 +99,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Search Input */}
-      <View style={[styles.searchContainer, theme.cardBg]}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <TextInput
-          placeholder="Search local businesses, experts, services..."
-          placeholderTextColor={isDarkMode ? '#64748B' : '#94A3B8'}
-          style={[styles.searchInput, theme.primaryText]}
-        />
-      </View>
 
       {/* Promotional Banner */}
       {/* <View style={styles.bannerCard}>
@@ -146,11 +128,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {displayCategories.map(item => (
           <TouchableOpacity
             key={item.id}
-            onPress={() => navigation.navigate('ExploreTab', { categoryId: item.id })}
+            onPress={() => navigation.navigate('BusinessesTab', { categoryId: item.id })}
             style={[styles.categoryCard, theme.cardBg]}
           >
             <View style={styles.categoryIconBg}>
-              <Text style={styles.categoryIcon}>{item.icon || '📍'}</Text>
+              {item.image ? (
+                <FallbackImage
+                  source={{ uri: item.image }}
+                  style={styles.categoryImage}
+                  fallbackSource={fallbackImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <Text style={styles.categoryIcon}>{item.icon || '📍'}</Text>
+              )}
             </View>
             <Text style={[styles.categoryName, theme.primaryText]} numberOfLines={1}>
               {item.name}
@@ -324,6 +315,11 @@ const styles = StyleSheet.create({
   },
   categoryIcon: {
     fontSize: 22,
+  },
+  categoryImage: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
   },
   categoryName: {
     fontSize: 12,

@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   FlatList,
   Modal,
+  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -11,7 +12,8 @@ import {
   View,
 } from 'react-native';
 import { useLocation } from '../context/LocationContext';
-import { LocationPayload, locationService } from '../services/locationService';
+import { LocationPayload } from '../services/locationService';
+import { GOOGLE_MAP_KEY } from '@env';
 
 interface LocationModalProps {
   visible: boolean;
@@ -39,13 +41,47 @@ export const LocationModal: React.FC<LocationModalProps> = ({
   const [cityResults, setCityResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  const defaultCities: LocationPayload[] = [
-    { type: 'search', location_name: 'Surat', full_address: 'Surat, Gujarat, India', latitude: 21.1702, longitude: 72.8311 },
-    { type: 'search', location_name: 'Ahmedabad', full_address: 'Ahmedabad, Gujarat, India', latitude: 23.0225, longitude: 72.5714 },
-    { type: 'search', location_name: 'Vadodara', full_address: 'Vadodara, Gujarat, India', latitude: 22.3072, longitude: 73.1812 },
-    { type: 'search', location_name: 'Mumbai', full_address: 'Mumbai, Maharashtra, India', latitude: 19.076, longitude: 72.8777 },
-    { type: 'search', location_name: 'Delhi', full_address: 'Delhi, India', latitude: 28.7041, longitude: 77.1025 },
-  ];
+  useEffect(() => {
+    console.log("LocationModal: GOOGLE_MAP_KEY =", GOOGLE_MAP_KEY);
+  }, []);
+
+  const fetchPlaces = async (query: string) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(
+          query
+        )}&key=${GOOGLE_MAP_KEY}&components=country:in&language=en`
+      );
+      const json = await response.json();
+      if (json.status === 'OK' && json.predictions) {
+        return json.predictions;
+      } else {
+        console.warn('Places autocomplete status:', json.status, json.error_message);
+        return [];
+      }
+    } catch (error) {
+      console.error('Places autocomplete fetch error:', error);
+      return [];
+    }
+  };
+
+  const fetchPlaceDetails = async (placeId: string) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&key=${GOOGLE_MAP_KEY}&fields=geometry,formatted_address,address_components`
+      );
+      const json = await response.json();
+      if (json.status === 'OK' && json.result) {
+        return json.result;
+      } else {
+        console.warn('Place details status:', json.status, json.error_message);
+        return null;
+      }
+    } catch (error) {
+      console.error('Place details fetch error:', error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -56,19 +92,67 @@ export const LocationModal: React.FC<LocationModalProps> = ({
 
     const timer = setTimeout(async () => {
       setIsSearching(true);
-      const res = await locationService.searchCities(searchQuery);
-      if (res.success && res.data) {
-        setCityResults(res.data);
-      }
+      const predictions = await fetchPlaces(searchQuery);
+      setCityResults(predictions);
       setIsSearching(false);
-    }, 300);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
   const handleSelectLocation = async (loc: LocationPayload) => {
     await setLocationData(loc);
+    setSearchQuery('');
     onClose();
+  };
+
+  const handleSelectPrediction = async (prediction: any) => {
+    setIsSearching(true);
+    const details = await fetchPlaceDetails(prediction.place_id);
+    setIsSearching(false);
+    if (!details) {
+      console.warn('Failed to get location details.');
+      return;
+    }
+
+    const lat = details.geometry.location.lat;
+    const lng = details.geometry.location.lng;
+
+    // Extract Area and City from address components
+    let area = '';
+    let city = '';
+    if (details.address_components) {
+      for (const component of details.address_components) {
+        if (component.types.includes('sublocality_level_1')) {
+          area = component.long_name;
+        }
+        if (component.types.includes('locality')) {
+          city = component.long_name;
+        }
+        if (!area && component.types.includes('sublocality')) {
+          area = component.long_name;
+        }
+      }
+    }
+
+    const locationName = area && city ? `${area}, ${city}` : (city || area || prediction.structured_formatting?.main_text || prediction.description);
+    const fullAddress = details.formatted_address || prediction.description;
+
+    let areaLatLong = undefined;
+    if (details.geometry && details.geometry.viewport) {
+      const sw = details.geometry.viewport.southwest;
+      const ne = details.geometry.viewport.northeast;
+      areaLatLong = `${sw.lat},${sw.lng},${ne.lat},${ne.lng}`;
+    }
+
+    handleSelectLocation({
+      type: 'search',
+      location_name: locationName,
+      full_address: fullAddress,
+      latitude: lat,
+      longitude: lng,
+      area_lat_long: areaLatLong,
+    });
   };
 
   const handleGPSDetect = async () => {
@@ -79,9 +163,9 @@ export const LocationModal: React.FC<LocationModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.overlay}>
-        <View style={[styles.content, theme.cardBg]}>
+    <Modal visible={visible} animationType="slide" transparent={false}>
+      <SafeAreaView style={[styles.container, theme.cardBg]}>
+        <View style={styles.content}>
           {/* Header */}
           <View style={styles.header}>
             <View>
@@ -136,95 +220,81 @@ export const LocationModal: React.FC<LocationModalProps> = ({
           {/* Search Results / Default Cities */}
           {isSearching ? (
             <ActivityIndicator size="small" color="#6366F1" style={{ marginVertical: 20 }} />
-          ) : cityResults.length > 0 ? (
-            <View style={{ maxHeight: 220 }}>
+          ) : searchQuery.trim().length > 0 ? (
+            <View style={{ flex: 1 }}>
               <Text style={[styles.sectionHeading, theme.secondaryText]}>SEARCH RESULTS</Text>
-              <FlatList
-                data={cityResults}
-                keyExtractor={item => String(item.id)}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    onPress={() =>
-                      handleSelectLocation({
-                        type: 'search',
-                        location_name: item.name,
-                        full_address: `${item.name}, ${item.state?.name || 'India'}`,
-                        latitude: 21.1702,
-                        longitude: 72.8311,
-                        city_id: item.id,
-                      })
-                    }
-                    style={[styles.cityRow, theme.borderBottom]}
-                  >
-                    <Text style={{ fontSize: 16, marginRight: 10 }}>📍</Text>
-                    <View>
-                      <Text style={[styles.cityName, theme.primaryText]}>{item.name}</Text>
-                      <Text style={[styles.stateName, theme.secondaryText]}>
-                        {item.state?.name || 'India'}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                )}
-              />
+              {cityResults.length === 0 ? (
+                <Text style={{ textAlign: 'center', marginVertical: 20, color: '#64748B' }}>No results found</Text>
+              ) : (
+                <FlatList
+                  data={cityResults}
+                  keyExtractor={item => item.place_id}
+                  keyboardShouldPersistTaps="handled"
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() => handleSelectPrediction(item)}
+                      style={[styles.cityRow, theme.borderBottom]}
+                    >
+                      <Text style={{ fontSize: 16, marginRight: 10 }}>📍</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.cityName, theme.primaryText]}>
+                          {item.structured_formatting?.main_text || item.description}
+                        </Text>
+                        <Text style={[styles.stateName, theme.secondaryText]}>
+                          {item.structured_formatting?.secondary_text || ''}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                />
+              )}
             </View>
           ) : (
-            <View>
+            <View style={{ flex: 1 }}>
               {/* Recent Locations if any */}
               {recentLocations.length > 0 && (
                 <View style={{ marginBottom: 16 }}>
                   <Text style={[styles.sectionHeading, theme.secondaryText]}>
                     RECENT LOCATIONS
                   </Text>
-                  <View style={styles.chipRow}>
+                  <View>
                     {recentLocations.map((loc, idx) => (
                       <TouchableOpacity
                         key={idx}
                         onPress={() => handleSelectLocation(loc)}
-                        style={[styles.chip, theme.chipBg]}
+                        style={[styles.cityRow, theme.borderBottom]}
                       >
-                        <Text style={[styles.chipText, theme.primaryText]}>
-                          🕒 {loc.location_name}
-                        </Text>
+                        <Text style={{ fontSize: 16, marginRight: 10 }}>🕒</Text>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.cityName, theme.primaryText]}>
+                            {loc.location_name}
+                          </Text>
+                          {loc.full_address ? (
+                            <Text style={[styles.stateName, theme.secondaryText]}>
+                              {loc.full_address}
+                            </Text>
+                          ) : null}
+                        </View>
                       </TouchableOpacity>
                     ))}
                   </View>
                 </View>
               )}
-
-              {/* Popular Cities */}
-              <Text style={[styles.sectionHeading, theme.secondaryText]}>POPULAR CITIES</Text>
-              <View style={styles.chipRow}>
-                {defaultCities.map((loc, idx) => (
-                  <TouchableOpacity
-                    key={idx}
-                    onPress={() => handleSelectLocation(loc)}
-                    style={[styles.chip, theme.chipBg]}
-                  >
-                    <Text style={[styles.chipText, theme.primaryText]}>
-                      🏢 {loc.location_name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
             </View>
           )}
         </View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
+  container: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
   },
   content: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    flex: 1,
     padding: 20,
-    maxHeight: '85%',
   },
   header: {
     flexDirection: 'row',

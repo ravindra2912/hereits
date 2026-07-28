@@ -6,17 +6,20 @@ import {
   View,
 } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useAuth } from '../context/AuthContext';
 
 export const BottomNavBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
   const isDarkMode = false;
   const theme = isDarkMode ? darkStyles : lightStyles;
 
+  const { isAuthenticated, setAuthModalVisible } = useAuth();
+
   const tabs: { key: string; label: string; icon: string }[] = [
     { key: 'HomeTab', label: 'Home', icon: '🏠' },
-    { key: 'ExploreTab', label: 'Explore', icon: '🔍' },
-    { key: 'BookingsTab', label: 'Bookings', icon: '📅' },
+    { key: 'BusinessesTab', label: 'Businesses', icon: '🏢' },
+    { key: 'SearchTab', label: 'Search', icon: '🔍' },
     { key: 'MessagesTab', label: 'Messages', icon: '💬' },
-    { key: 'AccountTab', label: 'Account', icon: '👤' },
+    { key: 'AccountTab', label: isAuthenticated ? 'Account' : 'Login', icon: '👤' },
   ];
 
   return (
@@ -27,6 +30,11 @@ export const BottomNavBar: React.FC<BottomTabBarProps> = ({ state, navigation })
           <TouchableOpacity
             key={t.key}
             onPress={() => {
+              if ((t.key === 'AccountTab' || t.key === 'MessagesTab') && !isAuthenticated) {
+                setAuthModalVisible(true);
+                return;
+              }
+
               const event = navigation.emit({
                 type: 'tabPress',
                 target: state.routes[index].key,

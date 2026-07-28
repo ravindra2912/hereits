@@ -14,17 +14,20 @@ class HomeController extends Controller
     public function index(Request $request)
     {
         try {
+            $lat = $request->header('X-Latitude') ?? $request->get('latitude');
+            $lng = $request->header('X-Longitude') ?? $request->get('longitude');
+            $areaLatLong = $request->header('X-Area-Lat-Long') ?? $request->get('area_lat_long');
+            $radius = $request->header('X-Radius') ?? $request->get('radius');
+
             $location = null;
-            if ($request->filled('area_lat_long') || ($request->filled('latitude') && $request->filled('longitude'))) {
+            if ($areaLatLong || ($lat && $lng)) {
                 $location = [
-                    'area_lat_long' => $request->get('area_lat_long'),
-                    'latitude' => $request->get('latitude'),
-                    'longitude' => $request->get('longitude'),
-                    'radius' => $request->get('radius'),
+                    'area_lat_long' => $areaLatLong,
+                    'latitude' => $lat,
+                    'longitude' => $lng,
+                    'radius' => !empty($radius) ? $radius : 100,
                 ];
             }
-
-            $banners = Banner::where('status', 'active')->get(['id', 'business_id', 'image_url', 'status']);
             $categories = BusinessCategory::where('status', 'active')
             ->whereHas('businesses', function ($query) use ($location) {
                     $query->where('status', 'active')
@@ -54,20 +57,23 @@ class HomeController extends Controller
                             }
                         });
                 }])
-            ->take(12)->get(['id', 'name', 'slug', 'image']);
+            ->take(12)->get(['id', 'name', 'slug', 'image'])->map(function($cat) {
+                $cat->image = getImage($cat->image, 'category');
+                return $cat;
+            });
             
             $query = Business::select('id', 'owner_id', 'name', 'slug', 'business_type', 'business_category_id', 'address', 'latitude', 'longitude', 'city_id', 'rating', 'business_image', 'business_logo')
                 ->with(['businessCategory:id,name', 'city:id,name'])
                 ->where('status', 'active');
 
-            if ($request->filled('area_lat_long')) {
-                $coords = explode(',', $request->area_lat_long);
+            if ($areaLatLong) {
+                $coords = explode(',', $areaLatLong);
                 if (count($coords) === 4) {
                     $query->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
                 }
-            } elseif ($request->filled('latitude') && $request->filled('longitude')) {
-                $radius = $request->get('radius', 100);
-                $query->nearby($request->latitude, $request->longitude, $radius);
+            } elseif ($lat && $lng) {
+                $radius = !empty($radius) ? $radius : 100;
+                $query->nearby($lat, $lng, $radius);
             }
 
             $featuredBusinesses = $query->take(10)->get()->map(function($business) {
@@ -81,7 +87,6 @@ class HomeController extends Controller
                 'success' => true,
                 'message' => 'Home data fetched successfully',
                 'data' => [
-                    'banners' => $banners,
                     'categories' => $categories,
                     'featured_businesses' => $featuredBusinesses,
                 ]
@@ -118,14 +123,19 @@ class HomeController extends Controller
                 ->with(['businessCategory:id,name', 'city:id,name', 'reviews'])
                 ->where('status', 'active');
 
-            if ($request->filled('area_lat_long')) {
-                $coords = explode(',', $request->area_lat_long);
+            $lat = $request->header('X-Latitude') ?? $request->get('latitude');
+            $lng = $request->header('X-Longitude') ?? $request->get('longitude');
+            $areaLatLong = $request->header('X-Area-Lat-Long') ?? $request->get('area_lat_long');
+            $radius = $request->header('X-Radius') ?? $request->get('radius');
+
+            if ($areaLatLong) {
+                $coords = explode(',', $areaLatLong);
                 if (count($coords) === 4) {
                     $query->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
                 }
-            } elseif ($request->filled('latitude') && $request->filled('longitude')) {
-                $radius = $request->get('radius', 100);
-                $query->nearby($request->latitude, $request->longitude, $radius);
+            } elseif ($lat && $lng) {
+                $radius = !empty($radius) ? $radius : 100;
+                $query->nearby($lat, $lng, $radius);
             }
 
             if ($request->has('category_id') && $request->category_id != '') {
@@ -163,11 +173,19 @@ class HomeController extends Controller
         try {
             $request->validate([
                 'business_id' => 'required|exists:businesses,id',
+                'type' => 'nullable|in:business,product,service',
+                'item_id' => 'nullable|integer',
             ]);
 
             $user = $request->user();
+            $type = $request->input('type', 'business');
+            $itemId = $request->input('item_id', $request->business_id);
+            $businessId = $request->business_id;
+
             $favorite = Favorite::where('user_id', $user->id)
-                ->where('business_id', $request->business_id)
+                ->where('business_id', $businessId)
+                ->where('favorite_type', $type)
+                ->where('favorite_item_id', $itemId)
                 ->first();
 
             if ($favorite) {
@@ -177,7 +195,9 @@ class HomeController extends Controller
             } else {
                 Favorite::create([
                     'user_id' => $user->id,
-                    'business_id' => $request->business_id,
+                    'business_id' => $businessId,
+                    'favorite_type' => $type,
+                    'favorite_item_id' => $itemId,
                 ]);
                 $isFavorite = true;
                 $msg = 'Added to favorites';

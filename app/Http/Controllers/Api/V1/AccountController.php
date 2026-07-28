@@ -83,10 +83,30 @@ class AccountController extends Controller
     {
         try {
             $user = $request->user();
-            $favorites = Favorite::with('business:id,name,address')
+            $favorites = Favorite::with([
+                    'business:id,name,address,business_image,business_logo',
+                    'product:id,name,slug,price,sell_price,price_type',
+                    'product.firstImage:id,product_id,image_url',
+                    'service:id,name,slug,price,price_type,image_url'
+                ])
                 ->where('user_id', $user->id)
                 ->latest()
                 ->get();
+
+            foreach ($favorites as $fav) {
+                if ($fav->favorite_type === 'business' && $fav->business) {
+                    $fav->business->business_image = getImage($fav->business->business_image, 'business');
+                    $fav->business->business_logo = getImage($fav->business->business_logo, 'business');
+                }
+                if ($fav->favorite_type === 'product' && $fav->product) {
+                    if ($fav->product->firstImage) {
+                        $fav->product->firstImage->image_url = getImage($fav->product->firstImage->image_url);
+                    }
+                }
+                if ($fav->favorite_type === 'service' && $fav->service) {
+                    $fav->service->image_url = getImage($fav->service->image_url);
+                }
+            }
 
             return response()->json([
                 'status_code' => 200,

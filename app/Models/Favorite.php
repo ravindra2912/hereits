@@ -18,4 +18,14 @@ class Favorite extends Model
     {
         return $this->belongsTo(Business::class, 'business_id', 'id');
     }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'favorite_item_id', 'id');
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class, 'favorite_item_id', 'id');
+    }
 }

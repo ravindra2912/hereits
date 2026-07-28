@@ -27,7 +27,6 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::controller(\App\Http\Controllers\Api\V1\LocationApiController::class)->prefix('location')->group(function () {
-        Route::post('/set', 'setLocation');
         Route::get('/search-cities', 'searchCities');
     });
 
@@ -36,6 +35,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/{id}/services', 'services');
         Route::get('/{id}/products', 'products');
         Route::get('/{id}/reviews', 'reviews');
+        Route::get('/product/{id}', 'productDetails');
+        Route::get('/service/{id}', 'serviceDetails');
     });
 
     Route::controller(AppointmentController::class)->group(function () {
@@ -67,6 +68,7 @@ Route::prefix('v1')->group(function () {
 
         Route::controller(ChatApiController::class)->prefix('chat')->group(function () {
             Route::get('/conversations', 'conversations');
+            Route::post('/conversations/start', 'startConversation');
             Route::get('/conversations/{conversationId}/messages', 'messages');
             Route::post('/conversations/{conversationId}/messages', 'sendMessage');
         });

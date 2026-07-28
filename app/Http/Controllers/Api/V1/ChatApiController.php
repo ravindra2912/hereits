@@ -84,4 +84,57 @@ class ChatApiController extends Controller
             return response()->json(['status_code' => 500, 'success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+
+    public function startConversation(Request $request)
+    {
+        try {
+            $request->validate([
+                'business_id' => 'required|exists:businesses,id',
+            ]);
+
+            $user = $request->user();
+            $businessId = $request->business_id;
+
+            // Check if direct conversation already exists between this user and business
+            $conversation = ChatConversation::where('conversation_type', 'direct')
+                ->whereHas('participants', function ($q) use ($user) {
+                    $q->where('participant_type', 'App\\Models\\User')
+                      ->where('participant_id', $user->id);
+                })
+                ->whereHas('participants', function ($q) use ($businessId) {
+                    $q->where('participant_type', 'App\\Models\\Business')
+                      ->where('participant_id', $businessId);
+                })
+                ->first();
+
+            if (!$conversation) {
+                // Create a new conversation
+                $business = \App\Models\Business::find($businessId);
+                $conversation = ChatConversation::create([
+                    'conversation_type' => 'direct',
+                    'title' => $business->name,
+                ]);
+
+                // Create participants
+                $conversation->participants()->create([
+                    'participant_type' => 'App\\Models\\User',
+                    'participant_id' => $user->id,
+                ]);
+
+                $conversation->participants()->create([
+                    'participant_type' => 'App\\Models\\Business',
+                    'participant_id' => $businessId,
+                ]);
+            }
+
+            return response()->json([
+                'status_code' => 200,
+                'success' => true,
+                'message' => 'Conversation started',
+                'data' => $conversation
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['status_code' => 500, 'success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }

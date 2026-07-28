@@ -1,8 +1,10 @@
+import { BASE_API_URL as ENV_BASE_API_URL } from '@env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 // Centralized API Service for Hereits Mobile App
 // Note: Android devices/emulators cannot resolve custom domain names like 'hereits.test' directly.
 // Use '10.0.2.2' for Android Emulator, or your local Wi-Fi IP '192.168.0.101' for Physical Devices.
-export const BASE_API_URL = 'http://192.168.0.103:8000/api/v1'; // Change to 'http://192.168.0.101/api/v1' if testing on physical phone
-// export const BASE_API_URL = 'http://10.0.2.2/api/v1'; // Change to 'http://192.168.0.101/api/v1' if testing on physical phone
+export const BASE_API_URL = ENV_BASE_API_URL || 'https://hereits.com/api/v1';
 
 let authToken: string | null = null;
 
@@ -25,25 +27,54 @@ export async function apiRequest<T = any>(
   const reqHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
-    Host: 'hereits.test', // Routes the request to Laragon's hereits.test virtual host on your PC
     ...headers,
   };
+
+  // Only inject Host: hereits.test for local virtual host routing on PC
+  if (
+    BASE_API_URL.includes('192.168.') ||
+    BASE_API_URL.includes('10.0.2.2') ||
+    BASE_API_URL.includes('localhost') ||
+    BASE_API_URL.includes('127.0.0.1')
+  ) {
+    reqHeaders['Host'] = 'hereits.test';
+  }
 
   if (authToken) {
     reqHeaders['Authorization'] = `Bearer ${authToken}`;
   }
 
   try {
-    const response = await fetch(`${BASE_API_URL}${endpoint}`, {
+    const locJson = await AsyncStorage.getItem('user_location');
+    if (locJson) {
+      const loc = JSON.parse(locJson);
+      if (loc) {
+        if (loc.latitude) reqHeaders['X-Latitude'] = String(loc.latitude);
+        if (loc.longitude) reqHeaders['X-Longitude'] = String(loc.longitude);
+        if (loc.radius) reqHeaders['X-Radius'] = String(loc.radius);
+        if (loc.area_lat_long) reqHeaders['X-Area-Lat-Long'] = loc.area_lat_long;
+        if (loc.city_id) reqHeaders['X-City-Id'] = String(loc.city_id);
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load location for headers:', e);
+  }
+
+  const fullUrl = `${BASE_API_URL}${endpoint}`;
+  console.log(`[API Request] ${method} to: ${fullUrl}`);
+
+  try {
+    const response = await fetch(fullUrl, {
       method,
       headers: reqHeaders,
       body: body ? JSON.stringify(body) : undefined,
     });
 
     const result = await response.json();
+    console.log(`[API Success] ${fullUrl}`, result);
     return result;
   } catch (error: any) {
-    console.error('API Error:', error);
+    console.error(`[API Error] Failed to fetch ${method} ${fullUrl}:`, error);
     return {
       success: false,
       message: error.message || 'Network request failed',

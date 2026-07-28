@@ -493,7 +493,7 @@ class AuthController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            dd($e->getMessage());
+            // dd($e->getMessage());
             // Handle exceptions
             return redirect('/')->with('error', 'Failed to login with Google.');
         }

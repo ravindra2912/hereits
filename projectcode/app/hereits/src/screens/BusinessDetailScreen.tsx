@@ -5,13 +5,19 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  useColorScheme,
   View,
   Image,
+  Linking,
+  Dimensions,
+  Platform,
+  Share,
 } from 'react-native';
 import { businessService } from '../services/businessService';
+import { chatService } from '../services/chatService';
+import { useAuth } from '../context/AuthContext';
 import FallbackImage from '../components/FallbackImage';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import Svg, { Path } from 'react-native-svg';
 
 interface BusinessDetailScreenProps {
   businessId?: number;
@@ -19,52 +25,171 @@ interface BusinessDetailScreenProps {
   onBookAppointment?: (businessId: number, businessName: string) => void;
 }
 
+const { width } = Dimensions.get('window');
 const fallbackImage = require('../assets/business_icon.png');
 
 export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const businessId = route.params?.businessId;
+  const { isAuthenticated, setAuthModalVisible } = useAuth();
 
   const isDarkMode = false;
   const theme = isDarkMode ? darkTheme : lightTheme;
 
-  const [business, setBusiness] = useState<any>(null);
-  const [services, setServices] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  const [detailData, setDetailData] = useState<any>(null);
   const [reviews, setReviews] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'services' | 'products' | 'reviews'>('services');
+  const [activeTab, setActiveTab] = useState<'services' | 'products' | 'specialists' | 'gallery' | 'reviews'>('services');
   const [loading, setLoading] = useState(true);
+  const [isFavorited, setIsFavorited] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (detailData?.business) {
+      setIsFavorited(!!detailData.business.is_favorited);
+    }
+  }, [detailData]);
 
   useEffect(() => {
     const loadDetail = async () => {
       setLoading(true);
-      const bRes = await businessService.getBusinessDetail(businessId);
-      if (bRes.success && bRes.data) {
-        setBusiness(bRes.data);
+      const res = await businessService.getBusinessDetail(businessId);
+      if (res && res.success && res.data) {
+        setDetailData(res.data);
       }
-      const sRes = await businessService.getServices(businessId);
-      if (sRes.success && sRes.data) setServices(sRes.data);
-
-      const pRes = await businessService.getProducts(businessId);
-      if (pRes.success && pRes.data) setProducts(pRes.data);
 
       const rRes = await businessService.getReviews(businessId);
-      if (rRes.success && rRes.data) setReviews(rRes.data);
-
+      if (rRes && rRes.success && rRes.data) {
+        setReviews(rRes.data);
+      }
       setLoading(false);
     };
 
     loadDetail();
   }, [businessId]);
 
-  if (loading) {
+  if (loading || !detailData) {
     return (
       <View style={[styles.loadingCenter, theme.background]}>
         <ActivityIndicator size="large" color="#6366F1" />
       </View>
     );
   }
+
+  const {
+    business,
+    setting,
+    isSubscriptionActive,
+    experts = [],
+    details = {},
+    galleries = [],
+  } = detailData;
+
+  const productCategories = details.productCategories || [];
+  const categoriesWithProducts = details.categoriesWithProducts || [];
+  const fallbackProducts = details.products || [];
+
+  const serviceCategories = details.serviceCategories || [];
+  const categoriesWithServices = details.categoriesWithServices || [];
+  const fallbackServices = details.services || [];
+
+  const totalServicesCount = categoriesWithServices.reduce(
+    (acc: number, cat: any) => acc + (cat.services?.length || 0),
+    0
+  ) || fallbackServices.length;
+
+  const totalProductsCount = categoriesWithProducts.reduce(
+    (acc: number, cat: any) => acc + (cat.products?.length || 0),
+    0
+  ) || fallbackProducts.length;
+
+  const openSocialLink = (url: string) => {
+    if (!url) return;
+    try {
+      Linking.openURL(url);
+    } catch (e) {
+      console.warn("Could not open social URL:", e);
+    }
+  };
+
+  const getBusinessLogoSource = () => {
+    if (business.business_logo && !business.business_logo.includes('default.png')) {
+      return { uri: business.business_logo };
+    }
+    return fallbackImage;
+  };
+
+  const handleCall = () => {
+    if (business.contact) {
+      Linking.openURL(`tel:${business.contact}`);
+    } else {
+      alert("This business doesn't have a contact number.");
+    }
+  };
+
+  const handleMessage = async () => {
+    if (!isAuthenticated) {
+      setAuthModalVisible(true);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await chatService.startConversation(business.id);
+      setLoading(false);
+      if (res && res.success && res.data) {
+        navigation.navigate('ChatDetail', {
+          conversationId: res.data.id,
+          title: business.name,
+        });
+      } else {
+        alert(res.message || 'Failed to start chat conversation.');
+      }
+    } catch (e) {
+      setLoading(false);
+      console.error('Chat error:', e);
+      alert('Failed to connect to chat service.');
+    }
+  };
+
+  const handleDirections = () => {
+    if (business.latitude && business.longitude) {
+      const label = encodeURIComponent(business.name);
+      const url = Platform.select({
+        ios: `maps:0,0?q=${label}@${business.latitude},${business.longitude}`,
+        android: `geo:0,0?q=${business.latitude},${business.longitude}(${label})`,
+        default: `https://www.google.com/maps/search/?api=1&query=${business.latitude},${business.longitude}`,
+      });
+      Linking.openURL(url);
+    } else {
+      alert("This business doesn't have coordinates registered.");
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Check out ${business.name} on Hereits! Address: ${business.address || 'Surat'}. Contact: ${business.contact || ''}`,
+      });
+    } catch (error) {
+      console.warn('Share error:', error);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!isAuthenticated) {
+      setAuthModalVisible(true);
+      return;
+    }
+
+    const prev = isFavorited;
+    setIsFavorited(!prev);
+
+    const res = await businessService.toggleFavorite(business.id, 'business', business.id);
+    if (!res || !res.success) {
+      setIsFavorited(prev);
+      alert('Failed to update favorite status.');
+    }
+  };
 
   return (
     <View style={[styles.container, theme.background]}>
@@ -76,34 +201,124 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
         <Text style={[styles.navTitle, theme.primaryText]} numberOfLines={1}>
           {business?.name || 'Business Detail'}
         </Text>
+        <TouchableOpacity onPress={handleToggleFavorite} style={[styles.favBtnHeader, theme.cardBg]}>
+          <Svg width="20" height="20" viewBox="0 0 24 24" fill={isFavorited ? '#EF4444' : 'none'} stroke={isFavorited ? '#EF4444' : (isDarkMode ? '#F8FAFC' : '#64748B')} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <Path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </Svg>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Hero Banner Header */}
-        <View style={styles.heroCard}>
-          <View style={styles.heroAvatar}>
-            <FallbackImage
-              source={business?.business_logo || business?.business_image ? { uri: business.business_logo || business.business_image } : null}
-              fallbackSource={fallbackImage}
-              style={styles.heroAvatarImage}
-              resizeMode="cover"
-            />
+
+
+        {/* Business Premium Card */}
+        <View style={[styles.profileCard, theme.cardBg]}>
+          <View style={styles.profileHeader}>
+            <View style={styles.logoContainer}>
+              <FallbackImage
+                source={getBusinessLogoSource()}
+                fallbackSource={fallbackImage}
+                style={styles.businessLogo}
+                resizeMode="cover"
+              />
+            </View>
+            <View style={styles.titleInfo}>
+              <View style={styles.badgeRow}>
+                {setting?.is_verified && (
+                  <View style={styles.verifiedBadge}>
+                    <Text style={styles.verifiedBadgeText}>✓ Verified</Text>
+                  </View>
+                )}
+                {isSubscriptionActive && (
+                  <View style={styles.premiumBadge}>
+                    <Text style={styles.premiumBadgeText}>★ Premium</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={[styles.bizName, theme.primaryText]}>{business?.name}</Text>
+              <View style={styles.ratingRow}>
+                <Text style={styles.ratingStars}>⭐ {business?.rating || '4.5'}</Text>
+                <Text style={[styles.categoryLabel, theme.secondaryText]}>
+                  • {business?.business_category?.name || 'Local Store'}
+                </Text>
+              </View>
+            </View>
           </View>
-          <Text style={styles.heroName}>{business?.name}</Text>
-          <Text style={styles.heroCategory}>
-            {business?.business_category?.name || 'Local Store'}
+
+          {/* Social Links Row */}
+          {(business?.facebook || business?.twitter || business?.instagram || business?.linkedin || business?.youtube) && (
+            <View style={styles.socialRow}>
+              {business.facebook && (
+                <TouchableOpacity style={styles.socialCircle} onPress={() => openSocialLink(business.facebook)}>
+                  <Text style={styles.socialText}>🔵</Text>
+                </TouchableOpacity>
+              )}
+              {business.instagram && (
+                <TouchableOpacity style={styles.socialCircle} onPress={() => openSocialLink(business.instagram)}>
+                  <Text style={styles.socialText}>📸</Text>
+                </TouchableOpacity>
+              )}
+              {business.twitter && (
+                <TouchableOpacity style={styles.socialCircle} onPress={() => openSocialLink(business.twitter)}>
+                  <Text style={styles.socialText}>🐦</Text>
+                </TouchableOpacity>
+              )}
+              {business.linkedin && (
+                <TouchableOpacity style={styles.socialCircle} onPress={() => openSocialLink(business.linkedin)}>
+                  <Text style={styles.socialText}>💼</Text>
+                </TouchableOpacity>
+              )}
+              {business.youtube && (
+                <TouchableOpacity style={styles.socialCircle} onPress={() => openSocialLink(business.youtube)}>
+                  <Text style={styles.socialText}>📺</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          <Text style={[styles.bizAddress, theme.secondaryText]}>
+            📍 {business?.address || 'Vesu Surat'}
           </Text>
-          <Text style={styles.heroAddress}>📍 {business?.address || 'Location'}</Text>
+
+          <View style={styles.actionButtonsRow}>
+            <TouchableOpacity style={[styles.actionBtn, theme.buttonCircleBg]} onPress={handleCall}>
+              <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isDarkMode ? '#F8FAFC' : '#6366F1'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <Path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+              </Svg>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.actionBtn, theme.buttonCircleBg]} onPress={handleMessage}>
+              <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isDarkMode ? '#F8FAFC' : '#6366F1'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <Path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </Svg>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.actionBtn, theme.buttonCircleBg]} onPress={handleDirections}>
+              <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isDarkMode ? '#F8FAFC' : '#6366F1'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <Path d="M3 11l19-9-9 19-2-8-8-2z" />
+              </Svg>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.actionBtn, theme.buttonCircleBg]} onPress={handleShare}>
+              <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isDarkMode ? '#F8FAFC' : '#6366F1'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <Path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <Path d="M16 6l-4-4-4 4" />
+                <Path d="M12 2v13" />
+              </Svg>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Action Tabs Header */}
+
+
+        {/* Navigation Tabs */}
         <View style={styles.tabsHeader}>
           <TouchableOpacity
             onPress={() => setActiveTab('services')}
             style={[styles.tabItem, activeTab === 'services' && styles.activeTabItem]}
           >
             <Text style={[styles.tabText, activeTab === 'services' && styles.activeTabText]}>
-              Services ({services.length})
+              Services ({totalServicesCount})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -111,7 +326,23 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
             style={[styles.tabItem, activeTab === 'products' && styles.activeTabItem]}
           >
             <Text style={[styles.tabText, activeTab === 'products' && styles.activeTabText]}>
-              Products ({products.length})
+              Products ({totalProductsCount})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setActiveTab('specialists')}
+            style={[styles.tabItem, activeTab === 'specialists' && styles.activeTabItem]}
+          >
+            <Text style={[styles.tabText, activeTab === 'specialists' && styles.activeTabText]}>
+              Specialists ({experts.length})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setActiveTab('gallery')}
+            style={[styles.tabItem, activeTab === 'gallery' && styles.activeTabItem]}
+          >
+            <Text style={[styles.tabText, activeTab === 'gallery' && styles.activeTabText]}>
+              Gallery ({galleries.length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -124,43 +355,225 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Tab Content Rendering */}
+        {/* Services Tab Content */}
         {activeTab === 'services' && (
           <View style={styles.tabContentSection}>
-            {services.length === 0 ? (
-              <Text style={[styles.emptyText, theme.secondaryText]}>No services listed.</Text>
-            ) : (
-              services.map(s => (
-                <View key={s.id} style={[styles.itemCard, theme.cardBg]}>
+            {categoriesWithServices.length > 0 ? (
+              categoriesWithServices.map((cat: any) => (
+                <View key={cat.id} style={styles.categorySection}>
+                  <Text style={[styles.categoryHeader, theme.primaryText]}>{cat.name}</Text>
+                  {cat.services?.map((s: any) => (
+                    <TouchableOpacity
+                      key={s.id}
+                      style={[styles.itemCard, theme.cardBg]}
+                      onPress={() => navigation.navigate('ServiceDetail', { serviceId: s.id })}
+                    >
+                      <View style={styles.serviceImageContainer}>
+                        <FallbackImage
+                          source={s.image_url ? { uri: s.image_url } : null}
+                          fallbackSource={fallbackImage}
+                          style={styles.serviceImage}
+                          resizeMode="cover"
+                        />
+                      </View>
+                      <View style={styles.itemMain}>
+                        <Text style={[styles.itemName, theme.primaryText]}>{s.name}</Text>
+                        <Text style={[styles.itemDesc, theme.secondaryText]} numberOfLines={2}>{s.description}</Text>
+                      </View>
+                      <View style={styles.pricingCol}>
+                        {s.price_type === "PriceInRange" && (
+                          <Text style={styles.itemPrice}>₹{s.min_price} - ₹{s.max_price}</Text>
+                        )}
+                        {s.price_type === "FixPrice" && (
+                          <Text style={styles.itemPrice}>₹{s.price || '0'}</Text>
+                        )}
+                        {s.price_type === "WithoutPrice" && (
+                          <Text style={[styles.priceType, theme.secondaryText]}>Contact for Price</Text>
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ))
+            ) : fallbackServices.length > 0 ? (
+              fallbackServices.map((s: any) => (
+                <TouchableOpacity
+                  key={s.id}
+                  style={[styles.itemCard, theme.cardBg]}
+                  onPress={() => navigation.navigate('ServiceDetail', { serviceId: s.id })}
+                >
+                  <View style={styles.serviceImageContainer}>
+                    <FallbackImage
+                      source={s.image_url ? { uri: s.image_url } : null}
+                      fallbackSource={fallbackImage}
+                      style={styles.serviceImage}
+                      resizeMode="cover"
+                    />
+                  </View>
                   <View style={styles.itemMain}>
                     <Text style={[styles.itemName, theme.primaryText]}>{s.name}</Text>
-                    <Text style={[styles.itemDesc, theme.secondaryText]}>{s.description}</Text>
+                    <Text style={[styles.itemDesc, theme.secondaryText]} numberOfLines={2}>{s.description}</Text>
                   </View>
-                  <Text style={styles.itemPrice}>₹{s.price || s.charge_amount || '0'}</Text>
-                </View>
+                  <View style={styles.pricingCol}>
+                    {s.price_type === "PriceInRange" && (
+                      <Text style={styles.itemPrice}>₹{s.min_price} - ₹{s.max_price}</Text>
+                    )}
+                    {s.price_type === "FixPrice" && (
+                      <Text style={styles.itemPrice}>₹{s.price || '0'}</Text>
+                    )}
+                    {s.price_type === "WithoutPrice" && (
+                      <Text style={[styles.priceType, theme.secondaryText]}>Contact for Price</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
               ))
+            ) : (
+              <Text style={[styles.emptyText, theme.secondaryText]}>No services listed.</Text>
             )}
           </View>
         )}
 
+        {/* Products Tab Content */}
         {activeTab === 'products' && (
           <View style={styles.tabContentSection}>
-            {products.length === 0 ? (
-              <Text style={[styles.emptyText, theme.secondaryText]}>No products listed.</Text>
-            ) : (
-              products.map(p => (
-                <View key={p.id} style={[styles.itemCard, theme.cardBg]}>
-                  <View style={styles.itemMain}>
-                    <Text style={[styles.itemName, theme.primaryText]}>{p.name}</Text>
-                    <Text style={[styles.itemDesc, theme.secondaryText]}>{p.description}</Text>
+            {categoriesWithProducts.length > 0 ? (
+              categoriesWithProducts.map((cat: any) => (
+                <View key={cat.id} style={styles.categorySection}>
+                  <Text style={[styles.categoryHeader, theme.primaryText]}>{cat.name}</Text>
+                  <View style={styles.productsGrid}>
+                    {cat.products?.map((p: any) => (
+                      <TouchableOpacity
+                        key={p.id}
+                        style={[styles.productGridCard, theme.cardBg]}
+                        onPress={() => navigation.navigate('ProductDetail', { productId: p.id })}
+                      >
+                        <FallbackImage
+                          source={p.first_image?.image_url ? { uri: p.first_image.image_url } : null}
+                          fallbackSource={fallbackImage}
+                          style={styles.productImage}
+                          resizeMode="cover"
+                        />
+                        <View style={styles.productInfo}>
+                          <Text style={[styles.itemName, theme.primaryText]} numberOfLines={1}>{p.name}</Text>
+                          {p.price_type === "PriceInRange" && (
+                            <Text style={styles.itemPrice}>₹{p.min_price} - ₹{p.max_price}</Text>
+                          )}
+                          {p.price_type === "FixPrice" && (
+                            <View style={styles.priceRow}>
+                              <Text style={styles.itemPrice}>₹{p.sell_price}</Text>
+                              {p.price && p.price !== p.sell_price && (
+                                <Text style={[styles.originalPrice, theme.secondaryText]}>₹{p.price}</Text>
+                              )}
+                            </View>
+                          )}
+                          {p.price_type === "WithoutPrice" && (
+                            <Text style={[styles.priceContact, theme.secondaryText]}>Contact for Price</Text>
+                          )}
+                        </View>
+                      </TouchableOpacity>
+                    ))}
                   </View>
-                  <Text style={styles.itemPrice}>₹{p.price || '0'}</Text>
                 </View>
               ))
+            ) : fallbackProducts.length > 0 ? (
+              <View style={styles.productsGrid}>
+                {fallbackProducts.map((p: any) => (
+                  <TouchableOpacity
+                    key={p.id}
+                    style={[styles.productGridCard, theme.cardBg]}
+                    onPress={() => navigation.navigate('ProductDetail', { productId: p.id })}
+                  >
+                    <FallbackImage
+                      source={null}
+                      fallbackSource={fallbackImage}
+                      style={styles.productImage}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.productInfo}>
+                      <Text style={[styles.itemName, theme.primaryText]} numberOfLines={1}>{p.name}</Text>
+                      {p.price_type === "PriceInRange" && (
+                        <Text style={styles.itemPrice}>₹{p.min_price} - ₹{p.max_price}</Text>
+                      )}
+                      {p.price_type === "FixPrice" && (
+                        <View style={styles.priceRow}>
+                          <Text style={styles.itemPrice}>₹{p.sell_price || p.price}</Text>
+                          {p.price && p.price !== p.sell_price && p.sell_price && (
+                            <Text style={[styles.originalPrice, theme.secondaryText]}>₹{p.price}</Text>
+                          )}
+                        </View>
+                      )}
+                      {p.price_type !== "PriceInRange" && p.price_type !== "FixPrice" && (
+                        <Text style={styles.itemPrice}>₹{p.price || '0'}</Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <Text style={[styles.emptyText, theme.secondaryText]}>No products listed.</Text>
             )}
           </View>
         )}
 
+        {/* Specialists Tab Content */}
+        {activeTab === 'specialists' && (
+          <View style={styles.tabContentSection}>
+            {experts.length > 0 ? (
+              experts.map((exp: any) => (
+                <View key={exp.id} style={[styles.expertListItem, theme.cardBg]}>
+                  <FallbackImage
+                    source={exp.expert_image ? { uri: exp.expert_image } : null}
+                    fallbackSource={fallbackImage}
+                    style={styles.expertListAvatar}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.expertListInfo}>
+                    <Text style={[styles.expertListName, theme.primaryText]}>{exp.expert_name}</Text>
+                    <Text style={[styles.expertListTitle, theme.secondaryText]}>
+                      {exp.department?.department_name || exp.title || 'Specialist'}
+                    </Text>
+                    {exp.description ? (
+                      <Text style={[styles.expertListDesc, theme.secondaryText]} numberOfLines={2}>
+                        {exp.description}
+                      </Text>
+                    ) : null}
+                  </View>
+                  {exp.rating > 0 && (
+                    <View style={styles.expertListRatingCol}>
+                      <Text style={styles.expertListRating}>⭐ {exp.rating}</Text>
+                    </View>
+                  )}
+                </View>
+              ))
+            ) : (
+              <Text style={[styles.emptyText, theme.secondaryText]}>No specialists found.</Text>
+            )}
+          </View>
+        )}
+
+        {/* Gallery Tab Content */}
+        {activeTab === 'gallery' && (
+          <View style={styles.tabContentSection}>
+            {galleries.length > 0 ? (
+              <View style={styles.galleryGrid}>
+                {galleries.map((img: any) => (
+                  <View key={img.id} style={styles.galleryWrapper}>
+                    <FallbackImage
+                      source={img.image_url ? { uri: img.image_url } : null}
+                      fallbackSource={fallbackImage}
+                      style={styles.galleryImg}
+                      resizeMode="cover"
+                    />
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <Text style={[styles.emptyText, theme.secondaryText]}>No photos uploaded yet.</Text>
+            )}
+          </View>
+        )}
+
+        {/* Reviews Tab Content */}
         {activeTab === 'reviews' && (
           <View style={styles.tabContentSection}>
             {reviews.length === 0 ? (
@@ -172,7 +585,7 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
                     <Text style={[styles.itemName, theme.primaryText]}>
                       {r.user?.first_name} ⭐ {r.rating}/5
                     </Text>
-                    <Text style={[styles.itemDesc, theme.secondaryText]}>{r.review_text}</Text>
+                    <Text style={[styles.itemDesc, theme.secondaryText]}>{r.review}</Text>
                   </View>
                 </View>
               ))
@@ -180,21 +593,6 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
           </View>
         )}
       </ScrollView>
-
-      {/* Floating CTA for Appointment */}
-      <View style={styles.footerCta}>
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate('Main', {
-              screen: 'BookingsTab',
-              params: { businessId: businessId, businessName: business?.name || 'Business' },
-            })
-          }
-          style={styles.ctaButton}
-        >
-          <Text style={styles.ctaText}>📅 Book Appointment</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };
@@ -221,6 +619,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 12,
   },
+  favBtnHeader: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginLeft: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   backIcon: {
     fontSize: 14,
     fontWeight: '700',
@@ -232,43 +638,176 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingBottom: 30,
   },
-  heroCard: {
-    backgroundColor: '#6366F1',
+
+  profileCard: {
     borderRadius: 20,
-    padding: 24,
-    alignItems: 'center',
+    padding: 16,
     marginBottom: 20,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
   },
-  heroAvatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoContainer: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    overflow: 'hidden',
+    marginRight: 16,
     backgroundColor: '#EEF2FF',
+    elevation: 2,
+  },
+  businessLogo: {
+    width: 68,
+    height: 68,
+  },
+  titleInfo: {
+    flex: 1,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  verifiedBadge: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginRight: 6,
+  },
+  verifiedBadgeText: {
+    color: '#6366F1',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  premiumBadge: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  premiumBadgeText: {
+    color: '#D97706',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  bizName: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ratingStars: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#EAB308',
+  },
+  categoryLabel: {
+    fontSize: 13,
+    marginLeft: 6,
+  },
+  socialRow: {
+    flexDirection: 'row',
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  socialCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginRight: 10,
+    backgroundColor: '#EEF2FF',
   },
-  heroAvatarImage: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-  },
-  heroName: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  heroCategory: {
+  socialText: {
     fontSize: 14,
-    color: '#C7D2FE',
+  },
+  bizAddress: {
+    fontSize: 13,
+    marginTop: 12,
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  actionBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  sectionContainer: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 10,
+  },
+  horizontalScroll: {
+    paddingRight: 16,
+  },
+  expertListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  expertListAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 14,
+    backgroundColor: '#EEF2FF',
+  },
+  expertListInfo: {
+    flex: 1,
+  },
+  expertListName: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  expertListTitle: {
+    fontSize: 12,
     marginTop: 2,
   },
-  heroAddress: {
+  expertListDesc: {
+    fontSize: 11,
+    marginTop: 4,
+  },
+  expertListRatingCol: {
+    justifyContent: 'center',
+  },
+  expertListRating: {
     fontSize: 13,
-    color: '#EEF2FF',
-    marginTop: 6,
+    fontWeight: '700',
+    color: '#D97706',
   },
   tabsHeader: {
     flexDirection: 'row',
@@ -296,6 +835,16 @@ const styles = StyleSheet.create({
   tabContentSection: {
     paddingTop: 4,
   },
+  categorySection: {
+    marginBottom: 18,
+  },
+  categoryHeader: {
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   itemCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -303,6 +852,20 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 14,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  serviceImageContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginRight: 12,
+    backgroundColor: '#EEF2FF',
+  },
+  serviceImage: {
+    width: 60,
+    height: 60,
   },
   itemMain: {
     flex: 1,
@@ -316,10 +879,70 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
   },
+  pricingCol: {
+    alignItems: 'flex-end',
+  },
   itemPrice: {
     fontSize: 15,
     fontWeight: '800',
     color: '#10B981',
+  },
+  priceType: {
+    fontSize: 10,
+    marginTop: 2,
+  },
+  productsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  productGridCard: {
+    width: '48%',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 12,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  productImage: {
+    width: '100%',
+    height: 110,
+    backgroundColor: '#EEF2FF',
+  },
+  productInfo: {
+    padding: 10,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginTop: 4,
+  },
+  originalPrice: {
+    fontSize: 12,
+    textDecorationLine: 'line-through',
+    marginLeft: 6,
+  },
+  priceContact: {
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  galleryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  galleryWrapper: {
+    width: '31.3%',
+    height: 90,
+    margin: '1%',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  galleryImg: {
+    width: '100%',
+    height: '100%',
   },
   emptyText: {
     textAlign: 'center',
@@ -356,6 +979,7 @@ const lightTheme = StyleSheet.create({
   primaryText: { color: '#0F172A' },
   secondaryText: { color: '#64748B' },
   cardBg: { backgroundColor: '#FFFFFF' },
+  buttonCircleBg: { backgroundColor: '#EEF2FF' },
 });
 
 const darkTheme = StyleSheet.create({
@@ -363,6 +987,7 @@ const darkTheme = StyleSheet.create({
   primaryText: { color: '#F8FAFC' },
   secondaryText: { color: '#94A3B8' },
   cardBg: { backgroundColor: '#1E293B' },
+  buttonCircleBg: { backgroundColor: '#334155' },
 });
 
 export default BusinessDetailScreen;

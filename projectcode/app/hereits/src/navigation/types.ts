@@ -6,13 +6,15 @@ export type RootStackParamList = {
   Splash: undefined;
   Main: undefined;
   BusinessDetail: { businessId: number };
+  ProductDetail: { productId: number };
+  ServiceDetail: { serviceId: number };
   ChatDetail: { conversationId: number; title: string };
 };
 
 export type MainTabParamList = {
   HomeTab: undefined;
-  ExploreTab: { categoryId?: number | null } | undefined;
-  BookingsTab: { businessId?: number | null; businessName?: string | null } | undefined;
+  BusinessesTab: { categoryId?: number | null } | undefined;
+  SearchTab: undefined;
   MessagesTab: undefined;
   AccountTab: undefined;
 };

@@ -8,15 +8,16 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { AuthModal } from './AuthModal';
 import { authService } from '../services/authService';
+import { useNavigation } from '@react-navigation/native';
+import FallbackImage from '../components/FallbackImage';
 
 export const ProfileScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
   const isDarkMode = false;
   const theme = isDarkMode ? darkTheme : lightTheme;
-  const { user, isAuthenticated, logout, refreshProfile } = useAuth();
+  const { user, isAuthenticated, logout, refreshProfile, setAuthModalVisible } = useAuth();
 
-  const [authModalVisible, setAuthModalVisible] = useState(false);
   const [favorites, setFavorites] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
 
@@ -24,8 +25,18 @@ export const ProfileScreen: React.FC = () => {
     if (isAuthenticated) {
       refreshProfile();
       fetchUserData();
+    } else {
+      setAuthModalVisible(true);
     }
-  }, [isAuthenticated]);
+
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (isAuthenticated) {
+        fetchUserData();
+      }
+    });
+
+    return unsubscribe;
+  }, [isAuthenticated, navigation]);
 
   const fetchUserData = async () => {
     const fRes = await authService.getFavorites();
@@ -127,10 +138,64 @@ export const ProfileScreen: React.FC = () => {
         )}
       </View>
 
-      <AuthModal
-        visible={authModalVisible}
-        onClose={() => setAuthModalVisible(false)}
-      />
+      {/* Saved Favorites List */}
+      {isAuthenticated && (
+        <View style={styles.favoritesSection}>
+          <Text style={[styles.sectionTitle, theme.primaryText]}>Saved Favorites ({favorites.length})</Text>
+          {favorites.length === 0 ? (
+            <Text style={[styles.emptyFavText, theme.secondaryText]}>No favorites added yet.</Text>
+          ) : (
+            favorites.map((fav: any) => {
+              let title = '';
+              let subtitle = '';
+              let imageUri = null;
+              let onPressHandler = () => {};
+
+              if (fav.favorite_type === 'business' && fav.business) {
+                title = fav.business.name;
+                subtitle = fav.business.address || 'Local Business';
+                imageUri = fav.business.business_logo || fav.business.business_image;
+                onPressHandler = () => navigation.navigate('BusinessDetail', { businessId: fav.business.id });
+              } else if (fav.favorite_type === 'product' && fav.product) {
+                title = fav.product.name;
+                subtitle = fav.product.price_type === 'FixPrice' ? `₹${fav.product.price}` : 'Product';
+                imageUri = fav.product.first_image?.image_url || (fav.product.first_image ? fav.product.first_image.image_url : null);
+                onPressHandler = () => navigation.navigate('ProductDetail', { productId: fav.product.id });
+              } else if (fav.favorite_type === 'service' && fav.service) {
+                title = fav.service.name;
+                subtitle = fav.service.price_type === 'FixPrice' ? `₹${fav.service.price}` : 'Service';
+                imageUri = fav.service.image_url;
+                onPressHandler = () => navigation.navigate('ServiceDetail', { serviceId: fav.service.id });
+              }
+
+              if (!title) return null;
+
+              return (
+                <TouchableOpacity
+                  key={fav.id}
+                  style={[styles.favItemCard, theme.cardBg]}
+                  onPress={onPressHandler}
+                >
+                  <FallbackImage
+                    source={imageUri ? { uri: imageUri } : null}
+                    fallbackSource={require('../assets/business_icon.png')}
+                    style={styles.favImage}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.favInfo}>
+                    <Text style={[styles.favTitle, theme.primaryText]} numberOfLines={1}>{title}</Text>
+                    <Text style={[styles.favSubtitle, theme.secondaryText]} numberOfLines={1}>{subtitle}</Text>
+                    <View style={styles.favBadge}>
+                      <Text style={styles.favBadgeText}>{fav.favorite_type.toUpperCase()}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.favArrowIcon}>›</Text>
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 };
@@ -209,6 +274,58 @@ const styles = StyleSheet.create({
   actionIcon: { fontSize: 18, marginRight: 12 },
   actionLabel: { flex: 1, fontSize: 14, fontWeight: '600' },
   arrowIcon: { fontSize: 18, color: '#94A3B8' },
+  favoritesSection: {
+    paddingBottom: 40,
+  },
+  emptyFavText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  favItemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  favImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    marginRight: 14,
+  },
+  favInfo: {
+    flex: 1,
+  },
+  favTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  favSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  favBadge: {
+    backgroundColor: '#EEF2FF',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginTop: 6,
+  },
+  favBadgeText: {
+    color: '#6366F1',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  favArrowIcon: {
+    fontSize: 18,
+    color: '#94A3B8',
+    marginLeft: 8,
+  },
 });
 
 const lightTheme = StyleSheet.create({

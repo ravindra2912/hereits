@@ -10,4 +10,10 @@ export const chatService = {
       method: 'POST',
       body: { message },
     }),
+
+  startConversation: (businessId: number) =>
+    apiRequest('/chat/conversations/start', {
+      method: 'POST',
+      body: { business_id: businessId },
+    }),
 };

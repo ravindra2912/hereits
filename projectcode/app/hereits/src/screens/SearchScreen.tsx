@@ -6,57 +6,30 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
   View,
-  Image,
 } from 'react-native';
 import { businessService } from '../services/businessService';
-import { useLocation } from '../context/LocationContext';
 import FallbackImage from '../components/FallbackImage';
-import { useNavigation, useRoute } from '@react-navigation/native';
-
-interface BusinessListScreenProps {
-  onSelectBusiness?: (id: number) => void;
-  selectedCategoryId?: number | null;
-}
+import { useNavigation } from '@react-navigation/native';
 
 const fallbackImage = require('../assets/business_icon.png');
 
-export const BusinessListScreen: React.FC<BusinessListScreenProps> = ({
-  onSelectBusiness,
-  selectedCategoryId = null,
-}) => {
+export const SearchScreen: React.FC = () => {
   const isDarkMode = false;
   const theme = isDarkMode ? darkTheme : lightTheme;
-
   const navigation = useNavigation<any>();
-  const route = useRoute<any>();
-
-  const { location } = useLocation();
 
   const [search, setSearch] = useState('');
-  const [activeCategory, setActiveCategory] = useState<number | null>(selectedCategoryId);
-  const [categories, setCategories] = useState<any[]>([]);
   const [businesses, setBusinesses] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (route.params?.categoryId !== undefined) {
-      setActiveCategory(route.params.categoryId);
-    }
-  }, [route.params?.categoryId]);
-
-  const fetchCategories = async () => {
-    const res = await businessService.getCategories();
-    if (res && res.success && res.data) {
-      setCategories(res.data);
-    }
-  };
+  const [loading, setLoading] = useState(false);
 
   const fetchBusinesses = async () => {
+    if (search.trim() === '') {
+      setBusinesses([]);
+      return;
+    }
     setLoading(true);
     const res = await businessService.getBusinesses({
-      category_id: activeCategory ? String(activeCategory) : undefined,
       search: search || undefined,
     });
     if (res && res.success && res.data) {
@@ -66,24 +39,34 @@ export const BusinessListScreen: React.FC<BusinessListScreenProps> = ({
   };
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchBusinesses();
+    }, 400);
 
-  useEffect(() => {
-    fetchBusinesses();
-  }, [activeCategory, search, location]);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   return (
     <View style={[styles.container, theme.background]}>
-      {/* Title Header */}
-      <View style={styles.header}>
-        <Text style={[styles.title, theme.primaryText]}>Explore Businesses</Text>
-        <Text style={[styles.subtitle, theme.secondaryText]}>
-          Find verified local services near you
-        </Text>
+      {/* Search Input Box */}
+      <View style={[styles.searchBox, theme.cardBg]}>
+        <Text style={styles.searchIcon}>🔍</Text>
+        <TextInput
+          placeholder="Search businesses, services..."
+          placeholderTextColor={isDarkMode ? '#64748B' : '#94A3B8'}
+          value={search}
+          onChangeText={setSearch}
+          style={[styles.searchInput, theme.primaryText]}
+          autoFocus={true}
+        />
+        {search !== '' && (
+          <TouchableOpacity onPress={() => setSearch('')}>
+            <Text style={{ fontSize: 16, color: '#64748B' }}>✕</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* Business Directory List */}
+      {/* Results List */}
       {loading ? (
         <ActivityIndicator size="large" color="#6366F1" style={{ marginTop: 40 }} />
       ) : (
@@ -121,12 +104,21 @@ export const BusinessListScreen: React.FC<BusinessListScreenProps> = ({
             </TouchableOpacity>
           )}
           ListEmptyComponent={
-            <View style={styles.emptyView}>
-              <Text style={{ fontSize: 32, marginBottom: 8 }}>🔍</Text>
-              <Text style={[styles.emptyText, theme.secondaryText]}>
-                No businesses found matching your criteria.
-              </Text>
-            </View>
+            search.trim() !== '' ? (
+              <View style={styles.emptyView}>
+                <Text style={{ fontSize: 32, marginBottom: 8 }}>🔍</Text>
+                <Text style={[styles.emptyText, theme.secondaryText]}>
+                  No businesses found matching "{search}".
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.emptyView}>
+                <Text style={{ fontSize: 32, marginBottom: 8 }}>🏢</Text>
+                <Text style={[styles.emptyText, theme.secondaryText]}>
+                  Type above to search local businesses.
+                </Text>
+              </View>
+            )
           }
         />
       )}
@@ -140,24 +132,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
   },
-  header: {
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  subtitle: {
-    fontSize: 13,
-    marginTop: 2,
-  },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    borderRadius: 14,
+    paddingHorizontal: 12,
     height: 48,
-    marginBottom: 14,
+    borderRadius: 14,
+    marginBottom: 16,
   },
   searchIcon: {
     fontSize: 16,
@@ -166,54 +147,32 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-  },
-  categoryRow: {
-    marginBottom: 16,
-    height: 38,
-  },
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
-    justifyContent: 'center',
-  },
-  selectedChip: {
-    backgroundColor: '#6366F1',
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  selectedChipText: {
-    color: '#FFFFFF',
+    fontWeight: '500',
+    padding: 0,
   },
   listContainer: {
-    paddingBottom: 40,
+    paddingBottom: 24,
   },
   bizCard: {
     flexDirection: 'row',
     padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
+    borderRadius: 18,
+    marginBottom: 14,
     alignItems: 'center',
   },
   bizAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: 54,
+    height: 54,
+    borderRadius: 16,
     backgroundColor: '#EEF2FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
-  },
-  bizAvatarText: {
-    fontSize: 24,
+    marginRight: 14,
   },
   bizAvatarImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: 54,
+    height: 54,
+    borderRadius: 16,
   },
   bizContent: {
     flex: 1,
@@ -222,51 +181,55 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 4,
   },
   bizName: {
     fontSize: 15,
     fontWeight: '700',
     flex: 1,
+    marginRight: 8,
   },
   openBadge: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#10B981',
-    backgroundColor: '#D1FAE5',
-    paddingHorizontal: 8,
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 6,
   },
   bizCategory: {
     fontSize: 12,
-    marginTop: 2,
+    fontWeight: '500',
+    marginBottom: 4,
   },
   bizAddress: {
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 11,
   },
   emptyView: {
     alignItems: 'center',
-    marginTop: 60,
+    marginTop: 80,
+    paddingHorizontal: 30,
   },
   emptyText: {
     fontSize: 14,
     textAlign: 'center',
+    lineHeight: 20,
   },
 });
 
-const lightTheme = StyleSheet.create({
+const lightTheme = {
   background: { backgroundColor: '#F8FAFC' },
+  cardBg: { backgroundColor: '#FFFFFF' },
   primaryText: { color: '#0F172A' },
   secondaryText: { color: '#64748B' },
-  cardBg: { backgroundColor: '#FFFFFF' },
-});
+};
 
-const darkTheme = StyleSheet.create({
+const darkTheme = {
   background: { backgroundColor: '#0F172A' },
+  cardBg: { backgroundColor: '#1E293B' },
   primaryText: { color: '#F8FAFC' },
   secondaryText: { color: '#94A3B8' },
-  cardBg: { backgroundColor: '#1E293B' },
-});
+};
 
-export default BusinessListScreen;
+export default SearchScreen;

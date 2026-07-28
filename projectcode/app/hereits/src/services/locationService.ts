@@ -8,15 +8,10 @@ export interface LocationPayload {
   longitude: number;
   radius?: number;
   city_id?: number | null;
+  area_lat_long?: string;
 }
 
 export const locationService = {
-  setLocation: (payload: LocationPayload) =>
-    apiRequest('/location/set', {
-      method: 'POST',
-      body: payload,
-    }),
-
   searchCities: (query: string) =>
     apiRequest(`/location/search-cities?q=${encodeURIComponent(query)}`),
 };
