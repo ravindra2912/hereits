@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { businessService } from '../services/businessService';
 import FallbackImage from '../components/FallbackImage';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import Svg, { Path } from 'react-native-svg';
+import { Skeleton } from '../components/SkeletonLoader';
 
 const { width } = Dimensions.get('window');
 const fallbackImage = require('../assets/business_icon.png');
@@ -51,8 +52,36 @@ export const ServiceDetailScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={[styles.loadingCenter, theme.background]}>
-        <ActivityIndicator size="large" color="#6366F1" />
+      <View style={[styles.container, theme.background]}>
+        {/* Top Header */}
+        <View style={styles.topNav}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backBtn, theme.cardBg]}>
+            <Text style={[styles.backIcon, theme.primaryText]}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={[styles.navTitle, theme.primaryText]} numberOfLines={1}>
+            Loading...
+          </Text>
+        </View>
+
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Cover Photo Placeholder */}
+          <Skeleton style={[styles.coverImage, theme.skeletonBg]} borderRadius={20} />
+
+          {/* Service Details Section Placeholder */}
+          <View style={[styles.detailCard, theme.cardBg]}>
+            <Skeleton style={[theme.skeletonBg, { width: 60, height: 12 }]} />
+            <Skeleton style={[theme.skeletonBg, { width: '80%', height: 22, marginTop: 8 }]} />
+            <Skeleton style={[theme.skeletonBg, { width: 100, height: 20, marginTop: 12 }]} />
+          </View>
+
+          {/* Description Section Placeholder */}
+          <View style={[styles.sectionCard, theme.cardBg]}>
+            <Skeleton style={[theme.skeletonBg, { width: 100, height: 16 }]} />
+            <Skeleton style={[theme.skeletonBg, { width: '100%', height: 12, marginTop: 10 }]} />
+            <Skeleton style={[theme.skeletonBg, { width: '90%', height: 12, marginTop: 6 }]} />
+            <Skeleton style={[theme.skeletonBg, { width: '70%', height: 12, marginTop: 6 }]} />
+          </View>
+        </ScrollView>
       </View>
     );
   }
@@ -84,7 +113,7 @@ export const ServiceDetailScreen: React.FC = () => {
     const res = await businessService.toggleFavorite(business.id, 'service', service.id);
     if (!res || !res.success) {
       setIsFavorited(prev);
-      alert('Failed to update favorite status.');
+      Alert.alert('Failed to update favorite status.');
     }
   };
 
@@ -419,6 +448,7 @@ const lightTheme = StyleSheet.create({
   primaryText: { color: '#0F172A' },
   secondaryText: { color: '#64748B' },
   cardBg: { backgroundColor: '#FFFFFF' },
+  skeletonBg: { backgroundColor: '#E2E8F0' },
 });
 
 const darkTheme = StyleSheet.create({
@@ -426,6 +456,7 @@ const darkTheme = StyleSheet.create({
   primaryText: { color: '#F8FAFC' },
   secondaryText: { color: '#94A3B8' },
   cardBg: { backgroundColor: '#1E293B' },
+  skeletonBg: { backgroundColor: '#334155' },
 });
 
 export default ServiceDetailScreen;

@@ -18,9 +18,12 @@ use App\Models\AppointmentDepartment;
 use App\Models\BusinessCategory;
 use Illuminate\Support\Facades\Validator;
 use App\Models\BusinessSetting;
+use App\Repositories\AppointmentRepository;
 
 class AppointmentController extends Controller
 {
+    public function __construct(protected AppointmentRepository $appointmentRepository) {}
+
     public function expertList(Request $request, $business_slug): View
     {
         $business = Business::select('id', 'name', 'slug', 'business_image', 'business_logo', 'address', 'contact', 'latitude', 'longitude', 'facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'seo_description', 'seo_keyword')
@@ -127,7 +130,7 @@ class AppointmentController extends Controller
 
             $timeSlots = [];
             if ($expert->is_appointment_book_with_time_slot) {
-                $timeSlots = getExpertTiming($expert->id, Carbon::now(), null, $expert->business_id);
+                $timeSlots = $this->appointmentRepository->resolveExpertTimeSlots($expert->id, Carbon::now(), null, $expert->business_id);
             }
 
             $expert->timing = isExpertAvailable($expert->id);
@@ -184,170 +187,11 @@ class AppointmentController extends Controller
 
     public function getExpertTiming(Request $request)
     {
-        $slots = getExpertTiming($request->expert_id, $request->date, null, $request->business_id);
-        return response()->json($slots);
+        return $this->appointmentRepository->getExpertTiming($request);
     }
 
     public function bookAppointment(Request $request)
     {
-        $success = false;
-        $message = 'Something Wrong!';
-        $redirect = '';
-        $data = array();
-
-        try {
-            DB::beginTransaction();
-
-            $expert = Expert::select('id', 'business_id', 'number_of_bookings_per_day', 'is_appointment_book_with_time_slot', 'is_need_booking_confirmation')
-                ->with(['business:id,business_category_id'])
-                ->where('id', $request->expert_id)
-                ->lockForUpdate() // Lock expert to read stable configuration
-                ->first();
-
-            $rules = [
-                'user_name' => $request->appointment_for == 'other' ? 'required' : 'nullable',
-                'user_contact' => ($request->appointment_for == 'other' ? 'required' : 'nullable') . '|numeric|digits_between:10,12',
-                'booking_date' => 'required|date',
-                'timeslote' => $expert->is_appointment_book_with_time_slot ? 'required' : 'nullable',
-                'expert_id' => 'required',
-                'note' => 'nullable|string|max:250',
-            ];
-
-            $validator = Validator::make($request->all(), $rules);
-
-            if ($validator->fails()) { // Validation fails
-                $message = $validator->errors();
-                // $message = $validator->errors()->first();
-            } else if (Auth::check() == false) {
-                $message = 'pease login form book your appointment';
-            } else {
-
-                $settings = BusinessSetting::where('business_id', $expert->business_id)->first(['id', 'credit', 'is_appointment_creadit_diduct_manual', 'deduct_credit_per_customer_appointment']);
-                if ($settings->credit < $settings->deduct_credit_per_customer_appointment) {
-                    $message = 'Something went wrong, please try again later';
-                    DB::rollBack();
-                    goto LAST;
-                }
-
-                // check business timing 
-                if (!$expert->is_appointment_book_with_time_slot && Carbon::parse($request->booking_date)->isToday()) {
-                    $day = Carbon::now()->format('l');
-                    $now = Carbon::now();
-                    $timings = BusinessTiming::select('id', 'start_time', 'end_time')
-                        ->where('day', $day)
-                        ->where('expert_id', $request->expert_id)
-                        ->where('business_id', $request->business_id)
-                        ->orderBy('start_time', 'asc')
-                        ->get();
-
-                    $startTiming = $timings->first(); // ⬅️ First slot (earliest start_time)
-                    $endTiming = $timings->last();
-
-
-                    if ($startTiming == null || $endTiming == null || !$now->between(Carbon::createFromFormat('H:i:s', $startTiming->start_time), Carbon::createFromFormat('H:i:s', $endTiming->end_time))) {
-                        $message = 'Today appointment is closed, please try next date.';
-                        DB::rollBack();
-                        goto LAST;
-                    }
-                }
-
-                //check same time slot booking with same date
-                if ($expert->is_appointment_book_with_time_slot) {
-                    $timeslote = explode(' - ', $request->timeslote);
-                    $checkBooking = AppointmentBooking::query()
-                        ->where('expert_id', $request->expert_id)
-                        ->whereDate('booking_date', Carbon::parse($request->booking_date))
-                        ->whereTime('slot_start_time', Carbon::parse($timeslote[0])->format('H:i:s'))
-                        ->whereTime('slot_end_time', Carbon::parse($timeslote[1])->format('H:i:s'))
-                        // ->where('status', 'pending')
-                        ->where('business_id', $request->business_id)
-                        ->exists();
-
-                    if ($checkBooking) {
-                        $message = 'This time slot is already booked, please try another time slot.';
-                        DB::rollBack();
-                        goto LAST;
-                    }
-                } else {
-                    // check maximum booking
-                    if ($expert) {
-                        $getAllbooking = AppointmentBooking::select('id', 'token_number')
-                            ->where('expert_id', $request->expert_id)
-                            ->whereDate('booking_date', Carbon::parse($request->booking_date))
-                            ->where('status', 'pending')
-                            ->where('business_id', $request->business_id)
-                            ->lockForUpdate() // Prevent race condition on count check
-                            ->count();
-
-                        if ($expert->number_of_bookings_per_day > 0 && $getAllbooking >= $expert->number_of_bookings_per_day) {
-                            $message = 'Sorry! This expert has already booked the maximum number of booking for this date.';
-                            DB::rollBack();
-                            return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
-                        }
-                    }
-                }
-
-
-
-                $getLastToken = AppointmentBooking::where('expert_id', $request->expert_id)
-                    ->whereDate('booking_date', Carbon::parse($request->booking_date))
-                    ->where('business_id', $request->business_id)
-                    ->lockForUpdate() // Lock to ensure token number is sequential and safe
-                    ->orderBy('token_number', 'desc')
-                    ->first();
-
-                if ($getLastToken) {
-                    $tokenNumber = $getLastToken->token_number + 1;
-                } else {
-                    $tokenNumber = 1;
-                }
-                $insert = new AppointmentBooking();
-                $insert->business_id  = $request->business_id;
-                $insert->user_id = Auth::user() ? Auth::user()->id : null;
-                $insert->token_number  = $tokenNumber;
-                $insert->department_id = $request->department_id;
-                $insert->expert_id = $request->expert_id;
-                if ($request->appointment_for == 'self') {
-                    $insert->user_name = Auth::user()->first_name . ' ' . Auth::user()->last_name;
-                    $insert->user_contact = Auth::user()->contact;
-                } else {
-                    $insert->user_name = $request->user_name;
-                    $insert->user_contact = $request->user_contact;
-                }
-                $insert->appointment_for = $request->appointment_for;
-                $insert->booking_date = $request->booking_date;
-                $insert->note = $request->note;
-
-                if ($expert->is_appointment_book_with_time_slot) {
-                    $timeslote = explode(' - ', $request->timeslote);
-                    $insert->slot_start_time = Carbon::parse($request->booking_date . ' ' . $timeslote[0]);
-                    $insert->slot_end_time = Carbon::parse($request->booking_date . ' ' . $timeslote[1]);
-                }
-                $insert->status =  $expert->is_need_booking_confirmation ? 'pending' : 'confirmed';
-                $insert->save();
-
-                $data['status_url'] = route('account.booking.details', $insert->id);
-
-                // Deduct credit
-                if ($settings->is_appointment_creadit_diduct_manual) {
-                    $creadit_deduction = $settings->deduct_credit_per_customer_appointment;
-                } else {
-                    $businessCategory = BusinessCategory::select('deduct_credit_per_customer_appointment')->find($expert->business->business_category_id);
-                    $creadit_deduction = $businessCategory->deduct_credit_per_customer_appointment ?? 1;
-                }
-                $settings->decrement('credit', $creadit_deduction);
-
-
-                $success = true;
-                $message = 'Appointment Book Successfully.';
-                DB::commit();
-            }
-        } catch (\Exception $e) {
-            DB::rollBack();
-            // dd($e);
-            $message = $e->getMessage();
-        }
-        LAST:
-        return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
+        return $this->appointmentRepository->bookAppointment($request);
     }
 }

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +10,7 @@ import {
   Dimensions,
   Platform,
   Share,
+  Alert,
 } from 'react-native';
 import { businessService } from '../services/businessService';
 import { chatService } from '../services/chatService';
@@ -18,6 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import FallbackImage from '../components/FallbackImage';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
+import { BusinessDetailSkeleton } from '../components/SkeletonLoader';
 
 interface BusinessDetailScreenProps {
   businessId?: number;
@@ -39,7 +40,6 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
 
   const [detailData, setDetailData] = useState<any>(null);
   const [reviews, setReviews] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'services' | 'products' | 'specialists' | 'gallery' | 'reviews'>('services');
   const [loading, setLoading] = useState(true);
   const [isFavorited, setIsFavorited] = useState<boolean>(false);
 
@@ -69,8 +69,18 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
 
   if (loading || !detailData) {
     return (
-      <View style={[styles.loadingCenter, theme.background]}>
-        <ActivityIndicator size="large" color="#6366F1" />
+      <View style={[styles.container, theme.background]}>
+        <View style={styles.topNav}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backBtn, theme.cardBg]}>
+            <Text style={[styles.backIcon, theme.primaryText]}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={[styles.navTitle, theme.primaryText]} numberOfLines={1}>
+            Loading...
+          </Text>
+        </View>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <BusinessDetailSkeleton theme={theme} />
+        </ScrollView>
       </View>
     );
   }
@@ -122,7 +132,7 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
     if (business.contact) {
       Linking.openURL(`tel:${business.contact}`);
     } else {
-      alert("This business doesn't have a contact number.");
+      Alert.alert("This business doesn't have a contact number.");
     }
   };
 
@@ -142,12 +152,12 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
           title: business.name,
         });
       } else {
-        alert(res.message || 'Failed to start chat conversation.');
+        Alert.alert(res.message || 'Failed to start chat conversation.');
       }
     } catch (e) {
       setLoading(false);
       console.error('Chat error:', e);
-      alert('Failed to connect to chat service.');
+      Alert.alert('Failed to connect to chat service.');
     }
   };
 
@@ -161,7 +171,7 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
       });
       Linking.openURL(url);
     } else {
-      alert("This business doesn't have coordinates registered.");
+      Alert.alert("This business doesn't have coordinates registered.");
     }
   };
 
@@ -187,7 +197,7 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
     const res = await businessService.toggleFavorite(business.id, 'business', business.id);
     if (!res || !res.success) {
       setIsFavorited(prev);
-      alert('Failed to update favorite status.');
+      Alert.alert('Failed to update favorite status.');
     }
   };
 
@@ -311,285 +321,350 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
 
 
 
-        {/* Navigation Tabs */}
-        <View style={styles.tabsHeader}>
-          <TouchableOpacity
-            onPress={() => setActiveTab('services')}
-            style={[styles.tabItem, activeTab === 'services' && styles.activeTabItem]}
-          >
-            <Text style={[styles.tabText, activeTab === 'services' && styles.activeTabText]}>
-              Services ({totalServicesCount})
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setActiveTab('products')}
-            style={[styles.tabItem, activeTab === 'products' && styles.activeTabItem]}
-          >
-            <Text style={[styles.tabText, activeTab === 'products' && styles.activeTabText]}>
-              Products ({totalProductsCount})
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setActiveTab('specialists')}
-            style={[styles.tabItem, activeTab === 'specialists' && styles.activeTabItem]}
-          >
-            <Text style={[styles.tabText, activeTab === 'specialists' && styles.activeTabText]}>
-              Specialists ({experts.length})
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setActiveTab('gallery')}
-            style={[styles.tabItem, activeTab === 'gallery' && styles.activeTabItem]}
-          >
-            <Text style={[styles.tabText, activeTab === 'gallery' && styles.activeTabText]}>
-              Gallery ({galleries.length})
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setActiveTab('reviews')}
-            style={[styles.tabItem, activeTab === 'reviews' && styles.activeTabItem]}
-          >
-            <Text style={[styles.tabText, activeTab === 'reviews' && styles.activeTabText]}>
-              Reviews ({reviews.length})
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* 1. Product Categories */}
+        {productCategories.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionTitle, theme.primaryText]}>Product Categories</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('BusinessCategoryList', { businessId: business.id, type: 'Products' })}>
+                <Text style={styles.viewMoreText}>View More →</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+              {productCategories.map((cat: any) => (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={[styles.categoryChip, theme.cardBg]}
+                  onPress={() => navigation.navigate('BusinessProductList', { businessId: business.id, categoryId: cat.id, categoryName: cat.name })}
+                >
+                  <FallbackImage
+                    source={cat.image_url ? { uri: cat.image_url } : null}
+                    fallbackSource={fallbackImage}
+                    style={styles.categoryChipImage}
+                    resizeMode="cover"
+                  />
+                  <Text style={[styles.categoryChipText, theme.primaryText]} numberOfLines={1}>{cat.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
-        {/* Services Tab Content */}
-        {activeTab === 'services' && (
-          <View style={styles.tabContentSection}>
-            {categoriesWithServices.length > 0 ? (
-              categoriesWithServices.map((cat: any) => (
-                <View key={cat.id} style={styles.categorySection}>
+        {/* 2. Service Categories */}
+        {serviceCategories.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionTitle, theme.primaryText]}>Service Categories</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('BusinessCategoryList', { businessId: business.id, type: 'Services' })}>
+                <Text style={styles.viewMoreText}>View More →</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+              {serviceCategories.map((cat: any) => (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={[styles.categoryChip, theme.cardBg]}
+                  onPress={() => navigation.navigate('BusinessServiceList', { businessId: business.id, categoryId: cat.id, categoryName: cat.name })}
+                >
+                  <FallbackImage
+                    source={cat.image_url ? { uri: cat.image_url } : null}
+                    fallbackSource={fallbackImage}
+                    style={styles.categoryChipImage}
+                    resizeMode="cover"
+                  />
+                  <Text style={[styles.categoryChipText, theme.primaryText]} numberOfLines={1}>{cat.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* 3. Products */}
+        {fallbackProducts.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionTitle, theme.primaryText]}>Products</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('BusinessProductList', { businessId: business.id })}>
+                <Text style={styles.viewMoreText}>View More →</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.productsGrid}>
+              {fallbackProducts.map((p: any) => (
+                <TouchableOpacity
+                  key={p.id}
+                  style={[styles.productGridCard, theme.cardBg]}
+                  onPress={() => navigation.navigate('ProductDetail', { productId: p.id })}
+                >
+                  <FallbackImage
+                    source={p.first_image?.image_url ? { uri: p.first_image.image_url } : null}
+                    fallbackSource={fallbackImage}
+                    style={styles.productImage}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.productInfo}>
+                    <Text style={[styles.itemName, theme.primaryText]} numberOfLines={1}>{p.name}</Text>
+                    {p.price_type === "PriceInRange" && (
+                      <Text style={styles.itemPrice}>₹{p.min_price} - ₹{p.max_price}</Text>
+                    )}
+                    {p.price_type === "FixPrice" && (
+                      <View style={styles.priceRow}>
+                        <Text style={styles.itemPrice}>₹{p.sell_price || p.price}</Text>
+                        {p.price && p.price !== p.sell_price && p.sell_price && (
+                          <Text style={[styles.originalPrice, theme.secondaryText]}>₹{p.price}</Text>
+                        )}
+                      </View>
+                    )}
+                    {p.price_type !== "PriceInRange" && p.price_type !== "FixPrice" && (
+                      <Text style={styles.itemPrice}>₹{p.price || '0'}</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* 4. Services */}
+        {fallbackServices.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionTitle, theme.primaryText]}>Services</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('BusinessServiceList', { businessId: business.id })}>
+                <Text style={styles.viewMoreText}>View More →</Text>
+              </TouchableOpacity>
+            </View>
+            {fallbackServices.map((s: any) => (
+              <TouchableOpacity
+                key={s.id}
+                style={[styles.itemCard, theme.cardBg]}
+                onPress={() => navigation.navigate('ServiceDetail', { serviceId: s.id })}
+              >
+                <View style={styles.serviceImageContainer}>
+                  <FallbackImage
+                    source={s.image_url ? { uri: s.image_url } : null}
+                    fallbackSource={fallbackImage}
+                    style={styles.serviceImage}
+                    resizeMode="cover"
+                  />
+                </View>
+                <View style={styles.itemMain}>
+                  <Text style={[styles.itemName, theme.primaryText]}>{s.name}</Text>
+                  <Text style={[styles.itemDesc, theme.secondaryText]} numberOfLines={2}>{s.description}</Text>
+                </View>
+                <View style={styles.pricingCol}>
+                  {s.price_type === "PriceInRange" && (
+                    <Text style={styles.itemPrice}>₹{s.min_price} - ₹{s.max_price}</Text>
+                  )}
+                  {s.price_type === "FixPrice" && (
+                    <Text style={styles.itemPrice}>₹{s.price || '0'}</Text>
+                  )}
+                  {s.price_type === "WithoutPrice" && (
+                    <Text style={[styles.priceType, theme.secondaryText]}>Contact for Price</Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* 5. Categories with Products */}
+        {categoriesWithProducts.length > 0 && (
+          <View style={styles.sectionContainer}>
+            {categoriesWithProducts.map((cat: any) => (
+              <View key={cat.id} style={styles.categorySection}>
+                <View style={styles.sectionHeaderRow}>
                   <Text style={[styles.categoryHeader, theme.primaryText]}>{cat.name}</Text>
-                  {cat.services?.map((s: any) => (
+                  <TouchableOpacity onPress={() => navigation.navigate('BusinessProductList', { businessId: business.id, categoryId: cat.id, categoryName: cat.name })}>
+                    <Text style={styles.viewMoreText}>View More →</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.productsGrid}>
+                  {cat.products?.map((p: any) => (
                     <TouchableOpacity
-                      key={s.id}
-                      style={[styles.itemCard, theme.cardBg]}
-                      onPress={() => navigation.navigate('ServiceDetail', { serviceId: s.id })}
+                      key={p.id}
+                      style={[styles.productGridCard, theme.cardBg]}
+                      onPress={() => navigation.navigate('ProductDetail', { productId: p.id })}
                     >
-                      <View style={styles.serviceImageContainer}>
-                        <FallbackImage
-                          source={s.image_url ? { uri: s.image_url } : null}
-                          fallbackSource={fallbackImage}
-                          style={styles.serviceImage}
-                          resizeMode="cover"
-                        />
-                      </View>
-                      <View style={styles.itemMain}>
-                        <Text style={[styles.itemName, theme.primaryText]}>{s.name}</Text>
-                        <Text style={[styles.itemDesc, theme.secondaryText]} numberOfLines={2}>{s.description}</Text>
-                      </View>
-                      <View style={styles.pricingCol}>
-                        {s.price_type === "PriceInRange" && (
-                          <Text style={styles.itemPrice}>₹{s.min_price} - ₹{s.max_price}</Text>
+                      <FallbackImage
+                        source={p.first_image?.image_url ? { uri: p.first_image.image_url } : null}
+                        fallbackSource={fallbackImage}
+                        style={styles.productImage}
+                        resizeMode="cover"
+                      />
+                      <View style={styles.productInfo}>
+                        <Text style={[styles.itemName, theme.primaryText]} numberOfLines={1}>{p.name}</Text>
+                        {p.price_type === "PriceInRange" && (
+                          <Text style={styles.itemPrice}>₹{p.min_price} - ₹{p.max_price}</Text>
                         )}
-                        {s.price_type === "FixPrice" && (
-                          <Text style={styles.itemPrice}>₹{s.price || '0'}</Text>
+                        {p.price_type === "FixPrice" && (
+                          <View style={styles.priceRow}>
+                            <Text style={styles.itemPrice}>₹{p.sell_price}</Text>
+                            {p.price && p.price !== p.sell_price && (
+                              <Text style={[styles.originalPrice, theme.secondaryText]}>₹{p.price}</Text>
+                            )}
+                          </View>
                         )}
-                        {s.price_type === "WithoutPrice" && (
-                          <Text style={[styles.priceType, theme.secondaryText]}>Contact for Price</Text>
+                        {p.price_type === "WithoutPrice" && (
+                          <Text style={[styles.priceContact, theme.secondaryText]}>Contact for Price</Text>
                         )}
                       </View>
                     </TouchableOpacity>
                   ))}
                 </View>
-              ))
-            ) : fallbackServices.length > 0 ? (
-              fallbackServices.map((s: any) => (
-                <TouchableOpacity
-                  key={s.id}
-                  style={[styles.itemCard, theme.cardBg]}
-                  onPress={() => navigation.navigate('ServiceDetail', { serviceId: s.id })}
-                >
-                  <View style={styles.serviceImageContainer}>
-                    <FallbackImage
-                      source={s.image_url ? { uri: s.image_url } : null}
-                      fallbackSource={fallbackImage}
-                      style={styles.serviceImage}
-                      resizeMode="cover"
-                    />
-                  </View>
-                  <View style={styles.itemMain}>
-                    <Text style={[styles.itemName, theme.primaryText]}>{s.name}</Text>
-                    <Text style={[styles.itemDesc, theme.secondaryText]} numberOfLines={2}>{s.description}</Text>
-                  </View>
-                  <View style={styles.pricingCol}>
-                    {s.price_type === "PriceInRange" && (
-                      <Text style={styles.itemPrice}>₹{s.min_price} - ₹{s.max_price}</Text>
-                    )}
-                    {s.price_type === "FixPrice" && (
-                      <Text style={styles.itemPrice}>₹{s.price || '0'}</Text>
-                    )}
-                    {s.price_type === "WithoutPrice" && (
-                      <Text style={[styles.priceType, theme.secondaryText]}>Contact for Price</Text>
-                    )}
-                  </View>
-                </TouchableOpacity>
-              ))
-            ) : (
-              <Text style={[styles.emptyText, theme.secondaryText]}>No services listed.</Text>
-            )}
+              </View>
+            ))}
           </View>
         )}
 
-        {/* Products Tab Content */}
-        {activeTab === 'products' && (
-          <View style={styles.tabContentSection}>
-            {categoriesWithProducts.length > 0 ? (
-              categoriesWithProducts.map((cat: any) => (
-                <View key={cat.id} style={styles.categorySection}>
+        {/* 6. Categories with Services */}
+        {categoriesWithServices.length > 0 && (
+          <View style={styles.sectionContainer}>
+            {categoriesWithServices.map((cat: any) => (
+              <View key={cat.id} style={styles.categorySection}>
+                <View style={styles.sectionHeaderRow}>
                   <Text style={[styles.categoryHeader, theme.primaryText]}>{cat.name}</Text>
-                  <View style={styles.productsGrid}>
-                    {cat.products?.map((p: any) => (
-                      <TouchableOpacity
-                        key={p.id}
-                        style={[styles.productGridCard, theme.cardBg]}
-                        onPress={() => navigation.navigate('ProductDetail', { productId: p.id })}
-                      >
-                        <FallbackImage
-                          source={p.first_image?.image_url ? { uri: p.first_image.image_url } : null}
-                          fallbackSource={fallbackImage}
-                          style={styles.productImage}
-                          resizeMode="cover"
-                        />
-                        <View style={styles.productInfo}>
-                          <Text style={[styles.itemName, theme.primaryText]} numberOfLines={1}>{p.name}</Text>
-                          {p.price_type === "PriceInRange" && (
-                            <Text style={styles.itemPrice}>₹{p.min_price} - ₹{p.max_price}</Text>
-                          )}
-                          {p.price_type === "FixPrice" && (
-                            <View style={styles.priceRow}>
-                              <Text style={styles.itemPrice}>₹{p.sell_price}</Text>
-                              {p.price && p.price !== p.sell_price && (
-                                <Text style={[styles.originalPrice, theme.secondaryText]}>₹{p.price}</Text>
-                              )}
-                            </View>
-                          )}
-                          {p.price_type === "WithoutPrice" && (
-                            <Text style={[styles.priceContact, theme.secondaryText]}>Contact for Price</Text>
-                          )}
-                        </View>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+                  <TouchableOpacity onPress={() => navigation.navigate('BusinessServiceList', { businessId: business.id, categoryId: cat.id, categoryName: cat.name })}>
+                    <Text style={styles.viewMoreText}>View More →</Text>
+                  </TouchableOpacity>
                 </View>
-              ))
-            ) : fallbackProducts.length > 0 ? (
-              <View style={styles.productsGrid}>
-                {fallbackProducts.map((p: any) => (
+                {cat.services?.map((s: any) => (
                   <TouchableOpacity
-                    key={p.id}
-                    style={[styles.productGridCard, theme.cardBg]}
-                    onPress={() => navigation.navigate('ProductDetail', { productId: p.id })}
+                    key={s.id}
+                    style={[styles.itemCard, theme.cardBg]}
+                    onPress={() => navigation.navigate('ServiceDetail', { serviceId: s.id })}
                   >
-                    <FallbackImage
-                      source={null}
-                      fallbackSource={fallbackImage}
-                      style={styles.productImage}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.productInfo}>
-                      <Text style={[styles.itemName, theme.primaryText]} numberOfLines={1}>{p.name}</Text>
-                      {p.price_type === "PriceInRange" && (
-                        <Text style={styles.itemPrice}>₹{p.min_price} - ₹{p.max_price}</Text>
+                    <View style={styles.serviceImageContainer}>
+                      <FallbackImage
+                        source={s.image_url ? { uri: s.image_url } : null}
+                        fallbackSource={fallbackImage}
+                        style={styles.serviceImage}
+                        resizeMode="cover"
+                      />
+                    </View>
+                    <View style={styles.itemMain}>
+                      <Text style={[styles.itemName, theme.primaryText]}>{s.name}</Text>
+                      <Text style={[styles.itemDesc, theme.secondaryText]} numberOfLines={2}>{s.description}</Text>
+                    </View>
+                    <View style={styles.pricingCol}>
+                      {s.price_type === "PriceInRange" && (
+                        <Text style={styles.itemPrice}>₹{s.min_price} - ₹{s.max_price}</Text>
                       )}
-                      {p.price_type === "FixPrice" && (
-                        <View style={styles.priceRow}>
-                          <Text style={styles.itemPrice}>₹{p.sell_price || p.price}</Text>
-                          {p.price && p.price !== p.sell_price && p.sell_price && (
-                            <Text style={[styles.originalPrice, theme.secondaryText]}>₹{p.price}</Text>
-                          )}
-                        </View>
+                      {s.price_type === "FixPrice" && (
+                        <Text style={styles.itemPrice}>₹{s.price || '0'}</Text>
                       )}
-                      {p.price_type !== "PriceInRange" && p.price_type !== "FixPrice" && (
-                        <Text style={styles.itemPrice}>₹{p.price || '0'}</Text>
+                      {s.price_type === "WithoutPrice" && (
+                        <Text style={[styles.priceType, theme.secondaryText]}>Contact for Price</Text>
                       )}
                     </View>
                   </TouchableOpacity>
                 ))}
               </View>
-            ) : (
-              <Text style={[styles.emptyText, theme.secondaryText]}>No products listed.</Text>
-            )}
+            ))}
           </View>
         )}
 
-        {/* Specialists Tab Content */}
-        {activeTab === 'specialists' && (
-          <View style={styles.tabContentSection}>
-            {experts.length > 0 ? (
-              experts.map((exp: any) => (
-                <View key={exp.id} style={[styles.expertListItem, theme.cardBg]}>
+        {/* 7. Experts */}
+        {experts.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionTitle, theme.primaryText]}>Specialists ({experts.length})</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('BusinessSpecialistList', { businessId: business.id })}>
+                <Text style={styles.viewMoreText}>View More →</Text>
+              </TouchableOpacity>
+            </View>
+            {experts.map((exp: any) => (
+              <TouchableOpacity
+                key={exp.id}
+                style={[styles.expertListItem, theme.cardBg]}
+                onPress={() => navigation.navigate('SpecialistDetail', { specialistId: exp.id })}
+                activeOpacity={0.8}
+              >
+                <FallbackImage
+                  source={exp.expert_image ? { uri: exp.expert_image } : null}
+                  fallbackSource={fallbackImage}
+                  style={styles.expertListAvatar}
+                  resizeMode="cover"
+                />
+                <View style={styles.expertListInfo}>
+                  <Text style={[styles.expertListName, theme.primaryText]}>{exp.expert_name}</Text>
+                  <Text style={[styles.expertListTitle, theme.secondaryText]}>
+                    {exp.department?.department_name || exp.title || 'Specialist'}
+                  </Text>
+                  {exp.description ? (
+                    <Text style={[styles.expertListDesc, theme.secondaryText]} numberOfLines={2}>
+                      {exp.description}
+                    </Text>
+                  ) : null}
+                </View>
+                {exp.rating > 0 && (
+                  <View style={styles.expertListRatingCol}>
+                    <Text style={styles.expertListRating}>⭐ {exp.rating}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* 8. Galleries */}
+        {galleries.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <Text style={[styles.sectionTitle, theme.primaryText]}>Gallery ({galleries.length})</Text>
+            <View style={styles.galleryGrid}>
+              {galleries.map((img: any) => (
+                <View key={img.id} style={styles.galleryWrapper}>
                   <FallbackImage
-                    source={exp.expert_image ? { uri: exp.expert_image } : null}
+                    source={img.image_url ? { uri: img.image_url } : null}
                     fallbackSource={fallbackImage}
-                    style={styles.expertListAvatar}
+                    style={styles.galleryImg}
                     resizeMode="cover"
                   />
-                  <View style={styles.expertListInfo}>
-                    <Text style={[styles.expertListName, theme.primaryText]}>{exp.expert_name}</Text>
-                    <Text style={[styles.expertListTitle, theme.secondaryText]}>
-                      {exp.department?.department_name || exp.title || 'Specialist'}
-                    </Text>
-                    {exp.description ? (
-                      <Text style={[styles.expertListDesc, theme.secondaryText]} numberOfLines={2}>
-                        {exp.description}
-                      </Text>
-                    ) : null}
-                  </View>
-                  {exp.rating > 0 && (
-                    <View style={styles.expertListRatingCol}>
-                      <Text style={styles.expertListRating}>⭐ {exp.rating}</Text>
-                    </View>
-                  )}
                 </View>
-              ))
-            ) : (
-              <Text style={[styles.emptyText, theme.secondaryText]}>No specialists found.</Text>
-            )}
+              ))}
+            </View>
           </View>
         )}
 
-        {/* Gallery Tab Content */}
-        {activeTab === 'gallery' && (
-          <View style={styles.tabContentSection}>
-            {galleries.length > 0 ? (
-              <View style={styles.galleryGrid}>
-                {galleries.map((img: any) => (
-                  <View key={img.id} style={styles.galleryWrapper}>
-                    <FallbackImage
-                      source={img.image_url ? { uri: img.image_url } : null}
-                      fallbackSource={fallbackImage}
-                      style={styles.galleryImg}
-                      resizeMode="cover"
-                    />
-                  </View>
-                ))}
+        {/* 9. About Us */}
+        <View style={styles.sectionContainer}>
+          <Text style={[styles.sectionTitle, theme.primaryText]}>About Us</Text>
+          <View style={[styles.aboutCard, theme.cardBg]}>
+            {business?.seo_description ? (
+              <Text style={[styles.aboutDesc, theme.primaryText]}>
+                {business.seo_description}
+              </Text>
+            ) : (
+              <Text style={[styles.aboutDesc, theme.secondaryText]}>
+                Welcome to {business?.name || 'our business'}. We offer the best products and services nearby.
+              </Text>
+            )}
+            <View style={styles.aboutMeta}>
+              <Text style={[styles.aboutMetaItem, theme.secondaryText]}>
+                📍 <Text style={theme.primaryText}>{business?.address || 'Vesu Surat'}</Text>
+              </Text>
+              {business?.contact ? (
+                <Text style={[styles.aboutMetaItem, theme.secondaryText]}>
+                  📞 <Text style={theme.primaryText}>{business.contact}</Text>
+                </Text>
+              ) : null}
+            </View>
+          </View>
+        </View>
+
+        {/* 10. Reviews */}
+        {reviews.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <Text style={[styles.sectionTitle, theme.primaryText]}>Reviews ({reviews.length})</Text>
+            {reviews.map(r => (
+              <View key={r.id} style={[styles.itemCard, theme.cardBg]}>
+                <View style={styles.itemMain}>
+                  <Text style={[styles.itemName, theme.primaryText]}>
+                    {r.user?.first_name} ⭐ {r.rating}/5
+                  </Text>
+                  <Text style={[styles.itemDesc, theme.secondaryText]}>{r.review}</Text>
+                </View>
               </View>
-            ) : (
-              <Text style={[styles.emptyText, theme.secondaryText]}>No photos uploaded yet.</Text>
-            )}
-          </View>
-        )}
-
-        {/* Reviews Tab Content */}
-        {activeTab === 'reviews' && (
-          <View style={styles.tabContentSection}>
-            {reviews.length === 0 ? (
-              <Text style={[styles.emptyText, theme.secondaryText]}>No reviews yet.</Text>
-            ) : (
-              reviews.map(r => (
-                <View key={r.id} style={[styles.itemCard, theme.cardBg]}>
-                  <View style={styles.itemMain}>
-                    <Text style={[styles.itemName, theme.primaryText]}>
-                      {r.user?.first_name} ⭐ {r.rating}/5
-                    </Text>
-                    <Text style={[styles.itemDesc, theme.secondaryText]}>{r.review}</Text>
-                  </View>
-                </View>
-              ))
-            )}
+            ))}
           </View>
         )}
       </ScrollView>
@@ -972,6 +1047,58 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  viewMoreText: {
+    fontSize: 13,
+    color: '#6366F1',
+    fontWeight: '700',
+  },
+  categoryChip: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 5,
+    borderRadius: 16,
+    marginRight: 4,
+    width: 90,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  categoryChipImage: {
+    width: 60,
+    height: 60,
+    // borderRadius: 28,
+    marginBottom: 8,
+  },
+  categoryChipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  aboutCard: {
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  aboutDesc: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  aboutMeta: {
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    paddingTop: 12,
+  },
+  aboutMetaItem: {
+    fontSize: 13,
+    marginBottom: 6,
+  },
 });
 
 const lightTheme = StyleSheet.create({
@@ -980,6 +1107,7 @@ const lightTheme = StyleSheet.create({
   secondaryText: { color: '#64748B' },
   cardBg: { backgroundColor: '#FFFFFF' },
   buttonCircleBg: { backgroundColor: '#EEF2FF' },
+  skeletonBg: { backgroundColor: '#E2E8F0' },
 });
 
 const darkTheme = StyleSheet.create({
@@ -988,6 +1116,7 @@ const darkTheme = StyleSheet.create({
   secondaryText: { color: '#94A3B8' },
   cardBg: { backgroundColor: '#1E293B' },
   buttonCircleBg: { backgroundColor: '#334155' },
+  skeletonBg: { backgroundColor: '#334155' },
 });
 
 export default BusinessDetailScreen;

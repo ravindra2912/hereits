@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import {
   Animated,
   Easing,
+  Image,
   StyleSheet,
   Text,
   useColorScheme,
@@ -120,10 +121,12 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             { transform: [{ scale: pulseAnim }] },
           ]}
         >
-          <View style={[styles.outerRing, themeStyles.outerRingStyle]}>
-            <View style={[styles.innerCircle, themeStyles.innerCircleStyle]}>
-              <Text style={styles.logoIcon}>📍</Text>
-            </View>
+          <View style={styles.outerRing}>
+            <Image
+              source={require('../assets/app_icon.png')}
+              style={{ width: 90, height: 90, borderRadius: 20 }}
+              resizeMode="cover"
+            />
           </View>
         </Animated.View>
 

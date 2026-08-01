@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -8,6 +7,7 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
+import { ChatListItemSkeleton } from '../components/SkeletonLoader';
 import { chatService } from '../services/chatService';
 import { useNavigation } from '@react-navigation/native';
 
@@ -46,7 +46,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = () => {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#6366F1" style={{ marginTop: 40 }} />
+        <View style={styles.listContent}>
+          {Array.from({ length: 4 }).map((_, index) => (
+            <ChatListItemSkeleton key={`skeleton-${index}`} theme={theme} />
+          ))}
+        </View>
       ) : (
         <FlatList
           data={conversations}
@@ -161,6 +165,7 @@ const lightTheme = StyleSheet.create({
   primaryText: { color: '#0F172A' },
   secondaryText: { color: '#64748B' },
   cardBg: { backgroundColor: '#FFFFFF' },
+  skeletonBg: { backgroundColor: '#E2E8F0' },
 });
 
 const darkTheme = StyleSheet.create({
@@ -168,6 +173,7 @@ const darkTheme = StyleSheet.create({
   primaryText: { color: '#F8FAFC' },
   secondaryText: { color: '#94A3B8' },
   cardBg: { backgroundColor: '#1E293B' },
+  skeletonBg: { backgroundColor: '#334155' },
 });
 
 export default ChatScreen;

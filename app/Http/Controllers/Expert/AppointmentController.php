@@ -12,9 +12,12 @@ use App\Models\BusinessSetting;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Repositories\AppointmentRepository;
 
 class AppointmentController extends Controller
 {
+    public function __construct(protected AppointmentRepository $appointmentRepository) {}
+
     private function getExpert()
     {
         return Auth::guard('expert')->user();
@@ -36,7 +39,7 @@ class AppointmentController extends Controller
     {
         try {
             $expert = $this->getExpert();
-            $slots = getExpertTiming($expert->id, $request->booking_date, null, $expert->business_id);
+            $slots = $this->appointmentRepository->resolveExpertTimeSlots($expert->id, $request->booking_date, null, $expert->business_id);
             return response()->json($slots);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()]);

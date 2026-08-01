@@ -14,6 +14,12 @@ export const FallbackImage: React.FC<FallbackImageProps> = ({
 }) => {
   const [error, setError] = useState(false);
 
+  const sourceKey = typeof source === 'object' && source !== null ? source.uri : source;
+
+  React.useEffect(() => {
+    setError(false);
+  }, [sourceKey]);
+
   const imageSource = error || !source ? fallbackSource : source;
 
   return (

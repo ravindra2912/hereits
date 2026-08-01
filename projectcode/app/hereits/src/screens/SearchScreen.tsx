@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -8,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { BusinessCardSkeleton } from '../components/SkeletonLoader';
 import { businessService } from '../services/businessService';
 import FallbackImage from '../components/FallbackImage';
 import { useNavigation } from '@react-navigation/native';
@@ -68,7 +68,11 @@ export const SearchScreen: React.FC = () => {
 
       {/* Results List */}
       {loading ? (
-        <ActivityIndicator size="large" color="#6366F1" style={{ marginTop: 40 }} />
+        <View style={styles.listContainer}>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <BusinessCardSkeleton key={`skeleton-${index}`} theme={theme} />
+          ))}
+        </View>
       ) : (
         <FlatList
           data={businesses}
@@ -223,6 +227,7 @@ const lightTheme = {
   cardBg: { backgroundColor: '#FFFFFF' },
   primaryText: { color: '#0F172A' },
   secondaryText: { color: '#64748B' },
+  skeletonBg: { backgroundColor: '#E2E8F0' },
 };
 
 const darkTheme = {
@@ -230,6 +235,7 @@ const darkTheme = {
   cardBg: { backgroundColor: '#1E293B' },
   primaryText: { color: '#F8FAFC' },
   secondaryText: { color: '#94A3B8' },
+  skeletonBg: { backgroundColor: '#334155' },
 };
 
 export default SearchScreen;

@@ -7,7 +7,7 @@ use App\Models\ChatConversation;
 use App\Models\ChatMessage;
 use Illuminate\Http\Request;
 
-class ChatApiController extends Controller
+class ApiV1ChatController extends Controller
 {
     public function conversations(Request $request)
     {

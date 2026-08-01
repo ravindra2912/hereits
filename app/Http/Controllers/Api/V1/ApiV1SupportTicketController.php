@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreSupportTicketRequest;
 use App\Models\SupportTicket;
 
-class SupportTicketController extends Controller
+class ApiV1SupportTicketController extends Controller
 {
     /**
      * Store a new support ticket.

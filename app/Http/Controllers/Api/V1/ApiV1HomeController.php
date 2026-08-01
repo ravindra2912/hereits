@@ -9,7 +9,7 @@ use App\Models\BusinessCategory;
 use App\Models\Favorite;
 use Illuminate\Http\Request;
 
-class HomeController extends Controller
+class ApiV1HomeController extends Controller
 {
     public function index(Request $request)
     {
@@ -62,8 +62,8 @@ class HomeController extends Controller
                 return $cat;
             });
             
-            $query = Business::select('id', 'owner_id', 'name', 'slug', 'business_type', 'business_category_id', 'address', 'latitude', 'longitude', 'city_id', 'rating', 'business_image', 'business_logo')
-                ->with(['businessCategory:id,name', 'city:id,name'])
+            $query = Business::select('id', 'owner_id', 'name', 'slug', 'business_type', 'business_category_id', 'area', 'latitude', 'longitude', 'city_id', 'rating', 'business_image')
+                ->with(['businessCategory:id,name', 'city:id,name', 'businessSetting:id,business_id,is_verified'])
                 ->where('status', 'active');
 
             if ($areaLatLong) {
@@ -78,7 +78,7 @@ class HomeController extends Controller
 
             $featuredBusinesses = $query->take(10)->get()->map(function($business) {
                 $business->business_image = getImage($business->business_image, 'business');
-                $business->business_logo = getImage($business->business_logo, 'business');
+                $business->is_verified = $business->businessSetting?->is_verified ? 1 : 0;
                 return $business;
             });
 
@@ -119,8 +119,8 @@ class HomeController extends Controller
     public function businesses(Request $request)
     {
         try {
-            $query = Business::select('id', 'owner_id', 'name', 'slug', 'business_type', 'business_category_id', 'address', 'latitude', 'longitude', 'city_id', 'rating', 'business_image', 'business_logo')
-                ->with(['businessCategory:id,name', 'city:id,name', 'reviews'])
+            $query = Business::select('id', 'owner_id', 'name', 'slug', 'business_type', 'business_category_id', 'area', 'latitude', 'longitude', 'city_id', 'rating', 'business_image')
+                ->with(['businessCategory:id,name', 'city:id,name', 'reviews', 'businessSetting:id,business_id,is_verified'])
                 ->where('status', 'active');
 
             $lat = $request->header('X-Latitude') ?? $request->get('latitude');
@@ -150,10 +150,10 @@ class HomeController extends Controller
                 });
             }
 
-            $businesses = $query->paginate(15);
+            $businesses = $query->paginate(12);
             $businesses->getCollection()->transform(function($business) {
                 $business->business_image = getImage($business->business_image, 'business');
-                $business->business_logo = getImage($business->business_logo, 'business');
+                $business->is_verified = $business->businessSetting?->is_verified ? 1 : 0;
                 return $business;
             });
 
@@ -173,7 +173,7 @@ class HomeController extends Controller
         try {
             $request->validate([
                 'business_id' => 'required|exists:businesses,id',
-                'type' => 'nullable|in:business,product,service',
+                'type' => 'nullable|in:business,product,service,expert',
                 'item_id' => 'nullable|integer',
             ]);
 

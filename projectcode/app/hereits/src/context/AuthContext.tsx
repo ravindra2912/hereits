@@ -11,6 +11,8 @@ interface UserProfile {
   contact?: string;
   role?: number;
   credit_balance?: number;
+  dob?: string;
+  profile?: string;
 }
 
 interface AuthContextType {

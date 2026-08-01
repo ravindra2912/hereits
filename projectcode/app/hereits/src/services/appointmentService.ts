@@ -24,5 +24,6 @@ export const appointmentService = {
       body: payload,
     }),
 
-  getMyAppointments: () => apiRequest('/my-appointments'),
+  getMyAppointments: (page: number = 1, perPage: number = 10) =>
+    apiRequest(`/my-appointments?page=${page}&per_page=${perPage}`),
 };

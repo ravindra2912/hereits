@@ -10,10 +10,12 @@ import {
   View,
   Image,
 } from 'react-native';
+import { BusinessCardSkeleton } from '../components/SkeletonLoader';
 import { businessService } from '../services/businessService';
 import { useLocation } from '../context/LocationContext';
 import FallbackImage from '../components/FallbackImage';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import ComingSoon from '../components/ComingSoon';
 
 interface BusinessListScreenProps {
   onSelectBusiness?: (id: number) => void;
@@ -39,6 +41,9 @@ export const BusinessListScreen: React.FC<BusinessListScreenProps> = ({
   const [categories, setCategories] = useState<any[]>([]);
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     if (route.params?.categoryId !== undefined) {
@@ -53,16 +58,36 @@ export const BusinessListScreen: React.FC<BusinessListScreenProps> = ({
     }
   };
 
-  const fetchBusinesses = async () => {
-    setLoading(true);
+  const fetchBusinesses = async (pageNum: number, resetList = false) => {
+    if (pageNum === 1) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
     const res = await businessService.getBusinesses({
       category_id: activeCategory ? String(activeCategory) : undefined,
       search: search || undefined,
+      page: pageNum,
     });
     if (res && res.success && res.data) {
-      setBusinesses(res.data.data || res.data || []);
+      const items = res.data.data || [];
+      const currentPage = res.data.current_page || 1;
+      const lastPage = res.data.last_page || 1;
+
+      if (resetList) {
+        setBusinesses(items);
+      } else {
+        setBusinesses(prev => [...prev, ...items]);
+      }
+      setPage(currentPage);
+      setHasMore(currentPage < lastPage);
+    } else {
+      if (resetList) {
+        setBusinesses([]);
+      }
     }
     setLoading(false);
+    setLoadingMore(false);
   };
 
   useEffect(() => {
@@ -70,8 +95,16 @@ export const BusinessListScreen: React.FC<BusinessListScreenProps> = ({
   }, []);
 
   useEffect(() => {
-    fetchBusinesses();
+    setPage(1);
+    setHasMore(true);
+    fetchBusinesses(1, true);
   }, [activeCategory, search, location]);
+
+  const handleLoadMore = () => {
+    if (!loading && !loadingMore && hasMore) {
+      fetchBusinesses(page + 1);
+    }
+  };
 
   return (
     <View style={[styles.container, theme.background]}>
@@ -85,12 +118,21 @@ export const BusinessListScreen: React.FC<BusinessListScreenProps> = ({
 
       {/* Business Directory List */}
       {loading ? (
-        <ActivityIndicator size="large" color="#6366F1" style={{ marginTop: 40 }} />
+        <View style={styles.skeletonContainer}>
+          {Array.from({ length: 8 }).map((_, index) => (
+            <BusinessCardSkeleton key={`skeleton-${index}`} theme={theme} />
+          ))}
+        </View>
       ) : (
         <FlatList
           data={businesses}
           keyExtractor={item => String(item.id)}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
           contentContainerStyle={styles.listContainer}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.2}
+          ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color="#6366F1" style={{ marginVertical: 12 }} /> : null}
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => navigation.navigate('BusinessDetail', { businessId: item.id })}
@@ -98,35 +140,39 @@ export const BusinessListScreen: React.FC<BusinessListScreenProps> = ({
             >
               <View style={styles.bizAvatar}>
                 <FallbackImage
-                  source={item.business_logo || item.business_image ? { uri: item.business_logo || item.business_image } : null}
+                  source={item.business_image ? { uri: item.business_image } : null}
                   fallbackSource={fallbackImage}
                   style={styles.bizAvatarImage}
                   resizeMode="cover"
                 />
+                {(item.is_verified === 1 || item.is_verified === true) && (
+                  <Text style={styles.badgeTextOverlay}>Verified</Text>
+                )}
               </View>
               <View style={styles.bizContent}>
-                <View style={styles.bizRow}>
-                  <Text style={[styles.bizName, theme.primaryText]} numberOfLines={1}>
-                    {item.name}
-                  </Text>
-                  <Text style={styles.openBadge}>Active</Text>
-                </View>
-                <Text style={[styles.bizCategory, theme.secondaryText]}>
+                <Text style={[styles.bizName, theme.primaryText]} numberOfLines={1}>
+                  {item.name}
+                </Text>
+                <Text style={[styles.bizCategory, theme.secondaryText]} numberOfLines={1}>
                   {item.business_category?.name || 'Local Store'}
                 </Text>
                 <Text style={[styles.bizAddress, theme.secondaryText]} numberOfLines={1}>
-                  📍 {item.address || 'Surat'}
+                  📍 {item.area && item.city?.name ? `${item.area}, ${item.city.name}` : (item.area || item.city?.name || 'Surat')}
                 </Text>
               </View>
             </TouchableOpacity>
           )}
           ListEmptyComponent={
-            <View style={styles.emptyView}>
-              <Text style={{ fontSize: 32, marginBottom: 8 }}>🔍</Text>
-              <Text style={[styles.emptyText, theme.secondaryText]}>
-                No businesses found matching your criteria.
-              </Text>
-            </View>
+            search ? (
+              <View style={styles.emptyView}>
+                <Text style={{ fontSize: 32, marginBottom: 8 }}>🔍</Text>
+                <Text style={[styles.emptyText, theme.secondaryText]}>
+                  No businesses found matching your search.
+                </Text>
+              </View>
+            ) : (
+              <ComingSoon theme={theme} />
+            )
           }
         />
       )}
@@ -188,62 +234,74 @@ const styles = StyleSheet.create({
   selectedChipText: {
     color: '#FFFFFF',
   },
+  skeletonContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
   listContainer: {
     paddingBottom: 40,
   },
   bizCard: {
-    flexDirection: 'row',
-    padding: 16,
+    width: '48%',
+    padding: 10,
     borderRadius: 16,
-    marginBottom: 12,
-    alignItems: 'center',
   },
   bizAvatar: {
-    width: 48,
-    height: 48,
+    width: '100%',
+    height: 110,
     borderRadius: 14,
     backgroundColor: '#EEF2FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    position: 'relative',
+    overflow: 'hidden',
+    marginBottom: 8,
   },
   bizAvatarText: {
     fontSize: 24,
   },
   bizAvatarImage: {
-    width: 48,
-    height: 48,
+    width: '100%',
+    height: 110,
     borderRadius: 14,
   },
   bizContent: {
-    flex: 1,
-  },
-  bizRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    paddingHorizontal: 2,
   },
   bizName: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
-    flex: 1,
+    marginBottom: 2,
   },
-  openBadge: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#10B981',
-    backgroundColor: '#D1FAE5',
-    paddingHorizontal: 8,
+  badgeTextOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#6366F1',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 6,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   bizCategory: {
     fontSize: 12,
-    marginTop: 2,
+    marginBottom: 4,
   },
   bizAddress: {
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 11,
   },
   emptyView: {
     alignItems: 'center',
@@ -260,6 +318,7 @@ const lightTheme = StyleSheet.create({
   primaryText: { color: '#0F172A' },
   secondaryText: { color: '#64748B' },
   cardBg: { backgroundColor: '#FFFFFF' },
+  skeletonBg: { backgroundColor: '#E2E8F0' },
 });
 
 const darkTheme = StyleSheet.create({
@@ -267,6 +326,7 @@ const darkTheme = StyleSheet.create({
   primaryText: { color: '#F8FAFC' },
   secondaryText: { color: '#94A3B8' },
   cardBg: { backgroundColor: '#1E293B' },
+  skeletonBg: { backgroundColor: '#334155' },
 });
 
 export default BusinessListScreen;

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -9,6 +8,7 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
+import { Skeleton } from '../components/SkeletonLoader';
 import { chatService } from '../services/chatService';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -74,7 +74,20 @@ export const ChatDetailScreen: React.FC<ChatDetailScreenProps> = () => {
 
       {/* Messages Feed */}
       {loading ? (
-        <ActivityIndicator size="large" color="#6366F1" style={{ marginTop: 40 }} />
+        <View style={styles.messagesList}>
+          <View style={[styles.msgBubble, styles.otherMsgBubble, { width: 150 }]}>
+            <Skeleton style={[theme.skeletonBg, { width: '100%', height: 14 }]} borderRadius={8} />
+          </View>
+          <View style={[styles.msgBubble, styles.myMsgBubble, { width: 180 }]}>
+            <Skeleton style={{ width: '100%', height: 14, backgroundColor: '#818CF8' }} borderRadius={8} />
+          </View>
+          <View style={[styles.msgBubble, styles.otherMsgBubble, { width: 220 }]}>
+            <Skeleton style={[theme.skeletonBg, { width: '100%', height: 14 }]} borderRadius={8} />
+          </View>
+          <View style={[styles.msgBubble, styles.myMsgBubble, { width: 100 }]}>
+            <Skeleton style={{ width: '100%', height: 14, backgroundColor: '#818CF8' }} borderRadius={8} />
+          </View>
+        </View>
       ) : (
         <FlatList
           inverted
@@ -185,6 +198,7 @@ const lightTheme = StyleSheet.create({
   primaryText: { color: '#0F172A' },
   secondaryText: { color: '#64748B' },
   cardBg: { backgroundColor: '#FFFFFF' },
+  skeletonBg: { backgroundColor: '#CBD5E1' },
 });
 
 const darkTheme = StyleSheet.create({
@@ -192,6 +206,7 @@ const darkTheme = StyleSheet.create({
   primaryText: { color: '#F8FAFC' },
   secondaryText: { color: '#94A3B8' },
   cardBg: { backgroundColor: '#1E293B' },
+  skeletonBg: { backgroundColor: '#475569' },
 });
 
 export default ChatDetailScreen;

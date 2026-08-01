@@ -3,11 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use Auth;
-// use Hash;
 use Carbon\Carbon;
 use App\Models\OwnerOfUser;
 use App\Models\UserSetting;
-
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Mail\ResetPasswordEmail;
@@ -18,7 +16,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use App\Models\{Categories, User, UserCategory};
 
-class AuthController extends Controller
+class ApiV1AuthController extends Controller
 {
 	public function login(Request $request)
 	{
@@ -28,7 +26,6 @@ class AuthController extends Controller
 		$statuscode = 422;
 
 		try {
-
 			$msg = [];
 
 			$rules['email'] = 'required|string|max:255';
@@ -94,7 +91,6 @@ class AuthController extends Controller
 
 		$validator = Validator::make($request->all(), $rules, $msgs);
 		if ($validator->fails()) { // Validation fails
-			// $message = $validator->errors();
 			$message = $validator->errors()->first();
 		} elseif ($request->password != $request->confirm_password) {
 			$message =  'Confirm password is not match';
@@ -139,14 +135,11 @@ class AuthController extends Controller
 		$validator = Validator::make($request->all(), $rules);
 
 		if ($validator->fails()) { // Validation fails
-			// $message = $validator->errors();
 			$message = $validator->errors()->first();
 		} else {
 			try {
 				$User = User::where('email', $request->email)->first();
 				if ($User) {
-
-					//Check  if token exist then delete first
 					if ($request->email) {
 						DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 					}
@@ -184,7 +177,8 @@ class AuthController extends Controller
 		$statuscode = 422;
 
 		$rules = [
-			'email' => 'required|email|Exists:users,email',
+			'email' => 'required|email|exists:users,email',
+			'token' => 'required|string',
 			'password' => 'required|min:6',
 			'confirm_password' => 'required|min:6',
 		];
@@ -192,25 +186,33 @@ class AuthController extends Controller
 		$validator = Validator::make($request->all(), $rules);
 
 		if ($validator->fails()) { // Validation fails
-			// $message = $validator->errors();
 			$message = $validator->errors()->first();
 		} elseif ($request->password != $request->confirm_password) {
 			$message =  'Confirm password is not match';
 		} else {
 			try {
-				$User = User::where('email', $request->email)->first();
-				$to = Carbon::parse($User->varification_code_at);
-				$from = Carbon::now();
-				$diffInMinutes = $to->diffInMinutes($from);
-				if ($diffInMinutes <= 5) {
-					$User->password = Hash::make($request->password);
-					$User->save();
+				$reset = DB::table('password_reset_tokens')
+					->where('email', $request->email)
+					->where('token', $request->token)
+					->first();
 
-					$success = true;
-					$message =  'Success';
-					$statuscode = 200;
+				if ($reset) {
+					$createdAt = Carbon::parse($reset->created_at);
+					if ($createdAt->addMinutes(60)->isPast()) {
+						$message = 'Reset token has expired';
+					} else {
+						$User = User::where('email', $request->email)->first();
+						$User->password = Hash::make($request->password);
+						$User->save();
+
+						DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
+						$success = true;
+						$message = 'Success';
+						$statuscode = 200;
+					}
 				} else {
-					$message = 'Expired';
+					$message = 'Invalid reset token';
 				}
 			} catch (\Exception $e) {
 				$message = $e->getMessage();
@@ -228,7 +230,6 @@ class AuthController extends Controller
 		try {
 			$user = $request->user();
 			$user->tokens()->delete();
-			// $user->devices()->delete();
 			$success = true;
 			$message =  'Logouted';
 			$statuscode = 200;

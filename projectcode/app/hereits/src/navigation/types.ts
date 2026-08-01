@@ -9,6 +9,14 @@ export type RootStackParamList = {
   ProductDetail: { productId: number };
   ServiceDetail: { serviceId: number };
   ChatDetail: { conversationId: number; title: string };
+  BusinessCategoryList: { businessId: number; type: 'Products' | 'Services' };
+  BusinessProductList: { businessId: number; categoryId?: number; categoryName?: string };
+  BusinessServiceList: { businessId: number; categoryId?: number; categoryName?: string };
+  BusinessSpecialistList: { businessId: number };
+  ProfileEdit: undefined;
+  Favorites: undefined;
+  SpecialistDetail: { specialistId: number };
+  Appointments: { businessId?: number; businessName?: string } | undefined;
 };
 
 export type MainTabParamList = {

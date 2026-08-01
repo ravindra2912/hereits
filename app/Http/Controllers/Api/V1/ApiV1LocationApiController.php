@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\City;
 use Illuminate\Http\Request;
 
-class LocationApiController extends Controller
+class ApiV1LocationApiController extends Controller
 {
 
     public function searchCities(Request $request)

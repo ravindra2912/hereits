@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Image,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from 'react-native';
 import { businessService } from '../services/businessService';
 import { useLocation } from '../context/LocationContext';
 import FallbackImage from '../components/FallbackImage';
 import { useNavigation } from '@react-navigation/native';
+import { CategoryItemSkeleton, BusinessCardSkeleton } from '../components/SkeletonLoader';
+import ComingSoon from '../components/ComingSoon';
 
 interface HomeScreenProps {
   onSelectBusiness?: (businessId: number) => void;
@@ -46,9 +45,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
     if (res && res.success && res.data) {
       console.log("featured_businesses", res.data.featured_businesses);
-      if (res.data.banners?.length) setBanners(res.data.banners);
-      if (res.data.categories?.length) setCategories(res.data.categories);
-      if (res.data.featured_businesses) setBusinesses(res.data.featured_businesses);
+      setBanners(res.data.banners || []);
+      setCategories(res.data.categories || []);
+      setBusinesses(res.data.featured_businesses || []);
+    } else {
+      setBanners([]);
+      setCategories([]);
+      setBusinesses([]);
     }
     setLoading(false);
     setRefreshing(false);
@@ -63,16 +66,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     loadData();
   };
 
-  const defaultCategories = [
-    { id: 1, name: 'Doctors', icon: '🩺' },
-    { id: 2, name: 'Salons', icon: '✂️' },
-    { id: 3, name: 'Restaurants', icon: '🍽️' },
-    { id: 4, name: 'Electrician', icon: '⚡' },
-    { id: 5, name: 'Plumber', icon: '🔧' },
-    { id: 6, name: 'Fitness', icon: '🏋️' },
-  ];
-
-  const displayCategories = categories.length > 0 ? categories : defaultCategories;
+  const skeletons = Array.from({ length: 5 }, (_, i) => i);
 
   return (
     <ScrollView
@@ -81,22 +75,36 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#6366F1" />
       }
     >
-      {/* Header Bar with Location Selector */}
+      {/* Header Bar with App Icon + Location Selector */}
       <View style={styles.header}>
-        <View style={{ flex: 1, marginRight: 10 }}>
+        <Image
+          source={require('../assets/header_icon.png')}
+          style={styles.headerAppIcon}
+          resizeMode="cover"
+        />
+
+        <TouchableOpacity
+          style={{ flex: 1, marginRight: 10 }}
+          onPress={() => setLocationModalVisible(true)}
+          activeOpacity={0.7}
+        >
           <Text style={[styles.locationLabel, theme.secondaryText]}>
-            📍 CURRENT LOCATION
+            📍 LOCATION
           </Text>
-          <TouchableOpacity onPress={() => setLocationModalVisible(true)} style={styles.locationSelector}>
+          <View style={styles.locationSelector}>
             <Text style={[styles.locationText, theme.primaryText]} numberOfLines={1}>
               {location?.location_name || 'Select Location'}
             </Text>
             <Text style={styles.dropdownIcon}> ▾</Text>
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity style={[styles.profileButton, theme.cardBg]}>
-          <Text style={styles.profileIcon}>👤</Text>
+          </View>
         </TouchableOpacity>
+
+        {/* <TouchableOpacity
+          style={[styles.profileButton, theme.cardBg]}
+          onPress={() => navigation.navigate('AccountTab')}
+        >
+          <Text style={styles.profileIcon}>👤</Text>
+        </TouchableOpacity> */}
       </View>
 
 
@@ -113,89 +121,105 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </View>
       </View> */}
 
-      {/* Categories Horizontal Scroll */}
-      <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, theme.primaryText]}>
-          Explore Categories
-        </Text>
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoryList}
-      >
-        {displayCategories.map(item => (
-          <TouchableOpacity
-            key={item.id}
-            onPress={() => navigation.navigate('BusinessesTab', { categoryId: item.id })}
-            style={[styles.categoryCard, theme.cardBg]}
-          >
-            <View style={styles.categoryIconBg}>
-              {item.image ? (
-                <FallbackImage
-                  source={{ uri: item.image }}
-                  style={styles.categoryImage}
-                  fallbackSource={fallbackImage}
-                  resizeMode="cover"
-                />
-              ) : (
-                <Text style={styles.categoryIcon}>{item.icon || '📍'}</Text>
-              )}
-            </View>
-            <Text style={[styles.categoryName, theme.primaryText]} numberOfLines={1}>
-              {item.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {/* Featured Businesses Section */}
-      <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, theme.primaryText]}>
-          Top Rated Nearby
-        </Text>
-      </View>
-
-      {loading ? (
-        <ActivityIndicator size="large" color="#6366F1" style={{ marginVertical: 30 }} />
+      {!loading && categories.length === 0 && businesses.length === 0 ? (
+        <ComingSoon theme={theme} />
       ) : (
-        <View style={styles.businessList}>
-          {businesses.map((biz: any) => (
-            <TouchableOpacity
-              key={biz.id}
-              onPress={() => navigation.navigate('BusinessDetail', { businessId: biz.id })}
-              style={[styles.businessCard, theme.cardBg]}
-            >
-              <View style={styles.bizAvatar}>
-                <FallbackImage
-                  source={biz.business_logo || biz.business_image ? { uri: biz.business_logo || biz.business_image } : null}
-                  fallbackSource={fallbackImage}
-                  style={styles.bizAvatarImage}
-                  resizeMode="cover"
-                />
-              </View>
-              <View style={styles.bizInfo}>
-                <View style={styles.bizHeaderRow}>
-                  <Text style={[styles.bizName, theme.primaryText]} numberOfLines={1}>
-                    {biz.name}
+        <>
+          {/* Categories Horizontal Scroll */}
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, theme.primaryText]}>
+              Explore Categories
+            </Text>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryList}
+          >
+            {loading ? (
+              skeletons.map(index => (
+                <CategoryItemSkeleton key={`skeleton-${index}`} theme={theme} />
+              ))
+            ) : (
+              categories.map(item => (
+                <TouchableOpacity
+                  key={item.id}
+                  onPress={() => navigation.navigate('BusinessesTab', { categoryId: item.id })}
+                  style={[styles.categoryCard, theme.cardBg]}
+                >
+                  <View style={styles.categoryIconBg}>
+                    {item.image ? (
+                      <FallbackImage
+                        source={{ uri: item.image }}
+                        style={styles.categoryImage}
+                        fallbackSource={fallbackImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Text style={styles.categoryIcon}>{item.icon || '📍'}</Text>
+                    )}
+                  </View>
+                  <Text style={[styles.categoryName, theme.primaryText]} numberOfLines={1}>
+                    {item.name}
                   </Text>
-                  <Text style={styles.badgeText}>Verified</Text>
-                </View>
-                <Text style={[styles.bizCategory, theme.secondaryText]}>
-                  {biz.business_category?.name || 'Local Business'}
-                </Text>
-                <View style={styles.bizMetaRow}>
-                  <Text style={styles.ratingText}>⭐ {biz.rating || '0.0'}</Text>
-                  <Text style={[styles.metaDot, theme.secondaryText]}> • </Text>
-                  <Text style={[styles.reviewText, theme.secondaryText]} numberOfLines={1}>
-                    {biz.address || 'Local Address'}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+                </TouchableOpacity>
+              ))
+            )}
+          </ScrollView>
+
+          {/* Featured Businesses Section */}
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, theme.primaryText]}>
+              Top Rated Nearby
+            </Text>
+          </View>
+
+          {loading ? (
+            <View style={styles.businessList}>
+              {skeletons.slice(0, 6).map(index => (
+                <BusinessCardSkeleton key={`biz-skeleton-${index}`} theme={theme} />
+              ))}
+            </View>
+          ) : (
+            <View style={styles.businessList}>
+              {businesses.map((biz: any) => (
+                <TouchableOpacity
+                  key={biz.id}
+                  onPress={() => navigation.navigate('BusinessDetail', { businessId: biz.id })}
+                  style={[styles.businessCard, theme.cardBg]}
+                >
+                  <View style={styles.bizAvatar}>
+                    <FallbackImage
+                      source={biz.business_image ? { uri: biz.business_image } : null}
+                      fallbackSource={fallbackImage}
+                      style={styles.bizAvatarImage}
+                      resizeMode="cover"
+                    />
+                    {(biz.is_verified === 1 || biz.is_verified === true) && (
+                      <Text style={styles.badgeTextOverlay}>Verified</Text>
+                    )}
+                  </View>
+                  <View style={styles.bizInfo}>
+                    <Text style={[styles.bizName, theme.primaryText]} numberOfLines={1}>
+                      {biz.name}
+                    </Text>
+                    <Text style={[styles.bizCategory, theme.secondaryText]} numberOfLines={1}>
+                      {biz.business_category?.name || 'Local Business'}
+                    </Text>
+                    <View style={styles.bizMetaRow}>
+                      <Text style={styles.ratingText}>⭐ {biz.rating || '0.0'}</Text>
+                      <Text style={[styles.metaDot, theme.secondaryText]}> • </Text>
+                      <Text style={[styles.reviewText, theme.secondaryText]} numberOfLines={1}>
+                        {biz.area && biz.city?.name ? `${biz.area}, ${biz.city.name}` : (biz.area || biz.city?.name || 'Local Address')}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </>
       )}
     </ScrollView>
   );
@@ -212,6 +236,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+  },
+  headerAppIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 10,
+    marginRight: 12,
   },
   locationLabel: {
     fontSize: 10,
@@ -327,57 +357,64 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   businessList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     paddingBottom: 40,
   },
   businessCard: {
-    flexDirection: 'row',
-    padding: 16,
+    width: '48%',
+    padding: 10,
     borderRadius: 18,
     marginBottom: 14,
-    alignItems: 'center',
   },
   bizAvatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 16,
+    width: '100%',
+    height: 110,
+    borderRadius: 14,
     backgroundColor: '#EEF2FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    position: 'relative',
+    overflow: 'hidden',
+    marginBottom: 10,
   },
   bizAvatarIcon: {
     fontSize: 26,
   },
   bizAvatarImage: {
-    width: 54,
-    height: 54,
-    borderRadius: 16,
+    width: '100%',
+    height: 110,
+    borderRadius: 14,
   },
   bizInfo: {
-    flex: 1,
-  },
-  bizHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    paddingHorizontal: 2,
   },
   bizName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
-    flex: 1,
+    marginBottom: 2,
   },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '700',
+  badgeTextOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    fontSize: 9,
+    fontWeight: '800',
     color: '#6366F1',
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   bizCategory: {
-    fontSize: 13,
-    marginTop: 2,
+    fontSize: 12,
     marginBottom: 6,
   },
   bizMetaRow: {
@@ -385,16 +422,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ratingText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     color: '#D97706',
   },
   metaDot: {
-    fontSize: 12,
+    fontSize: 11,
   },
   reviewText: {
-    fontSize: 12,
+    fontSize: 11,
     flex: 1,
+  },
+  skeletonText: {
+    width: 50,
+    height: 12,
+    borderRadius: 6,
+    marginTop: 4,
   },
 });
 
@@ -403,13 +446,15 @@ const lightTheme = StyleSheet.create({
   primaryText: { color: '#0F172A' },
   secondaryText: { color: '#64748B' },
   cardBg: { backgroundColor: '#FFFFFF' },
+  skeletonBg: { backgroundColor: '#E2E8F0' },
 });
 
 const darkTheme = StyleSheet.create({
   background: { backgroundColor: '#0F172A' },
-  primaryText: { color: '#0F172A' },
+  primaryText: { color: '#F8FAFC' },
   secondaryText: { color: '#94A3B8' },
   cardBg: { backgroundColor: '#1E293B' },
+  skeletonBg: { backgroundColor: '#334155' },
 });
 
 export default HomeScreen;

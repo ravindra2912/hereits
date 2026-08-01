@@ -27,12 +27,19 @@ export const authService = {
 
   getProfile: () => apiRequest('/user/profile'),
 
-  updateProfile: (data: { first_name: string; last_name: string; contact?: string; dob?: string }) =>
+  updateProfile: (data: any) =>
     apiRequest('/user/profile/update', {
       method: 'POST',
       body: data,
     }),
 
+  updatePassword: (data: any) =>
+    apiRequest('/user/profile/update-password', {
+      method: 'POST',
+      body: data,
+    }),
+
   getOrders: () => apiRequest('/user/orders'),
-  getFavorites: () => apiRequest('/user/favorites'),
+  getFavorites: (page?: number) =>
+    apiRequest(`/user/favorites${page ? `?page=${page}` : ''}`),
 };

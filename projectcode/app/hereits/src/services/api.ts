@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Centralized API Service for Hereits Mobile App
 // Note: Android devices/emulators cannot resolve custom domain names like 'hereits.test' directly.
 // Use '10.0.2.2' for Android Emulator, or your local Wi-Fi IP '192.168.0.101' for Physical Devices.
-export const BASE_API_URL = ENV_BASE_API_URL || 'https://hereits.com/api/v1';
+export const BASE_API_URL = ENV_BASE_API_URL || 'http://192.168.1.11/api/v1';
 
 let authToken: string | null = null;
 
@@ -25,10 +25,14 @@ export async function apiRequest<T = any>(
   const { method = 'GET', body, headers = {} } = options;
 
   const reqHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
     Accept: 'application/json',
     ...headers,
   };
+
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  if (!isFormData) {
+    reqHeaders['Content-Type'] = 'application/json';
+  }
 
   // Only inject Host: hereits.test for local virtual host routing on PC
   if (
@@ -67,7 +71,7 @@ export async function apiRequest<T = any>(
     const response = await fetch(fullUrl, {
       method,
       headers: reqHeaders,
-      body: body ? JSON.stringify(body) : undefined,
+      body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
     });
 
     const result = await response.json();

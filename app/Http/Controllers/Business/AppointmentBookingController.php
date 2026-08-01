@@ -17,9 +17,11 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\BookingsExport;
 use App\Models\BusinessCategory;
+use App\Repositories\AppointmentRepository;
 
 class AppointmentBookingController extends Controller
 {
+    public function __construct(protected AppointmentRepository $appointmentRepository) {}
     /**
      * Display the user's profile form.
      */
@@ -219,11 +221,8 @@ class AppointmentBookingController extends Controller
 
     public function getExpertTiming(Request $request)
     {
-        $appoinment_id = null;
-        if (isset($request->appoinment_id)) {
-            $appoinment_id = $request->appoinment_id;
-        }
-        $slots = getExpertTiming($request->expert_id, $request->date, $appoinment_id);
+        $appoinment_id = $request->appoinment_id ?? null;
+        $slots = $this->appointmentRepository->resolveExpertTimeSlots($request->expert_id, $request->date, $appoinment_id);
         return response()->json($slots);
     }
 
@@ -359,7 +358,7 @@ class AppointmentBookingController extends Controller
 
         $timeSlots = array();
         if ($appontment->expert->is_appointment_book_with_time_slot) {
-            $timeSlots = getExpertTiming($appontment->expert_id, $appontment->booking_date, $id);
+            $timeSlots = $this->appointmentRepository->resolveExpertTimeSlots($appontment->expert_id, $appontment->booking_date, $id);
         }
 
         return view('business.appointment.booking.edit', compact('departments', 'experts', 'businessSetting', 'appontment', 'timeSlots'));

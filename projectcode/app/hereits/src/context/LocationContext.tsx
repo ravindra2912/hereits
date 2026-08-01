@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform, PermissionsAndroid } from 'react-native';
+import { Platform, PermissionsAndroid, Alert, Linking } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import { LocationPayload } from '../services/locationService';
 import { GOOGLE_MAP_KEY } from '@env';
@@ -112,6 +112,16 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
           console.warn('Location permission denied');
           setIsDetectingGPS(false);
+          if (granted === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+            Alert.alert(
+              'Location Permission Required',
+              'Please grant location permissions in your app settings to detect your current location.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Open Settings', onPress: () => Linking.openSettings() }
+              ]
+            );
+          }
           return null;
         }
       }
@@ -180,9 +190,36 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await setLocationData(currentLoc);
       setIsDetectingGPS(false);
       return currentLoc;
-    } catch (error) {
+    } catch (error: any) {
       console.error('GPS error:', error);
       setIsDetectingGPS(false);
+
+      const isPermissionError = error && (error.code === 1 || error.message?.toLowerCase().includes('permission') || error.message?.toLowerCase().includes('denied'));
+
+      Alert.alert(
+        isPermissionError ? 'Location Permission Required' : 'Location Services Disabled',
+        isPermissionError
+          ? 'Please enable location permissions in settings to use current location.'
+          : 'Please make sure your device\'s GPS / Location services are enabled to detect your current location.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: isPermissionError ? 'Open Settings' : 'Enable GPS',
+            onPress: () => {
+              if (Platform.OS === 'android') {
+                if (isPermissionError) {
+                  Linking.openSettings();
+                } else {
+                  Linking.sendIntent('android.settings.LOCATION_SOURCE_SETTINGS');
+                }
+              } else {
+                Linking.openSettings();
+              }
+            },
+          },
+        ]
+      );
+
       return null;
     }
   };

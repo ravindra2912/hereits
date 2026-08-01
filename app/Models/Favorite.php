@@ -28,4 +28,9 @@ class Favorite extends Model
     {
         return $this->belongsTo(Service::class, 'favorite_item_id', 'id');
     }
+
+    public function expert()
+    {
+        return $this->belongsTo(Expert::class, 'favorite_item_id', 'id');
+    }
 }

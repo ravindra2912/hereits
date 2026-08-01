@@ -9,7 +9,6 @@ use App\Models\Service;
 use App\Models\ReviewAndRating;
 use Illuminate\Http\Request;
 use App\Models\Favorite;
-
 use App\Models\Expert;
 use App\Models\AppointmentDepartment;
 use App\Models\Banner;
@@ -17,7 +16,7 @@ use App\Models\Category;
 use App\Models\Gallery;
 use Illuminate\Support\Facades\Auth;
 
-class BusinessController extends Controller
+class ApiV1BusinessController extends Controller
 {
     public function show($id)
     {
@@ -53,6 +52,18 @@ class BusinessController extends Controller
             $setting = getBusinessSettings($business->id);
             $isSubscriptionActive = $setting && ($setting->subscription_expiry_date > now());
 
+            // Filter out sensitive settings data
+            if ($setting) {
+                $setting = (object)[
+                    'is_appointment_system' => (bool)$setting->is_appointment_system,
+                    'is_appointment_with_department' => (bool)$setting->is_appointment_with_department,
+                    'is_appointment_price_required' => (bool)$setting->is_appointment_price_required,
+                    'is_ecommerce_system' => (bool)$setting->is_ecommerce_system,
+                    'is_service_system' => (bool)$setting->is_service_system,
+                    'is_verified' => (bool)$setting->is_verified,
+                ];
+            }
+
             $departments = array();
             $banners = array();
             $experts = collect();
@@ -66,12 +77,6 @@ class BusinessController extends Controller
                 'categoriesWithServices' => collect(),
             ];
             $galleries = collect();
-
-            // Banners (Hero Slider)
-            // $banners = Banner::where('business_id', $business->id)->where('status', 'active')->pluck('image_url')->toArray();
-            // $banners = array_map(function ($url) {
-            //     return getImage($url);
-            // }, $banners);
 
             // Gallery
             $galleries = Gallery::select('id', 'image_url', 'title', 'business_id', 'type')
@@ -124,7 +129,7 @@ class BusinessController extends Controller
                     }
 
                     // category with products
-                     $details['categoriesWithProducts'] = Category::select('id', 'name', 'image_url', 'business_id')
+                    $details['categoriesWithProducts'] = Category::select('id', 'name', 'image_url', 'business_id')
                         ->with(['products' => function ($query) use ($userId) {
                             $query->select('id', 'name', 'slug', 'description', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'category_id', 'business_id')
                                 ->with(['firstImage:id,product_id,image_url', 'category:id,name'])
@@ -241,8 +246,6 @@ class BusinessController extends Controller
                     'business' => $business,
                     'setting' => $setting,
                     'isSubscriptionActive' => $isSubscriptionActive,
-                    // 'departments' => $departments,
-                    // 'banners' => $banners,
                     'experts' => $experts,
                     'details' => $details,
                     'galleries' => $galleries,
@@ -254,12 +257,22 @@ class BusinessController extends Controller
         }
     }
 
-    public function services($id)
+    public function services(Request $request, $id)
     {
         try {
-            $services = Service::where('business_id', $id)
-                ->where('status', 'active')
-                ->get(['id', 'business_id', 'category_id', 'name', 'description', 'price', 'status']);
+            $query = Service::where('business_id', $id)
+                ->where('status', 'active');
+
+            if ($request->has('category_id') && $request->category_id != '') {
+                $query->where('category_id', $request->category_id);
+            }
+
+            $services = $query->paginate(12, ['id', 'business_id', 'category_id', 'name', 'slug', 'description', 'price', 'max_price', 'min_price', 'price_type', 'image_url', 'status']);
+            $services->getCollection()->transform(function ($s) {
+                $s->image_url = getImage($s->image_url);
+                return $s;
+            });
+
             return response()->json([
                 'status_code' => 200,
                 'success' => true,
@@ -271,12 +284,26 @@ class BusinessController extends Controller
         }
     }
 
-    public function products($id)
+    public function products(Request $request, $id)
     {
         try {
-            $products = Product::where('business_id', $id)
-                ->where('status', 'active')
-                ->get(['id', 'business_id', 'category_id', 'name', 'description', 'price', 'status']);
+            $query = Product::where('business_id', $id)
+                ->where('status', 'active');
+
+            if ($request->has('category_id') && $request->category_id != '') {
+                $query->where('category_id', $request->category_id);
+            }
+
+            $products = $query->with('firstImage:id,product_id,image_url')
+                ->paginate(12, ['id', 'business_id', 'category_id', 'name', 'slug', 'description', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'status']);
+            
+            $products->getCollection()->transform(function ($p) {
+                if ($p->firstImage) {
+                    $p->firstImage->image_url = getImage($p->firstImage->image_url);
+                }
+                return $p;
+            });
+
             return response()->json([
                 'status_code' => 200,
                 'success' => true,
@@ -310,11 +337,16 @@ class BusinessController extends Controller
     public function productDetails($id)
     {
         try {
-            $product = Product::where('id', $id)
-                ->orWhere('slug', $id)
-                ->with(['business', 'category', 'images' => function ($query) {
-                    $query->select('id', 'product_id', 'image_url');
-                }])
+            $product = Product::select('id', 'name', 'slug', 'description', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'category_id', 'business_id')
+                ->where(function ($query) use ($id) {
+                    $query->where('id', $id)
+                          ->orWhere('slug', $id);
+                })
+                ->with([
+                    'business:id,name,slug,business_logo,address',
+                    'category:id,name',
+                    'images:id,product_id,image_url'
+                ])
                 ->where('status', 'active')
                 ->firstOrFail();
 
@@ -324,6 +356,18 @@ class BusinessController extends Controller
 
             $business = $product->business;
             $setting = getBusinessSettings($business->id);
+
+            // Filter out sensitive settings data
+            if ($setting) {
+                $setting = (object)[
+                    'is_appointment_system' => (bool)$setting->is_appointment_system,
+                    'is_appointment_with_department' => (bool)$setting->is_appointment_with_department,
+                    'is_appointment_price_required' => (bool)$setting->is_appointment_price_required,
+                    'is_ecommerce_system' => (bool)$setting->is_ecommerce_system,
+                    'is_service_system' => (bool)$setting->is_service_system,
+                    'is_verified' => (bool)$setting->is_verified,
+                ];
+            }
 
             // Related Products
             $relatedProducts = Product::select('id', 'name', 'slug', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'business_id')
@@ -374,9 +418,15 @@ class BusinessController extends Controller
     public function serviceDetails($id)
     {
         try {
-            $service = Service::where('id', $id)
-                ->orWhere('slug', $id)
-                ->with(['business', 'category'])
+            $service = Service::select('id', 'name', 'slug', 'description', 'price_type', 'price', 'max_price', 'min_price', 'category_id', 'image_url', 'business_id')
+                ->where(function ($query) use ($id) {
+                    $query->where('id', $id)
+                          ->orWhere('slug', $id);
+                })
+                ->with([
+                    'business:id,name,slug,business_logo,address',
+                    'category:id,name'
+                ])
                 ->where('status', 'active')
                 ->firstOrFail();
 
@@ -385,8 +435,21 @@ class BusinessController extends Controller
             $business = $service->business;
             $setting = getBusinessSettings($business->id);
 
+            // Filter out sensitive settings data
+            if ($setting) {
+                $setting = (object)[
+                    'is_appointment_system' => (bool)$setting->is_appointment_system,
+                    'is_appointment_with_department' => (bool)$setting->is_appointment_with_department,
+                    'is_appointment_price_required' => (bool)$setting->is_appointment_price_required,
+                    'is_ecommerce_system' => (bool)$setting->is_ecommerce_system,
+                    'is_service_system' => (bool)$setting->is_service_system,
+                    'is_verified' => (bool)$setting->is_verified,
+                ];
+            }
+
             // Recommended Services
-            $recommendedServices = Service::where('business_id', $business->id)
+            $recommendedServices = Service::select('id', 'name', 'slug', 'description', 'price_type', 'price', 'max_price', 'min_price', 'category_id', 'image_url', 'business_id')
+                ->where('business_id', $business->id)
                 ->where('id', '!=', $service->id)
                 ->where('status', 'active')
                 ->inRandomOrder()
