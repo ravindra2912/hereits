@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\ApiV1BusinessController;
 use App\Http\Controllers\Api\V1\ApiV1AppointmentController;
 use App\Http\Controllers\Api\V1\ApiV1AccountController;
 use App\Http\Controllers\Api\V1\ApiV1ChatController;
+use App\Http\Controllers\Api\V1\ApiV1RagbotController;
 use App\Http\Controllers\Api\V1\ApiV1SupportTicketController;
 use App\Http\Controllers\Api\V1\ApiV1LocationController;
 
@@ -46,6 +47,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/expert-timing', 'getExpertTiming');
         Route::post('/book-appointment', 'bookAppointment');
     });
+
+    Route::post('/chatbot/chat', [ApiV1RagbotController::class, 'ragChat']);
 
     // Passport Authenticated Routes
     Route::middleware(['auth:api'])->group(function () {

@@ -15,7 +15,10 @@ use App\Http\Controllers\Front\BlogController;
 use App\Http\Controllers\Front\LocationController;
 use App\Http\Controllers\ChatController;
 
+use App\Http\Controllers\Api\V1\ApiV1RagbotController;
+
 Route::post('/set-location', [LocationController::class, 'setLocation'])->name('set-location');
+Route::post('/chatbot/chat', [ApiV1RagbotController::class, 'ragChat']);
 
 
 Route::controller(BlogController::class)->name('blog.')->group(function () {

@@ -3,8 +3,10 @@
  * Self-contained JS file that injects chatbot UI into the host page.
  */
 (function () {
-    // Configuration - Change this URL to match your backend API address
-    const API_URL = "http://localhost:8000";
+    // Configuration - Automatically use local proxy on HTTPS to prevent (blocked:mixed-content) errors
+    const API_URL = (typeof window !== 'undefined' && window.location && window.location.protocol === 'https:')
+        ? window.location.origin
+        : "http://130.210.17.238:8000";
 
     let IS_USER_LOGIN = false;
     let USER_info = "";
@@ -762,19 +764,31 @@
 
             try {
                 // Call API backend passing session_id, prompt, and history
-                const response = await fetch(`${API_URL}/api/chat`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        session_id: sessionId,
-                        prompt: text,
-                        history: history,
-                        is_login: IS_USER_LOGIN,
-                        user_info: USER_info
-                    })
+                const payload = JSON.stringify({
+                    session_id: sessionId,
+                    prompt: text,
+                    history: history,
+                    is_login: IS_USER_LOGIN,
+                    user_info: USER_info
                 });
+
+                let targetEndpoint = (API_URL === window.location.origin || !API_URL) ? "/chatbot/chat" : `${API_URL}/api/chat`;
+
+                let response;
+                try {
+                    response = await fetch(targetEndpoint, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: payload
+                    });
+                } catch (directError) {
+                    console.warn("Direct request to chatbot server failed/blocked. Retrying via local Laravel proxy...", directError);
+                    response = await fetch("/chatbot/chat", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: payload
+                    });
+                }
 
                 // Remove typing indicator
                 removeTypingIndicator(typingId);
