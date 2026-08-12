@@ -35,7 +35,14 @@ class ApiV1BusinessController extends Controller
                     }]);
                 })
                 ->where('status', 'active')
-                ->find($id);
+                ->where(function ($q) use ($id) {
+                    if (is_numeric($id)) {
+                        $q->where('id', $id)->orWhere('slug', $id);
+                    } else {
+                        $q->where('slug', $id);
+                    }
+                })
+                ->first();
 
             if (!$business) {
                 return response()->json([
@@ -238,6 +245,19 @@ class ApiV1BusinessController extends Controller
                 }
             }
 
+            $reviews = ReviewAndRating::where('business_id', $business->id)
+                ->with(['user:id,first_name,last_name,profile'])
+                ->latest()
+                ->limit(5)
+                ->get();
+
+            foreach ($reviews as $rev) {
+                if ($rev->user) {
+                    $rev->user->profile = getImage($rev->user->profile, 'user');
+                    $rev->user->avatar = $rev->user->profile;
+                }
+            }
+
             return response()->json([
                 'status_code' => 200,
                 'success' => true,
@@ -249,6 +269,7 @@ class ApiV1BusinessController extends Controller
                     'experts' => $experts,
                     'details' => $details,
                     'galleries' => $galleries,
+                    'reviews' => $reviews,
                     'totalExperts' => $totalExperts,
                 ]
             ]);

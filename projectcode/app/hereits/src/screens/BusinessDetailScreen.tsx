@@ -32,7 +32,7 @@ const fallbackImage = require('../assets/business_icon.png');
 export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  const businessId = route.params?.businessId;
+  const businessId = route.params?.businessId || route.params?.id;
   const { isAuthenticated, setAuthModalVisible } = useAuth();
 
   const isDarkMode = false;
@@ -51,15 +51,19 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
 
   useEffect(() => {
     const loadDetail = async () => {
+      if (!businessId) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       const res = await businessService.getBusinessDetail(businessId);
       if (res && res.success && res.data) {
         setDetailData(res.data);
-      }
-
-      const rRes = await businessService.getReviews(businessId);
-      if (rRes && rRes.success && rRes.data) {
-        setReviews(rRes.data);
+        if (res.data.reviews) {
+          setReviews(res.data.reviews);
+        }
+      } else {
+        setDetailData(null);
       }
       setLoading(false);
     };
@@ -67,7 +71,7 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
     loadDetail();
   }, [businessId]);
 
-  if (loading || !detailData) {
+  if (loading) {
     return (
       <View style={[styles.container, theme.background]}>
         <View style={styles.topNav}>
@@ -81,6 +85,32 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <BusinessDetailSkeleton theme={theme} />
         </ScrollView>
+      </View>
+    );
+  }
+
+  if (!detailData || !detailData.business) {
+    return (
+      <View style={[styles.container, theme.background]}>
+        <View style={styles.topNav}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backBtn, theme.cardBg]}>
+            <Text style={[styles.backIcon, theme.primaryText]}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={[styles.navTitle, theme.primaryText]}>Business Details</Text>
+        </View>
+        <View style={styles.notFoundContent}>
+          <Text style={styles.notFoundIcon}>🏢</Text>
+          <Text style={[styles.notFoundTitle, theme.primaryText]}>Business Not Found</Text>
+          <Text style={[styles.notFoundSub, theme.secondaryText]}>
+            The business you are looking for does not exist or may have been removed.
+          </Text>
+          <TouchableOpacity
+            style={styles.homeBtn}
+            onPress={() => navigation.navigate('HomeTab')}
+          >
+            <Text style={styles.homeBtnText}>Go to Home</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -1098,6 +1128,40 @@ const styles = StyleSheet.create({
   aboutMetaItem: {
     fontSize: 13,
     marginBottom: 6,
+  },
+  notFoundContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 60,
+  },
+  notFoundIcon: {
+    fontSize: 54,
+    marginBottom: 16,
+  },
+  notFoundTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  notFoundSub: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  homeBtn: {
+    backgroundColor: '#6366F1',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 14,
+  },
+  homeBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
 

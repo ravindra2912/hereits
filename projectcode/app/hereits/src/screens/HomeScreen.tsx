@@ -14,6 +14,19 @@ import FallbackImage from '../components/FallbackImage';
 import { useNavigation } from '@react-navigation/native';
 import { CategoryItemSkeleton, BusinessCardSkeleton } from '../components/SkeletonLoader';
 import ComingSoon from '../components/ComingSoon';
+import QRScannerModal from '../components/QRScannerModal';
+
+import Svg, { Path, Rect } from 'react-native-svg';
+
+const QRScanSvgIcon: React.FC<{ size?: number; color?: string }> = ({ size = 22, color = '#6366F1' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M3 8V5a2 2 0 012-2h3M16 3h3a2 2 0 012 2v3M21 16v3a2 2 0 01-2 2h-3M8 21H5a2 2 0 01-2-2v-3" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    <Rect x="7" y="7" width="3.5" height="3.5" rx="0.5" fill={color} />
+    <Rect x="13.5" y="7" width="3.5" height="3.5" rx="0.5" fill={color} />
+    <Rect x="7" y="13.5" width="3.5" height="3.5" rx="0.5" fill={color} />
+    <Rect x="13.5" y="13.5" width="3.5" height="3.5" rx="0.5" fill={color} />
+  </Svg>
+);
 
 interface HomeScreenProps {
   onSelectBusiness?: (businessId: number) => void;
@@ -39,6 +52,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isQRScannerVisible, setIsQRScannerVisible] = useState(false);
 
   const loadData = async () => {
     const res = await businessService.getHomeData();
@@ -99,13 +113,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         </TouchableOpacity>
 
-        {/* <TouchableOpacity
-          style={[styles.profileButton, theme.cardBg]}
-          onPress={() => navigation.navigate('AccountTab')}
+        <TouchableOpacity
+          style={styles.qrScanButton}
+          onPress={() => setIsQRScannerVisible(true)}
+          activeOpacity={0.8}
         >
-          <Text style={styles.profileIcon}>👤</Text>
-        </TouchableOpacity> */}
+          <QRScanSvgIcon size={22} color="#6366F1" />
+        </TouchableOpacity>
       </View>
+
+      <QRScannerModal
+        visible={isQRScannerVisible}
+        onClose={() => setIsQRScannerVisible(false)}
+      />
 
 
       {/* Promotional Banner */}
@@ -261,15 +281,17 @@ const styles = StyleSheet.create({
     color: '#6366F1',
     fontWeight: 'bold',
   },
-  profileButton: {
+  qrScanButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 14,
+    backgroundColor: '#EEF2FF',
     justifyContent: 'center',
     alignItems: 'center',
+    marginLeft: 6,
   },
-  profileIcon: {
-    fontSize: 20,
+  qrScanIcon: {
+    fontSize: 22,
   },
   searchContainer: {
     flexDirection: 'row',
