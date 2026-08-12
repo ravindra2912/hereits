@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Linking,
@@ -11,7 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { Camera, CameraType } from 'react-native-camera-kit';
 import { useNavigation } from '@react-navigation/native';
 import { businessService } from '../services/businessService';
 
@@ -36,19 +37,33 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ visible, onClose
   const navigation = useNavigation<any>();
   const [manualCode, setManualCode] = useState('');
   const [scanning, setScanning] = useState(false);
+  const [hasPermission, setHasPermission] = useState(false);
+  const hasScannedRef = useRef(false);
+
+  useEffect(() => {
+    if (visible) {
+      hasScannedRef.current = false;
+      requestCameraPermission();
+    }
+  }, [visible]);
 
   const requestCameraPermission = async () => {
-    if (Platform.OS !== 'android') return true;
+    if (Platform.OS !== 'android') {
+      setHasPermission(true);
+      return true;
+    }
     try {
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.CAMERA,
         {
           title: 'Camera Permission',
-          message: 'Hereits needs camera access to scan QR codes.',
+          message: 'Hereits needs camera access to scan QR codes automatically.',
           buttonPositive: 'OK',
         }
       );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
+      const ok = granted === PermissionsAndroid.RESULTS.GRANTED;
+      setHasPermission(ok);
+      return ok;
     } catch (err) {
       console.warn('Camera permission error:', err);
       return true;
@@ -84,29 +99,12 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ visible, onClose
     navigation.navigate('BusinessDetail', { businessId: targetIdentifier });
   };
 
-  const openCameraScanner = async () => {
-    const hasPerm = await requestCameraPermission();
-    if (!hasPerm) {
-      Alert.alert('Permission Denied', 'Camera permission is required to scan QR code.');
-      return;
-    }
-
-    setScanning(true);
-    try {
-      const result = await launchCamera({
-        mediaType: 'photo',
-        quality: 0.8,
-      });
-      setScanning(false);
-
-      if (result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        const scannedQrUrl = 'https://hereits.test/jaitry-surat';
-        handleParsedQRCode(scannedQrUrl);
-      }
-    } catch (err) {
-      setScanning(false);
-      console.warn('Camera scan error:', err);
+  const handleBarCodeRead = (event: any) => {
+    if (hasScannedRef.current) return;
+    const codeValue = event?.nativeEvent?.codeStringValue || event?.codeStringValue;
+    if (codeValue) {
+      hasScannedRef.current = true;
+      handleParsedQRCode(codeValue);
     }
   };
 
@@ -152,26 +150,40 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ visible, onClose
             </TouchableOpacity>
           </View>
           <Text style={styles.subTitleText}>
-            Point your camera at a Hereits QR code or select an image from gallery to scan.
+            Point camera at a Hereits QR code to automatically scan & open store.
           </Text>
 
-          {/* Viewfinder Frame */}
+          {/* Viewfinder Frame with Real-Time Auto Camera Scanner */}
           <View style={styles.viewfinderBox}>
-            <View style={[styles.corner, styles.cornerTL]} />
-            <View style={[styles.corner, styles.cornerTR]} />
-            <View style={[styles.corner, styles.cornerBL]} />
-            <View style={[styles.corner, styles.cornerBR]} />
-            <Text style={styles.viewfinderHint}>Align QR Code within frame</Text>
+            {visible && hasPermission ? (
+              <Camera
+                scanBarcode={true}
+                onReadCode={handleBarCodeRead}
+                showFrame={false}
+                zoom={-1}
+                maxZoom={-1}
+                scanThrottleDelay={500}
+                faceDetectionThrottleMs={-1}
+                style={styles.cameraStyle}
+              />
+            ) : (
+              <Text style={styles.viewfinderHint}>Camera Permission Required</Text>
+            )}
+            <View style={styles.overlayCorners} pointerEvents="none">
+              <View style={[styles.corner, styles.cornerTL]} />
+              <View style={[styles.corner, styles.cornerTR]} />
+              <View style={[styles.corner, styles.cornerBL]} />
+              <View style={[styles.corner, styles.cornerBR]} />
+              <View style={styles.hintBadge}>
+                <Text style={styles.viewfinderHint}>Align QR Code within frame</Text>
+              </View>
+            </View>
           </View>
 
           {/* Action Buttons */}
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.cameraBtn} onPress={openCameraScanner} disabled={scanning}>
-              <QRScanSvgIcon size={16} color="#FFFFFF" />
-              <Text style={styles.btnText}>Scan Camera</Text>
-            </TouchableOpacity>
             <TouchableOpacity style={styles.galleryBtn} onPress={openGalleryScanner} disabled={scanning}>
-              <Text style={styles.galleryBtnText}>🖼 From Gallery</Text>
+              <Text style={styles.galleryBtnText}>🖼 Select from Gallery</Text>
             </TouchableOpacity>
           </View>
 
@@ -245,31 +257,51 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   viewfinderBox: {
-    width: 220,
-    height: 220,
-    borderWidth: 1,
-    borderColor: '#475569',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 250,
+    height: 250,
+    borderRadius: 20,
     position: 'relative',
     marginBottom: 20,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#000000',
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cameraStyle: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  overlayCorners: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: 12,
   },
   corner: {
     position: 'absolute',
-    width: 24,
-    height: 24,
+    width: 28,
+    height: 28,
     borderColor: '#6366F1',
   },
-  cornerTL: { top: -2, left: -2, borderTopWidth: 4, borderLeftWidth: 4, borderTopLeftRadius: 8 },
-  cornerTR: { top: -2, right: -2, borderTopWidth: 4, borderRightWidth: 4, borderTopRightRadius: 8 },
-  cornerBL: { bottom: -2, left: -2, borderBottomWidth: 4, borderLeftWidth: 4, borderBottomLeftRadius: 8 },
-  cornerBR: { bottom: -2, right: -2, borderBottomWidth: 4, borderRightWidth: 4, borderBottomRightRadius: 8 },
+  cornerTL: { top: 0, left: 0, borderTopWidth: 4, borderLeftWidth: 4, borderTopLeftRadius: 16 },
+  cornerTR: { top: 0, right: 0, borderTopWidth: 4, borderRightWidth: 4, borderTopRightRadius: 16 },
+  cornerBL: { bottom: 0, left: 0, borderBottomWidth: 4, borderLeftWidth: 4, borderBottomLeftRadius: 16 },
+  cornerBR: { bottom: 0, right: 0, borderBottomWidth: 4, borderRightWidth: 4, borderBottomRightRadius: 16 },
+  hintBadge: {
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
   viewfinderHint: {
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
   },
   buttonRow: {
     flexDirection: 'row',
