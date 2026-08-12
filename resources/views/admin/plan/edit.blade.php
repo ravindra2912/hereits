@@ -43,25 +43,7 @@
                     <input type="number" step="0.01" class="form-control" id="price" name="price" value="{{ $plan->price }}" placeholder="Leave empty for free">
                 </div>
 
-                <div class="col-md-6 mb-3" id="perProductPriceField" style="display: {{ $plan->plan_type == 'product' ? 'block' : 'none' }};">
-                    <label for="per_product_price" class="form-label">Price Per Product (₹)</label>
-                    <input type="number" step="0.01" class="form-control" id="per_product_price" name="per_product_price" value="{{ $plan->per_product_price }}" placeholder="Price per product per month">
-                </div>
 
-                <div class="col-md-6 mb-3" id="maxProductLimitField" style="display: {{ $plan->plan_type == 'product' ? 'block' : 'none' }};">
-                    <label for="max_product_limit" class="form-label">Max Product Limit</label>
-                    <input type="number" class="form-control" id="max_product_limit" name="max_product_limit" value="{{ $plan->max_product_limit }}" placeholder="Maximum products allowed">
-                </div>
-
-                <div class="col-md-6 mb-3" id="perServicePriceField" style="display: {{ $plan->plan_type == 'service' ? 'block' : 'none' }};">
-                    <label for="per_service_price" class="form-label">Price Per Service (₹)</label>
-                    <input type="number" step="0.01" class="form-control" id="per_service_price" name="per_service_price" value="{{ $plan->per_service_price }}" placeholder="Price per service per month">
-                </div>
-
-                <div class="col-md-6 mb-3" id="maxServiceLimitField" style="display: {{ $plan->plan_type == 'service' ? 'block' : 'none' }};">
-                    <label for="max_service_limit" class="form-label">Max Service Limit</label>
-                    <input type="number" class="form-control" id="max_service_limit" name="max_service_limit" value="{{ $plan->max_service_limit }}" placeholder="Maximum services allowed">
-                </div>
 
                 <div class="col-md-6 mb-3">
                     <label for="duration" class="form-label">Duration (Months)</label>

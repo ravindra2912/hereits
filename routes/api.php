@@ -16,6 +16,7 @@ Route::prefix('v1')->group(function () {
     // Auth Routes
     Route::controller(ApiV1AuthController::class)->group(function () {
         Route::post('/login', 'login');
+        Route::post('/google-login', 'googleLogin');
         Route::post('/registration', 'register');
         Route::post('/forgot-password', 'forgotPassword');
         Route::post('/reset-password', 'ResetPassword');
@@ -70,6 +71,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/profile/update-password', 'updatePassword');
             Route::get('/favorites', 'favorites');
             Route::get('/orders', 'orders');
+            Route::get('/orders/{id}', 'showOrder');
+            Route::post('/orders/review', 'submitOrderReview');
         });
 
         Route::controller(ApiV1ChatController::class)->prefix('chat')->group(function () {

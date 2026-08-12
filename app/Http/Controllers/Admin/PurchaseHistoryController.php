@@ -42,9 +42,7 @@ class PurchaseHistoryController extends Controller
                 ->addColumn('plan_info', function ($row) {
                     $typeIcons = [
                         'subscription' => ['icon' => 'bi-star', 'color' => 'primary'],
-                        'product' => ['icon' => 'bi-box', 'color' => 'success'],
-                        'service' => ['icon' => 'bi-tools', 'color' => 'info'],
-                        'appointment' => ['icon' => 'bi-calendar-check', 'color' => 'warning']
+                        'credit' => ['icon' => 'bi-wallet2', 'color' => 'success'],
                     ];
                     $type = $row->plan_type ?? 'subscription';
                     $info = $typeIcons[$type] ?? ['icon' => 'bi-credit-card', 'color' => 'secondary'];

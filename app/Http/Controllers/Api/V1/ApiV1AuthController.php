@@ -102,7 +102,7 @@ class ApiV1AuthController extends Controller
 				$User->email = trim($request->email);
 				$User->contact = $request->contact == 0 ? null : $request->contact;
 				$User->dob = $request->dob;
-				$User->role = 3;
+				$User->role = 'User';
 				$User->password = Hash::make($request->password);
 				$User->save();
 
@@ -217,6 +217,57 @@ class ApiV1AuthController extends Controller
 			} catch (\Exception $e) {
 				$message = $e->getMessage();
 			}
+		}
+		return apiResponce($statuscode, $success, $message, $data);
+	}
+
+	public function googleLogin(Request $request)
+	{
+		$success = false;
+		$message = 'Something Wrong!';
+		$data = array();
+		$statuscode = 422;
+
+		try {
+			$rules = [
+				'email' => 'required|email|max:255',
+			];
+
+			$validator = Validator::make($request->all(), $rules);
+			if ($validator->fails()) {
+				$message = $validator->errors()->first();
+			} else {
+				$email = trim($request->email);
+				$user = User::where('email', $email)->first();
+
+				if (!$user) {
+					$firstName = trim($request->first_name ?? '');
+					$lastName = trim($request->last_name ?? '');
+
+					if (empty($firstName)) {
+						$nameParts = explode('@', $email);
+						$firstName = ucfirst($nameParts[0]);
+					}
+
+					$user = new User();
+					$user->first_name = $firstName;
+					$user->last_name = $lastName;
+					$user->email = $email;
+					$user->role = 'User';
+					$user->password = Hash::make(Str::random(16));
+					$user->save();
+				}
+
+				$token = $user->createToken('Laravel Password Grant Client')->accessToken;
+				$data['user_details'] = $user->apiObject();
+				$data['token'] = $token;
+
+				$statuscode = 200;
+				$success = true;
+				$message = 'Google login successful';
+			}
+		} catch (\Exception $e) {
+			$message = $e->getMessage();
 		}
 		return apiResponce($statuscode, $success, $message, $data);
 	}

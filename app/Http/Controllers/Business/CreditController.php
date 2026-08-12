@@ -50,7 +50,7 @@ class CreditController extends Controller
         $quantity = $request->quantity ?? 1;
         $total_amount = $quantity * $unit_price;
 
-        $result = validateCoupon($request->coupon_code, 'appointment', $total_amount);
+        $result = validateCoupon($request->coupon_code, 'credit', $total_amount);
 
         return response()->json($result);
     }
@@ -84,7 +84,7 @@ class CreditController extends Controller
 
                 // Coupon Validation
                 if ($request->has('coupon_code') && !empty($request->coupon_code)) {
-                    $validation = validateCoupon($request->coupon_code, 'appointment', $originalPrice);
+                    $validation = validateCoupon($request->coupon_code, 'credit', $originalPrice);
                     if (!$validation['success']) {
                         throw new \Exception($validation['message']);
                     }
@@ -96,8 +96,8 @@ class CreditController extends Controller
 
                 $binsert = new Purchase();
                 $binsert->business_id = getBusinessId();
-                $binsert->plan_id = null; // No fixed plan for appointment credits
-                $binsert->plan_type = 'appointment';
+                $binsert->plan_id = null; // No fixed plan for credits
+                $binsert->plan_type = 'credit';
                 $binsert->subtotal = $originalPrice;
                 $binsert->quantity = $quantity;
                 $binsert->coupon_id = $couponId;
@@ -110,7 +110,7 @@ class CreditController extends Controller
                     throw new \Exception('Failed to create purchase record.');
                 }
 
-                $redirect = route('business.Payment', ['type' => 'appointment', 'id' => $binsert->id]);
+                $redirect = route('business.Payment', ['type' => 'credit', 'id' => $binsert->id]);
                 $success = true;
                 $message = 'Credit purchase initiated.';
                 DB::commit();

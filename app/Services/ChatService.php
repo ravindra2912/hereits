@@ -61,14 +61,25 @@ class ChatService
         ];
     }
 
+    public function normalizeParticipantType(string $type): string
+    {
+        return match ($type) {
+            'user', 'App\\Models\\User', User::class => self::PARTICIPANT_USER,
+            'business', 'App\\Models\\Business', Business::class => self::PARTICIPANT_BUSINESS,
+            default => $type,
+        };
+    }
+
     public function participantKey(string $participantType, int $participantId): string
     {
-        return $participantType . ':' . $participantId;
+        return $this->normalizeParticipantType($participantType) . ':' . $participantId;
     }
 
     public function participantModel(string $participantType, int $participantId): Model
     {
-        return match ($participantType) {
+        $normalizedType = $this->normalizeParticipantType($participantType);
+
+        return match ($normalizedType) {
             self::PARTICIPANT_USER => User::query()
                 ->select(['id', 'first_name', 'last_name', 'profile', 'email', 'contact', 'role', 'status'])
                 ->findOrFail($participantId),
@@ -81,18 +92,19 @@ class ChatService
 
     public function participantPayload(string $participantType, int $participantId): array
     {
-        $participant = $this->participantModel($participantType, $participantId);
+        $normalizedType = $this->normalizeParticipantType($participantType);
+        $participant = $this->participantModel($normalizedType, $participantId);
 
         return [
-            'type' => $participantType,
+            'type' => $normalizedType,
             'id' => $participant->id,
-            'name' => $participantType === self::PARTICIPANT_BUSINESS
+            'name' => $normalizedType === self::PARTICIPANT_BUSINESS
                 ? $participant->name
                 : trim($participant->first_name . ' ' . $participant->last_name),
-            'avatar' => $participantType === self::PARTICIPANT_BUSINESS
+            'avatar' => $normalizedType === self::PARTICIPANT_BUSINESS
                 ? getImage($participant->business_logo)
                 : getImage($participant->profile),
-            'subtitle' => $participantType === self::PARTICIPANT_BUSINESS
+            'subtitle' => $normalizedType === self::PARTICIPANT_BUSINESS
                 ? 'Business'
                 : 'User',
         ];
@@ -188,8 +200,13 @@ class ChatService
 
     public function ensureActorCanAccessConversation(ChatConversation $conversation, array $actor): void
     {
+        $actorType = $this->normalizeParticipantType($actor['type']);
+
         $hasAccess = $conversation->participants
-            ->contains(fn(ChatConversationParticipant $participant) => $participant->participant_type === $actor['type'] && (int) $participant->participant_id === (int) $actor['id']);
+            ->contains(function (ChatConversationParticipant $participant) use ($actorType, $actor) {
+                return $this->normalizeParticipantType($participant->participant_type) === $actorType &&
+                       (int) $participant->participant_id === (int) $actor['id'];
+            });
 
         if (!$hasAccess) {
             throw new AuthorizationException('You do not have access to this conversation.');
@@ -334,9 +351,10 @@ class ChatService
                 /** @var UploadedFile $uploadedFile */
                 $path = fileUploadStorage($uploadedFile, 'chat/' . $conversation->id, 500, 500);
 
+                $disk = env('IMAGE_STORAGE_DISK', 'r2');
                 ChatMessageAttachment::query()->create([
                     'message_id'    => $message->id,
-                    'disk'          => 'public',
+                    'disk'          => $disk,
                     'path'          => $path,
                     'original_name' => $uploadedFile->getClientOriginalName(),
                     'mime_type'     => $uploadedFile->getMimeType(),
@@ -350,7 +368,7 @@ class ChatService
                 'last_message_at' => $message->created_at,
             ])->save();
 
-            return $message->load(['attachments']);
+            return $message->load(['attachments', 'replyTo']);
         });
     }
 

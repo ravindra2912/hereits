@@ -167,17 +167,7 @@ class ImageService
                 return "https://img.youtube.com/vi/$ytId/hqdefault.jpg";
             }
 
-            return Cache::remember('valid_image_' . md5($url), 86400, function () use ($url, $type) {
-                try {
-                    $response = Http::timeout(2)->head($url);
-                    if ($response->ok()) {
-                        return $url;
-                    }
-                } catch (\Exception $e) {
-                    Log::warning("Could not resolve image URL: " . $url . " - Error: " . $e->getMessage());
-                }
-                return $this->getPlaceholder($type);
-            });
+            return $url;
         }
 
         $imagePath = "storage/" . $url;
@@ -264,17 +254,7 @@ class ImageService
                 return "https://img.youtube.com/vi/$ytId/hqdefault.jpg";
             }
 
-            return Cache::remember('valid_image_' . md5($url), 86400, function () use ($url, $type) {
-                try {
-                    $response = Http::timeout(2)->head($url);
-                    if ($response->ok()) {
-                        return $url;
-                    }
-                } catch (\Exception $e) {
-                    Log::warning("Could not resolve image URL: " . $url . " - Error: " . $e->getMessage());
-                }
-                return $this->getPlaceholder($type);
-            });
+            return $url;
         }
 
         return Storage::disk('r2')->url($url);

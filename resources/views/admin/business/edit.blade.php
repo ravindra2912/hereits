@@ -441,30 +441,7 @@
           <h6 class="fw-bold text-uppercase m-0 small tracking-wider text-muted">Quotas & Expirations</h6>
         </div>
         <div class="row g-4">
-          <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 p-4">
-              <label class="form-label fw-bold small text-muted text-uppercase mb-3"><i class="bi bi-box-seam me-1"></i> Product Quota</label>
-              <div class="mb-3">
-                <input type="number" class="form-control form-control-lg fw-bold" name="product_limit" value="{{ $setting->product_limit }}" min="0">
-              </div>
-              <div class="mt-auto">
-                <label class="small text-muted mb-1">Limit Expiry Date</label>
-                <input type="date" class="form-control form-control-sm" name="product_limit_expiry_date" value="{{ $setting->product_limit_expiry_date }}">
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 p-4">
-              <label class="form-label fw-bold small text-muted text-uppercase mb-3"><i class="bi bi-person-gear me-1"></i> Service Quota</label>
-              <div class="mb-3">
-                <input type="number" class="form-control form-control-lg fw-bold" name="service_limit" value="{{ $setting->service_limit }}" min="0">
-              </div>
-              <div class="mt-auto">
-                <label class="small text-muted mb-1">Limit Expiry Date</label>
-                <input type="date" class="form-control form-control-sm" name="service_limit_expiry_date" value="{{ $setting->service_limit_expiry_date }}">
-              </div>
-            </div>
-          </div>
+
           <div class="col-md-4">
             <div class="card bg-primary text-white border-0 shadow-sm rounded-4 p-4">
               <label class="form-label fw-bold small text-white-50 text-uppercase mb-3"><i class="bi bi-star me-1"></i> Global Subscription</label>

@@ -50,9 +50,7 @@ class CouponController extends Controller
                         $color = match ($type) {
                             'all' => 'bg-primary',
                             'subscription' => 'bg-info',
-                            'product' => 'bg-warning text-dark',
-                            'service' => 'bg-success',
-                            'appointment' => 'bg-danger',
+                            'credit' => 'bg-success',
                             default => 'bg-secondary'
                         };
                         $badges .= '<span class="badge ' . $color . ' me-1 mb-1">' . ucfirst($type) . '</span>';
@@ -174,7 +172,7 @@ class CouponController extends Controller
             'discount_type' => 'required|in:flat,percentage',
             'discount_value' => 'required|numeric|min:0',
             'applicable_for' => 'required|array',
-            'applicable_for.*' => 'in:' . implode(',', config('const.coupon_compatibility', ['all', 'subscription', 'product', 'service', 'appointment'])),
+            'applicable_for.*' => 'in:' . implode(',', config('const.coupon_compatibility', ['all', 'subscription', 'credit'])),
             'max_discount' => 'nullable|numeric|min:0',
             'min_purchase' => 'nullable|numeric|min:0',
             'usage_type' => 'required|in:one_time,recurring,unlimited',
@@ -269,7 +267,7 @@ class CouponController extends Controller
             'discount_type' => 'required|in:flat,percentage',
             'discount_value' => 'required|numeric|min:0',
             'applicable_for' => 'required|array',
-            'applicable_for.*' => 'in:' . implode(',', config('const.coupon_compatibility', ['all', 'subscription', 'product', 'service', 'appointment'])),
+            'applicable_for.*' => 'in:' . implode(',', config('const.coupon_compatibility', ['all', 'subscription', 'credit'])),
             'max_discount' => 'nullable|numeric|min:0',
             'min_purchase' => 'nullable|numeric|min:0',
             'usage_type' => 'required|in:one_time,recurring,unlimited',

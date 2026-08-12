@@ -31,7 +31,7 @@ class PaymentController extends Controller
         $success = false;
 
         // Fetch purchase data based on type
-        if ($type == 'subscription' || $type == 'product' || $type == 'service' || $type == 'appointment') {
+        if (in_array($type, ['subscription', 'credit'])) {
             $purchaseData = Purchase::find($id);
             if ($purchaseData && $purchaseData->status == 'pending') {
 
@@ -46,10 +46,6 @@ class PaymentController extends Controller
                 // Set redirection URL based on type
                 if ($type == 'subscription') {
                     $data->redirectUrl = route('business.subscription');
-                } elseif ($type == 'product') {
-                    $data->redirectUrl = route('business.product.plans');
-                } elseif ($type == 'service') {
-                    $data->redirectUrl = route('business.service.plans');
                 } else {
                     $data->redirectUrl = route('business.credits');
                 }

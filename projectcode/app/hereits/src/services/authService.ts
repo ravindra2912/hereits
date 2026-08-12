@@ -7,6 +7,18 @@ export const authService = {
       body: { email, password },
     }),
 
+  googleLogin: (payload: {
+    email: string;
+    first_name?: string;
+    last_name?: string;
+    google_id?: string;
+    profile?: string;
+  }) =>
+    apiRequest('/google-login', {
+      method: 'POST',
+      body: payload,
+    }),
+
   register: (payload: {
     first_name: string;
     last_name: string;
@@ -39,7 +51,20 @@ export const authService = {
       body: data,
     }),
 
-  getOrders: () => apiRequest('/user/orders'),
+  getOrders: (page: number = 1, perPage: number = 10) =>
+    apiRequest(`/user/orders?page=${page}&per_page=${perPage}`),
+  getOrderDetails: (id: number | string) =>
+    apiRequest(`/user/orders/${id}`),
+  submitOrderReview: (payload: {
+    business_id: number;
+    order_id: number;
+    rating: number;
+    review: string;
+  }) =>
+    apiRequest('/user/orders/review', {
+      method: 'POST',
+      body: payload,
+    }),
   getFavorites: (page?: number) =>
     apiRequest(`/user/favorites${page ? `?page=${page}` : ''}`),
 };

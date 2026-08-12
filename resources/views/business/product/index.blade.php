@@ -19,9 +19,6 @@
         <h5 class="m-0 fw-bold text-dark"><i class="bi bi-box-seam me-2 text-primary"></i>Product Management</h5>
         <div class="d-flex flex-wrap align-items-center justify-content-md-end gap-2 pe-3">
             <div class="me-auto me-md-0 d-flex align-items-center gap-2">
-                <span class="badge bg-light text-dark border py-2 rounded-pill">
-                    <i class="bi bi-bar-chart-fill me-1 text-primary"></i> {{ $totalProducts }} / {{ $limit }} <span class="d-none d-sm-inline">Limit</span>
-                </span>
                 @if($businessSetting->is_product_import_export)
                     @if(checkBusinessPermission('product', 'products', 'view'))
                     <a href="{{ route('business.product.export') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm" title="Export Products">
@@ -36,16 +33,10 @@
                 @endif
             </div>
             <div class="d-flex gap-2 flex-grow-1 flex-md-grow-0">
-                @if($totalProducts >= $limit)
-                <a href="{{ route('business.product.plans') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm flex-fill">
-                    <i class="bi bi-cart-plus me-1"></i> <span class="d-none d-sm-inline">Buy More</span>
-                </a>
-                @else
-                    @if(checkBusinessPermission('product', 'products', 'add'))
-                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm flex-fill" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                        <i class="bi bi-plus-lg me-1"></i> <span class="d-none d-sm-inline">Add Product</span>
-                    </button>
-                    @endif
+                @if(checkBusinessPermission('product', 'products', 'add'))
+                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm flex-fill" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                    <i class="bi bi-plus-lg me-1"></i> <span class="d-none d-sm-inline">Add Product</span>
+                </button>
                 @endif
             </div>
         </div>

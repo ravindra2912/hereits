@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   FlatList,
   Modal,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -11,6 +10,7 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocation } from '../context/LocationContext';
 import { LocationPayload } from '../services/locationService';
 import { GOOGLE_MAP_KEY } from '@env';

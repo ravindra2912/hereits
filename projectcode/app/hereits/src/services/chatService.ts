@@ -5,10 +5,10 @@ export const chatService = {
 
   getMessages: (conversationId: number) => apiRequest(`/chat/conversations/${conversationId}/messages`),
 
-  sendMessage: (conversationId: number, message: string) =>
+  sendMessage: (conversationId: number, data: string | FormData) =>
     apiRequest(`/chat/conversations/${conversationId}/messages`, {
       method: 'POST',
-      body: { message },
+      body: typeof FormData !== 'undefined' && data instanceof FormData ? data : { message: data },
     }),
 
   startConversation: (businessId: number) =>

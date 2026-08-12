@@ -1,4 +1,4 @@
-package com.hereits
+package com.hereits2026
 
 import android.app.Application
 import com.facebook.react.PackageList

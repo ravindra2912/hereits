@@ -86,14 +86,14 @@
               <div class="row mb-4">
                 <div class="col-6">
                   <div class="p-3 bg-light rounded text-center shadow-sm">
-                    <h4 class="fw-bold text-primary mb-0"><span id="view_product_count">0</span> / <span id="view_product_limit" class="text-secondary small">0</span></h4>
-                    <small class="text-muted text-uppercase fw-bold ls-1" style="font-size: 10px;">Products (Count/Limit)</small>
+                    <h4 class="fw-bold text-primary mb-0"><span id="view_product_count">0</span></h4>
+                    <small class="text-muted text-uppercase fw-bold ls-1" style="font-size: 10px;">Products</small>
                   </div>
                 </div>
                 <div class="col-6">
                   <div class="p-3 bg-light rounded text-center shadow-sm">
-                    <h4 class="fw-bold text-success mb-0"><span id="view_service_count">0</span> / <span id="view_service_limit" class="text-secondary small">0</span></h4>
-                    <small class="text-muted text-uppercase fw-bold ls-1" style="font-size: 10px;">Services (Count/Limit)</small>
+                    <h4 class="fw-bold text-success mb-0"><span id="view_service_count">0</span></h4>
+                    <small class="text-muted text-uppercase fw-bold ls-1" style="font-size: 10px;">Services</small>
                   </div>
                 </div>
               </div>

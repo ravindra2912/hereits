@@ -13,7 +13,6 @@ use Illuminate\Support\Str;
 
 class ServiceController extends Controller
 {
-    use \App\Traits\ManageListingLimits;
 
     /**
      * Display a listing of the resource.
@@ -90,9 +89,8 @@ class ServiceController extends Controller
         $categories = getServiceCategory();
         $business_id = Auth::user()->business_id;
         $totalServices = Service::where('business_id', $business_id)->count();
-        $limit = $this->getEffectiveLimit($business_id, 'service');
 
-        return view('business.service.index', compact('categories', 'totalServices', 'limit'));
+        return view('business.service.index', compact('categories', 'totalServices'));
     }
 
     public function updateStatus(Request $request, $id)
@@ -110,16 +108,7 @@ class ServiceController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($service->status === 'in-active' && $request->status === 'active') {
-                $limitCheck = $this->checkListingLimit($businessId, Service::class, 'service');
-
-                if ($limitCheck) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $limitCheck,
-                    ], 422);
-                }
-            }
+            $service->status = $request->status;
 
             $service->status = $request->status;
             $service->save();
@@ -182,11 +171,6 @@ class ServiceController extends Controller
                 $message = $validator->errors();
             } else {
                 $business_id = getBusinessId();
-                $limitCheck = $this->checkListingLimit($business_id, Service::class, 'service');
-
-                if ($limitCheck) {
-                    return response()->json(['success' => false, 'message' => $limitCheck]);
-                }
 
                 $image_url = '';
                 if ($request->hasFile('image')) {
@@ -280,14 +264,7 @@ class ServiceController extends Controller
                 $service->price = $request->price;
                 $service->min_price = $request->min_price;
                 $service->max_price = $request->max_price;
-                if ($service->status == 'in-active' && $request->status == 'active') {
-                    $limitCheck = $this->checkListingLimit($business_id, Service::class, 'service');
-
-                    if ($limitCheck) {
-                        return response()->json(['success' => false, 'message' => $limitCheck]);
-                    }
-                    $service->status = $request->status;
-                }
+                $service->status = $request->status;
 
                 $service->save();
 

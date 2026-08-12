@@ -22,29 +22,10 @@ export const ProfileScreen: React.FC = () => {
   const [orders, setOrders] = useState<any[]>([]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      refreshProfile();
-      fetchUserData();
-    } else {
+    if (!isAuthenticated) {
       setAuthModalVisible(true);
     }
-
-    const unsubscribe = navigation.addListener('focus', () => {
-      if (isAuthenticated) {
-        fetchUserData();
-      }
-    });
-
-    return unsubscribe;
-  }, [isAuthenticated, navigation]);
-
-  const fetchUserData = async () => {
-    const fRes = await authService.getFavorites();
-    if (fRes.success && fRes.data) setFavorites(fRes.data);
-
-    const oRes = await authService.getOrders();
-    if (oRes.success && oRes.data) setOrders(oRes.data);
-  };
+  }, [isAuthenticated]);
 
   const handleLogout = async () => {
     await logout();
@@ -137,7 +118,16 @@ export const ProfileScreen: React.FC = () => {
           <Text style={styles.arrowIcon}>›</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.actionRow, theme.cardBg]}>
+        <TouchableOpacity
+          onPress={() => {
+            if (!isAuthenticated) {
+              setAuthModalVisible(true);
+              return;
+            }
+            navigation.navigate('OrdersList');
+          }}
+          style={[styles.actionRow, theme.cardBg]}
+        >
           <Text style={styles.actionIcon}>📦</Text>
           <Text style={[styles.actionLabel, theme.primaryText]}>Order History</Text>
           <Text style={styles.arrowIcon}>›</Text>

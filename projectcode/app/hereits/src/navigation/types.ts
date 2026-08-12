@@ -17,6 +17,8 @@ export type RootStackParamList = {
   Favorites: undefined;
   SpecialistDetail: { specialistId: number };
   Appointments: { businessId?: number; businessName?: string } | undefined;
+  OrdersList: undefined;
+  OrderDetail: { orderId: number; initialOrder?: any };
 };
 
 export type MainTabParamList = {

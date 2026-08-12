@@ -22,21 +22,9 @@ class PlanController extends Controller
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('price', function ($row) {
-                    if ($row->plan_type == 'subscription') {
-                        return $row->price ? '₹' . number_format($row->price, 2) : 'Free';
-                    } elseif ($row->plan_type == 'product') {
-                        return $row->per_product_price ? '₹' . number_format($row->per_product_price, 2) . '/product' : '-';
-                    } elseif ($row->plan_type == 'service') {
-                        return $row->per_service_price ? '₹' . number_format($row->per_service_price, 2) . '/service' : '-';
-                    }
-                    return '-';
+                    return $row->price ? '₹' . number_format($row->price, 2) : 'Free';
                 })
                 ->addColumn('limit', function ($row) {
-                    if ($row->plan_type == 'product') {
-                        return $row->max_product_limit ? $row->max_product_limit . ' products' : 'Unlimited';
-                    } elseif ($row->plan_type == 'service') {
-                        return $row->max_service_limit ? $row->max_service_limit . ' services' : 'Unlimited';
-                    }
                     return '-';
                 })
                 ->addColumn('duration', function ($row) {
@@ -48,9 +36,7 @@ class PlanController extends Controller
                 ->addColumn('plan_type', function ($row) {
                     $colors = [
                         'subscription' => 'primary',
-                        'product' => 'success',
-                        'service' => 'info',
-                        'appointment' => 'warning'
+                        'credit' => 'success',
                     ];
                     $color = $colors[$row->plan_type] ?? 'secondary';
                     return '<span class="badge bg-' . $color . '">' . ucfirst($row->plan_type) . '</span>';

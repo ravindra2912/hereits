@@ -24,10 +24,6 @@ class BusinessSetting extends Model
         'about_us_image',
         'subscription_expiry_date',
         'credit',
-        'product_limit',
-        'product_limit_expiry_date',
-        'service_limit',
-        'service_limit_expiry_date',
         'is_appointment_creadit_diduct_manual',
         'deduct_credit_per_customer_appointment',
         'deduct_credit_per_self_appointment',
@@ -56,10 +52,6 @@ class BusinessSetting extends Model
             'about_us_image' => $this->about_us_image,
             'subscription_expiry_date' => $this->subscription_expiry_date,
             'credit' => (float)$this->credit,
-            'product_limit' => (int)$this->product_limit,
-            'product_limit_expiry_date' => $this->product_limit_expiry_date,
-            'service_limit' => (int)$this->service_limit,
-            'service_limit_expiry_date' => $this->service_limit_expiry_date,
             'visibility' => $this->visibility,
         ];
 

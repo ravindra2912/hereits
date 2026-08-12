@@ -23,6 +23,13 @@ interface AuthContextType {
   authModalVisible: boolean;
   setAuthModalVisible: (visible: boolean) => void;
   login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
+  googleLogin: (payload: {
+    email: string;
+    first_name?: string;
+    last_name?: string;
+    google_id?: string;
+    profile?: string;
+  }) => Promise<{ success: boolean; message?: string }>;
   register: (payload: any) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -106,6 +113,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: false, message: res.message || 'Login failed' };
   };
 
+  const googleLogin = async (payload: {
+    email: string;
+    first_name?: string;
+    last_name?: string;
+    google_id?: string;
+    profile?: string;
+  }) => {
+    setIsLoading(true);
+    const res = await authService.googleLogin(payload);
+    setIsLoading(false);
+
+    if (res.success && res.data?.token) {
+      await updateToken(res.data.token);
+      const userDetails = res.data.user_details || null;
+      setUser(userDetails);
+      try {
+        if (userDetails) {
+          await AsyncStorage.setItem('auth_user', JSON.stringify(userDetails));
+        } else {
+          await AsyncStorage.removeItem('auth_user');
+        }
+      } catch (e) {
+        console.error('Failed to persist user details:', e);
+      }
+      setAuthModalVisible(false);
+      return { success: true, message: res.message };
+    }
+    return { success: false, message: res.message || 'Google Login failed' };
+  };
+
   const register = async (payload: any) => {
     setIsLoading(true);
     const res = await authService.register(payload);
@@ -166,6 +203,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         authModalVisible,
         setAuthModalVisible,
         login,
+        googleLogin,
         register,
         logout,
         refreshProfile,

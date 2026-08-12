@@ -17,6 +17,8 @@ class ChatMessageAttachment extends Model
         'sort_order',
     ];
 
+    protected $appends = ['url'];
+
     protected function casts(): array
     {
         return [
@@ -32,6 +34,6 @@ class ChatMessageAttachment extends Model
 
     public function getUrlAttribute(): string
     {
-        return Storage::disk($this->disk)->url($this->path);
+            return getImage($this->path);
     }
 }

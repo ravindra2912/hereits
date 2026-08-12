@@ -192,9 +192,7 @@ class BusinessController extends Controller
                     'is_appointment_system',
                     'is_ecommerce_system',
                     'is_service_system',
-                    'subscription_expiry_date',
-                    'product_limit',
-                    'service_limit'
+                    'subscription_expiry_date'
                 );
             },
             'state' => function ($q) {
@@ -397,12 +395,7 @@ class BusinessController extends Controller
                 $update->deduct_credit_per_customer_appointment = $request->deduct_credit_per_customer_appointment ?? 0;
                 $update->deduct_credit_per_self_appointment = $request->deduct_credit_per_self_appointment ?? 0;
 
-                $update->product_limit = $request->product_limit ?? 0;
-                $update->service_limit = $request->service_limit ?? 0;
-
                 $update->subscription_expiry_date = $request->subscription_expiry_date;
-                $update->product_limit_expiry_date = $request->product_limit_expiry_date;
-                $update->service_limit_expiry_date = $request->service_limit_expiry_date;
                 $update->visibility = $request->visibility ?? 'public';
                 $update->save();
 
@@ -500,14 +493,6 @@ class BusinessController extends Controller
                     $q->where(function ($query) use ($today) {
                         $query->whereNotNull('subscription_expiry_date')
                             ->where('subscription_expiry_date', '<=', $today);
-                    })
-                    ->orWhere(function ($query) use ($today) {
-                        $query->whereNotNull('product_limit_expiry_date')
-                            ->where('product_limit_expiry_date', '<=', $today);
-                    })
-                    ->orWhere(function ($query) use ($today) {
-                        $query->whereNotNull('service_limit_expiry_date')
-                            ->where('service_limit_expiry_date', '<=', $today);
                     });
                 });
 
@@ -532,16 +517,10 @@ class BusinessController extends Controller
                     return '<span class="badge bg-' . ($isExpired ? 'danger' : 'success') . '">' . $date . '</span>';
                 })
                 ->addColumn('product_expiry', function ($row) {
-                    $date = $row->businessSetting->product_limit_expiry_date ?? null;
-                    if (!$date) return '<span class="text-muted">N/A</span>';
-                    $isExpired = $date <= \Carbon\Carbon::today()->toDateString();
-                    return '<span class="badge bg-' . ($isExpired ? 'danger' : 'success') . '">' . $date . '</span>';
+                    return '<span class="text-muted">N/A</span>';
                 })
                 ->addColumn('service_expiry', function ($row) {
-                    $date = $row->businessSetting->service_limit_expiry_date ?? null;
-                    if (!$date) return '<span class="text-muted">N/A</span>';
-                    $isExpired = $date <= \Carbon\Carbon::today()->toDateString();
-                    return '<span class="badge bg-' . ($isExpired ? 'danger' : 'success') . '">' . $date . '</span>';
+                    return '<span class="text-muted">N/A</span>';
                 })
                 ->addColumn('status', function ($row) {
                     return '<span class="badge bg-' . ($row->status == 'active' ? 'success' : 'warning') . '">' . ucfirst($row->status) . '</span>';

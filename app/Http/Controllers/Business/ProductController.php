@@ -18,7 +18,6 @@ use App\Models\BusinessSetting;
 
 class ProductController extends Controller
 {
-    use \App\Traits\ManageListingLimits;
 
     /**
      * Display a listing of the resource.
@@ -97,9 +96,8 @@ class ProductController extends Controller
         $businessSetting = BusinessSetting::where('business_id', $business_id)->first('is_product_import_export');
         $categories = getProductCategory();
         $totalProducts = Product::where('business_id', $business_id)->count();
-        $limit = $this->getEffectiveLimit($business_id, 'product');
 
-        return view('business.product.index', compact('categories', 'totalProducts', 'limit', 'businessSetting'));
+        return view('business.product.index', compact('categories', 'totalProducts', 'businessSetting'));
     }
 
     public function updateStatus(Request $request, $id)
@@ -117,16 +115,7 @@ class ProductController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($product->status === 'in-active' && $request->status === 'active') {
-                $limitCheck = $this->checkListingLimit($businessId, Product::class, 'product');
-
-                if ($limitCheck) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $limitCheck,
-                    ], 422);
-                }
-            }
+            $product->status = $request->status;
 
             $product->status = $request->status;
             $product->save();
@@ -184,10 +173,6 @@ class ProductController extends Controller
                 $message = 'SKU already exists.';
             } else {
                 $business_id = getBusinessId();
-                $limitCheck = $this->checkListingLimit($business_id, Product::class, 'product');
-                if ($limitCheck) {
-                    return response()->json(['success' => false, 'message' => $limitCheck]);
-                }
 
                 $product = Product::create([
                     'business_id' => $business_id,
@@ -275,12 +260,7 @@ class ProductController extends Controller
                 $message = 'SKU already exists.';
             } else {
 
-                if ($product->status == 'in-active' && $request->status == 'active') {
-                    $limitCheck = $this->checkListingLimit($business_id, Product::class, 'product');
-                    if ($limitCheck) {
-                        return response()->json(['success' => false, 'message' => $limitCheck]);
-                    }
-                }
+
 
                 $product->update([
                     'name' => $request->name,

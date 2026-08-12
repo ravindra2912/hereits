@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   FlatList,
   StyleSheet,
@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import { ChatListItemSkeleton } from '../components/SkeletonLoader';
 import { chatService } from '../services/chatService';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import FallbackImage from '../components/FallbackImage';
 
 interface ChatScreenProps {
   onSelectConversation?: (conversationId: number, title: string) => void;
@@ -32,9 +33,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = () => {
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchConversations();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchConversations();
+    }, [])
+  );
 
   return (
     <View style={[styles.container, theme.background]}>
@@ -66,15 +69,19 @@ export const ChatScreen: React.FC<ChatScreenProps> = () => {
               }
               style={[styles.chatRow, theme.cardBg]}
             >
-              <View style={styles.avatar}>
-                <Text style={{ fontSize: 20 }}>💬</Text>
-              </View>
+              <FallbackImage
+                source={item.image ? { uri: item.image } : undefined}
+                fallbackSource={require('../assets/app_icon.png')}
+                style={styles.avatar}
+              />
               <View style={styles.chatInfo}>
                 <View style={styles.topRow}>
                   <Text style={[styles.chatTitle, theme.primaryText]} numberOfLines={1}>
-                    {item.title || 'Support Chat'}
+                    {item.title || 'Direct Chat'}
                   </Text>
-                  <Text style={[styles.chatTime, theme.secondaryText]}>Today</Text>
+                  <Text style={[styles.chatTime, theme.secondaryText]}>
+                    {item.last_message_at ? new Date(item.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                  </Text>
                 </View>
                 <Text style={[styles.lastMsg, theme.secondaryText]} numberOfLines={1}>
                   {item.last_message?.message || 'Tap to view conversation'}

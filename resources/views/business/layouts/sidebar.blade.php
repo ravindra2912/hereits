@@ -99,11 +99,7 @@
     </a>
     @endif
 
-    @if (Auth::user()->role === 'Business')
-    <a href="{{ route('business.product.plans') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('business.product.plans') ? 'active' : '' }}">
-      <i class="bi bi-card-checklist me-2"></i>Product Plans
-    </a>
-    @endif
+
     @endif
 
     @if ($businessSettings->is_pos_access && $businessSettings->is_ecommerce_system && Auth::user()->role === 'Business')
@@ -127,11 +123,7 @@
     </a>
     @endif
 
-    @if (Auth::user()->role === 'Business')
-    <a href="{{ route('business.service.plans') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('business.service.plans') ? 'active' : '' }}">
-      <i class="bi bi-card-checklist me-2"></i>Service Plans
-    </a>
-    @endif
+
     @endif
 
 

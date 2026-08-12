@@ -14,13 +14,15 @@ export const FallbackImage: React.FC<FallbackImageProps> = ({
 }) => {
   const [error, setError] = useState(false);
 
-  const sourceKey = typeof source === 'object' && source !== null ? source.uri : source;
+  const isUriObject = typeof source === 'object' && source !== null && 'uri' in source;
+  const hasValidUri = isUriObject ? !!source.uri && String(source.uri).trim() !== '' : !!source;
+  const sourceKey = isUriObject ? source.uri : source;
 
   React.useEffect(() => {
     setError(false);
   }, [sourceKey]);
 
-  const imageSource = error || !source ? fallbackSource : source;
+  const imageSource = error || !hasValidUri ? fallbackSource : source;
 
   return (
     <Image

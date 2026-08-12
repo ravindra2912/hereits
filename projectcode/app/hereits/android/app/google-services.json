@@ -1,0 +1,34 @@
+{
+  "project_info": {
+    "project_number": "1034832913243",
+    "project_id": "hereits-2026",
+    "storage_bucket": "hereits-2026.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1034832913243:android:com.hereits2026",
+        "android_client_info": {
+          "package_name": "com.hereits2026"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1034832913243-lhms3o79iis7ld1r0pjma2cehikfvahl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSy_Default_Key"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

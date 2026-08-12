@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('plans', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->enum('plan_type', ['subscription', 'product', 'service', 'appointment']);
+            $table->enum('plan_type', ['subscription'])->default('subscription');
             $table->decimal('price', 10, 2)->nullable();
             $table->double('per_product_price', 10, 2)->nullable()->comment('Price of one product');
             $table->double('per_service_price', 10, 2)->nullable()->comment('Price of one service');

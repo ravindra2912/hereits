@@ -134,14 +134,7 @@ trait BusinessTraits
                         );
                     }
                 }
-            } else if ($type == 'product' || $type == 'service') {
-                $field = ($type == 'product') ? 'product_limit' : 'service_limit';
-                $expiry_field = ($type == 'product') ? 'product_limit_expiry_date' : 'service_limit_expiry_date';
-                $settings->update([
-                    $expiry_field => $purchase->end_date,
-                    $field => $purchase->quantity,
-                ]);
-            } else if ($type == 'appointment') {
+            } else if ($type == 'credit' || $type == 'appointment') {
                 $settings->increment('credit', $purchase->quantity);
             }
             DB::commit();

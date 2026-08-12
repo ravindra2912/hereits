@@ -29,6 +29,8 @@ import BusinessCategoryListScreen from './src/screens/BusinessCategoryListScreen
 import BusinessProductListScreen from './src/screens/BusinessProductListScreen';
 import BusinessServiceListScreen from './src/screens/BusinessServiceListScreen';
 import BusinessSpecialistListScreen from './src/screens/BusinessSpecialistListScreen';
+import OrdersListScreen from './src/screens/OrdersListScreen';
+import OrderDetailScreen from './src/screens/OrderDetailScreen';
 import { RootStackParamList, MainTabParamList } from './src/navigation/types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -69,6 +71,8 @@ function MainNavigator() {
         <Stack.Screen name="Favorites" component={FavoritesScreen} />
         <Stack.Screen name="SpecialistDetail" component={SpecialistDetailScreen} />
         <Stack.Screen name="Appointments" component={AppointmentScreen} />
+        <Stack.Screen name="OrdersList" component={OrdersListScreen} />
+        <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
       </Stack.Navigator>
 
       <LocationModal

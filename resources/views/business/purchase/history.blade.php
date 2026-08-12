@@ -47,9 +47,8 @@
                                         @php
                                         $typeIcons = [
                                         'subscription' => ['icon' => 'bi-star', 'color' => 'primary'],
-                                        'product' => ['icon' => 'bi-box', 'color' => 'success'],
-                                        'service' => ['icon' => 'bi-tools', 'color' => 'info'],
-                                        'appointment' => ['icon' => 'bi-calendar-check', 'color' => 'warning']
+                                        'credit' => ['icon' => 'bi-wallet2', 'color' => 'success'],
+                                        'appointment' => ['icon' => 'bi-wallet2', 'color' => 'success'],
                                         ];
                                         $typeInfo = $typeIcons[$data->plan_type] ?? ['icon' => 'bi-credit-card', 'color' => 'secondary'];
                                         @endphp

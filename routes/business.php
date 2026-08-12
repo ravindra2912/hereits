@@ -11,10 +11,8 @@ use App\Http\Controllers\Business\CustomerController;
 use App\Http\Controllers\Business\AppointmentBookingController;
 use App\Http\Controllers\Business\AppointmentDepartmentController;
 use App\Http\Controllers\Business\ProductController;
-use App\Http\Controllers\Business\ProductPlanController;
 use App\Http\Controllers\Business\BannerController;
 use App\Http\Controllers\Business\ServiceController;
-use App\Http\Controllers\Business\ServicePlanController;
 use App\Http\Controllers\Business\SubscriptionPlanController;
 use App\Http\Controllers\Business\CreditController;
 use App\Http\Controllers\Business\PurchaseHistoryController;
@@ -81,11 +79,7 @@ Route::name('business.')->group(function () {
                 Route::get('home-management/search-category', 'searchCategory')->name('home-management.search-category');
             })->middleware('checkBusinessPerm:home_management');
 
-            // Product Plan Routes
-            Route::controller(ProductPlanController::class)->group(function () {
-                Route::get('product-plans', 'index')->name('product.plans');
-                Route::post('product-plans/buy', 'buy')->name('product.plans.buy');
-            })->middleware('checkBusinessPerm:owner_only');
+
 
             // Quotation Routes
             Route::get('quotation/search-customer', [\App\Http\Controllers\Business\QuotationController::class, 'searchCustomer'])->name('quotation.search-customer')->middleware('checkBusinessPerm:product,products');
@@ -104,11 +98,7 @@ Route::name('business.')->group(function () {
             Route::resource('service-category', \App\Http\Controllers\Business\ServiceCategoryController::class)->middleware('checkBusinessPerm:service,categories');
             Route::post('service-category/status/{id}', [\App\Http\Controllers\Business\ServiceCategoryController::class, 'updateStatus'])->name('service-category.status.update')->middleware('checkBusinessPerm:service,categories');
 
-            // Service Plan Routes
-            Route::controller(\App\Http\Controllers\Business\ServicePlanController::class)->group(function () {
-                Route::get('service-plans', 'index')->name('service.plans');
-                Route::post('service-plans/buy', 'buy')->name('service.plans.buy');
-            })->middleware('checkBusinessPerm:owner_only');
+
         });
         Route::resource('gallery', GalleryController::class)->middleware('checkBusinessPerm:store_management,gallery');
 
@@ -154,7 +144,7 @@ Route::name('business.')->group(function () {
             Route::post('setting/business/system-setting', 'systemSettingUpdate')->name('setting.systemsetting.update')->middleware('checkBusinessPerm:owner_only');
             Route::get('switch-business/{id}', 'switchBusiness')->name('switchBusiness');
 
-            Route::post('setting/business/service-limit/buy', 'serviceLimitBuy')->name('setting.business.servicelimit.buy')->middleware('checkBusinessPerm:owner_only');
+
         });
 
         // Credit Routes
@@ -165,19 +155,7 @@ Route::name('business.')->group(function () {
             Route::post('credits/buy', 'buy')->name('credits.buy');
         })->middleware('checkBusinessPerm:owner_only');
 
-        Route::controller(ProductPlanController::class)->group(function () {
-            Route::get('product-plan', 'index')->name('product.plan');
-            Route::get('product-plan/details/{id}', 'show')->name('product.plan.details');
-            Route::post('product-plan/validate-coupon', 'validateCouponAjax')->name('product.plan.validate_coupon');
-            Route::post('product-plan/buy', 'buy')->name('product.plan.buy');
-        })->middleware('checkBusinessPerm:owner_only');
 
-        Route::controller(ServicePlanController::class)->group(function () {
-            Route::get('service-plan', 'index')->name('service.plan');
-            Route::get('service-plan/details/{id}', 'show')->name('service.plan.details');
-            Route::post('service-plan/validate-coupon', 'validateCouponAjax')->name('service.plan.validate_coupon');
-            Route::post('service-plan/buy', 'buy')->name('service.plan.buy');
-        })->middleware('checkBusinessPerm:owner_only');
 
         Route::controller(SubscriptionPlanController::class)->group(function () {
             Route::get('subscription', 'index')->name('subscription');

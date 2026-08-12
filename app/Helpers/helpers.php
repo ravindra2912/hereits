@@ -248,10 +248,6 @@ function getBusinessSettings($business_id = null)
             'is_service_system' => false,
             'subscription_expiry_date' => null,
             'credit' => 0,
-            'product_limit' => 0,
-            'product_limit_expiry_date' => null,
-            'service_limit' => 0,
-            'service_limit_expiry_date' => null,
             'is_verified' => false,
             'visibility' => 'public'
         ];

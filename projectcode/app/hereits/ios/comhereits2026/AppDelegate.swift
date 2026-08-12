@@ -24,7 +24,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     window = UIWindow(frame: UIScreen.main.bounds)
 
     factory.startReactNative(
-      withModuleName: "hereits",
+      withModuleName: "comhereits2026",
       in: window,
       launchOptions: launchOptions
     )

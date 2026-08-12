@@ -27,8 +27,8 @@ const LocationContext = createContext<LocationContextType>({
   isDetectingGPS: false,
   isLoadingStorage: true,
   locationModalVisible: false,
-  setLocationModalVisible: () => {},
-  setLocationData: async () => {},
+  setLocationModalVisible: () => { },
+  setLocationData: async () => { },
   detectCurrentLocation: async () => null,
 });
 

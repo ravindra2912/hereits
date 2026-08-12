@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('plan_id')->index()->nullable();
             $table->unsignedBigInteger('transaction_id')->nullable()->index();
             $table->bigInteger('coupon_id')->nullable();
-            $table->enum('plan_type', ['subscription', 'product', 'service', 'appointment']);
+            $table->enum('plan_type', ['subscription', 'credit'])->default('subscription');
 
             $table->decimal('subtotal', 10, 2);                              // 🔥 subtotal amount
             $table->integer('quantity')->nullable();                      // 🔥 products limit/services limit/appoinment credit

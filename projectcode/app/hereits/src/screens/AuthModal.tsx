@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -8,10 +8,19 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from 'react-native';
+import {
+  GoogleSignin,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
 import { useAuth } from '../context/AuthContext';
+
+GoogleSignin.configure({
+  webClientId: '1034832913243-lhms3o79iis7ld1r0pjma2cehikfvahl.apps.googleusercontent.com',
+  offlineAccess: true,
+  scopes: ['profile', 'email'],
+});
 
 interface AuthModalProps {
   visible: boolean;
@@ -21,9 +30,10 @@ interface AuthModalProps {
 export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
   const isDarkMode = false;
   const theme = isDarkMode ? darkTheme : lightTheme;
-  const { login, register, isLoading } = useAuth();
+  const { login, googleLogin, register, isLoading } = useAuth();
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Form Fields
   const [email, setEmail] = useState('');
@@ -32,6 +42,65 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
   const [lastName, setLastName] = useState('');
   const [contact, setContact] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setGoogleLoading(true);
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+      let userInfo: any = null;
+      try {
+        GoogleSignin.configure({
+          webClientId: '1034832913243-lhms3o79iis7ld1r0pjma2cehikfvahl.apps.googleusercontent.com',
+        });
+        const response = await GoogleSignin.signIn();
+        userInfo = (response as any).data || response;
+      } catch (err: any) {
+        console.warn('SignIn with webClientId failed, trying fallback configuration:', err);
+        GoogleSignin.configure({});
+        const response = await GoogleSignin.signIn();
+        userInfo = (response as any).data || response;
+      }
+      console.log('User Info', userInfo);
+      const user = userInfo?.user || userInfo;
+
+      if (user && user.email) {
+        const res = await googleLogin({
+          email: user.email,
+          first_name: user.givenName || user.name || '',
+          last_name: user.familyName || '',
+          google_id: user.id || '',
+          profile: user.photo || '',
+        });
+
+        setGoogleLoading(false);
+        if (res.success) {
+          Alert.alert('Welcome!', 'Signed in with Google successfully.');
+          onClose();
+        } else {
+          Alert.alert('Google Auth Failed', res.message || 'Could not authenticate with Google.');
+        }
+      } else {
+        setGoogleLoading(false);
+        Alert.alert('Google Sign-In Error', 'Unable to retrieve user details from Google.');
+      }
+    } catch (error: any) {
+      setGoogleLoading(false);
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        // User cancelled the login flow
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        // Operation in progress
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert('Play Services Error', 'Google Play Services are not available or out of date.');
+      } else {
+        console.error('Google Sign-In Error details:', error);
+        Alert.alert(
+          'Google Sign-In Error',
+          error.message || 'Developer Error: Please verify SHA-1 fingerprint and package name in Google Console.'
+        );
+      }
+    }
+  };
 
   const handleSubmit = async () => {
     if (mode === 'login') {
@@ -82,6 +151,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
           </View>
 
           <ScrollView contentContainerStyle={styles.scroll}>
+            {/* Google Sign In Button */}
+            <TouchableOpacity
+              disabled={googleLoading || isLoading}
+              onPress={handleGoogleSignIn}
+              style={styles.googleBtn}
+            >
+              {googleLoading ? (
+                <ActivityIndicator color="#0F172A" />
+              ) : (
+                <View style={styles.googleBtnContent}>
+                  <Text style={styles.googleIconText}>G</Text>
+                  <Text style={styles.googleBtnText}>Continue with Google</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={[styles.dividerText, theme.secondaryText]}>OR</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
             {mode === 'register' && (
               <>
                 <Text style={[styles.label, theme.primaryText]}>First Name</Text>
@@ -144,7 +235,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
             )}
 
             <TouchableOpacity
-              disabled={isLoading}
+              disabled={isLoading || googleLoading}
               onPress={handleSubmit}
               style={styles.submitBtn}
             >
@@ -198,6 +289,51 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingBottom: 20,
+  },
+  googleBtn: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  googleBtnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  googleIconText: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#4285F4',
+    marginRight: 10,
+  },
+  googleBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    fontSize: 12,
+    fontWeight: '700',
   },
   label: {
     fontSize: 13,

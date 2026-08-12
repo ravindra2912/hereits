@@ -41,17 +41,7 @@
                         </div>
                     </div>
 
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Free Product Limit</label>
-                        <input type="number" name="free_product_limit" class="form-control rounded-pill px-3" value="{{ $setting->free_product_limit ?? 20 }}" required>
-                        <small class="text-muted mt-2 d-block px-2">Default product limit for new businesses.</small>
-                    </div>
 
-                    <div class="col-md-6">
-                        <label class="form-label fw-bold">Free Service Limit</label>
-                        <input type="number" name="free_service_limit" class="form-control rounded-pill px-3" value="{{ $setting->free_service_limit ?? 10 }}" required>
-                        <small class="text-muted mt-2 d-block px-2">Default service limit for new businesses.</small>
-                    </div>
 
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Website Order Charge (Credits/Order)</label>

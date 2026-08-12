@@ -183,6 +183,68 @@ export const ChatListItemSkeleton: React.FC<SkeletonCardProps> = ({ theme }) => 
     </View>
   );
 };
+// 9. Order card skeleton (used in OrdersListScreen)
+export const OrderCardSkeleton: React.FC<SkeletonCardProps> = ({ theme }) => {
+  return (
+    <View style={[styles.orderCard, theme.cardBg]}>
+      <View style={styles.orderHeader}>
+        <View style={styles.flex1}>
+          <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '60%', height: 16 }]} />
+          <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '40%', height: 12, marginTop: 6 }]} />
+        </View>
+        <Skeleton style={[styles.statusBadge, theme.skeletonBg]} borderRadius={12} />
+      </View>
+      <View style={styles.orderBusinessRow}>
+        <Skeleton style={[styles.orderImg, theme.skeletonBg]} borderRadius={10} />
+        <View style={[styles.flex1, { marginLeft: 12 }]}>
+          <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '70%', height: 14 }]} />
+          <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '40%', height: 12, marginTop: 6 }]} />
+        </View>
+        <Skeleton style={[styles.textLine, theme.skeletonBg, { width: 60, height: 16 }]} />
+      </View>
+      <View style={styles.orderFooter}>
+        <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '50%', height: 12 }]} />
+        <Skeleton style={[styles.textLine, theme.skeletonBg, { width: 70, height: 12 }]} />
+      </View>
+    </View>
+  );
+};
+
+// 10. Order detail page skeleton (used in OrderDetailScreen)
+export const OrderDetailSkeleton: React.FC<SkeletonCardProps> = ({ theme }) => {
+  return (
+    <View style={styles.flex1}>
+      <View style={[styles.orderCard, theme.cardBg]}>
+        <View style={styles.orderHeader}>
+          <View style={styles.flex1}>
+            <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '60%', height: 18 }]} />
+            <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '45%', height: 12, marginTop: 8 }]} />
+          </View>
+          <Skeleton style={[styles.statusBadge, theme.skeletonBg]} borderRadius={12} />
+        </View>
+      </View>
+      <View style={[styles.orderCard, theme.cardBg]}>
+        <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '40%', height: 16, marginBottom: 12 }]} />
+        <View style={styles.orderBusinessRow}>
+          <Skeleton style={[styles.orderImg, theme.skeletonBg]} borderRadius={10} />
+          <View style={[styles.flex1, { marginLeft: 12 }]}>
+            <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '60%', height: 15 }]} />
+            <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '40%', height: 12, marginTop: 6 }]} />
+          </View>
+        </View>
+      </View>
+      <View style={[styles.orderCard, theme.cardBg]}>
+        <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '45%', height: 16, marginBottom: 12 }]} />
+        {Array.from({ length: 3 }).map((_, idx) => (
+          <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+            <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '50%', height: 14 }]} />
+            <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '20%', height: 14 }]} />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   skeleton: {},
@@ -364,6 +426,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  // Order skeleton styles
+  orderCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 14,
+  },
+  orderHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  orderBusinessRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  orderImg: {
+    width: 44,
+    height: 44,
+    backgroundColor: '#E2E8F0',
+  },
+  orderFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
   },
 });
 
