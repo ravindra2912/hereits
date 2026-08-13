@@ -241,11 +241,6 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
         <Text style={[styles.navTitle, theme.primaryText]} numberOfLines={1}>
           {business?.name || 'Business Detail'}
         </Text>
-        <TouchableOpacity onPress={handleToggleFavorite} style={[styles.favBtnHeader, theme.cardBg]}>
-          <Svg width="20" height="20" viewBox="0 0 24 24" fill={isFavorited ? '#EF4444' : 'none'} stroke={isFavorited ? '#EF4444' : (isDarkMode ? '#F8FAFC' : '#64748B')} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <Path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </Svg>
-        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -320,6 +315,17 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
             📍 {business?.address || 'Vesu Surat'}
           </Text>
 
+          {/* Follow Button (uses toggleFavorite API) */}
+          <TouchableOpacity
+            style={[styles.followBtn, isFavorited ? styles.followingBtn : styles.followBtnActive]}
+            onPress={handleToggleFavorite}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.followBtnText, isFavorited ? styles.followingBtnText : styles.followBtnActiveText]}>
+              {isFavorited ? 'Following' : 'Follow'}
+            </Text>
+          </TouchableOpacity>
+
           <View style={styles.actionButtonsRow}>
             <TouchableOpacity style={[styles.actionBtn, theme.buttonCircleBg]} onPress={handleCall}>
               <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isDarkMode ? '#F8FAFC' : '#6366F1'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -369,6 +375,7 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
                 >
                   <FallbackImage
                     source={cat.image_url ? { uri: cat.image_url } : null}
+                    type="business"
                     fallbackSource={fallbackImage}
                     style={styles.categoryChipImage}
                     resizeMode="cover"
@@ -398,6 +405,7 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
                 >
                   <FallbackImage
                     source={cat.image_url ? { uri: cat.image_url } : null}
+                    type="business"
                     fallbackSource={fallbackImage}
                     style={styles.categoryChipImage}
                     resizeMode="cover"
@@ -427,6 +435,7 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
                 >
                   <FallbackImage
                     source={p.first_image?.image_url ? { uri: p.first_image.image_url } : null}
+                    type="product"
                     fallbackSource={fallbackImage}
                     style={styles.productImage}
                     resizeMode="cover"
@@ -472,6 +481,7 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
                 <View style={styles.serviceImageContainer}>
                   <FallbackImage
                     source={s.image_url ? { uri: s.image_url } : null}
+                    type="service"
                     fallbackSource={fallbackImage}
                     style={styles.serviceImage}
                     resizeMode="cover"
@@ -517,6 +527,7 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
                     >
                       <FallbackImage
                         source={p.first_image?.image_url ? { uri: p.first_image.image_url } : null}
+                        type="product"
                         fallbackSource={fallbackImage}
                         style={styles.productImage}
                         resizeMode="cover"
@@ -566,6 +577,7 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
                     <View style={styles.serviceImageContainer}>
                       <FallbackImage
                         source={s.image_url ? { uri: s.image_url } : null}
+                        type="service"
                         fallbackSource={fallbackImage}
                         style={styles.serviceImage}
                         resizeMode="cover"
@@ -611,6 +623,7 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
               >
                 <FallbackImage
                   source={exp.expert_image ? { uri: exp.expert_image } : null}
+                  type="specialist"
                   fallbackSource={fallbackImage}
                   style={styles.expertListAvatar}
                   resizeMode="cover"
@@ -645,6 +658,7 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
                 <View key={img.id} style={styles.galleryWrapper}>
                   <FallbackImage
                     source={img.image_url ? { uri: img.image_url } : null}
+                    type="business"
                     fallbackSource={fallbackImage}
                     style={styles.galleryImg}
                     resizeMode="cover"
@@ -724,13 +738,34 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 12,
   },
-  favBtnHeader: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    marginLeft: 12,
-    justifyContent: 'center',
+  followBtn: {
+    width: '100%',
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    borderWidth: 1.5,
+  },
+  followBtnActive: {
+    backgroundColor: '#6366F1',
+    borderColor: '#6366F1',
+  },
+  followingBtn: {
+    backgroundColor: 'transparent',
+    borderColor: '#6366F1',
+  },
+  followBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  followBtnActiveText: {
+    color: '#FFFFFF',
+  },
+  followingBtnText: {
+    color: '#6366F1',
   },
   backIcon: {
     fontSize: 14,

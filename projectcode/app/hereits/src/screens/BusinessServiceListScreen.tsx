@@ -141,7 +141,7 @@ export const BusinessServiceListScreen: React.FC = () => {
               <View style={styles.serviceImageContainer}>
                 <FallbackImage
                   source={item.image_url ? { uri: item.image_url } : null}
-                  fallbackSource={fallbackImage}
+                  type="service"
                   style={styles.serviceImage}
                   resizeMode="cover"
                 />

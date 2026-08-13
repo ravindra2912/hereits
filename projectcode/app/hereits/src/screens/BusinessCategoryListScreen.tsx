@@ -9,7 +9,7 @@ import {
 import { businessService } from '../services/businessService';
 import FallbackImage from '../components/FallbackImage';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { Skeleton } from '../components/SkeletonLoader';
+import { CategoryGridSkeleton } from '../components/SkeletonLoader';
 
 const fallbackImage = require('../assets/business_icon.png');
 
@@ -81,24 +81,16 @@ export const BusinessCategoryListScreen: React.FC = () => {
       {loading ? (
         <View style={styles.listContent}>
           <View style={styles.columnWrapper}>
-            <View style={[styles.categoryCard, theme.cardBg]}>
-              <Skeleton style={[styles.categoryImage, theme.skeletonBg]} borderRadius={34} />
-              <Skeleton style={[theme.skeletonBg, { width: 80, height: 12, marginTop: 4 }]} />
-            </View>
-            <View style={[styles.categoryCard, theme.cardBg]}>
-              <Skeleton style={[styles.categoryImage, theme.skeletonBg]} borderRadius={34} />
-              <Skeleton style={[theme.skeletonBg, { width: 80, height: 12, marginTop: 4 }]} />
-            </View>
+            <CategoryGridSkeleton theme={theme} />
+            <CategoryGridSkeleton theme={theme} />
           </View>
           <View style={styles.columnWrapper}>
-            <View style={[styles.categoryCard, theme.cardBg]}>
-              <Skeleton style={[styles.categoryImage, theme.skeletonBg]} borderRadius={34} />
-              <Skeleton style={[theme.skeletonBg, { width: 80, height: 12, marginTop: 4 }]} />
-            </View>
-            <View style={[styles.categoryCard, theme.cardBg]}>
-              <Skeleton style={[styles.categoryImage, theme.skeletonBg]} borderRadius={34} />
-              <Skeleton style={[theme.skeletonBg, { width: 80, height: 12, marginTop: 4 }]} />
-            </View>
+            <CategoryGridSkeleton theme={theme} />
+            <CategoryGridSkeleton theme={theme} />
+          </View>
+          <View style={styles.columnWrapper}>
+            <CategoryGridSkeleton theme={theme} />
+            <CategoryGridSkeleton theme={theme} />
           </View>
         </View>
       ) : (
@@ -121,7 +113,7 @@ export const BusinessCategoryListScreen: React.FC = () => {
             >
               <FallbackImage
                 source={item.image_url ? { uri: item.image_url } : null}
-                fallbackSource={fallbackImage}
+                type="business"
                 style={styles.categoryImage}
                 resizeMode="cover"
               />
@@ -200,6 +192,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   columnWrapper: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 14,
   },

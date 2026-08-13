@@ -280,7 +280,7 @@ export const SpecialistDetailScreen: React.FC = () => {
         <View style={styles.profileTopRow}>
           <FallbackImage
             source={expert.expert_image ? { uri: expert.expert_image } : null}
-            fallbackSource={require('../assets/business_icon.png')}
+            type="specialist"
             style={styles.avatarRect}
             resizeMode="cover"
           />

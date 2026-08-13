@@ -171,9 +171,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <View style={styles.categoryIconBg}>
                     {item.image ? (
                       <FallbackImage
-                        source={{ uri: item.image }}
+                        source={item.image ? { uri: item.image } : null}
+                        type="business"
                         style={styles.categoryImage}
-                        fallbackSource={fallbackImage}
                         resizeMode="cover"
                       />
                     ) : (
@@ -212,7 +212,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <View style={styles.bizAvatar}>
                     <FallbackImage
                       source={biz.business_image ? { uri: biz.business_image } : null}
-                      fallbackSource={fallbackImage}
+                      type="business"
                       style={styles.bizAvatarImage}
                       resizeMode="cover"
                     />

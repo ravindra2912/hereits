@@ -166,7 +166,7 @@ export const FavoritesScreen: React.FC = () => {
       >
         <FallbackImage
           source={imageUri ? { uri: imageUri } : null}
-          fallbackSource={fallbackImage}
+          type="business"
           style={styles.itemImage}
           resizeMode="cover"
         />

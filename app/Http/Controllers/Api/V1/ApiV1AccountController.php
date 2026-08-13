@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
 use App\Models\BusinessFavorite;
+use App\Models\Favorite;
 use App\Models\Order;
 
 class ApiV1AccountController extends Controller
@@ -38,6 +39,7 @@ class ApiV1AccountController extends Controller
                 'last_name' => 'required|string|max:100',
                 'contact' => 'nullable|string|max:20',
                 'dob' => 'nullable|date',
+                'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             ]);
 
             if ($validator->fails()) {
@@ -49,10 +51,17 @@ class ApiV1AccountController extends Controller
                 ], 422);
             }
 
+            if ($request->hasFile('profile')) {
+                $image_name = fileUploadStorage($request->file('profile'), 'user_images', 500, 500);
+                if ($image_name) {
+                    $user->profile = $image_name;
+                }
+            }
+
             $user->first_name = trim($request->first_name);
             $user->last_name = trim($request->last_name);
-            $user->contact = $request->contact;
-            $user->dob = $request->dob;
+            if ($request->has('contact')) $user->contact = $request->contact;
+            if ($request->has('dob')) $user->dob = $request->dob;
             $user->save();
 
             return response()->json([
@@ -112,12 +121,29 @@ class ApiV1AccountController extends Controller
     {
         try {
             $user = $request->user();
-            $perPage = (int) $request->get('per_page', 10);
+            $perPage = (int) $request->get('per_page', 20);
+            $type = $request->get('type');
 
-            $favorites = BusinessFavorite::with('business:id,name,business_image,rating,area,city_id', 'business.city:id,name')
-                ->where('user_id', $user->id)
-                ->latest()
-                ->paginate($perPage);
+            $query = Favorite::with([
+                'business:id,name,slug,business_image,business_logo,rating,area,city_id',
+                'business.city:id,name',
+                'product',
+                'service',
+                'expert'
+            ])->where('user_id', $user->id);
+
+            if ($type) {
+                $query->where('favorite_type', $type);
+            }
+
+            $favorites = $query->latest()->paginate($perPage);
+
+            foreach ($favorites as $fav) {
+                if ($fav->business) {
+                    $fav->business->business_image = getImage($fav->business->business_image);
+                    $fav->business->business_logo = getImage($fav->business->business_logo);
+                }
+            }
 
             return response()->json([
                 'status_code' => 200,

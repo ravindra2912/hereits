@@ -10,7 +10,7 @@ import {
 import { businessService } from '../services/businessService';
 import FallbackImage from '../components/FallbackImage';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { Skeleton } from '../components/SkeletonLoader';
+import { ProductGridSkeleton } from '../components/SkeletonLoader';
 
 const fallbackImage = require('../assets/business_icon.png');
 
@@ -113,36 +113,16 @@ export const BusinessProductListScreen: React.FC = () => {
       {loading ? (
         <View style={styles.listContent}>
           <View style={styles.columnWrapper}>
-            <View style={[styles.productCard, theme.cardBg]}>
-              <Skeleton style={[styles.productImage, theme.skeletonBg]} borderRadius={0} />
-              <View style={styles.productInfo}>
-                <Skeleton style={[theme.skeletonBg, { width: '80%', height: 12 }]} />
-                <Skeleton style={[theme.skeletonBg, { width: '50%', height: 12, marginTop: 6 }]} />
-              </View>
-            </View>
-            <View style={[styles.productCard, theme.cardBg]}>
-              <Skeleton style={[styles.productImage, theme.skeletonBg]} borderRadius={0} />
-              <View style={styles.productInfo}>
-                <Skeleton style={[theme.skeletonBg, { width: '80%', height: 12 }]} />
-                <Skeleton style={[theme.skeletonBg, { width: '50%', height: 12, marginTop: 6 }]} />
-              </View>
-            </View>
+            <ProductGridSkeleton theme={theme} />
+            <ProductGridSkeleton theme={theme} />
           </View>
           <View style={styles.columnWrapper}>
-            <View style={[styles.productCard, theme.cardBg]}>
-              <Skeleton style={[styles.productImage, theme.skeletonBg]} borderRadius={0} />
-              <View style={styles.productInfo}>
-                <Skeleton style={[theme.skeletonBg, { width: '80%', height: 12 }]} />
-                <Skeleton style={[theme.skeletonBg, { width: '50%', height: 12, marginTop: 6 }]} />
-              </View>
-            </View>
-            <View style={[styles.productCard, theme.cardBg]}>
-              <Skeleton style={[styles.productImage, theme.skeletonBg]} borderRadius={0} />
-              <View style={styles.productInfo}>
-                <Skeleton style={[theme.skeletonBg, { width: '80%', height: 12 }]} />
-                <Skeleton style={[theme.skeletonBg, { width: '50%', height: 12, marginTop: 6 }]} />
-              </View>
-            </View>
+            <ProductGridSkeleton theme={theme} />
+            <ProductGridSkeleton theme={theme} />
+          </View>
+          <View style={styles.columnWrapper}>
+            <ProductGridSkeleton theme={theme} />
+            <ProductGridSkeleton theme={theme} />
           </View>
         </View>
       ) : (
@@ -162,7 +142,7 @@ export const BusinessProductListScreen: React.FC = () => {
             >
               <FallbackImage
                 source={item.first_image?.image_url ? { uri: item.first_image.image_url } : null}
-                fallbackSource={fallbackImage}
+                type="product"
                 style={styles.productImage}
                 resizeMode="cover"
               />
@@ -227,6 +207,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   columnWrapper: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 14,
   },

@@ -15,6 +15,7 @@ export type RootStackParamList = {
   BusinessSpecialistList: { businessId: number };
   ProfileEdit: undefined;
   Favorites: undefined;
+  Following: undefined;
   SpecialistDetail: { specialistId: number };
   Appointments: { businessId?: number; businessName?: string } | undefined;
   OrdersList: undefined;

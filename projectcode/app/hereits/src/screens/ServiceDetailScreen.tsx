@@ -138,7 +138,7 @@ export const ServiceDetailScreen: React.FC = () => {
         {/* Cover Photo */}
         <FallbackImage
           source={service.image_url ? { uri: service.image_url } : null}
-          fallbackSource={fallbackImage}
+          type="service"
           style={styles.coverImage}
           resizeMode="cover"
         />

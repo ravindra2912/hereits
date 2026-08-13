@@ -42,15 +42,11 @@ export const ProfileScreen: React.FC = () => {
               onPress={() => navigation.navigate('ProfileEdit')}
             >
               <View style={styles.avatar}>
-                {user.profile ? (
-                  <FallbackImage
-                    source={{ uri: user.profile }}
-                    fallbackSource={require('../assets/business_icon.png')}
-                    style={styles.avatarImage}
-                  />
-                ) : (
-                  <Text style={{ fontSize: 32 }}>👤</Text>
-                )}
+                <FallbackImage
+                  source={user.profile ? { uri: user.profile } : null}
+                  type="user"
+                  style={styles.avatarImage}
+                />
               </View>
             </TouchableOpacity>
 
@@ -106,6 +102,21 @@ export const ProfileScreen: React.FC = () => {
         >
           <Text style={styles.actionIcon}>📅</Text>
           <Text style={[styles.actionLabel, theme.primaryText]}>My Appointments</Text>
+          <Text style={styles.arrowIcon}>›</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => {
+            if (!isAuthenticated) {
+              setAuthModalVisible(true);
+              return;
+            }
+            navigation.navigate('Following');
+          }}
+          style={[styles.actionRow, theme.cardBg]}
+        >
+          <Text style={styles.actionIcon}>🏪</Text>
+          <Text style={[styles.actionLabel, theme.primaryText]}>Following Businesses</Text>
           <Text style={styles.arrowIcon}>›</Text>
         </TouchableOpacity>
 

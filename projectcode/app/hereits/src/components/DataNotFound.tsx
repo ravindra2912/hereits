@@ -1,15 +1,24 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+const defaultTheme = {
+  background: { backgroundColor: '#F8FAFC' },
+  primaryText: { color: '#0F172A' },
+  secondaryText: { color: '#64748B' },
+  cardBg: { backgroundColor: '#FFFFFF' },
+};
+
 interface DataNotFoundProps {
   title?: string;
   description?: string;
   icon?: string;
-  theme: {
-    background: { backgroundColor: string };
-    primaryText: { color: string };
-    secondaryText: { color: string };
-    cardBg: { backgroundColor: string };
+  buttonText?: string;
+  onButtonPress?: () => void;
+  theme?: {
+    background?: { backgroundColor: string };
+    primaryText?: { color: string };
+    secondaryText?: { color: string };
+    cardBg?: { backgroundColor: string };
   };
 }
 
@@ -17,15 +26,38 @@ export const DataNotFound: React.FC<DataNotFoundProps> = ({
   title = "No Data Found",
   description = "There is no information available at the moment.",
   icon = "📂",
-  theme,
+  buttonText,
+  onButtonPress,
+  theme = defaultTheme,
 }) => {
+  const activeTheme = theme || defaultTheme;
   return (
-    <View style={[styles.container, theme.cardBg]}>
+    <View style={[styles.container, activeTheme.cardBg]}>
       <View style={styles.iconContainer}>
         <Text style={styles.icon}>{icon}</Text>
       </View>
-      <Text style={[styles.title, theme.primaryText]}>{title}</Text>
-      <Text style={[styles.description, theme.secondaryText]}>{description}</Text>
+      <Text style={[styles.title, activeTheme.primaryText]}>{title}</Text>
+      <Text style={[styles.description, activeTheme.secondaryText]}>{description}</Text>
+      {buttonText && onButtonPress && (
+        <View style={{ marginTop: 16 }}>
+          <Text
+            onPress={onButtonPress}
+            style={{
+              backgroundColor: '#6366F1',
+              color: '#FFFFFF',
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              borderRadius: 14,
+              fontWeight: '700',
+              fontSize: 13,
+              overflow: 'hidden',
+              textAlign: 'center',
+            }}
+          >
+            {buttonText}
+          </Text>
+        </View>
+      )}
     </View>
   );
 };

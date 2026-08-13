@@ -149,7 +149,7 @@ export const ProductDetailScreen: React.FC = () => {
               <FallbackImage
                 key={idx}
                 source={{ uri: imgObj.image_url }}
-                fallbackSource={fallbackImage}
+                type="product"
                 style={styles.carouselImage}
                 resizeMode="contain"
               />
@@ -158,7 +158,7 @@ export const ProductDetailScreen: React.FC = () => {
         ) : (
           <FallbackImage
             source={null}
-            fallbackSource={fallbackImage}
+            type="product"
             style={styles.placeholderCover}
             resizeMode="contain"
           />

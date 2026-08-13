@@ -65,6 +65,6 @@ export const authService = {
       method: 'POST',
       body: payload,
     }),
-  getFavorites: (page?: number) =>
-    apiRequest(`/user/favorites${page ? `?page=${page}` : ''}`),
+  getFavorites: (page?: number, type?: string) =>
+    apiRequest(`/user/favorites?${page ? `page=${page}&` : ''}${type ? `type=${type}` : ''}`),
 };

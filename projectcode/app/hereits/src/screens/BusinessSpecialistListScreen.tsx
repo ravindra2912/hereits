@@ -117,7 +117,7 @@ export const BusinessSpecialistListScreen: React.FC = () => {
             >
               <FallbackImage
                 source={item.expert_image ? { uri: item.expert_image } : null}
-                fallbackSource={fallbackImage}
+                type="specialist"
                 style={styles.expertListAvatar}
                 resizeMode="cover"
               />

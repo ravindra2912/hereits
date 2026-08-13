@@ -146,23 +146,11 @@ export const ProfileEditScreen: React.FC = () => {
       <View style={{ alignItems: 'center', marginBottom: 24, marginTop: 16 }}>
         <View style={{ position: 'relative' }}>
           <TouchableOpacity onPress={handlePickImage} style={styles.avatarContainer}>
-            {selectedImageUri ? (
-              <FallbackImage
-                source={{ uri: selectedImageUri }}
-                fallbackSource={require('../assets/business_icon.png')}
-                style={styles.avatar}
-              />
-            ) : user && user.profile ? (
-              <FallbackImage
-                source={{ uri: user.profile }}
-                fallbackSource={require('../assets/business_icon.png')}
-                style={styles.avatar}
-              />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={{ fontSize: 40 }}>👤</Text>
-              </View>
-            )}
+            <FallbackImage
+              source={selectedImageUri ? { uri: selectedImageUri } : (user && user.profile ? { uri: user.profile } : null)}
+              type="user"
+              style={styles.avatar}
+            />
           </TouchableOpacity>
           <TouchableOpacity onPress={handlePickImage} style={styles.editImageBadge}>
             <Text style={{ fontSize: 12, color: '#FFF' }}>📷</Text>

@@ -20,6 +20,7 @@ import ChatDetailScreen from './src/screens/ChatDetailScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import ProfileEditScreen from './src/screens/ProfileEditScreen';
 import FavoritesScreen from './src/screens/FavoritesScreen';
+import FollowingScreen from './src/screens/FollowingScreen';
 import SpecialistDetailScreen from './src/screens/SpecialistDetailScreen';
 import LocationModal from './src/screens/LocationModal';
 import AuthModal from './src/screens/AuthModal';
@@ -69,6 +70,7 @@ function MainNavigator() {
         <Stack.Screen name="BusinessSpecialistList" component={BusinessSpecialistListScreen} />
         <Stack.Screen name="ProfileEdit" component={ProfileEditScreen} />
         <Stack.Screen name="Favorites" component={FavoritesScreen} />
+        <Stack.Screen name="Following" component={FollowingScreen} />
         <Stack.Screen name="SpecialistDetail" component={SpecialistDetailScreen} />
         <Stack.Screen name="Appointments" component={AppointmentScreen} />
         <Stack.Screen name="OrdersList" component={OrdersListScreen} />

@@ -57,12 +57,37 @@ export const BusinessCardSkeleton: React.FC<SkeletonCardProps> = ({ theme }) => 
   );
 };
 
-// 2. Category list item skeleton (used in HomeScreen explore, BusinessCategoryListScreen, etc.)
-export const CategoryItemSkeleton: React.FC<SkeletonCardProps> = ({ theme }) => {
+// 1b. Full-width row business list item skeleton (used in FollowingScreen, search lists, etc.)
+export const BusinessListItemSkeleton: React.FC<SkeletonCardProps> = ({ theme }) => {
   return (
-    <View style={[styles.categoryCard, theme.cardBg]}>
+    <View style={[styles.businessListItem, theme.cardBg]}>
+      <Skeleton style={[styles.bizRowLogo, theme.skeletonBg]} borderRadius={14} />
+      <View style={styles.bizRowContent}>
+        <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '70%', height: 16 }]} />
+        <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '45%', height: 12, marginTop: 8 }]} />
+        <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '35%', height: 11, marginTop: 8 }]} />
+      </View>
+      <Skeleton style={[styles.unfollowBtnSkeleton, theme.skeletonBg]} borderRadius={12} />
+    </View>
+  );
+};
+
+// 2. Category list item skeleton (used in HomeScreen explore)
+export const CategoryItemSkeleton: React.FC<SkeletonCardProps> = ({ theme, style }) => {
+  return (
+    <View style={[styles.categoryCard, theme.cardBg, style]}>
       <Skeleton style={[styles.categoryIconBg, theme.skeletonBg]} borderRadius={23} />
       <Skeleton style={[styles.textLine, theme.skeletonBg, { width: 50, height: 12 }]} />
+    </View>
+  );
+};
+
+// 2b. Category 2-column grid item skeleton (used in BusinessCategoryListScreen)
+export const CategoryGridSkeleton: React.FC<SkeletonCardProps> = ({ theme, style }) => {
+  return (
+    <View style={[styles.categoryGridCard, theme.cardBg, style]}>
+      <Skeleton style={[styles.categoryGridIconBg, theme.skeletonBg]} borderRadius={30} />
+      <Skeleton style={[styles.textLine, theme.skeletonBg, { width: '60%', height: 12, marginTop: 8 }]} />
     </View>
   );
 };
@@ -264,6 +289,29 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 12,
   },
+  businessListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 16,
+    marginBottom: 12,
+    width: '100%',
+  },
+  bizRowLogo: {
+    width: 60,
+    height: 60,
+    marginRight: 14,
+    backgroundColor: '#E2E8F0',
+  },
+  bizRowContent: {
+    flex: 1,
+    marginRight: 10,
+  },
+  unfollowBtnSkeleton: {
+    width: 76,
+    height: 34,
+    backgroundColor: '#E2E8F0',
+  },
   bizAvatar: {
     width: '100%',
     height: 110,
@@ -289,6 +337,20 @@ const styles = StyleSheet.create({
   categoryIconBg: {
     width: 46,
     height: 46,
+    backgroundColor: '#E2E8F0',
+    marginBottom: 8,
+  },
+  // Category Grid Card styles (2-column grid)
+  categoryGridCard: {
+    width: '48%',
+    alignItems: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+  },
+  categoryGridIconBg: {
+    width: 60,
+    height: 60,
     backgroundColor: '#E2E8F0',
     marginBottom: 8,
   },

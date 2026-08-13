@@ -86,7 +86,7 @@ export const SearchScreen: React.FC = () => {
               <View style={styles.bizAvatar}>
                 <FallbackImage
                   source={item.business_logo || item.business_image ? { uri: item.business_logo || item.business_image } : null}
-                  fallbackSource={fallbackImage}
+                  type="business"
                   style={styles.bizAvatarImage}
                   resizeMode="cover"
                 />
