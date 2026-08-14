@@ -17,6 +17,7 @@ use App\Http\Controllers\Business\SubscriptionPlanController;
 use App\Http\Controllers\Business\CreditController;
 use App\Http\Controllers\Business\PurchaseHistoryController;
 use App\Http\Controllers\Business\GalleryController;
+use App\Http\Controllers\Business\VisitorAnalyticsController;
 use App\Http\Controllers\ChatController;
 
 Route::name('business.')->group(function () {
@@ -47,11 +48,16 @@ Route::name('business.')->group(function () {
             Route::get('participants/search', 'searchParticipants')->name('participants.search');
         });
 
-    Route::controller(DashboarController::class)->group(function () {
+        Route::controller(DashboarController::class)->group(function () {
             Route::get('dashboard', 'index')->name('dashboard');
             Route::get('analytics', 'analyticsPageView')->name('analytics')->middleware('checkBusinessPerm:analytics');
             Route::get('influencer', 'influencer')->name('influencer');
             Route::post('dashboard-analytics', 'analytics')->name('dashboard.analytics')->middleware('checkBusinessPerm:analytics');
+        });
+
+        Route::controller(VisitorAnalyticsController::class)->group(function () {
+            Route::get('visitors', 'index')->name('visitors')->middleware('checkBusinessPerm:analytics');
+            Route::get('visitors/data', 'chartData')->name('visitors.data')->middleware('checkBusinessPerm:analytics');
         });
 
         Route::middleware(['checkModule:product'])->group(function () {

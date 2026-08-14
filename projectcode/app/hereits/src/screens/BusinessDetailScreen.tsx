@@ -1047,7 +1047,7 @@ const styles = StyleSheet.create({
   },
   productImage: {
     width: '100%',
-    height: 110,
+    height: 160,
     backgroundColor: '#EEF2FF',
   },
   productInfo: {

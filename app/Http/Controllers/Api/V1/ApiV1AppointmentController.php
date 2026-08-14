@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\AppointmentRepository;
+use App\Services\BusinessAnalyticsService;
 
 class ApiV1AppointmentController extends Controller
 {
@@ -178,6 +179,8 @@ class ApiV1AppointmentController extends Controller
             if (!$expert) {
                 return response()->json(['status_code' => 404, 'success' => false, 'message' => 'Specialist not found'], 404);
             }
+
+            app(BusinessAnalyticsService::class)->trackExpertView($expert, $request);
 
             // Check if user has favorited this expert (uses Auth::guard('api') to parse Bearer token on public routes)
             $user = Auth::guard('api')->user();

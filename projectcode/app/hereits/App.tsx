@@ -32,6 +32,7 @@ import BusinessServiceListScreen from './src/screens/BusinessServiceListScreen';
 import BusinessSpecialistListScreen from './src/screens/BusinessSpecialistListScreen';
 import OrdersListScreen from './src/screens/OrdersListScreen';
 import OrderDetailScreen from './src/screens/OrderDetailScreen';
+import OfflineBanner from './src/components/OfflineBanner';
 import { RootStackParamList, MainTabParamList } from './src/navigation/types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -108,6 +109,7 @@ function App() {
             <SplashScreen onFinish={() => setShowSplash(false)} />
           ) : (
             <SafeAreaView style={{ flex: 1, backgroundColor: '#F8FAFC' }} edges={['top']}>
+              <OfflineBanner />
               <MainNavigator />
             </SafeAreaView>
           )}

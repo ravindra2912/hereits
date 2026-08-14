@@ -84,6 +84,11 @@ class Business extends Model
         return $this->hasMany(AppointmentDepartment::class, 'business_id', 'id');
     }
 
+    public function analyticsEvents()
+    {
+        return $this->hasMany(BusinessAnalyticsEvent::class, 'business_id', 'id');
+    }
+
     // ***************************
     // for dashboard calculation end
     // ***************************

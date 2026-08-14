@@ -17,8 +17,6 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 GoogleSignin.configure({
-  webClientId: '1034832913243-lhms3o79iis7ld1r0pjma2cehikfvahl.apps.googleusercontent.com',
-  offlineAccess: true,
   scopes: ['profile', 'email'],
 });
 
@@ -48,19 +46,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
       setGoogleLoading(true);
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
-      let userInfo: any = null;
-      try {
-        GoogleSignin.configure({
-          webClientId: '1034832913243-lhms3o79iis7ld1r0pjma2cehikfvahl.apps.googleusercontent.com',
-        });
-        const response = await GoogleSignin.signIn();
-        userInfo = (response as any).data || response;
-      } catch (err: any) {
-        console.warn('SignIn with webClientId failed, trying fallback configuration:', err);
-        GoogleSignin.configure({});
-        const response = await GoogleSignin.signIn();
-        userInfo = (response as any).data || response;
+      const response = await GoogleSignin.signIn();
+      if ((response as any)?.type === 'cancelled') {
+        setGoogleLoading(false);
+        return;
       }
+      const userInfo = (response as any)?.data || response;
       console.log('User Info', userInfo);
       const user = userInfo?.user || userInfo;
 

@@ -41,6 +41,9 @@
     <a href="{{ route('business.analytics') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('business.analytics') ? 'active' : '' }}">
       <i class="bi bi-graph-up-arrow me-2"></i>Analytics
     </a>
+    <a href="{{ route('business.visitors') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('business.visitors*') ? 'active' : '' }}">
+      <i class="bi bi-people-fill me-2"></i>Visitors
+    </a>
     @endif
 
     @if (checkBusinessPermission('home_management'))

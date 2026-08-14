@@ -209,6 +209,7 @@ export const ServiceDetailScreen: React.FC = () => {
                     source={rs.image_url ? { uri: rs.image_url } : null}
                     fallbackSource={fallbackImage}
                     style={styles.relatedCardImage}
+                    type="service"
                     resizeMode="cover"
                   />
                   <View style={styles.relatedCardInfo}>

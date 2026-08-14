@@ -13,6 +13,7 @@ use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Service;
 use App\Models\Gallery;
+use App\Services\BusinessAnalyticsService;
 
 class BusinessController extends Controller
 {
@@ -38,6 +39,8 @@ class BusinessController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
         if ($business) {
+            app(BusinessAnalyticsService::class)->trackBusinessView($business, $request);
+
             if ($business->template == null || $business->template == 'common') {
                 $info = $this->template1($request, $business);
             } else {

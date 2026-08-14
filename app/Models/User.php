@@ -91,6 +91,21 @@ class User extends Authenticatable
         return $this->hasMany(UserCreditTransaction::class, 'user_id');
     }
 
+    public function devices()
+    {
+        return $this->hasMany(UserDevice::class, 'user_id');
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class, 'user_id');
+    }
+
+    public function analyticsEvents()
+    {
+        return $this->hasMany(BusinessAnalyticsEvent::class, 'user_id');
+    }
+
     public function getAvailableCreditsAttribute()
     {
         $credits = $this->creditTransactions()->where('type', 'credit')->sum('amount');

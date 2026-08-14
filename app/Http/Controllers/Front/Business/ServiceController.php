@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Service;
+use App\Services\BusinessAnalyticsService;
 
 class ServiceController extends Controller
 {
@@ -30,28 +31,19 @@ class ServiceController extends Controller
         }
 
         $limit = 12;
-        $isServiceLimitExpired = $setting->service_limit_expiry_date <= now();
-        if ($isServiceLimitExpired) {
-            $siteSetting = getSiteSetting();
-            $limit = $siteSetting->free_service_limit;
-        }
 
         $query = Service::select('id', 'name', 'slug', 'description', 'price_type', 'price', 'max_price', 'min_price', 'category_id', 'image_url', 'business_id')
             ->with(['category:id,name'])
             ->where('business_id', $business->id)
             ->where('status', 'active');
 
-        if ($request->has('category_id') && !empty($request->category_id) && $isServiceLimitExpired == false) {
+        if ($request->has('category_id') && !empty($request->category_id)) {
             $query->where('category_id', $request->category_id);
         }
 
-        $categories = [];
-        if (!$isServiceLimitExpired) {
-            $services = $query->paginate($limit);
-            $categories = getServiceCategory($business->id);
-        } else {
-            $services = $query->take($limit)->get();
-        }
+        $services = $query->paginate($limit);
+        $categories = getServiceCategory($business->id);
+
 
         // In-memory favorite check
         if (auth()->check()) {
@@ -92,6 +84,8 @@ class ServiceController extends Controller
             ->where('slug', $service_slug)
             ->where('status', 'active')
             ->firstOrFail();
+
+        app(BusinessAnalyticsService::class)->trackServiceView($service, $request);
 
         // Fetch recommended services from the same business (excluding current service)
         $recommendedServices = Service::where('business_id', $business->id)

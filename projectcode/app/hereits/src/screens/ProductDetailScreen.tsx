@@ -233,6 +233,7 @@ export const ProductDetailScreen: React.FC = () => {
                     source={rp.first_image?.image_url ? { uri: rp.first_image.image_url } : null}
                     fallbackSource={fallbackImage}
                     style={styles.relatedCardImage}
+                    type='product'
                     resizeMode="cover"
                   />
                   <View style={styles.relatedCardInfo}>
@@ -445,8 +446,8 @@ const styles = StyleSheet.create({
     borderColor: '#F1F5F9',
   },
   relatedCardImage: {
-    width: 140,
-    height: 100,
+    width: '100%',
+    height: 160,
     backgroundColor: '#EEF2FF',
   },
   relatedCardInfo: {

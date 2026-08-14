@@ -1,5 +1,6 @@
 import { BASE_API_URL as ENV_BASE_API_URL } from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 // Centralized API Service for Hereits Mobile App
 // Note: Android devices/emulators cannot resolve custom domain names like 'hereits.test' directly.
@@ -26,6 +27,10 @@ export async function apiRequest<T = any>(
 
   const reqHeaders: Record<string, string> = {
     Accept: 'application/json',
+    'X-Device': Platform.OS === 'ios' ? (Platform.isPad ? 'tablet' : 'mobile') : 'mobile',
+    'X-Platform': Platform.OS === 'ios' ? 'iOS' : 'Android',
+    'X-Browser': 'Hereits App',
+    Referer: 'Hereits App',
     ...headers,
   };
 

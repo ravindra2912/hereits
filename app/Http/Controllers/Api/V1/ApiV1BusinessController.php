@@ -15,6 +15,7 @@ use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Gallery;
 use Illuminate\Support\Facades\Auth;
+use App\Services\BusinessAnalyticsService;
 
 class ApiV1BusinessController extends Controller
 {
@@ -52,6 +53,8 @@ class ApiV1BusinessController extends Controller
                     'data' => null
                 ], 404);
             }
+
+            app(BusinessAnalyticsService::class)->trackBusinessView($business, request());
 
             $business->business_image = getImage($business->business_image, 'business');
             $business->business_logo = getImage($business->business_logo, 'business');
@@ -376,6 +379,8 @@ class ApiV1BusinessController extends Controller
             }
 
             $business = $product->business;
+            app(BusinessAnalyticsService::class)->trackProductView($product, request());
+
             $setting = getBusinessSettings($business->id);
 
             // Filter out sensitive settings data
@@ -454,6 +459,8 @@ class ApiV1BusinessController extends Controller
             $service->image_url = getImage($service->image_url);
 
             $business = $service->business;
+            app(BusinessAnalyticsService::class)->trackServiceView($service, request());
+
             $setting = getBusinessSettings($business->id);
 
             // Filter out sensitive settings data

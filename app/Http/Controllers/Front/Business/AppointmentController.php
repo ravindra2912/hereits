@@ -19,6 +19,7 @@ use App\Models\BusinessCategory;
 use Illuminate\Support\Facades\Validator;
 use App\Models\BusinessSetting;
 use App\Repositories\AppointmentRepository;
+use App\Services\BusinessAnalyticsService;
 
 class AppointmentController extends Controller
 {
@@ -108,6 +109,8 @@ class AppointmentController extends Controller
             ->firstOrFail();
 
         if ($expert) {
+            app(BusinessAnalyticsService::class)->trackExpertView($expert, $request);
+
             $setting = getBusinessSettings($expert->business_id);
             if ($setting->subscription_expiry_date <= now()) {
                 return abort(404);

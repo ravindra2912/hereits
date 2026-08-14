@@ -43,6 +43,7 @@ const AuthContext = createContext<AuthContextType>({
   authModalVisible: false,
   setAuthModalVisible: () => {},
   login: async () => ({ success: false }),
+  googleLogin: async () => ({ success: false }),
   register: async () => ({ success: false }),
   logout: async () => {},
   refreshProfile: async () => {},

@@ -41,6 +41,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({ style, borderRadius = 8 }) =
 
 interface SkeletonCardProps {
   theme: any;
+  style?: ViewStyle | ViewStyle[];
 }
 
 // 1. Business list card skeleton (used in HomeScreen featured, BusinessListScreen, etc.)
@@ -363,7 +364,7 @@ const styles = StyleSheet.create({
   },
   productImage: {
     width: '100%',
-    height: 120,
+    height: 180,
     backgroundColor: '#E2E8F0',
   },
   productInfo: {

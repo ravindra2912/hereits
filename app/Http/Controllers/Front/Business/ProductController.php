@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Services\BusinessAnalyticsService;
 
 class ProductController extends Controller
 {
@@ -29,28 +30,20 @@ class ProductController extends Controller
         }
 
         $limit = 24;
-        $isProductLimitExpired = $setting->product_limit_expiry_date <= now();
-        if ($isProductLimitExpired) {
-            $siteSetting = getSiteSetting();
-            $limit = $siteSetting->free_product_limit;
-        }
 
         $query = Product::select('id', 'name', 'slug', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'category_id', 'business_id')
             ->where('business_id', $business->id)
             ->where('status', 'active')
             ->with(['firstTwoImages:id,product_id,image_url', 'category:id,name']);
 
-        if ($request->has('category_id') && !empty($request->category_id) && $isProductLimitExpired == false) {
+        if ($request->has('category_id') && !empty($request->category_id)) {
             $query->where('category_id', $request->category_id);
         }
 
-        $categories = [];
-        if (!$isProductLimitExpired) {
-            $products = $query->paginate($limit);
-            $categories = getProductCategory($business->id);
-        } else {
-            $products = $query->take($limit)->get();
-        }
+
+        $products = $query->paginate($limit);
+        $categories = getProductCategory($business->id);
+
 
         // In-memory favorite check — replaces N per-row EXISTS subqueries with 1 pluck query
         if (auth()->check()) {
@@ -91,6 +84,8 @@ class ProductController extends Controller
         if ($setting->subscription_expiry_date <= now()) {
             return abort(404);
         }
+
+        app(BusinessAnalyticsService::class)->trackProductView($product);
 
         // Sidebar/Related products or other info could be added here
         $relatedProducts = Product::select('id', 'name', 'slug', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'business_id')
