@@ -18,6 +18,7 @@ import { Skeleton } from '../components/SkeletonLoader';
 import { chatService } from '../services/chatService';
 import { useAuth } from '../context/AuthContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import RetryView from '../components/RetryView';
 
 import FallbackImage from '../components/FallbackImage';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
@@ -39,15 +40,30 @@ export const ChatDetailScreen: React.FC<ChatDetailScreenProps> = () => {
   const { user } = useAuth();
 
   const [messages, setMessages] = useState<any[]>([]);
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState(route.params?.initialMessage || '');
   const [selectedImages, setSelectedImages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [fetchError, setFetchError] = useState<{ message?: string; isTimeout?: boolean } | null>(null);
+
+  useEffect(() => {
+    if (route.params?.initialMessage && !inputText) {
+      setInputText(route.params.initialMessage);
+    }
+  }, [route.params?.initialMessage]);
 
   const fetchMessages = async () => {
+    setLoading(true);
+    setFetchError(null);
     const res = await chatService.getMessages(conversationId);
     if (res.success && res.data) {
       setMessages(res.data.data || res.data || []);
+      setFetchError(null);
+    } else {
+      setFetchError({
+        message: res.message || 'Failed to load messages.',
+        isTimeout: res.is_timeout,
+      });
     }
     setLoading(false);
   };
@@ -56,29 +72,41 @@ export const ChatDetailScreen: React.FC<ChatDetailScreenProps> = () => {
     fetchMessages();
   }, [conversationId]);
 
+  const sendMessageWithPayload = async (tempId: string, payload: any) => {
+    setSending(true);
+    setMessages(prev =>
+      prev.map(m => (m.id === tempId ? { ...m, isSending: true, hasError: false } : m))
+    );
+
+    const res = await chatService.sendMessage(conversationId, payload);
+    setSending(false);
+
+    if (res.success && res.data) {
+      setMessages(prev =>
+        prev.map(m => (m.id === tempId ? { ...res.data, isSending: false, hasError: false } : m))
+      );
+    } else {
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === tempId
+            ? {
+                ...m,
+                isSending: false,
+                hasError: true,
+                errorMessage: res.message || (res.is_timeout ? 'Timed out (>30s)' : 'Failed to send'),
+                isTimeout: res.is_timeout,
+              }
+            : m
+        )
+      );
+    }
+  };
+
   const handleSend = async () => {
     if (!inputText.trim() && selectedImages.length === 0) return;
     const msgText = inputText.trim();
     const imagesToSend = [...selectedImages];
     const tempId = `temp-${Date.now()}`;
-
-    const tempMsg = {
-      id: tempId,
-      sender_id: user?.id,
-      sender_type: 'user',
-      body: msgText,
-      message: msgText,
-      message_type: imagesToSend.length > 0 ? 'image' : 'text',
-      image_url: imagesToSend.length > 0 ? imagesToSend[0].uri : null,
-      attachments: imagesToSend.map(a => ({ url: a.uri })),
-      isSending: true,
-      created_at: new Date().toISOString(),
-    };
-
-    setInputText('');
-    setSelectedImages([]);
-    setMessages(prev => [tempMsg, ...prev]);
-    setSending(true);
 
     let payload: any;
     if (imagesToSend.length > 0) {
@@ -99,15 +127,31 @@ export const ChatDetailScreen: React.FC<ChatDetailScreenProps> = () => {
       payload = msgText;
     }
 
-    const res = await chatService.sendMessage(conversationId, payload);
-    setSending(false);
+    const tempMsg = {
+      id: tempId,
+      sender_id: user?.id,
+      sender_type: 'user',
+      body: msgText,
+      message: msgText,
+      message_type: imagesToSend.length > 0 ? 'image' : 'text',
+      image_url: imagesToSend.length > 0 ? imagesToSend[0].uri : null,
+      attachments: imagesToSend.map(a => ({ url: a.uri })),
+      isSending: true,
+      hasError: false,
+      payload,
+      created_at: new Date().toISOString(),
+    };
 
-    if (res.success && res.data) {
-      setMessages(prev =>
-        prev.map(m => (m.id === tempId ? { ...res.data, isSending: false } : m))
-      );
-    } else {
-      fetchMessages();
+    setInputText('');
+    setSelectedImages([]);
+    setMessages(prev => [tempMsg, ...prev]);
+
+    await sendMessageWithPayload(tempId, payload);
+  };
+
+  const handleRetryMessage = (item: any) => {
+    if (item.payload) {
+      sendMessageWithPayload(item.id, item.payload);
     }
   };
 
@@ -212,7 +256,7 @@ export const ChatDetailScreen: React.FC<ChatDetailScreenProps> = () => {
       </View>
 
       {/* Messages Feed */}
-      {loading ? (
+      {loading && messages.length === 0 ? (
         <View style={styles.messagesList}>
           <View style={[styles.msgBubble, styles.otherMsgBubble, { width: 150 }]}>
             <Skeleton style={[theme.skeletonBg, { width: '100%', height: 14 }]} borderRadius={8} />
@@ -227,77 +271,125 @@ export const ChatDetailScreen: React.FC<ChatDetailScreenProps> = () => {
             <Skeleton style={{ width: '100%', height: 14, backgroundColor: '#818CF8' }} borderRadius={8} />
           </View>
         </View>
-      ) : (
-        <FlatList
-          inverted
-          data={messages}
-          keyExtractor={item => String(item.id)}
-          contentContainerStyle={styles.messagesList}
-          renderItem={({ item }) => {
-            const isMe = item.sender_id === user?.id;
-            const attachments = item.attachments || [];
-
-            const formatUrl = (u?: string) => {
-              if (!u) return null;
-              if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('file://') || u.startsWith('content://')) {
-                return u;
-              }
-              return `https://cdn.hereits.com/local/${u}`;
-            };
-
-            const imageUrls: string[] = [];
-            const addUrl = (raw?: string) => {
-              const formatted = formatUrl(raw);
-              if (formatted && !imageUrls.includes(formatted)) {
-                imageUrls.push(formatted);
-              }
-            };
-
-            addUrl(item.image_url);
-            addUrl(item.image);
-            attachments.forEach((att: any) => {
-              addUrl(att.url);
-              addUrl(att.path);
-            });
-            if (item.metadata?.url) addUrl(item.metadata.url);
-
-            const textContent = (item.body || item.message || '').trim();
-            const isImageMessage = item.message_type === 'image' || imageUrls.length > 0;
-            const showText = textContent && (!isImageMessage || textContent !== item.image_url);
-
-            return (
-              <View
-                style={[
-                  styles.msgBubble,
-                  isMe ? styles.myMsgBubble : styles.otherMsgBubble,
-                ]}
-              >
-                {imageUrls.map((imgUrl: string, idx: number) => (
-                  <FallbackImage
-                    key={`img-${idx}`}
-                    source={{ uri: imgUrl }}
-                    fallbackSource={require('../assets/app_icon.png')}
-                    style={styles.attachmentImage}
-                    resizeMode="cover"
-                  />
-                ))}
-                {showText ? (
-                  <Text style={isMe ? styles.myMsgText : styles.otherMsgText}>
-                    {textContent}
-                  </Text>
-                ) : null}
-                {item.isSending ? (
-                  <View style={styles.sendingContainer}>
-                    <ActivityIndicator size="small" color={isMe ? '#FFFFFF' : '#6366F1'} />
-                    <Text style={[styles.sendingText, { color: isMe ? 'rgba(255,255,255,0.85)' : '#64748B' }]}>
-                      Sending...
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-            );
-          }}
+      ) : fetchError && messages.length === 0 ? (
+        <RetryView
+          message={fetchError.message}
+          isTimeout={fetchError.isTimeout}
+          onRetry={fetchMessages}
+          onBack={() => navigation.goBack()}
         />
+      ) : (
+        <>
+          {fetchError && (
+            <RetryView
+              compact
+              message={fetchError.message}
+              isTimeout={fetchError.isTimeout}
+              onRetry={fetchMessages}
+            />
+          )}
+          <FlatList
+            inverted
+            data={messages}
+            keyExtractor={item => String(item.id)}
+            contentContainerStyle={styles.messagesList}
+            renderItem={({ item }) => {
+              const isMe = item.sender_id === user?.id;
+              const attachments = item.attachments || [];
+
+              const formatUrl = (u?: string) => {
+                if (!u) return null;
+                if (u.startsWith('http://') || u.startsWith('https://') || u.startsWith('file://') || u.startsWith('content://')) {
+                  return u;
+                }
+                return `https://cdn.hereits.com/local/${u}`;
+              };
+
+              const imageUrls: string[] = [];
+              const addUrl = (raw?: string) => {
+                const formatted = formatUrl(raw);
+                if (formatted && !imageUrls.includes(formatted)) {
+                  imageUrls.push(formatted);
+                }
+              };
+
+              addUrl(item.image_url);
+              addUrl(item.image);
+              attachments.forEach((att: any) => {
+                addUrl(att.url);
+                addUrl(att.path);
+              });
+              if (item.metadata?.url) addUrl(item.metadata.url);
+
+              const textContent = (item.body || item.message || '').trim();
+              const isImageMessage = item.message_type === 'image' || imageUrls.length > 0;
+              const showText = Boolean(textContent && (!isImageMessage || textContent !== item.image_url));
+
+              const renderFormattedMessage = (text: string, isSender: boolean) => {
+                if (!text) return null;
+                const parts = text.split(/(\*[^*\n]+?\*)/g);
+
+                return (
+                  <Text style={isSender ? styles.myMsgText : styles.otherMsgText}>
+                    {parts.map((part, index) => {
+                      if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+                        const boldText = part.slice(1, -1);
+                        return (
+                          <Text
+                            key={`bold-${index}`}
+                            style={isSender ? styles.myMsgTextBold : styles.otherMsgTextBold}
+                          >
+                            {boldText}
+                          </Text>
+                        );
+                      }
+                      return <React.Fragment key={`text-${index}`}>{part}</React.Fragment>;
+                    })}
+                  </Text>
+                );
+              };
+
+              return (
+                <View
+                  style={[
+                    styles.msgBubble,
+                    isMe ? styles.myMsgBubble : styles.otherMsgBubble,
+                  ]}
+                >
+                  {imageUrls.map((imgUrl: string, idx: number) => (
+                    <FallbackImage
+                      key={`img-${idx}`}
+                      source={{ uri: imgUrl }}
+                      fallbackSource={require('../assets/app_icon.png')}
+                      style={styles.attachmentImage}
+                      resizeMode="cover"
+                    />
+                  ))}
+                  {showText ? renderFormattedMessage(textContent, isMe) : null}
+                  {item.isSending ? (
+                    <View style={styles.sendingContainer}>
+                      <ActivityIndicator size="small" color={isMe ? '#FFFFFF' : '#6366F1'} />
+                      <Text style={[styles.sendingText, { color: isMe ? 'rgba(255,255,255,0.85)' : '#64748B' }]}>
+                        Sending...
+                      </Text>
+                    </View>
+                  ) : item.hasError ? (
+                    <TouchableOpacity
+                      style={styles.retryMessageBtn}
+                      onPress={() => handleRetryMessage(item)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.retryMessageIcon}>⚠️</Text>
+                      <Text style={styles.retryMessageText}>
+                        {item.isTimeout ? 'Timed out (>30s)' : 'Failed'} • Tap to Retry 🔄
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+              );
+            }}
+          />
+        </>
       )}
 
       {/* Selected Images Preview Strip */}
@@ -398,8 +490,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
     borderBottomLeftRadius: 4,
   },
-  myMsgText: { color: '#FFFFFF', fontSize: 14 },
-  otherMsgText: { color: '#0F172A', fontSize: 14 },
+  myMsgText: { color: '#FFFFFF', fontSize: 14, lineHeight: 20 },
+  myMsgTextBold: { color: '#FFFFFF', fontSize: 14, fontWeight: '800', lineHeight: 20 },
+  otherMsgText: { color: '#0F172A', fontSize: 14, lineHeight: 20 },
+  otherMsgTextBold: { color: '#0F172A', fontSize: 14, fontWeight: '800', lineHeight: 20 },
   sendingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -409,6 +503,27 @@ const styles = StyleSheet.create({
   sendingText: {
     fontSize: 11,
     fontStyle: 'italic',
+  },
+  retryMessageBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    alignSelf: 'flex-end',
+    gap: 4,
+  },
+  retryMessageIcon: {
+    fontSize: 12,
+  },
+  retryMessageText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#EF4444',
   },
   previewStripContainer: {
     paddingHorizontal: 16,

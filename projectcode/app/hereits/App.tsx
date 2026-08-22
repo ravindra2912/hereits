@@ -8,6 +8,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { LocationProvider, useLocation } from './src/context/LocationContext';
+import { CartProvider } from './src/context/CartContext';
 import SplashScreen from './src/screens/SplashScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import BusinessListScreen from './src/screens/BusinessListScreen';
@@ -100,19 +101,21 @@ function App() {
     <SafeAreaProvider>
       <AuthProvider>
         <LocationProvider>
-          <StatusBar
-            barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-            backgroundColor="#F8FAFC"
-            translucent={false}
-          />
-          {showSplash ? (
-            <SplashScreen onFinish={() => setShowSplash(false)} />
-          ) : (
-            <SafeAreaView style={{ flex: 1, backgroundColor: '#F8FAFC' }} edges={['top']}>
-              <OfflineBanner />
-              <MainNavigator />
-            </SafeAreaView>
-          )}
+          <CartProvider>
+            <StatusBar
+              barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+              backgroundColor="#F8FAFC"
+              translucent={false}
+            />
+            {showSplash ? (
+              <SplashScreen onFinish={() => setShowSplash(false)} />
+            ) : (
+              <SafeAreaView style={{ flex: 1, backgroundColor: '#F8FAFC' }} edges={['top']}>
+                <OfflineBanner />
+                <MainNavigator />
+              </SafeAreaView>
+            )}
+          </CartProvider>
         </LocationProvider>
       </AuthProvider>
       {/* Toast must be last child so it renders above all screens & modals */}

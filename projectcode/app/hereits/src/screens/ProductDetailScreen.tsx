@@ -13,6 +13,9 @@ import { businessService } from '../services/businessService';
 import FallbackImage from '../components/FallbackImage';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
+import CartModal from '../components/CartModal';
+import RetryView from '../components/RetryView';
 import Svg, { Path } from 'react-native-svg';
 import { Skeleton } from '../components/SkeletonLoader';
 
@@ -24,13 +27,16 @@ export const ProductDetailScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const productId = route.params?.productId;
   const { isAuthenticated, setAuthModalVisible } = useAuth();
+  const { addToCart, getItemQuantity, updateQuantity, getBusinessItemCount } = useCart();
 
   const isDarkMode = false;
   const theme = isDarkMode ? darkTheme : lightTheme;
 
   const [loading, setLoading] = useState(true);
   const [productData, setProductData] = useState<any>(null);
+  const [errorInfo, setErrorInfo] = useState<{ message?: string; isTimeout?: boolean } | null>(null);
   const [isFavorited, setIsFavorited] = useState<boolean>(false);
+  const [cartModalVisible, setCartModalVisible] = useState<boolean>(false);
 
   useEffect(() => {
     if (productData?.product) {
@@ -38,16 +44,23 @@ export const ProductDetailScreen: React.FC = () => {
     }
   }, [productData]);
 
-  useEffect(() => {
-    const loadProductDetail = async () => {
-      setLoading(true);
-      const res = await businessService.getProductDetail(productId);
-      if (res && res.success && res.data) {
-        setProductData(res.data);
-      }
-      setLoading(false);
-    };
+  const loadProductDetail = async () => {
+    setLoading(true);
+    setErrorInfo(null);
+    const res = await businessService.getProductDetail(productId);
+    if (res && res.success && res.data) {
+      setProductData(res.data);
+      setErrorInfo(null);
+    } else {
+      setErrorInfo({
+        message: res?.message || 'Failed to load product details.',
+        isTimeout: res?.is_timeout,
+      });
+    }
+    setLoading(false);
+  };
 
+  useEffect(() => {
     loadProductDetail();
   }, [productId]);
 
@@ -89,19 +102,27 @@ export const ProductDetailScreen: React.FC = () => {
 
   if (!productData || !productData.product) {
     return (
-      <View style={[styles.loadingCenter, theme.background]}>
-        <Text style={[styles.emptyText, theme.secondaryText]}>Product details not found.</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtnError}>
-          <Text style={styles.backBtnErrorText}>Go Back</Text>
-        </TouchableOpacity>
+      <View style={[styles.container, theme.background]}>
+        <View style={styles.topNav}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backBtn, theme.cardBg]}>
+            <Text style={[styles.backIcon, theme.primaryText]}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={[styles.navTitle, theme.primaryText]}>Product</Text>
+        </View>
+        <RetryView
+          message={errorInfo?.message}
+          isTimeout={errorInfo?.isTimeout}
+          onRetry={loadProductDetail}
+          onBack={() => navigation.goBack()}
+        />
       </View>
     );
   }
 
   const { product, business, relatedProducts = [] } = productData;
   const images = product.images || [];
-
-
+  const quantityInCart = business ? getItemQuantity(business.id, product.id) : 0;
+  const businessItemCount = business ? getBusinessItemCount(business.id) : 0;
 
   const handleToggleFavorite = async () => {
     if (!isAuthenticated) {
@@ -134,6 +155,25 @@ export const ProductDetailScreen: React.FC = () => {
             <Path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </Svg>
         </TouchableOpacity>
+        {business && (
+          <TouchableOpacity
+            onPress={() => setCartModalVisible(true)}
+            style={[styles.cartBtnHeader, theme.cardBg]}
+          >
+            <Svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isDarkMode ? '#F8FAFC' : '#64748B'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <Path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+              <Path d="M3 6h18" />
+              <Path d="M16 10a4 4 0 0 1-8 0" />
+            </Svg>
+            {businessItemCount > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>
+                  {businessItemCount > 99 ? '99+' : businessItemCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -252,6 +292,73 @@ export const ProductDetailScreen: React.FC = () => {
           </View>
         )}
       </ScrollView>
+
+      {/* Bottom Sticky Action Bar */}
+      {business && (
+        <View style={[styles.bottomActionBar, theme.cardBg]}>
+          <View style={styles.bottomPriceInfo}>
+            <Text style={[styles.bottomPriceLabel, theme.secondaryText]}>Price</Text>
+            {product.price_type === 'FixPrice' ? (
+              <Text style={styles.bottomPriceValue}>₹{product.sell_price || product.price}</Text>
+            ) : product.price_type === 'PriceInRange' ? (
+              <Text style={styles.bottomPriceValue}>₹{product.min_price} - ₹{product.max_price}</Text>
+            ) : (
+              <Text style={[styles.bottomPriceContact, theme.secondaryText]}>On Inquiry</Text>
+            )}
+          </View>
+
+          {quantityInCart > 0 ? (
+            <View style={styles.bottomActionRow}>
+              <View style={styles.bottomQtyStepper}>
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => updateQuantity(business.id, product.id, quantityInCart - 1)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.stepperBtnText}>−</Text>
+                </TouchableOpacity>
+                <Text style={styles.stepperQtyText}>{quantityInCart}</Text>
+                <TouchableOpacity
+                  style={styles.stepperBtn}
+                  onPress={() => updateQuantity(business.id, product.id, quantityInCart + 1)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.stepperBtnText}>+</Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={styles.viewCartBtn}
+                onPress={() => setCartModalVisible(true)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.viewCartBtnText}>
+                  View Cart ({businessItemCount})
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.addToCartBtn}
+              onPress={() => addToCart(product, business, 1)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.addToCartIcon}>🛒</Text>
+              <Text style={styles.addToCartBtnText}>Add to Cart</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* Business Cart Modal */}
+      {business && (
+        <CartModal
+          visible={cartModalVisible}
+          onClose={() => setCartModalVisible(false)}
+          businessId={business.id}
+          businessName={business.name || 'Store'}
+        />
+      )}
     </View>
   );
 };
@@ -467,6 +574,148 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     marginTop: 2,
+  },
+  cartBtnHeader: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginLeft: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  cartBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 100,
+  },
+  bottomActionBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  bottomPriceInfo: {
+    marginRight: 14,
+  },
+  bottomPriceLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  bottomPriceValue: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#10B981',
+  },
+  bottomPriceContact: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  bottomActionRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  bottomQtyStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  stepperBtn: {
+    width: 34,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperBtnText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1E293B',
+  },
+  stepperQtyText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1E293B',
+    paddingHorizontal: 8,
+  },
+  viewCartBtn: {
+    flex: 1,
+    backgroundColor: '#6366F1',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 44,
+    borderRadius: 14,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  viewCartBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  addToCartBtn: {
+    flex: 1,
+    backgroundColor: '#6366F1',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 44,
+    borderRadius: 14,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  addToCartIcon: {
+    fontSize: 15,
+    marginRight: 8,
+  },
+  addToCartBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
   },
   emptyText: {
     textAlign: 'center',

@@ -19,6 +19,7 @@ import FallbackImage from '../components/FallbackImage';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { BusinessDetailSkeleton } from '../components/SkeletonLoader';
+import RetryView from '../components/RetryView';
 
 interface BusinessDetailScreenProps {
   businessId?: number;
@@ -41,6 +42,7 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
   const [detailData, setDetailData] = useState<any>(null);
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorInfo, setErrorInfo] = useState<{ message?: string; isTimeout?: boolean } | null>(null);
   const [isFavorited, setIsFavorited] = useState<boolean>(false);
 
   useEffect(() => {
@@ -49,25 +51,31 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
     }
   }, [detailData]);
 
-  useEffect(() => {
-    const loadDetail = async () => {
-      if (!businessId) {
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      const res = await businessService.getBusinessDetail(businessId);
-      if (res && res.success && res.data) {
-        setDetailData(res.data);
-        if (res.data.reviews) {
-          setReviews(res.data.reviews);
-        }
-      } else {
-        setDetailData(null);
-      }
+  const loadDetail = async () => {
+    if (!businessId) {
       setLoading(false);
-    };
+      return;
+    }
+    setLoading(true);
+    setErrorInfo(null);
+    const res = await businessService.getBusinessDetail(businessId);
+    if (res && res.success && res.data) {
+      setDetailData(res.data);
+      if (res.data.reviews) {
+        setReviews(res.data.reviews);
+      }
+      setErrorInfo(null);
+    } else {
+      setDetailData(null);
+      setErrorInfo({
+        message: res?.message || 'Failed to load business details.',
+        isTimeout: res?.is_timeout,
+      });
+    }
+    setLoading(false);
+  };
 
+  useEffect(() => {
     loadDetail();
   }, [businessId]);
 
@@ -98,19 +106,12 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
           </TouchableOpacity>
           <Text style={[styles.navTitle, theme.primaryText]}>Business Details</Text>
         </View>
-        <View style={styles.notFoundContent}>
-          <Text style={styles.notFoundIcon}>🏢</Text>
-          <Text style={[styles.notFoundTitle, theme.primaryText]}>Business Not Found</Text>
-          <Text style={[styles.notFoundSub, theme.secondaryText]}>
-            The business you are looking for does not exist or may have been removed.
-          </Text>
-          <TouchableOpacity
-            style={styles.homeBtn}
-            onPress={() => navigation.navigate('HomeTab')}
-          >
-            <Text style={styles.homeBtnText}>Go to Home</Text>
-          </TouchableOpacity>
-        </View>
+        <RetryView
+          message={errorInfo?.message}
+          isTimeout={errorInfo?.isTimeout}
+          onRetry={loadDetail}
+          onBack={() => navigation.goBack()}
+        />
       </View>
     );
   }

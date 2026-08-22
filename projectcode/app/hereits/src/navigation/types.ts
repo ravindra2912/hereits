@@ -8,7 +8,7 @@ export type RootStackParamList = {
   BusinessDetail: { businessId: number };
   ProductDetail: { productId: number };
   ServiceDetail: { serviceId: number };
-  ChatDetail: { conversationId: number; title: string };
+  ChatDetail: { conversationId: number; title: string; initialMessage?: string };
   BusinessCategoryList: { businessId: number; type: 'Products' | 'Services' };
   BusinessProductList: { businessId: number; categoryId?: number; categoryName?: string };
   BusinessServiceList: { businessId: number; categoryId?: number; categoryName?: string };

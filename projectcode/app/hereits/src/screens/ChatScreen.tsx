@@ -11,6 +11,7 @@ import { ChatListItemSkeleton } from '../components/SkeletonLoader';
 import { chatService } from '../services/chatService';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import FallbackImage from '../components/FallbackImage';
+import RetryView from '../components/RetryView';
 
 interface ChatScreenProps {
   onSelectConversation?: (conversationId: number, title: string) => void;
@@ -23,12 +24,20 @@ export const ChatScreen: React.FC<ChatScreenProps> = () => {
 
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorInfo, setErrorInfo] = useState<{ message?: string; isTimeout?: boolean } | null>(null);
 
   const fetchConversations = async () => {
     setLoading(true);
+    setErrorInfo(null);
     const res = await chatService.getConversations();
     if (res.success && res.data) {
       setConversations(res.data);
+      setErrorInfo(null);
+    } else {
+      setErrorInfo({
+        message: res.message || 'Failed to load conversations.',
+        isTimeout: res.is_timeout,
+      });
     }
     setLoading(false);
   };
@@ -54,6 +63,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = () => {
             <ChatListItemSkeleton key={`skeleton-${index}`} theme={theme} />
           ))}
         </View>
+      ) : errorInfo && conversations.length === 0 ? (
+        <RetryView
+          message={errorInfo.message}
+          isTimeout={errorInfo.isTimeout}
+          onRetry={fetchConversations}
+        />
       ) : (
         <FlatList
           data={conversations}

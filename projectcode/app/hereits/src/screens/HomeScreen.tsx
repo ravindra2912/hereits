@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { CategoryItemSkeleton, BusinessCardSkeleton } from '../components/SkeletonLoader';
 import ComingSoon from '../components/ComingSoon';
 import QRScannerModal from '../components/QRScannerModal';
+import RetryView from '../components/RetryView';
 
 import Svg, { Path, Rect } from 'react-native-svg';
 
@@ -52,9 +53,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorInfo, setErrorInfo] = useState<{ message?: string; isTimeout?: boolean } | null>(null);
   const [isQRScannerVisible, setIsQRScannerVisible] = useState(false);
 
   const loadData = async () => {
+    setErrorInfo(null);
     const res = await businessService.getHomeData();
 
     if (res && res.success && res.data) {
@@ -62,10 +65,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       setBanners(res.data.banners || []);
       setCategories(res.data.categories || []);
       setBusinesses(res.data.featured_businesses || []);
+      setErrorInfo(null);
     } else {
-      setBanners([]);
-      setCategories([]);
-      setBusinesses([]);
+      setErrorInfo({
+        message: res?.message || 'Failed to load home data.',
+        isTimeout: res?.is_timeout,
+      });
     }
     setLoading(false);
     setRefreshing(false);
@@ -141,10 +146,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </View>
       </View> */}
 
-      {!loading && categories.length === 0 && businesses.length === 0 ? (
+      {errorInfo && !loading && categories.length === 0 && businesses.length === 0 ? (
+        <RetryView
+          message={errorInfo.message}
+          isTimeout={errorInfo.isTimeout}
+          onRetry={loadData}
+        />
+      ) : !loading && categories.length === 0 && businesses.length === 0 ? (
         <ComingSoon theme={theme} />
       ) : (
         <>
+          {errorInfo && (
+            <RetryView
+              compact
+              message={errorInfo.message}
+              isTimeout={errorInfo.isTimeout}
+              onRetry={loadData}
+            />
+          )}
           {/* Categories Horizontal Scroll */}
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, theme.primaryText]}>

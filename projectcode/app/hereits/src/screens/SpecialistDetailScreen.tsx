@@ -14,6 +14,7 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import { businessService } from '../services/businessService';
 import FallbackImage from '../components/FallbackImage';
 import DataNotFound from '../components/DataNotFound';
+import RetryView from '../components/RetryView';
 import { useAuth } from '../context/AuthContext';
 
 export const SpecialistDetailScreen: React.FC = () => {
@@ -24,6 +25,7 @@ export const SpecialistDetailScreen: React.FC = () => {
 
   const [loading, setLoading] = useState<boolean>(true);
   const [expert, setExpert] = useState<any>(null);
+  const [fetchError, setFetchError] = useState<{ message?: string; isTimeout?: boolean } | null>(null);
 
   // Booking states
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -108,14 +110,24 @@ export const SpecialistDetailScreen: React.FC = () => {
 
   const fetchSpecialistDetail = async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const res = await businessService.getExpertDetail(specialistId);
-      if (res.success && res.data) {
+      if (res && res.success && res.data) {
         setExpert(res.data);
         setIsFavorited(!!res.data.is_favorited);
+        setFetchError(null);
+      } else {
+        setFetchError({
+          message: res?.message || 'Failed to load specialist details.',
+          isTimeout: res?.is_timeout,
+        });
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn('Failed to load specialist details:', e);
+      setFetchError({
+        message: e?.message || 'Network request failed.',
+      });
     } finally {
       setLoading(false);
     }
@@ -254,10 +266,11 @@ export const SpecialistDetailScreen: React.FC = () => {
             <Text style={[styles.backText, theme.primaryText]}>← Back</Text>
           </TouchableOpacity>
         </View>
-        <DataNotFound
-          title="Specialist Not Found"
-          description="We couldn't retrieve the details for this specialist."
-          theme={theme}
+        <RetryView
+          message={fetchError?.message}
+          isTimeout={fetchError?.isTimeout}
+          onRetry={fetchSpecialistDetail}
+          onBack={() => navigation.goBack()}
         />
       </View>
     );
@@ -359,25 +372,23 @@ export const SpecialistDetailScreen: React.FC = () => {
               onPress={() => setAppointmentFor('self')}
               activeOpacity={0.8}
             >
-              <View style={[styles.radioCircle, appointmentFor === 'self' && styles.radioCircleActive]}>
-                {appointmentFor === 'self' && <View style={styles.radioInner} />}
-              </View>
-              <Text style={[styles.apptForText, appointmentFor === 'self' && styles.apptForTextActive]}>
+              <Text 
+                style={[styles.apptForText, appointmentFor === 'self' && styles.apptForTextActive]}
+                numberOfLines={1}
+              >
                 👤 Myself
               </Text>
             </TouchableOpacity>
-
-            <View style={{ width: 10 }} />
 
             <TouchableOpacity
               style={[styles.apptForBtn, appointmentFor === 'other' && styles.apptForBtnActive]}
               onPress={() => setAppointmentFor('other')}
               activeOpacity={0.8}
             >
-              <View style={[styles.radioCircle, appointmentFor === 'other' && styles.radioCircleActive]}>
-                {appointmentFor === 'other' && <View style={styles.radioInner} />}
-              </View>
-              <Text style={[styles.apptForText, appointmentFor === 'other' && styles.apptForTextActive]}>
+              <Text 
+                style={[styles.apptForText, appointmentFor === 'other' && styles.apptForTextActive]}
+                numberOfLines={1}
+              >
                 👥 Someone Else
               </Text>
             </TouchableOpacity>
@@ -864,44 +875,33 @@ const styles = StyleSheet.create({
   // appointment_for buttons
   apptForRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     marginBottom: 16,
   },
   apptForBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 11,
+    paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
     backgroundColor: '#F8FAFC',
+    minWidth: 0,
   },
   apptForBtnActive: {
     borderColor: '#6366F1',
     backgroundColor: '#EEF2FF',
   },
-  radioCircle: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 2,
-    borderColor: '#CBD5E1',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  radioCircleActive: { borderColor: '#6366F1' },
-  radioInner: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#6366F1',
-  },
   apptForText: {
     fontSize: 13,
     fontWeight: '700',
     color: '#64748B',
+    textAlign: 'center',
+    flexShrink: 1,
   },
   apptForTextActive: { color: '#6366F1' },
   queueInfoCard: {

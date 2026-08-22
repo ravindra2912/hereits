@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,11 +10,14 @@ import {
   Alert,
 } from 'react-native';
 import { businessService } from '../services/businessService';
+import { chatService } from '../services/chatService';
 import FallbackImage from '../components/FallbackImage';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
+import RetryView from '../components/RetryView';
 import Svg, { Path } from 'react-native-svg';
 import { Skeleton } from '../components/SkeletonLoader';
+import Toast from 'react-native-toast-message';
 
 const { width } = Dimensions.get('window');
 const fallbackImage = require('../assets/business_icon.png');
@@ -28,7 +32,9 @@ export const ServiceDetailScreen: React.FC = () => {
   const theme = isDarkMode ? darkTheme : lightTheme;
 
   const [loading, setLoading] = useState(true);
+  const [inquiring, setInquiring] = useState(false);
   const [serviceData, setServiceData] = useState<any>(null);
+  const [errorInfo, setErrorInfo] = useState<{ message?: string; isTimeout?: boolean } | null>(null);
   const [isFavorited, setIsFavorited] = useState<boolean>(false);
 
   useEffect(() => {
@@ -37,16 +43,23 @@ export const ServiceDetailScreen: React.FC = () => {
     }
   }, [serviceData]);
 
-  useEffect(() => {
-    const loadServiceDetail = async () => {
-      setLoading(true);
-      const res = await businessService.getServiceDetail(serviceId);
-      if (res && res.success && res.data) {
-        setServiceData(res.data);
-      }
-      setLoading(false);
-    };
+  const loadServiceDetail = async () => {
+    setLoading(true);
+    setErrorInfo(null);
+    const res = await businessService.getServiceDetail(serviceId);
+    if (res && res.success && res.data) {
+      setServiceData(res.data);
+      setErrorInfo(null);
+    } else {
+      setErrorInfo({
+        message: res?.message || 'Failed to load service details.',
+        isTimeout: res?.is_timeout,
+      });
+    }
+    setLoading(false);
+  };
 
+  useEffect(() => {
     loadServiceDetail();
   }, [serviceId]);
 
@@ -88,18 +101,77 @@ export const ServiceDetailScreen: React.FC = () => {
 
   if (!serviceData || !serviceData.service) {
     return (
-      <View style={[styles.loadingCenter, theme.background]}>
-        <Text style={[styles.emptyText, theme.secondaryText]}>Service details not found.</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtnError}>
-          <Text style={styles.backBtnErrorText}>Go Back</Text>
-        </TouchableOpacity>
+      <View style={[styles.container, theme.background]}>
+        <View style={styles.topNav}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backBtn, theme.cardBg]}>
+            <Text style={[styles.backIcon, theme.primaryText]}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={[styles.navTitle, theme.primaryText]}>Service</Text>
+        </View>
+        <RetryView
+          message={errorInfo?.message}
+          isTimeout={errorInfo?.isTimeout}
+          onRetry={loadServiceDetail}
+          onBack={() => navigation.goBack()}
+        />
       </View>
     );
   }
 
   const { service, business, recommendedServices = [] } = serviceData;
 
+  const handleServiceInquiry = async () => {
+    if (!isAuthenticated) {
+      setAuthModalVisible(true);
+      return;
+    }
 
+    if (!business || !service) return;
+
+    try {
+      setInquiring(true);
+      const res = await chatService.startConversation(business.id);
+      setInquiring(false);
+
+      if (res && res.success && res.data) {
+        let priceStr = 'Contact for Price';
+        if (service.price_type === 'FixPrice') {
+          priceStr = `₹${service.price || '0'}`;
+        } else if (service.price_type === 'PriceInRange') {
+          priceStr = `₹${service.min_price} - ₹${service.max_price}`;
+        }
+
+        let inquiryMsg = `🛠️ *Service Inquiry & Booking*\n`;
+        inquiryMsg += `📍 *Provider:* ${business.name}\n\n`;
+        inquiryMsg += `*Service Details:*\n`;
+        inquiryMsg += `• *Service Name:* ${service.name}\n`;
+        if (service.category?.name) {
+          inquiryMsg += `• *Category:* ${service.category.name}\n`;
+        }
+        inquiryMsg += `• *Estimated Price:* ${priceStr}\n`;
+        inquiryMsg += `\n━━━━━━━━━━━━━━━━━━━━\n`;
+        inquiryMsg += `Hello ${business.name}! I am interested in inquiring about and booking your "${service.name}" service. Could you please provide more details on availability, scheduling, and service requirements?`;
+
+        navigation.navigate('ChatDetail', {
+          conversationId: res.data.id,
+          title: business.name,
+          initialMessage: inquiryMsg,
+        });
+
+        Toast.show({
+          type: 'success',
+          text1: 'Service Inquiry Created! 💬',
+          text2: `Connecting to ${business.name} on chat...`,
+        });
+      } else {
+        Alert.alert('Error', res?.message || 'Failed to initiate chat conversation.');
+      }
+    } catch (e) {
+      setInquiring(false);
+      console.error('Service inquiry chat error:', e);
+      Alert.alert('Error', 'Unable to connect to chat. Please try again.');
+    }
+  };
 
   const handleToggleFavorite = async () => {
     if (!isAuthenticated) {
@@ -228,6 +300,38 @@ export const ServiceDetailScreen: React.FC = () => {
           </View>
         )}
       </ScrollView>
+
+      {/* Bottom Sticky Action Bar */}
+      {business && (
+        <View style={[styles.bottomActionBar, theme.cardBg]}>
+          <View style={styles.bottomPriceInfo}>
+            <Text style={[styles.bottomPriceLabel, theme.secondaryText]}>Price</Text>
+            {service.price_type === 'FixPrice' ? (
+              <Text style={styles.bottomPriceValue}>₹{service.price || '0'}</Text>
+            ) : service.price_type === 'PriceInRange' ? (
+              <Text style={styles.bottomPriceValue}>₹{service.min_price} - ₹{service.max_price}</Text>
+            ) : (
+              <Text style={[styles.bottomPriceContact, theme.secondaryText]}>On Inquiry</Text>
+            )}
+          </View>
+
+          <TouchableOpacity
+            style={[styles.inquireBtn, inquiring && styles.inquireBtnDisabled]}
+            onPress={handleServiceInquiry}
+            disabled={inquiring}
+            activeOpacity={0.85}
+          >
+            {inquiring ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <>
+                <Text style={styles.inquireBtnIcon}>💬</Text>
+                <Text style={styles.inquireBtnText}>Inquire on Chat</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -274,7 +378,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 30,
+    paddingBottom: 100,
   },
   coverImage: {
     width: '100%',
@@ -426,6 +530,70 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     marginTop: 2,
+  },
+  bottomActionBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  bottomPriceInfo: {
+    marginRight: 14,
+  },
+  bottomPriceLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  bottomPriceValue: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#10B981',
+  },
+  bottomPriceContact: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  inquireBtn: {
+    flex: 1,
+    backgroundColor: '#6366F1',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 44,
+    borderRadius: 14,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  inquireBtnDisabled: {
+    backgroundColor: '#94A3B8',
+    shadowOpacity: 0,
+  },
+  inquireBtnIcon: {
+    fontSize: 15,
+    marginRight: 8,
+  },
+  inquireBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
   },
   emptyText: {
     textAlign: 'center',

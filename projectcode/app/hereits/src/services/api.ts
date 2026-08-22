@@ -3,9 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 // Centralized API Service for Hereits Mobile App
-// Note: Android devices/emulators cannot resolve custom domain names like 'hereits.test' directly.
-// Use '10.0.2.2' for Android Emulator, or your local Wi-Fi IP '192.168.0.101' for Physical Devices.
 export const BASE_API_URL = ENV_BASE_API_URL;
+export const DEFAULT_TIMEOUT_MS = 30000; // 30 seconds timeout across all API calls
 
 let authToken: string | null = null;
 
@@ -15,15 +14,24 @@ export const setAuthToken = (token: string | null) => {
 
 export const getAuthToken = () => authToken;
 
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  status_code?: number;
+  is_timeout?: boolean;
+}
+
 export async function apiRequest<T = any>(
   endpoint: string,
   options: {
     method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
     body?: any;
     headers?: Record<string, string>;
+    timeoutMs?: number;
   } = {}
-): Promise<{ success: boolean; data?: T; message?: string; status_code?: number }> {
-  const { method = 'GET', body, headers = {} } = options;
+): Promise<ApiResponse<T>> {
+  const { method = 'GET', body, headers = {}, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
 
   const reqHeaders: Record<string, string> = {
     Accept: 'application/json',
@@ -60,24 +68,51 @@ export async function apiRequest<T = any>(
   }
 
   const fullUrl = `${BASE_API_URL}${endpoint}`;
-  console.log(`[API Request] ${method} to: ${fullUrl}`);
+  console.log(`[API Request] (${timeoutMs}ms timeout) ${method} to: ${fullUrl}`);
+
+  // Setup 30-second abort controller
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, timeoutMs);
 
   try {
     const response = await fetch(fullUrl, {
       method,
       headers: reqHeaders,
       body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     const result = await response.json();
     console.log(`[API Success] ${fullUrl}`, result);
     return result;
   } catch (error: any) {
+    clearTimeout(timeoutId);
+
+    const isTimeout =
+      error.name === 'AbortError' ||
+      error.message?.toLowerCase().includes('aborted') ||
+      error.message?.toLowerCase().includes('timeout');
+
+    if (isTimeout) {
+      console.warn(`[API Timeout] ${method} ${fullUrl} exceeded ${timeoutMs / 1000}s`);
+      return {
+        success: false,
+        message: 'Request timed out after 30 seconds. Please check your connection and retry.',
+        status_code: 408,
+        is_timeout: true,
+      };
+    }
+
     console.error(`[API Error] Failed to fetch ${method} ${fullUrl}:`, error);
     return {
       success: false,
-      message: error.message || 'Network request failed',
+      message: error.message || 'Network request failed. Please retry.',
       status_code: 500,
+      is_timeout: false,
     };
   }
 }
