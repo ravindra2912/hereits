@@ -25,7 +25,7 @@ class VisitorAnalyticsController extends Controller
         $businessDetails = Business::select('id', 'name', 'slug', 'status')
             ->with([
                 'businessSetting' => function ($q) {
-                    $q->select('business_id', 'is_ecommerce_system', 'is_service_system', 'is_appointment_system', 'is_appointment_with_department', 'subscription_expiry_date', 'credit');
+                    $q->select('business_id', 'is_ecommerce_system', 'is_service_system', 'is_appointment_system', 'is_appointment_with_department', 'credit');
                 }
             ])
             ->findOrFail($businessId);

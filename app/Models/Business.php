@@ -93,18 +93,6 @@ class Business extends Model
     // for dashboard calculation end
     // ***************************
 
-
-
-    public function hasActivePlan($type = 'subscription')
-    {
-        return $this->purchases()
-            ->where('plan_type', $type)
-            ->where('status', 'paid')
-            ->where('plan_status', 'active')
-            ->where('end_date', '>', now())
-            ->exists();
-    }
-
     public function favorites()
     {
         return $this->hasMany(Favorite::class, 'favorite_item_id', 'id')->where('favorite_type', 'business');

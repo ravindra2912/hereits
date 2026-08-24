@@ -147,10 +147,6 @@
     @endif
 
     @if (Auth::user()->role === 'Business')
-    <a href="{{ route('business.subscription') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('business.subscription') ? 'active' : '' }}">
-      <i class="bi bi-card-checklist me-2"></i>Subscription Plans
-    </a>
-
     <a href="{{ route('business.credits') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('business.credits') ? 'active' : '' }}">
       <i class="bi bi-wallet2 me-2"></i>Credits
     </a>

@@ -62,7 +62,7 @@ class AuthController extends Controller
             if ($isBusinessOwner) {
                 if ($user->business_id == null) {
                     $business = Business::select('id', 'owner_id', 'name', 'business_image')
-                        ->with(['businessSetting:id,business_id,subscription_expiry_date'])
+                        ->with(['businessSetting:id,business_id'])
                         ->where('owner_id', $user->id)->first();
                     if ($business) {
                         $user->business_id = $business->id;

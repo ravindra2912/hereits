@@ -60,7 +60,6 @@ class ApiV1BusinessController extends Controller
             $business->business_logo = getImage($business->business_logo, 'business');
 
             $setting = getBusinessSettings($business->id);
-            $isSubscriptionActive = $setting && ($setting->subscription_expiry_date > now());
 
             // Filter out sensitive settings data
             if ($setting) {
@@ -99,12 +98,12 @@ class ApiV1BusinessController extends Controller
                 $g->image_url = getImage($g->image_url);
             }
 
-            if ($isSubscriptionActive) {
-                if ($setting->is_appointment_with_department) {
-                    // $departments = AppointmentDepartment::select('id', 'department_name')->where('business_id', $business->id)->get();
-                }
+            if ($setting && $setting->is_appointment_with_department) {
+                // $departments = AppointmentDepartment::select('id', 'department_name')->where('business_id', $business->id)->get();
+            }
 
-                // Experts
+            // Experts
+            if ($setting && $setting->is_appointment_system) {
                 $experts = Expert::select('id', 'business_id', 'title', 'expert_name', 'expert_image', 'department_id', 'slug', 'rating', 'description', 'is_appointment_book_with_time_slot')
                     ->with([
                         'department',
@@ -119,131 +118,134 @@ class ApiV1BusinessController extends Controller
                     ->where('status', 'active')
                     ->limit(4)
                     ->get();
-                foreach ($experts as $exp) {
-                    $exp->expert_image = getImage($exp->expert_image);
-                }
 
                 $totalExperts = $experts->count();
 
-                // Products
-                if ($setting->is_ecommerce_system) {
-                    //product categories
-                    $details['productCategories'] = Category::select('id', 'name', 'image_url', 'business_id')
-                        ->where('business_id', $business->id)
-                        ->where('type', 'Products')
-                        ->where('show_in_home', true)
-                        ->where('status', 'active')
-                        ->get();
-                    foreach ($details['productCategories'] as $cat) {
-                        $cat->image_url = getImage($cat->image_url);
-                    }
+                foreach ($experts as $exp) {
+                    $exp->expert_image = getImage($exp->expert_image, 'expert');
+                }
+            }
 
-                    // category with products
-                    $details['categoriesWithProducts'] = Category::select('id', 'name', 'image_url', 'business_id')
-                        ->with(['products' => function ($query) use ($userId) {
-                            $query->select('id', 'name', 'slug', 'description', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'category_id', 'business_id')
-                                ->with(['firstImage:id,product_id,image_url', 'category:id,name'])
-                                ->when($userId, function ($query) use ($userId) {
-                                    $query->withExists(['favorites as is_favorited' => function ($q) use ($userId) {
-                                        $q->where('user_id', $userId);
-                                    }]);
-                                })
-                                ->where('status', 'active')
-                                ->limit(6);
-                        }])
-                        ->whereHas('products', function ($query) {
-                            $query->where('status', 'active');
-                        })
-                        ->where('business_id', $business->id)
-                        ->where('type', 'Products')
-                        ->where('show_in_home_with_items', true)
-                        ->where('status', 'active')
-                        ->get();
-                    foreach ($details['categoriesWithProducts'] as $cat) {
-                        $cat->image_url = getImage($cat->image_url);
-                        foreach ($cat->products as $p) {
-                            if ($p->firstImage) {
-                                $p->firstImage->image_url = getImage($p->firstImage->image_url);
-                            }
-                        }
-                    }
+            // Products
+            if ($setting && $setting->is_ecommerce_system) {
+                //product categories
+                $details['productCategories'] = Category::select('id', 'name', 'image_url', 'business_id')
+                    ->where('business_id', $business->id)
+                    ->where('type', 'Products')
+                    ->where('show_in_home', true)
+                    ->where('status', 'active')
+                    ->get();
+                foreach ($details['productCategories'] as $cat) {
+                    $cat->image_url = getImage($cat->image_url);
+                }
 
-                    if ($details['categoriesWithProducts']->count() == 0) {
-                        $details['products'] = Product::select('id', 'name', 'slug', 'description', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'category_id', 'business_id')
-                            ->with(['firstImage:id,product_id,image_url', 'category:id,name'])
+                // category with products
+                $details['categoriesWithProducts'] = Category::select('id', 'name', 'image_url', 'business_id')
+                    ->with(['products' => function ($query) use ($userId) {
+                        $query->select('id', 'name', 'slug', 'description', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'category_id', 'business_id')
+                            ->with(['firstTwoImages:id,product_id,image_url', 'category:id,name'])
                             ->when($userId, function ($query) use ($userId) {
                                 $query->withExists(['favorites as is_favorited' => function ($q) use ($userId) {
                                     $q->where('user_id', $userId);
                                 }]);
                             })
-                            ->where('business_id', $business->id)
                             ->where('status', 'active')
-                            ->limit(6)
-                            ->get();
-                        foreach ($details['products'] as $p) {
-                            if ($p->firstImage) {
-                                $p->firstImage->image_url = getImage($p->firstImage->image_url);
+                            ->limit(6);
+                    }])
+                    ->whereHas('products', function ($query) {
+                        $query->where('status', 'active');
+                    })
+                    ->where('business_id', $business->id)
+                    ->where('type', 'Products')
+                    ->where('show_in_home_with_items', true)
+                    ->where('status', 'active')
+                    ->get();
+                foreach ($details['categoriesWithProducts'] as $cat) {
+                    $cat->image_url = getImage($cat->image_url);
+                    foreach ($cat->products as $p) {
+                        if ($p->firstTwoImages) {
+                            foreach ($p->firstTwoImages as $img) {
+                                $img->image_url = getImage($img->image_url);
                             }
                         }
                     }
                 }
 
-                // Services
-                if ($setting->is_service_system) {
-                    //service categories
-                    $details['serviceCategories'] = Category::select('id', 'name', 'image_url', 'business_id')
-                        ->where('business_id', $business->id)
-                        ->where('type', 'Services')
-                        ->where('show_in_home', true)
-                        ->where('status', 'active')
-                        ->get();
-                    foreach ($details['serviceCategories'] as $cat) {
-                        $cat->image_url = getImage($cat->image_url);
-                    }
-
-                    // category with services
-                    $details['categoriesWithServices'] = Category::select('id', 'name', 'image_url', 'business_id')
-                        ->with(['services' => function ($query) use ($userId) {
-                            $query->select('id', 'name', 'slug', 'description', 'price_type', 'price', 'max_price', 'min_price', 'category_id', 'image_url', 'business_id')
-                                ->with('category:id,name')
-                                ->when($userId, function ($query) use ($userId) {
-                                    $query->withExists(['favorites as is_favorited' => function ($q) use ($userId) {
-                                        $q->where('user_id', $userId);
-                                    }]);
-                                })
-                                ->where('status', 'active')
-                                ->limit(4);
-                        }])
-                        ->whereHas('services', function ($query) {
-                            $query->where('status', 'active');
+                if ($details['categoriesWithProducts']->count() == 0) {
+                    $details['products'] = Product::select('id', 'name', 'slug', 'description', 'price', 'sell_price', 'max_price', 'min_price', 'price_type', 'category_id', 'business_id')
+                        ->with(['firstImage:id,product_id,image_url', 'category:id,name'])
+                        ->when($userId, function ($query) use ($userId) {
+                            $query->withExists(['favorites as is_favorited' => function ($q) use ($userId) {
+                                $q->where('user_id', $userId);
+                            }]);
                         })
                         ->where('business_id', $business->id)
-                        ->where('type', 'Services')
-                        ->where('show_in_home_with_items', true)
                         ->where('status', 'active')
+                        ->limit(6)
                         ->get();
-                    foreach ($details['categoriesWithServices'] as $cat) {
-                        $cat->image_url = getImage($cat->image_url);
-                        foreach ($cat->services as $s) {
-                            $s->image_url = getImage($s->image_url);
+                    foreach ($details['products'] as $p) {
+                        if ($p->firstImage) {
+                            $p->firstImage->image_url = getImage($p->firstImage->image_url);
                         }
                     }
+                }
+            }
 
-                    if ($details['categoriesWithServices']->count() == 0) {
-                        $details['services'] = Service::select('id', 'name', 'slug', 'description', 'price_type', 'price', 'max_price', 'min_price', 'category_id', 'image_url', 'business_id')
+            // Services
+            if ($setting && $setting->is_service_system) {
+                //service categories
+                $details['serviceCategories'] = Category::select('id', 'name', 'image_url', 'business_id')
+                    ->where('business_id', $business->id)
+                    ->where('type', 'Services')
+                    ->where('show_in_home', true)
+                    ->where('status', 'active')
+                    ->get();
+                foreach ($details['serviceCategories'] as $cat) {
+                    $cat->image_url = getImage($cat->image_url);
+                }
+
+                // category with services
+                $details['categoriesWithServices'] = Category::select('id', 'name', 'image_url', 'business_id')
+                    ->with(['services' => function ($query) use ($userId) {
+                        $query->select('id', 'name', 'slug', 'description', 'price_type', 'price', 'max_price', 'min_price', 'category_id', 'image_url', 'business_id')
                             ->with('category:id,name')
                             ->when($userId, function ($query) use ($userId) {
                                 $query->withExists(['favorites as is_favorited' => function ($q) use ($userId) {
                                     $q->where('user_id', $userId);
                                 }]);
                             })
-                            ->where('business_id', $business->id)
                             ->where('status', 'active')
-                            ->limit(4)
-                            ->get();
-                        foreach ($details['services'] as $s) {
-                            $s->image_url = getImage($s->image_url);
-                        }
+                            ->limit(4);
+                    }])
+                    ->whereHas('services', function ($query) {
+                        $query->where('status', 'active');
+                    })
+                    ->where('business_id', $business->id)
+                    ->where('type', 'Services')
+                    ->where('show_in_home_with_items', true)
+                    ->where('status', 'active')
+                    ->get();
+                foreach ($details['categoriesWithServices'] as $cat) {
+                    $cat->image_url = getImage($cat->image_url);
+                    foreach ($cat->services as $s) {
+                        $s->image_url = getImage($s->image_url);
+                    }
+                }
+
+                if ($details['categoriesWithServices']->count() == 0) {
+                    $details['services'] = Service::select('id', 'name', 'slug', 'description', 'price_type', 'price', 'max_price', 'min_price', 'category_id', 'image_url', 'business_id')
+                        ->with('category:id,name')
+                        ->when($userId, function ($query) use ($userId) {
+                            $query->withExists(['favorites as is_favorited' => function ($q) use ($userId) {
+                                $q->where('user_id', $userId);
+                            }]);
+                        })
+                        ->where('business_id', $business->id)
+                        ->where('status', 'active')
+                        ->limit(4)
+                        ->get();
+                    foreach ($details['services'] as $s) {
+                        $s->image_url = getImage($s->image_url);
                     }
                 }
             }
@@ -268,7 +270,6 @@ class ApiV1BusinessController extends Controller
                 'data' => [
                     'business' => $business,
                     'setting' => $setting,
-                    'isSubscriptionActive' => $isSubscriptionActive,
                     'experts' => $experts,
                     'details' => $details,
                     'galleries' => $galleries,

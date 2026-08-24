@@ -37,14 +37,7 @@
                           {{ $transaction->created_at->format('M d, Y h:i A') }}
                         </td>
                         <td class="px-4 py-3">
-                          @if($transaction->reference_type == \App\Models\UserCreditTransaction::REF_BUSINESS_SUBSCRIPTION)
-                            Referral Bonus 
-                            @if($transaction->business)
-                              - <a href="{{ route('business-details', $transaction->business->slug) }}" class="fw-bold text-primary text-decoration-none hover-underline">{{ $transaction->business->name }}</a>
-                            @else
-                              (Business Subscription)
-                            @endif
-                          @elseif($transaction->reference_type == \App\Models\UserCreditTransaction::REF_PAYOUT)
+                          @if($transaction->reference_type == \App\Models\UserCreditTransaction::REF_PAYOUT)
                             Payout Withdrawal
                           @elseif($transaction->reference_type == \App\Models\UserCreditTransaction::REF_ADMIN_ADJUSTMENT)
                             Admin Adjustment

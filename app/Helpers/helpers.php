@@ -246,7 +246,6 @@ function getBusinessSettings($business_id = null)
             'is_ecommerce_system' => false,
             'is_product_import_export' => false,
             'is_service_system' => false,
-            'subscription_expiry_date' => null,
             'credit' => 0,
             'is_verified' => false,
             'visibility' => 'public'

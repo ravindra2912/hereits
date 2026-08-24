@@ -432,32 +432,6 @@
         </div>
       </div>
 
-      <!-- 3. Limits & Expiry -->
-      <div class="mb-4">
-        <div class="d-flex align-items-center mb-3">
-          <div class="bg-danger bg-opacity-10 p-2 rounded-3 text-danger me-2">
-            <i class="bi bi-shield-lock fs-5"></i>
-          </div>
-          <h6 class="fw-bold text-uppercase m-0 small tracking-wider text-muted">Quotas & Expirations</h6>
-        </div>
-        <div class="row g-4">
-
-          <div class="col-md-4">
-            <div class="card bg-primary text-white border-0 shadow-sm rounded-4 p-4">
-              <label class="form-label fw-bold small text-white-50 text-uppercase mb-3"><i class="bi bi-star me-1"></i> Global Subscription</label>
-              <div class="mb-3">
-                <h4 class="mb-0 fw-bold">Active Plan</h4>
-                <small class="text-white-50">Manage global access</small>
-              </div>
-              <div class="mt-auto">
-                <label class="small text-white-50 mb-1">Plan Expiry Date</label>
-                <input type="date" class="form-control form-control-sm bg-white bg-opacity-10 border-white border-opacity-25 text-white" name="subscription_expiry_date" value="{{ $setting->subscription_expiry_date }}">
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top">
         <button class="btn btn-outline-secondary px-4 rounded-pill" type="button" onclick="history.back()">
           <i class="bi bi-arrow-left me-1"></i> Cancel

@@ -17,15 +17,12 @@ class ProductController extends Controller
     public function businessProducts($slug, Request $request): View
     {
         $business = Business::where('slug', $slug)
-            ->whereHas('businessSetting', function ($query) {
-                $query->where('subscription_expiry_date', '>=', now());
-            })
             ->where('status', 'active')
             ->firstOrFail();
 
         $setting = getBusinessSettings($business->id);
 
-        if (!$setting->is_ecommerce_system && $setting->subscription_expiry_date <= now()) {
+        if (!$setting->is_ecommerce_system) {
             return abort(404);
         }
 
@@ -71,17 +68,14 @@ class ProductController extends Controller
                 $query->orderBy('sort_order', 'asc')->select('id', 'product_id', 'image_url');
             }])
             ->whereHas('business', function ($q) use ($business_slug) {
-                $q->where('slug', $business_slug)
-                    ->whereHas('businessSetting', function ($query) {
-                        $query->where('subscription_expiry_date', '>=', now());
-                    });
+                $q->where('slug', $business_slug);
             })
             ->where('status', 'active')
             ->firstOrFail();
 
         $business = $product->business;
         $setting = getBusinessSettings($business->id);
-        if ($setting->subscription_expiry_date <= now()) {
+        if (!$setting->is_ecommerce_system) {
             return abort(404);
         }
 

@@ -17,16 +17,13 @@ class ServiceController extends Controller
     {
         $business = Business::select('id', 'name', 'slug', 'business_image', 'business_logo', 'contact', 'address', 'city_id', 'state_id', 'facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'seo_description', 'seo_keyword')
             ->with(['city', 'state'])
-            ->whereHas('businessSetting', function ($query) {
-                $query->where('subscription_expiry_date', '>=', now());
-            })
             ->where('slug', $slug)
             ->where('status', 'active')
             ->firstOrFail();
 
         $setting = getBusinessSettings($business->id);
 
-        if (!$setting->is_service_system || $setting->subscription_expiry_date <= now()) {
+        if (!$setting->is_service_system) {
             return abort(404);
         }
 
@@ -68,15 +65,12 @@ class ServiceController extends Controller
     {
         $business = Business::select('id', 'name', 'slug', 'business_image', 'business_logo', 'contact', 'address', 'city_id', 'state_id', 'facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'seo_description', 'seo_keyword')
             ->with(['city', 'state'])
-            ->whereHas('businessSetting', function ($query) {
-                $query->where('subscription_expiry_date', '>=', now());
-            })
             ->where('slug', $business_slug)
             ->where('status', 'active')
             ->firstOrFail();
 
         $setting = getBusinessSettings($business->id);
-        if ($setting->subscription_expiry_date <= now()) {
+        if (!$setting->is_service_system) {
             return abort(404);
         }
 

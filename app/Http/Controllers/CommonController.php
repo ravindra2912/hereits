@@ -20,13 +20,13 @@ class CommonController extends Controller
 
         if (Auth::guard('admin')->check()) {
             // Admin can see all invoices
-            $purchase = Purchase::with(['transaction', 'plan', 'business', 'business.owner'])->findOrFail($id);
+            $purchase = Purchase::with(['transaction', 'business', 'business.owner'])->findOrFail($id);
         } elseif (Auth::check()) {
             $user = Auth::user();
             if ($user->role == 'Business') {
                 // Business owners can only see their own invoices
                 $purchase = Purchase::where('business_id', $user->business_id)
-                    ->with(['transaction', 'plan', 'business', 'business.owner'])
+                    ->with(['transaction', 'business', 'business.owner'])
                     ->findOrFail($id);
             }
         }

@@ -52,17 +52,13 @@
                                         ];
                                         $typeInfo = $typeIcons[$data->plan_type] ?? ['icon' => 'bi-credit-card', 'color' => 'secondary'];
                                         @endphp
-                                        <div class="bg-{{ $typeInfo['color'] }} bg-opacity-10 text-{{ $typeInfo['color'] }} rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
-                                            <i class="bi {{ $typeInfo['icon'] }} small"></i>
+                                        <div class="bg-success bg-opacity-10 text-success rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                                            <i class="bi bi-wallet2 small"></i>
                                         </div>
                                         <div>
-                                            <div class="fw-bold text-dark">{{ $data->plan->name ?? ucfirst($data->plan_type) }}</div>
+                                            <div class="fw-bold text-dark">{{ $data->quantity ? $data->quantity . ' Credits' : 'Credits' }}</div>
                                             <div class="small text-muted">
-                                                @if($data->plan_type == 'subscription')
-                                                {{ $data->plan->duration ?? '1' }} Months Subscription
-                                                @else
-                                                {{ $data->quantity ?? '1' }} {{ ucfirst($data->plan_type) }} Units
-                                                @endif
+                                                {{ $data->quantity ?? '1' }} Credits
                                             </div>
                                         </div>
                                     </div>
@@ -70,7 +66,7 @@
                                 <td class="py-3 text-center">
                                     <div class="fw-bold text-dark">{{ currencyFormat($data->total_amount) }}</div>
                                     @php
-                                    $total_saved = $data->coupon_discount_amount + $data->activated_plan_discount;
+                                    $total_saved = $data->coupon_discount_amount;
                                     @endphp
                                     @if($total_saved > 0)
                                     <small class="text-success" style="font-size: 0.7rem;">

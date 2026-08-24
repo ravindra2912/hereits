@@ -96,7 +96,6 @@ class CreditController extends Controller
 
                 $binsert = new Purchase();
                 $binsert->business_id = getBusinessId();
-                $binsert->plan_id = null; // No fixed plan for credits
                 $binsert->plan_type = 'credit';
                 $binsert->subtotal = $originalPrice;
                 $binsert->quantity = $quantity;

@@ -31,7 +31,7 @@ class PaymentController extends Controller
         $success = false;
 
         // Fetch purchase data based on type
-        if (in_array($type, ['subscription', 'credit'])) {
+        if ($type === 'credit') {
             $purchaseData = Purchase::find($id);
             if ($purchaseData && $purchaseData->status == 'pending') {
 
@@ -42,13 +42,7 @@ class PaymentController extends Controller
 
                 $business_id = $purchaseData->business_id;
                 $data->total = $purchaseData->total_amount;
-
-                // Set redirection URL based on type
-                if ($type == 'subscription') {
-                    $data->redirectUrl = route('business.subscription');
-                } else {
-                    $data->redirectUrl = route('business.credits');
-                }
+                $data->redirectUrl = route('business.credits');
                 $success = true;
             } else {
                 exit('Invalid order or payment already processed!');

@@ -22,7 +22,6 @@ class BusinessSetting extends Model
         'is_service_system',
         'about_us_text',
         'about_us_image',
-        'subscription_expiry_date',
         'credit',
         'is_appointment_creadit_diduct_manual',
         'deduct_credit_per_customer_appointment',
@@ -50,7 +49,6 @@ class BusinessSetting extends Model
             'is_verified' => $this->is_verified == '1' ? true : false,
             'about_us_text' => $this->about_us_text,
             'about_us_image' => $this->about_us_image,
-            'subscription_expiry_date' => $this->subscription_expiry_date,
             'credit' => (float)$this->credit,
             'visibility' => $this->visibility,
         ];

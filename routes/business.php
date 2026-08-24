@@ -13,7 +13,6 @@ use App\Http\Controllers\Business\AppointmentDepartmentController;
 use App\Http\Controllers\Business\ProductController;
 use App\Http\Controllers\Business\BannerController;
 use App\Http\Controllers\Business\ServiceController;
-use App\Http\Controllers\Business\SubscriptionPlanController;
 use App\Http\Controllers\Business\CreditController;
 use App\Http\Controllers\Business\PurchaseHistoryController;
 use App\Http\Controllers\Business\GalleryController;
@@ -159,15 +158,6 @@ Route::name('business.')->group(function () {
             Route::get('credits/details', 'show')->name('credits.details');
             Route::post('credits/validate-coupon', 'validateCouponAjax')->name('credits.validate_coupon');
             Route::post('credits/buy', 'buy')->name('credits.buy');
-        })->middleware('checkBusinessPerm:owner_only');
-
-
-
-        Route::controller(SubscriptionPlanController::class)->group(function () {
-            Route::get('subscription', 'index')->name('subscription');
-            Route::get('subscription/details/{id}', 'show')->name('subscription.details');
-            Route::post('subscription/validate-coupon', 'validateCouponAjax')->name('subscription.validate_coupon');
-            Route::post('subscription/buy', 'buy')->name('subscription.buy');
         })->middleware('checkBusinessPerm:owner_only');
 
         Route::controller(PurchaseHistoryController::class)->group(function () {

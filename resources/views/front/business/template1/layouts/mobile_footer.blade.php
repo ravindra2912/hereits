@@ -10,11 +10,7 @@
                 </a>
             </div>
 
-            @php
-                $isSubscriptionActive = !empty($setting->subscription_expiry_date) && \Carbon\Carbon::parse($setting->subscription_expiry_date) >= now();
-            @endphp
-
-            @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system && $isSubscriptionActive)
+            @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
             <div class="mobile-nav-item px-1">
                 <a href="{{ route('business-products', ['business_slug' => $business->slug]) }}" class="mobile-nav-link {{ request()->routeIs('business-products') ? 'active' : '' }}">
                     <div class="nav-icon-wrapper">
@@ -25,7 +21,7 @@
             </div>
             @endif
 
-            @if(isset($setting->is_service_system) && $setting->is_service_system && $isSubscriptionActive)
+            @if(isset($setting->is_service_system) && $setting->is_service_system)
             <div class="mobile-nav-item px-1">
                 <a href="{{ route('business-services', ['business_slug' => $business->slug]) }}" class="mobile-nav-link {{ request()->routeIs('business-services') ? 'active' : '' }}">
                     <div class="nav-icon-wrapper">
@@ -36,7 +32,7 @@
             </div>
             @endif
 
-            @if(isset($setting->is_appointment_system) && $setting->is_appointment_system && $isSubscriptionActive)
+            @if(isset($setting->is_appointment_system) && $setting->is_appointment_system)
             <div class="mobile-nav-item px-1">
                 <a href="{{ route('expert.list', $business->slug) }}" class="mobile-nav-link {{ request()->routeIs('expert.list') ? 'active' : '' }}">
                     <div class="nav-icon-wrapper">

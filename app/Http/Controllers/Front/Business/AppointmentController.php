@@ -29,14 +29,11 @@ class AppointmentController extends Controller
     {
         $business = Business::select('id', 'name', 'slug', 'business_image', 'business_logo', 'address', 'contact', 'latitude', 'longitude', 'facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'seo_description', 'seo_keyword')
             ->where('slug', $business_slug)
-            ->whereHas('businessSetting', function ($query) {
-                $query->where('subscription_expiry_date', '>=', now());
-            })
             ->where('status', 'active')
             ->firstOrFail();
 
         $setting = getBusinessSettings($business->id);
-        if ($setting->subscription_expiry_date <= now()) {
+        if (!$setting->is_appointment_system) {
             return abort(404);
         }
 
@@ -45,52 +42,55 @@ class AppointmentController extends Controller
             $departments = AppointmentDepartment::select('id', 'department_name')->where('business_id', $business->id)->get();
         }
 
-        $query = Expert::select('id', 'business_id', 'title', 'expert_name', 'expert_image', 'department_id', 'slug', 'rating', 'is_appointment_book_with_time_slot')
-            ->with(['department', 'business'])
+        $limit = 12;
+        $query = Expert::select('id', 'business_id', 'title', 'expert_name', 'expert_image', 'department_id', 'slug', 'rating', 'description', 'is_appointment_book_with_time_slot')
+            ->with(['department'])
             ->where('business_id', $business->id)
-            ->where('status', 'active')
-            ->when(auth()->check(), function ($query) {
-                $query->withExists(['favorites as is_favorited' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }]);
-            });
+            ->where('status', 'active');
 
-        if ($request->has('department') && !empty($request->department) && $request->department != 'all') {
-            $query->where('department_id', $request->department);
+        if ($request->has('department_id') && !empty($request->department_id)) {
+            $query->where('department_id', $request->department_id);
         }
 
-        if ($request->has('search') && !empty($request->search)) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('expert_name', 'like', "%{$search}%")
-                    ->orWhere('title', 'like', "%{$search}%");
+        $experts = $query->paginate($limit);
+
+        // in-memory favorite check
+        if (auth()->check()) {
+            $favoriteExpertIds = \App\Models\Favorite::where('user_id', auth()->id())
+                ->where('favorite_type', 'expert')
+                ->pluck('favorite_item_id')
+                ->toArray();
+
+            $collection = $experts instanceof \Illuminate\Pagination\LengthAwarePaginator
+                ? $experts->getCollection()
+                : $experts;
+
+            $collection->each(function ($expert) use ($favoriteExpertIds) {
+                $expert->is_favorited = in_array($expert->id, $favoriteExpertIds);
             });
         }
 
-        $experts = $query->paginate(12);
-
-        return view('front.business.template1.appointment.expert_list', compact('business', 'experts', 'departments', 'setting'));
+        return view('front.business.template1.appointment.experts', compact('business', 'experts', 'setting', 'departments'));
     }
 
-    public function index(Request $request, $business_slug, $expert_slug = null): View
+    public function expertDetails(Request $request, $business_slug, $expert_slug): View
     {
-        $expert = Expert::select('id', 'department_id', 'business_id', 'expert_image', 'expert_name', 'slug', 'title', 'description', 'rating', 'is_appointment_book_with_time_slot')
+        $expert = Expert::select('id', 'business_id', 'title', 'expert_name', 'expert_image', 'department_id', 'slug', 'rating', 'description', 'timing_per_appointment', 'is_appointment_book_with_time_slot', 'appointment_price')
             ->with([
+                'department',
                 'business' => function ($q) {
-                    return $q->select('id', 'name', 'slug', 'address', 'contact', 'rating', 'latitude', 'longitude', 'business_logo', 'facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'seo_description', 'seo_keyword');
+                    return $q->select('id', 'name', 'slug', 'address', 'contact', 'rating', 'latitude', 'longitude', 'business_logo', 'facebook', 'twitter', 'instagram', 'linkedin', 'youtube');
                 },
+                'timings',
+                'specializations:id,name',
+                'languages:id,name',
+                'faqs:id,question,answer,expert_id',
                 'reviews' => function ($q) {
-                    $q->select('id', 'business_id', 'user_id', 'review_on_id', 'rating', 'review', 'created_at')
-                        ->with([
-                            'user' => function ($query) {
-                                $query->select('id', 'first_name', 'last_name', 'profile');
-                            }
-                        ])
-                        ->limit(6);
-                },
-                'timings' => function ($q) {
-                    $q->select('id', 'business_id', 'expert_id', 'day', 'start_time', 'end_time')
-                        ->orderByRaw("FIELD(day, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')");
+                    $q->select('id', 'user_id', 'review_on_id', 'review_type', 'rating', 'review', 'created_at')
+                        ->with(['user' => function ($qu) {
+                            $qu->select('id', 'first_name', 'last_name', 'profile_image');
+                        }])
+                        ->where('status', 'approved');
                 }
             ])
             ->when(auth()->check(), function ($query) {
@@ -99,10 +99,7 @@ class AppointmentController extends Controller
                 }]);
             })
             ->whereHas('business', function ($q) use ($business_slug) {
-                $q->where('slug', $business_slug)
-                    ->whereHas('businessSetting', function ($query) {
-                        $query->where('subscription_expiry_date', '>=', now());
-                    });
+                $q->where('slug', $business_slug);
             })
             ->where('status', 'active')
             ->where('slug', $expert_slug)
@@ -112,7 +109,7 @@ class AppointmentController extends Controller
             app(BusinessAnalyticsService::class)->trackExpertView($expert, $request);
 
             $setting = getBusinessSettings($expert->business_id);
-            if ($setting->subscription_expiry_date <= now()) {
+            if (!$setting->is_appointment_system) {
                 return abort(404);
             }
 
@@ -124,8 +121,6 @@ class AppointmentController extends Controller
                 DB::raw('SUM(CASE WHEN rating = "4" THEN 1 ELSE 0 END) as reviewCount4'),
                 DB::raw('SUM(CASE WHEN rating = "5" THEN 1 ELSE 0 END) as reviewCount5'),
                 DB::raw('COUNT(rating) as totalReview'),
-                // DB::raw('AVG(rating) as avgRating'),
-                // DB::raw('SELECT * FROM review_and_ratings WHERE business_id = '.$business->id.' AND review_type = "business" AND user_id = '.Auth::user()->id.' as is_reviewed'),
             )
                 ->where('review_on_id', $expert->id)
                 ->where('review_type', 'expert')
@@ -155,10 +150,7 @@ class AppointmentController extends Controller
                 }
             ])
             ->whereHas('business', function ($q) use ($business_slug) {
-                $q->where('slug', $business_slug)
-                    ->whereHas('businessSetting', function ($query) {
-                        $query->where('subscription_expiry_date', '>=', now());
-                    });
+                $q->where('slug', $business_slug);
             })
             ->where('status', 'active')
             ->where('slug', $expert_slug)

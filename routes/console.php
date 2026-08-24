@@ -19,6 +19,5 @@ Log::info("Run schedule at " . date('y-m-d-h-i-s'));
 
 // Schedule::command('app:appoinment-auto-cancel')->everySecond();
 Schedule::command('app:appoinment-auto-cancel')->dailyAt('00:10');
-Schedule::command('app:subscription-check-task')->dailyAt('00:01');
 Schedule::command('queue:work --stop-when-empty')->everyMinute();
 // Schedule::command('reverb:start --stop-when-empty')->withoutOverlapping();

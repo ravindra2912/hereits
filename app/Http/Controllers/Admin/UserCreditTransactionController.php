@@ -48,7 +48,6 @@ class UserCreditTransactionController extends Controller
                 })
                 ->addColumn('reference_info', function ($row) {
                     $badge = match ($row->reference_type) {
-                        'business_subscription' => 'primary',
                         'payout'                => 'warning',
                         'admin_adjustment'      => 'secondary',
                         default                 => 'secondary',

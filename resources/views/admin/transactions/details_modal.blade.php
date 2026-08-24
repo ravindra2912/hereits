@@ -76,16 +76,12 @@
                     <tbody class="align-middle">
                         <tr class="border-bottom">
                             <td class="ps-4 py-3">
-                                <div class="fw-bold text-dark">{{ $transaction->purchase?->plan?->name ?? ucfirst($transaction->purchase->plan_type) . ' Plan' }}</div>
-                                <div class="small text-muted text-uppercase">{{ $transaction->purchase->plan_type }}</div>
+                                <div class="fw-bold text-dark">{{ $transaction->purchase->quantity ? $transaction->purchase->quantity . ' Credits' : 'Credits' }}</div>
+                                <div class="small text-muted text-uppercase">{{ $transaction->purchase->plan_type ?? 'credit' }}</div>
                             </td>
                             <td class="text-center py-3">
                                 <span class="badge bg-light text-dark border">
-                                    @if($transaction->purchase->plan_type == 'subscription')
-                                    {{ $transaction->purchase->plan->duration ?? 'N/A' }} Days/Months
-                                    @else
-                                    {{ $transaction->purchase->quantity ?? 'N/A' }} Units
-                                    @endif
+                                    {{ $transaction->purchase->quantity ?? 'N/A' }} Credits
                                 </span>
                             </td>
                             <td class="text-end pe-4 py-3 fw-bold text-dark">{{ currencyFormat($transaction->purchase->total_amount) }}</td>

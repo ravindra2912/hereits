@@ -51,7 +51,7 @@ class AuthController extends Controller
                 }
                 if ($user->role == 'Business' && $user->business_id == null) {
                     $business = Business::select('id', 'owner_id', 'name', 'business_image')
-                        ->with(['businessSetting:id,business_id,subscription_expiry_date'])
+                        ->with(['businessSetting:id,business_id'])
                         ->where('owner_id', $user->id)
                         ->first();
                     $user->business_id = $business->id;
@@ -351,7 +351,6 @@ class AuthController extends Controller
                     'credit' => 30,
                     'deduct_credit_per_self_appointment' => $business_category->deduct_credit_per_self_appointment ?? 1,
                     'deduct_credit_per_customer_appointment' => $business_category->deduct_credit_per_customer_appointment ?? 1,
-                    'subscription_expiry_date' => Carbon::now()->addDays($free_trial_days),
                 ]);
 
                 // add business and expert timing
@@ -386,10 +385,6 @@ class AuthController extends Controller
                 $message = 'Business register successfully.';
 
                 DB::commit();
-
-                if (isset($request->plan_id) && !empty($request->plan_id)) {
-                    $redirect = route('business.subscription.details', $request->plan_id);
-                }
             }
         } catch (\Exception $e) {
             $message = $e->getMessage();

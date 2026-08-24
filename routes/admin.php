@@ -12,7 +12,6 @@ use App\Http\Controllers\Admin\DashboarController;
 use App\Http\Controllers\Admin\LagelPagesController;
 use App\Http\Controllers\Admin\BusinessCategoryController;
 use App\Http\Controllers\Admin\CouponController;
-use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\PurchaseHistoryController;
 use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\TransactionController;
@@ -62,14 +61,12 @@ Route::name('admin.')->group(function () {
         Route::resource('blog', BlogController::class);
         Route::controller(BusinessController::class)->group(function () {
             Route::get('business/pending/list', 'pendingBusinesses')->name('business.pendings');
-            Route::get('business/expired/list', 'expiredBusinesses')->name('business.expired');
             Route::post('business/change/status', 'changeBusinessStatus')->name('business.change.status');
         });
 
 
 
         Route::resource('businesscategory', BusinessCategoryController::class);
-        Route::resource('plan', PlanController::class);
         Route::get('coupon/get-businesses', [CouponController::class, 'getBusinesses'])->name('coupon.getBusinesses');
         Route::get('coupon/usage-history/{id}', [CouponController::class, 'usageHistory'])->name('coupon.usageHistory');
         Route::resource('coupon', CouponController::class);

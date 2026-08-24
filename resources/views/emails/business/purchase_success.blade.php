@@ -26,7 +26,7 @@
       </tr>
       <tr>
         <td style="padding-bottom: 12px; color: #6b7280; font-size: 15px;">Item</td>
-        <td style="padding-bottom: 12px; color: #111827; font-size: 15px; text-align: right; font-weight: 600;">{{ $purchase->plan->name ?? ucfirst($purchase->plan_type) . ' Plan' }}</td>
+        <td style="padding-bottom: 12px; color: #111827; font-size: 15px; text-align: right; font-weight: 600;">{{ $purchase->quantity ? $purchase->quantity . ' Credits' : 'Credits' }}</td>
       </tr>
       <tr>
         <td style="padding-bottom: 12px; color: #6b7280; font-size: 15px;">Date</td>
@@ -36,13 +36,6 @@
         <td style="padding-bottom: 12px; color: #6b7280; font-size: 15px;">Subtotal</td>
         <td style="padding-bottom: 12px; color: #111827; font-size: 15px; text-align: right; font-weight: 600;">₹{{ number_format($purchase->subtotal, 2) }}</td>
       </tr>
-      
-      @if($purchase->activated_plan_discount > 0)
-      <tr>
-        <td style="padding-bottom: 12px; color: #6366f1; font-size: 15px;">Plan Discount</td>
-        <td style="padding-bottom: 12px; color: #6366f1; font-size: 15px; text-align: right; font-weight: 600;">-₹{{ number_format($purchase->activated_plan_discount, 2) }}</td>
-      </tr>
-      @endif
       
       @if($purchase->coupon_discount_amount > 0)
       <tr>

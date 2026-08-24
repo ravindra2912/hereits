@@ -23,7 +23,7 @@ class TransactionController extends Controller
     public function pending(Request $request)
     {
         if ($request->ajax()) {
-            $data = Transactions::with(['business', 'purchase', 'purchase.plan'])
+            $data = Transactions::with(['business', 'purchase'])
                 ->where('status', 'pending')
                 ->where('payment_gateway', 'upi_manual')
                 ->select('transactions.*');
@@ -41,9 +41,9 @@ class TransactionController extends Controller
                     </div>';
                 })
                 ->addColumn('plan_info', function ($row) {
-                    $type = $row->purchase->plan_type ?? 'N/A';
+                    $type = $row->purchase->plan_type ?? 'credit';
                     return '<div>
-                        <div class="fw-bold mb-0">' . ($row->purchase->plan->name ?? ucfirst($type)) . '</div>
+                        <div class="fw-bold mb-0">' . ($row->purchase->quantity ? $row->purchase->quantity . ' Credits' : 'Credits') . '</div>
                         <small class="text-muted text-uppercase" style="font-size: 0.65rem;">' . $type . '</small>
                     </div>';
                 })
@@ -71,7 +71,7 @@ class TransactionController extends Controller
 
     public function show($id)
     {
-        $transaction = Transactions::with(['business', 'purchase', 'purchase.plan', 'business.owner'])->findOrFail($id);
+        $transaction = Transactions::with(['business', 'purchase', 'business.owner'])->findOrFail($id);
         $html = view('admin.transactions.details_modal', compact('transaction'))->render();
         return response()->json(['success' => true, 'html' => $html]);
     }
@@ -107,17 +107,7 @@ class TransactionController extends Controller
 
             // Update purchase status
             if ($transaction->purchase) {
-
                 $purchase = $transaction->purchase;
-
-                //deactive current active plan if have
-                Purchase::where('business_id', $purchase->business_id)
-                    ->where('plan_type', $purchase->plan_type)
-                    ->where('status', 'paid')
-                    ->where('plan_status', 'active')
-                    ->whereDate('end_date', '>=', Carbon::now())
-                    ->update(['plan_status' => 'override']);
-
                 $purchase->update(['status' => 'paid', 'plan_status' => 'active']);
 
                 // Increment Coupon Usage if applicable

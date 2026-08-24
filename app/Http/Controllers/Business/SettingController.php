@@ -17,7 +17,6 @@ use App\Models\SiteSetting;
 use App\Models\Purchase;
 use App\Models\Transactions;
 use Illuminate\Support\Facades\DB;
-use App\Models\Plan;
 
 class SettingController extends Controller
 {
@@ -96,7 +95,7 @@ class SettingController extends Controller
 
     public function businessProfile(Request $request)
     {
-        $business = Business::with(['businessCategory:id,name', 'businessSetting:id,business_id,subscription_expiry_date'])->find(Auth::user()->business_id);
+        $business = Business::with(['businessCategory:id,name', 'businessSetting:id,business_id'])->find(Auth::user()->business_id);
         return view('business.setting.business_profile', compact('business'));
     }
 

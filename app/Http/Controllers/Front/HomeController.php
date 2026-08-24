@@ -11,7 +11,6 @@ use App\Models\Favorite;
 use App\Models\Product;
 use App\Models\Expert;
 use App\Models\Service;
-use App\Models\Plan;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -157,12 +156,7 @@ class HomeController extends Controller
                 ->get();
         });
 
-        $plans = Plan::where('plan_type', 'subscription')
-            ->where('status', 'active')
-            ->orderBy('price', 'asc')
-            ->get();
-
-        return view('front.why_join_with_us', compact('businesses', 'businessCategory', 'blogs', 'plans'));
+        return view('front.why_join_with_us', compact('businesses', 'businessCategory', 'blogs'));
     }
 
     public function faq(Request $request): View

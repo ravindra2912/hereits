@@ -96,15 +96,11 @@
                         <tbody>
                             <tr>
                                 <td class="ps-3 py-4">
-                                    <div class="fw-bold text-dark">{{ $purchase->plan->name ?? ucfirst($purchase->plan_type) . ' Plan' }}</div>
-                                    <div class="small text-muted">{{ $purchase->plan->description ?? 'Custom purchase for ' . $purchase->plan_type }}</div>
+                                    <div class="fw-bold text-dark">{{ $purchase->quantity ? $purchase->quantity . ' Credits' : 'Credits' }}</div>
+                                    <div class="small text-muted">Purchase for appointment credits</div>
                                 </td>
                                 <td class="py-4 text-center text-dark">
-                                    @if($purchase->plan_type == 'subscription')
-                                    {{ $purchase->plan->duration ?? '1' }} Months
-                                    @else
-                                    {{ $purchase->quantity ?? '1' }} Units
-                                    @endif
+                                    {{ $purchase->quantity ?? '1' }} Credits
                                 </td>
                                 <td class="py-4 text-end text-dark">₹ {{ number_format($purchase->subtotal, 2) }}</td>
                                 <td class="pe-3 py-4 text-end text-dark fw-bold">₹ {{ number_format($purchase->total_amount, 2) }}</td>
@@ -115,12 +111,6 @@
                                 <td colspan="3" class="text-end py-3 fw-bold ps-3 text-secondary">Subtotal</td>
                                 <td class="text-end py-3 fw-bold pe-3 text-dark">₹ {{ number_format($purchase->subtotal, 2) }}</td>
                             </tr>
-                            @if($purchase->activated_plan_discount > 0)
-                            <tr>
-                                <td colspan="3" class="text-end py-2 text-info ps-3 fw-medium">Activated Plan Discount</td>
-                                <td class="text-end py-2 pe-3 text-info fw-bold">- ₹ {{ number_format($purchase->activated_plan_discount, 2) }}</td>
-                            </tr>
-                            @endif
                             @if($purchase->coupon_discount_amount > 0)
                             <tr>
                                 <td colspan="3" class="text-end py-2 text-success ps-3 fw-medium">Coupon Discount</td>
@@ -147,26 +137,17 @@
 
     <!-- Side Info Cards -->
     <div class="col-lg-4">
-        <!-- Plan Benefits Card -->
+        <!-- Purchase Details Card -->
         <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
             <div class="card-header bg-primary bg-gradient text-white border-0 py-3">
-                <h6 class="mb-0 fw-bold"><i class="bi bi-gift me-2"></i>Plan Benefits</h6>
+                <h6 class="mb-0 fw-bold"><i class="bi bi-gift me-2"></i>Credit Details</h6>
             </div>
             <div class="card-body p-4">
                 <ul class="list-unstyled mb-0">
-                    @if(isset($purchase->plan->benefits))
-                    @foreach(explode(",", $purchase->plan->benefits) as $benefit)
-                    <li class="mb-3 d-flex align-items-start">
-                        <i class="bi bi-check-circle-fill text-success me-3 mt-1"></i>
-                        <span class="text-dark small fw-medium">{{ trim($benefit) }}</span>
-                    </li>
-                    @endforeach
-                    @else
                     <li class="mb-0 d-flex align-items-start">
-                        <i class="bi bi-info-circle-fill text-primary me-3 mt-1"></i>
-                        <span class="text-dark small fw-medium">Credits/Access allocated as per plan configuration.</span>
+                        <i class="bi bi-check-circle-fill text-success me-3 mt-1"></i>
+                        <span class="text-dark small fw-medium">{{ $purchase->quantity ? $purchase->quantity . ' appointment credits added to business account.' : 'Credits allocated to business account.' }}</span>
                     </li>
-                    @endif
                 </ul>
             </div>
         </div>

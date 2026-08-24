@@ -65,7 +65,7 @@ return [
     "payment_gateway" => ['upi_manual', 'cashfree'],
     "purchase_plan_status" => ['pending', 'active', 'expired', 'override'],
     "purchase_status" => ['pending', 'paid', 'failed', 'refunded'],
-    "purchase_type" => ['subscription', 'credit'],
+    "purchase_type" => ['credit'],
 
     "product_price_type" => ['FixPrice' => 'Fixed Price', 'PriceInRange' => 'Price Range', 'WithoutPrice' => 'Without Price'],
     "product_images_upload_limit" => 4,
@@ -85,10 +85,7 @@ return [
     ],
     "category_type" => ['Services', 'Products'],
 
-    "plan_type" => ['subscription'],
-    "plan_usage_type" => ['one_time', 'recurring', 'unlimited'],
-
-    "coupon_compatibility" => ['all', 'subscription', 'credit'],
+    "coupon_compatibility" => ['all', 'credit'],
 
     // Orders 
     'order_status' => [

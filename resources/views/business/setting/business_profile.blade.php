@@ -64,10 +64,6 @@
                   <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Category</small>
                   <span class="fw-medium">{{ isset($business->businessCategory) ? $business->businessCategory->name : '-' }}</span>
                 </div>
-                <div class="bg-white p-2 rounded border">
-                  <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Expiry</small>
-                  <span class="fw-medium text-danger">{{ $business->businessSetting->subscription_expiry_date }}</span>
-                </div>
               </div>
             </div>
           </div>

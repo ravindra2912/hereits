@@ -131,19 +131,19 @@
             </div>
             @endif
 
-            @if(isset($setting->is_appointment_system) && $setting->is_appointment_system && $isSubscriptionActive)
+            @if(isset($setting->is_appointment_system) && $setting->is_appointment_system)
             <div class="d-flex align-items-center">
               <i class="fas fa-users text-primary fa-lg me-2"></i>
               <span>Expert Staff</span>
             </div>
             @endif
-            @if(isset($setting->is_service_system) && $setting->is_service_system && $isSubscriptionActive)
+            @if(isset($setting->is_service_system) && $setting->is_service_system)
             <div class="d-flex align-items-center">
               <i class="fas fa-tools text-primary fa-lg me-2"></i>
               <span>Quality Service</span>
             </div>
             @endif
-            @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system && $isSubscriptionActive)
+            @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
             <div class="d-flex align-items-center">
               <i class="fas fa-box-open text-primary fa-lg me-2"></i>
               <span>Quality Products</span>
@@ -153,35 +153,15 @@
 
           <!-- CTA Buttons -->
           <div class="d-flex flex-wrap gap-3">
-            <!-- @auth
-            <a
-              href="{{ route('chat.start', ['participantType' => 'business', 'participantId' => $business->id]) }}"
-              class="btn btn-success btn-lg rounded-pill fw-bold px-4 shadow-lg hover-lift d-inline-flex align-items-center gap-2 text-decoration-none"
-              data-chat-start
-              data-chat-target-type="business"
-              data-chat-target-id="{{ $business->id }}"
-              data-chat-store-url="{{ route('chat.conversations.store') }}"
-              data-chat-index-url="{{ route('chat.index') }}"
-            >
-              <i class="bi bi-chat-dots-fill"></i>
-              Message
-            </a>
-            @else
-            <button type="button" class="btn btn-success btn-lg rounded-pill fw-bold px-4 shadow-lg hover-lift d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')">
-              <i class="bi bi-chat-dots-fill"></i>
-              Message
-            </button>
-            @endauth -->
-
-            @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system && $isSubscriptionActive)
+            @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
             <a href="#products" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
               Shop Now
             </a>
-            @elseif(isset($setting->is_service_system) && $setting->is_service_system && $isSubscriptionActive)
+            @elseif(isset($setting->is_service_system) && $setting->is_service_system)
             <a href="#services" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
               Book Service
             </a>
-            @elseif(isset($setting->is_appointment_system) && $setting->is_appointment_system && $isSubscriptionActive)
+            @elseif(isset($setting->is_appointment_system) && $setting->is_appointment_system)
             <a href="#experts-list" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
               Book Appointment
             </a>
@@ -225,7 +205,7 @@
   <div id="about" class="container py-5 position-relative z-10">
 
     <!-- Products Section (E-commerce) -->
-    @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system && $isSubscriptionActive)
+    @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
 
     <!-- Product Categories (Scrollable) -->
     @if(isset($details['productCategories']) && $details['productCategories']->count() > 0)
@@ -270,7 +250,7 @@
     @endif
 
     <!-- Services Section -->
-    @if(isset($setting->is_service_system) && $setting->is_service_system && $isSubscriptionActive)
+    @if(isset($setting->is_service_system) && $setting->is_service_system)
 
     <!-- Service Categories (Scrollable) -->
     @if(isset($details['serviceCategories']) && $details['serviceCategories']->count() > 0)
@@ -318,7 +298,7 @@
 
 
 
-  @if(isset($setting->is_appointment_system) && $setting->is_appointment_system && $isSubscriptionActive && isset($experts) && $experts->count() > 0)
+  @if(isset($setting->is_appointment_system) && $setting->is_appointment_system && isset($experts) && $experts->count() > 0)
   <!-- Appointment/Experts Section -->
   <div id="experts-list" class="mb-5 section-scroll container">
     <div class="d-flex justify-content-between align-items-center mb-4">

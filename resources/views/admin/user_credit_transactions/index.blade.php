@@ -31,7 +31,6 @@
             </select>
             <select id="filter-ref-type" class="form-select form-select-sm" style="width:200px;">
                 <option value="">All References</option>
-                <option value="business_subscription">Business Subscription</option>
                 <option value="payout">Payout</option>
                 <option value="admin_adjustment">Admin Adjustment</option>
             </select>

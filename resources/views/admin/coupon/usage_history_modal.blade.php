@@ -11,7 +11,7 @@
                 <tr>
                     <th class="ps-3">Date</th>
                     <th>Business</th>
-                    <th>Plan</th>
+                    <th>Item</th>
                     <th class="text-end pe-3">Discount</th>
                 </tr>
             </thead>
@@ -31,7 +31,7 @@
                     </td>
                     <td>
                         <span class="badge bg-soft-primary text-primary small py-1 px-2 border border-primary border-opacity-25">
-                            {{ $purchase->plan->name ?? ucfirst($purchase->plan_type) }}
+                            {{ $purchase->quantity ? $purchase->quantity . ' Credits' : 'Credits' }}
                         </span>
                     </td>
                     <td class="text-end pe-3">

@@ -71,12 +71,12 @@
                     <tbody class="align-middle">
                         <tr class="border-bottom">
                             <td class="ps-4 py-3">
-                                <div class="fw-bold text-dark">{{ $purchase->plan->name ?? ucfirst($purchase->plan_type) . ' Plan' }}</div>
-                                <div class="small text-muted">{{ $purchase->plan->description ?? 'Standard purchase for ' . $purchase->plan_type }}</div>
+                                <div class="fw-bold text-dark">{{ $purchase->quantity ? $purchase->quantity . ' Credits' : 'Credits' }}</div>
+                                <div class="small text-muted">Purchase for appointment credits</div>
                             </td>
                             <td class="text-center py-3">
                                 <span class="badge bg-light text-dark border">
-                                    {{ $purchase->plan_type == 'subscription' ? ($purchase->plan->duration . ' Months') : ($purchase->quantity . ' Units') }}
+                                    {{ $purchase->quantity ?? 'N/A' }} Credits
                                 </span>
                             </td>
                             <td class="text-end pe-4 py-3 fw-bold text-dark">{{ currencyFormat($purchase->subtotal) }}</td>
@@ -87,14 +87,6 @@
                             <td colspan="2" class="text-end ps-4 py-2 text-secondary px-3">Subtotal</td>
                             <td class="text-end pe-4 py-2 fw-bold text-dark">{{ currencyFormat($purchase->subtotal) }}</td>
                         </tr>
-                        @if($purchase->activated_plan_discount > 0)
-                        <tr>
-                            <td colspan="2" class="text-end ps-4 py-2 text-info px-3">
-                                <i class="bi bi-shield-check me-1"></i> Activated Plan Discount
-                            </td>
-                            <td class="text-end pe-4 py-2 fw-bold text-info">- {{ currencyFormat($purchase->activated_plan_discount) }}</td>
-                        </tr>
-                        @endif
                         @if($purchase->coupon_discount_amount > 0)
                         <tr>
                             <td colspan="2" class="text-end ps-4 py-2 text-success px-3">

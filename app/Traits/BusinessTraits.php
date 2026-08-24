@@ -41,14 +41,6 @@ trait BusinessTraits
             $insert->status = 'paid';
             $insert->save();
 
-            //check current active plan and override if plan is expired
-            Purchase::where('business_id', $purchase->business_id)
-                ->where('plan_status', 'active')
-                ->where('plan_type', $purchase->plan_type)
-                ->update([
-                    'plan_status' => 'override',
-                ]);
-
             $purchase->update([
                 'transaction_id' => $insert->id,
                 'status' => 'paid',
@@ -107,34 +99,7 @@ trait BusinessTraits
             if (!$settings) {
                 $settings = BusinessSetting::create(['business_id' => $purchase->business_id]);
             }
-            $type = $purchase->plan_type;
-            if ($type == 'subscription') {
-                $settings->update(['subscription_expiry_date' => $purchase->end_date]);
-
-                // Check referral: single JOIN query instead of two separate queries
-                $refUser = User::select('users.id')
-                    ->join('businesses', 'businesses.user_referral_code', '=', 'users.referral_code')
-                    ->where('businesses.id', $purchase->business_id)
-                    ->first();
-
-                if ($refUser) {
-                    // exists() is faster than count() — award credit only on first subscription
-                    $isFirstSubscription = !Purchase::where('business_id', $purchase->business_id)
-                        ->where('plan_type', 'subscription')
-                        ->where('status', 'paid')
-                        ->where('id', '!=', $purchase->id)
-                        ->exists();
-
-                    if ($isFirstSubscription) {
-                        app(UserCreditTransactionRepository::class)->addCredit(
-                            $refUser->id,
-                            UserCreditTransaction::REF_BUSINESS_SUBSCRIPTION,
-                            $purchase->business_id,
-                            99
-                        );
-                    }
-                }
-            } else if ($type == 'credit' || $type == 'appointment') {
+            if ($purchase->quantity > 0) {
                 $settings->increment('credit', $purchase->quantity);
             }
             DB::commit();

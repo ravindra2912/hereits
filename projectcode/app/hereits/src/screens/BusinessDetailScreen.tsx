@@ -119,7 +119,6 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
   const {
     business,
     setting,
-    isSubscriptionActive,
     experts = [],
     details = {},
     galleries = [],
@@ -263,11 +262,6 @@ export const BusinessDetailScreen: React.FC<BusinessDetailScreenProps> = () => {
                 {setting?.is_verified && (
                   <View style={styles.verifiedBadge}>
                     <Text style={styles.verifiedBadgeText}>✓ Verified</Text>
-                  </View>
-                )}
-                {isSubscriptionActive && (
-                  <View style={styles.premiumBadge}>
-                    <Text style={styles.premiumBadgeText}>★ Premium</Text>
                   </View>
                 )}
               </View>

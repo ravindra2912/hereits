@@ -23,7 +23,7 @@ class PurchaseSuccessMail extends Mailable implements ShouldQueue
      */
     public function __construct(Purchase $purchase)
     {
-        $this->purchase = $purchase->load(['transaction', 'plan', 'business', 'business.owner']);
+        $this->purchase = $purchase->load(['transaction', 'business', 'business.owner']);
     }
 
     /**

@@ -24,7 +24,6 @@ class UserCreditTransaction extends Model
     const TYPE_CREDIT = 'credit';
     const TYPE_DEBIT  = 'debit';
 
-    const REF_BUSINESS_SUBSCRIPTION = 'business_subscription';
     const REF_PAYOUT                = 'payout';
     const REF_ADMIN_ADJUSTMENT      = 'admin_adjustment';
 
@@ -65,7 +64,7 @@ class UserCreditTransaction extends Model
     }
 
     /**
-     * The business associated with the transaction (if reference_type is business_subscription).
+     * The business associated with the transaction.
      */
     public function business()
     {

@@ -24,7 +24,6 @@
             @if(Auth::check())
             <form id="loginForm2" action="{{ route('register.business.store') }}" method="POST" enctype="multipart/form-data" data-action="redirect" class="formaction">
                 @csrf
-                <input type="hidden" name="plan_id" value="{{ request()->plan_id }}">
                 <!-- Section 1: Basic Information -->
                 <div class="form-section">
                     <div class="section-header text-center">

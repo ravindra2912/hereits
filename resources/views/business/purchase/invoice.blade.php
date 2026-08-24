@@ -172,26 +172,14 @@
 
             <tr class="item">
                 <td>
-                    {{ $purchase->plan->name ?? ucfirst($purchase->plan_type) . ' Plan' }} <br>
-                    <small>({{ $purchase->plan_type == 'subscription' ? ($purchase->plan->duration . ' Months') : ($purchase->quantity . ' Units') }})</small>
+                    {{ $purchase->quantity ? $purchase->quantity . ' Credits' : 'Credits' }} <br>
+                    <small>({{ $purchase->quantity ?? '1' }} Credits)</small>
                 </td>
 
                 <td>
                     {{ number_format($purchase->subtotal, 2) }}
                 </td>
             </tr>
-
-            @if($purchase->activated_plan_discount > 0)
-            <tr class="item">
-                <td>
-                    Activated Plan Discount
-                </td>
-
-                <td>
-                    -{{ number_format($purchase->activated_plan_discount, 2) }}
-                </td>
-            </tr>
-            @endif
 
             @if($purchase->coupon_discount_amount > 0)
             <tr class="item">
