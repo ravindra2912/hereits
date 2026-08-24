@@ -91,6 +91,15 @@ class PosSaleController extends Controller
         $user = Auth::guard('pos')->user();
         $business_id = getPosBusinessId();
 
+        $creditDeduction = getOrderCreditDeductionAmount($business_id, 'self');
+        $businessSetting = BusinessSetting::where('business_id', $business_id)->first();
+        if ($creditDeduction > 0 && (!$businessSetting || $businessSetting->credit < $creditDeduction)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient credits to place this order. Please recharge credits.'
+            ], 400);
+        }
+
         $subtotal = 0;
         foreach ($request->cart as $item) {
             $subtotal += (float)$item['price'] * (int)$item['qty'];
@@ -119,13 +128,9 @@ class PosSaleController extends Controller
             'order_status' => $request->order_type === 'in_store' ? 'delivered' : 'pending',
         ]);
 
-        // Deduct POS order charge from business credit
-        $siteSetting = SiteSetting::first();
-        if ($siteSetting && $siteSetting->charge_place_order_on_pos > 0) {
-            $businessSetting = BusinessSetting::where('business_id', $business_id)->first();
-            if ($businessSetting) {
-                $businessSetting->decrement('credit', $siteSetting->charge_place_order_on_pos);
-            }
+        // Deduct order credit from business account
+        if ($creditDeduction > 0 && $businessSetting) {
+            $businessSetting->decrement('credit', $creditDeduction);
         }
 
         foreach ($request->cart as $item) {

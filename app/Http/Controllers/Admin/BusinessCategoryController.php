@@ -64,6 +64,8 @@ class BusinessCategoryController extends Controller
                 'name' => 'required',
                 'deduct_credit_per_customer_appointment' => 'required|numeric|min:0',
                 'deduct_credit_per_self_appointment' => 'required|numeric|min:0',
+                'deduct_credit_per_customer_order' => 'required|numeric|min:0',
+                'deduct_credit_per_self_order' => 'required|numeric|min:0',
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -84,6 +86,8 @@ class BusinessCategoryController extends Controller
                 $insert->slug = generateUniqueSlug(BusinessCategory::class, $request->name);
                 $insert->deduct_credit_per_customer_appointment = $request->deduct_credit_per_customer_appointment;
                 $insert->deduct_credit_per_self_appointment = $request->deduct_credit_per_self_appointment;
+                $insert->deduct_credit_per_customer_order = $request->deduct_credit_per_customer_order;
+                $insert->deduct_credit_per_self_order = $request->deduct_credit_per_self_order;
                 $insert->save();
 
                 Cache::forget('BusinessCategory');
@@ -127,6 +131,8 @@ class BusinessCategoryController extends Controller
                 'name' => 'required',
                 'deduct_credit_per_customer_appointment' => 'required|numeric|min:0',
                 'deduct_credit_per_self_appointment' => 'required|numeric|min:0',
+                'deduct_credit_per_customer_order' => 'required|numeric|min:0',
+                'deduct_credit_per_self_order' => 'required|numeric|min:0',
                 'status' => 'required'
             ];
 
@@ -148,6 +154,8 @@ class BusinessCategoryController extends Controller
                 $update->name = $request->name;
                 $update->deduct_credit_per_customer_appointment = $request->deduct_credit_per_customer_appointment;
                 $update->deduct_credit_per_self_appointment = $request->deduct_credit_per_self_appointment;
+                $update->deduct_credit_per_customer_order = $request->deduct_credit_per_customer_order;
+                $update->deduct_credit_per_self_order = $request->deduct_credit_per_self_order;
                 $update->status = $request->status;
                 $update->save();
 

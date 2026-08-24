@@ -243,6 +243,9 @@ function getBusinessSettings($business_id = null)
             'is_appointment_creadit_diduct_manual' => false,
             'deduct_credit_per_customer_appointment' => 1,
             'deduct_credit_per_self_appointment' => 1,
+            'is_order_creadit_diduct_manual' => false,
+            'deduct_credit_per_customer_order' => 1,
+            'deduct_credit_per_self_order' => 1,
             'is_ecommerce_system' => false,
             'is_product_import_export' => false,
             'is_service_system' => false,
@@ -252,6 +255,61 @@ function getBusinessSettings($business_id = null)
         ];
     }
     return (object)$data;
+}
+
+/**
+ * Get credit deduction amount for placing an order
+ * 
+ * @param int $businessId
+ * @param string $orderType 'customer' | 'self'
+ * @return float
+ */
+function getOrderCreditDeductionAmount($businessId, $orderType = 'self'): float
+{
+    $settings = \App\Models\BusinessSetting::where('business_id', $businessId)
+        ->first(['id', 'is_order_creadit_diduct_manual', 'deduct_credit_per_customer_order', 'deduct_credit_per_self_order']);
+
+    if ($settings && $settings->is_order_creadit_diduct_manual) {
+        return (float)($orderType === 'customer' 
+            ? $settings->deduct_credit_per_customer_order 
+            : $settings->deduct_credit_per_self_order);
+    }
+
+    $business = \App\Models\Business::select('id', 'business_category_id')->find($businessId);
+    if ($business && $business->business_category_id) {
+        $category = \App\Models\BusinessCategory::select('id', 'deduct_credit_per_customer_order', 'deduct_credit_per_self_order')
+            ->find($business->business_category_id);
+        if ($category) {
+            return (float)($orderType === 'customer' 
+                ? ($category->deduct_credit_per_customer_order ?? 1) 
+                : ($category->deduct_credit_per_self_order ?? 1));
+        }
+    }
+
+    return 1.0;
+}
+
+/**
+ * Deduct credit for an order from business account
+ *
+ * @param int $businessId
+ * @param string $orderType 'customer' | 'self'
+ * @return bool
+ */
+function deductOrderCredit($businessId, $orderType = 'self'): bool
+{
+    $deduction = getOrderCreditDeductionAmount($businessId, $orderType);
+    if ($deduction <= 0) {
+        return true;
+    }
+
+    $settings = \App\Models\BusinessSetting::where('business_id', $businessId)->first();
+    if ($settings) {
+        $settings->decrement('credit', $deduction);
+        return true;
+    }
+
+    return false;
 }
 
 function getBusinessCategory()

@@ -337,7 +337,12 @@ class AuthController extends Controller
 
                 updateBusinessSeo($insert->id);
 
-                $business_category = BusinessCategory::select('deduct_credit_per_self_appointment', 'deduct_credit_per_customer_appointment')->first($request->business_category_id);
+                $business_category = BusinessCategory::select(
+                    'deduct_credit_per_self_appointment',
+                    'deduct_credit_per_customer_appointment',
+                    'deduct_credit_per_self_order',
+                    'deduct_credit_per_customer_order'
+                )->find($request->business_category_id);
 
                 $site_setting = getSiteSetting();
                 $free_trial_days = $site_setting->free_trial_days ?? 7;
@@ -351,6 +356,8 @@ class AuthController extends Controller
                     'credit' => 30,
                     'deduct_credit_per_self_appointment' => $business_category->deduct_credit_per_self_appointment ?? 1,
                     'deduct_credit_per_customer_appointment' => $business_category->deduct_credit_per_customer_appointment ?? 1,
+                    'deduct_credit_per_self_order' => $business_category->deduct_credit_per_self_order ?? 1,
+                    'deduct_credit_per_customer_order' => $business_category->deduct_credit_per_customer_order ?? 1,
                 ]);
 
                 // add business and expert timing

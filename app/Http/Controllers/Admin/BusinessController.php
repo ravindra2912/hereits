@@ -382,10 +382,13 @@ class BusinessController extends Controller
                 $update->is_verified = $request->has('is_verified') ? 1 : 0;
                 $update->is_pos_access = $request->has('is_pos_access') ? 1 : 0;
                 $update->is_appointment_creadit_diduct_manual = $request->has('is_appointment_creadit_diduct_manual') ? 1 : 0;
+                $update->is_order_creadit_diduct_manual = $request->has('is_order_creadit_diduct_manual') ? 1 : 0;
 
                 $update->credit = $request->credit ?? 0;
                 $update->deduct_credit_per_customer_appointment = $request->deduct_credit_per_customer_appointment ?? 0;
                 $update->deduct_credit_per_self_appointment = $request->deduct_credit_per_self_appointment ?? 0;
+                $update->deduct_credit_per_customer_order = $request->deduct_credit_per_customer_order ?? 0;
+                $update->deduct_credit_per_self_order = $request->deduct_credit_per_self_order ?? 0;
 
                 $update->visibility = $request->visibility ?? 'public';
                 $update->save();

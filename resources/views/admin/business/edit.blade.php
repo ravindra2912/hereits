@@ -352,13 +352,40 @@
         </div>
         <div class="card border-0 shadow-sm rounded-4 p-4">
           <div class="row g-4 align-items-end">
-            <div class="col-md-3">
+            <div class="col-md-6">
               <label class="form-label fw-bold small text-muted">Feature: Product Import/Export</label>
               <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
                 <div class="form-check form-switch m-0">
                   <input class="form-check-input" type="checkbox" role="switch" name="is_product_import_export" {{ $setting->is_product_import_export ? 'checked' : '' }}>
                 </div>
                 <span class="small fw-semibold">Enabled</span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-muted">Feature: Manual Order Credit Deduction</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" role="switch" name="is_order_creadit_diduct_manual" id="is_order_creadit_diduct_manual" {{ $setting->is_order_creadit_diduct_manual ? 'checked' : '' }}>
+                </div>
+                <span class="small fw-semibold">Enabled</span>
+              </div>
+            </div>
+            <div class="row g-4 mt-2 order_credit_deduction_fields" style="display: {{ $setting->is_order_creadit_diduct_manual ? 'flex' : 'none' }};">
+              <div class="col-md-6">
+                <label class="form-label fw-bold small text-muted">Usage: Customer Order Cost</label>
+                <div class="input-group mb-3 mb-md-0">
+                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-cart-dash text-danger"></i></span>
+                  <input type="number" class="form-control border-start-0 ps-0" name="deduct_credit_per_customer_order" value="{{ $setting->deduct_credit_per_customer_order ?? 1 }}" min="0" step="0.01">
+                  <span class="input-group-text bg-light">Credits / order</span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small text-muted">Usage: Self / POS Order Cost</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-cart-check text-success"></i></span>
+                  <input type="number" class="form-control border-start-0 ps-0" name="deduct_credit_per_self_order" value="{{ $setting->deduct_credit_per_self_order ?? 1 }}" min="0" step="0.01">
+                  <span class="input-group-text bg-light">Credits / order</span>
+                </div>
               </div>
             </div>
           </div>
@@ -375,7 +402,7 @@
         </div>
         <div class="card border-0 shadow-sm rounded-4 p-4">
           <div class="row g-4 align-items-end">
-            <div class="col-md-3">
+            <div class="col-md-4">
               <label class="form-label fw-bold small text-muted">Feature: Departments</label>
               <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
                 <div class="form-check form-switch m-0">
@@ -384,7 +411,7 @@
                 <span class="small fw-semibold">Mandatory</span>
               </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
               <label class="form-label fw-bold small text-muted">Feature: Price Required</label>
               <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
                 <div class="form-check form-switch m-0">
@@ -393,8 +420,8 @@
                 <span class="small fw-semibold">Mandatory</span>
               </div>
             </div>
-            <div class="col-md-6">
-              <label class="form-label fw-bold small text-muted">Feature: Manual Credit Deduction</label>
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-muted">Feature: Manual Appointment Credit Deduction</label>
               <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
                 <div class="form-check form-switch m-0">
                   <input class="form-check-input" type="checkbox" role="switch" name="is_appointment_creadit_diduct_manual" id="is_appointment_creadit_diduct_manual" {{ $setting->is_appointment_creadit_diduct_manual ? 'checked' : '' }}>
@@ -402,17 +429,9 @@
                 <span class="small fw-semibold">Enabled</span>
               </div>
             </div>
-            <div class="col-md-6">
-              <label class="form-label fw-bold small text-muted">Current Credits</label>
-              <div class="input-group">
-                <span class="input-group-text bg-white border-end-0"><i class="bi bi-wallet2 text-primary"></i></span>
-                <input type="number" class="form-control border-start-0 ps-0 fw-bold" name="credit" value="{{ $setting->credit }}" min="0" readonly>
-                <span class="input-group-text bg-light fw-bold">CREDITS AVAILABLE</span>
-              </div>
-            </div>
             <div class="row g-4 mt-2 credit_deduction_fields" style="display: {{ $setting->is_appointment_creadit_diduct_manual ? 'flex' : 'none' }};">
               <div class="col-md-6">
-                <label class="form-label fw-bold small text-muted">Usage: Customer Booking Cost</label>
+                <label class="form-label fw-bold small text-muted">Usage: Customer Appointment Booking Cost</label>
                 <div class="input-group mb-3 mb-md-0">
                   <span class="input-group-text bg-white border-end-0"><i class="bi bi-person-dash text-danger"></i></span>
                   <input type="number" class="form-control border-start-0 ps-0" name="deduct_credit_per_customer_appointment" value="{{ $setting->deduct_credit_per_customer_appointment }}" min="0" step="0.01">
@@ -420,12 +439,34 @@
                 </div>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-bold small text-muted">Usage: Self Booking Cost</label>
+                <label class="form-label fw-bold small text-muted">Usage: Self Appointment Booking Cost</label>
                 <div class="input-group">
                   <span class="input-group-text bg-white border-end-0"><i class="bi bi-person-check text-success"></i></span>
                   <input type="number" class="form-control border-start-0 ps-0" name="deduct_credit_per_self_appointment" value="{{ $setting->deduct_credit_per_self_appointment }}" min="0" step="0.01">
                   <span class="input-group-text bg-light">Credits / booking</span>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Business Credits Card -->
+      <div class="mb-5">
+        <div class="d-flex align-items-center mb-3">
+          <div class="bg-info bg-opacity-10 p-2 rounded-3 text-info me-2">
+            <i class="bi bi-wallet2 fs-5"></i>
+          </div>
+          <h6 class="fw-bold text-uppercase m-0 small tracking-wider text-muted">Business Credits</h6>
+        </div>
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+          <div class="row g-4">
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-muted">Current Credits Available</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-wallet2 text-primary"></i></span>
+                <input type="number" class="form-control border-start-0 ps-0 fw-bold" name="credit" value="{{ $setting->credit }}" min="0" readonly>
+                <span class="input-group-text bg-light fw-bold">CREDITS AVAILABLE</span>
               </div>
             </div>
           </div>
@@ -485,6 +526,14 @@
         $('.credit_deduction_fields').slideDown();
       } else {
         $('.credit_deduction_fields').slideUp();
+      }
+    });
+
+    $('#is_order_creadit_diduct_manual').on('change', function() {
+      if ($(this).is(':checked')) {
+        $('.order_credit_deduction_fields').slideDown();
+      } else {
+        $('.order_credit_deduction_fields').slideUp();
       }
     });
   });

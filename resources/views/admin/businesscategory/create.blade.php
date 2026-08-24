@@ -74,6 +74,20 @@
                 <input type="number" class="form-control required" name="deduct_credit_per_self_appointment" value="1" min="0" step="0.01" placeholder="e.g. 1.00" />
               </div>
             </div>
+
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Deduct Credit (Customer Order) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control required" name="deduct_credit_per_customer_order" value="1" min="0" step="0.01" placeholder="e.g. 1.00" />
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label">Deduct Credit (Self / POS Order) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control required" name="deduct_credit_per_self_order" value="1" min="0" step="0.01" placeholder="e.g. 1.00" />
+              </div>
+            </div>
           </div>
         </div>
       </div>

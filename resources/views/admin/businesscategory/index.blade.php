@@ -33,8 +33,10 @@
           <tr>
             <th>Image</th>
             <th>Name</th>
-            <th>Cust. Credit</th>
-            <th>Self Credit</th>
+            <th>Cust. Appt.</th>
+            <th>Self Appt.</th>
+            <th>Cust. Order</th>
+            <th>Self Order</th>
             <th>Status</th>
             <th>Action</th>
           </tr>
@@ -96,6 +98,16 @@
         {
           data: 'deduct_credit_per_self_appointment',
           name: 'deduct_credit_per_self_appointment',
+          className: 'text-center'
+        },
+        {
+          data: 'deduct_credit_per_customer_order',
+          name: 'deduct_credit_per_customer_order',
+          className: 'text-center'
+        },
+        {
+          data: 'deduct_credit_per_self_order',
+          name: 'deduct_credit_per_self_order',
           className: 'text-center'
         },
         {

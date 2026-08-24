@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\BusinessSetting;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -606,6 +607,17 @@ class QuotationController extends Controller
             DB::beginTransaction();
 
             $businessId = getBusinessId();
+
+            $creditDeduction = getOrderCreditDeductionAmount($businessId, 'self');
+            $businessSetting = BusinessSetting::where('business_id', $businessId)->first();
+            if ($creditDeduction > 0 && (!$businessSetting || $businessSetting->credit < $creditDeduction)) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient credits to convert this quotation to order. Please recharge credits.'
+                ], 400);
+            }
+
             $quotation = Quotation::with('items')
                 ->where('business_id', $businessId)
                 ->where('status', 'inprogress')
@@ -650,6 +662,11 @@ class QuotationController extends Controller
                 'payment_status' => 'pending',
                 'order_status' => 'pending'
             ]);
+
+            // Deduct order credit from business account
+            if ($creditDeduction > 0 && $businessSetting) {
+                $businessSetting->decrement('credit', $creditDeduction);
+            }
 
             // Save order items & decrement stock
             foreach ($quotation->items as $item) {
