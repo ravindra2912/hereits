@@ -17,10 +17,9 @@ class SiteSettingSeeder extends Seeder
 
         SiteSetting::create([
             'per_credit_price' => 1,
-            'free_product_limit' => 20,
-            'free_service_limit' => 10,
             'charge_place_order_on_website' => 0.1,
             'charge_place_order_on_pos' => 0.05,
+            'free_credit' => 30,
         ]);
 
         $countries = database_path('sql/countries.sql');

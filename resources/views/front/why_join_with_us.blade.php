@@ -16,10 +16,6 @@
 
 @section('content')
 
-@php
-    $free_trial_days = getSiteSetting()->free_trial_days ?? 7;
-@endphp
-
 <!-- 1. Hero Section -->
 <section class="hero-section py-5 position-relative overflow-hidden">
     <div class="container py-lg-5">
@@ -38,7 +34,7 @@
                 </p>
                 <div class="d-flex gap-3 flex-column flex-sm-row">
                     <a href="{{ route('register.business') }}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
-                        {{ $free_trial_days > 0 ? "Start {$free_trial_days} Day Free Trial" : "Get Started" }}
+                        Get Started
                     </a>
                     <a href="#how-it-works" class="btn btn-outline-dark btn-lg rounded-pill px-5">How It Works</a>
                 </div>
@@ -458,7 +454,7 @@
                 <h2 class="fw-bold mb-3 text-white display-5">Ready to Grow Your Business?</h2>
                 <p class="lead text-white mb-5">Join thousands of businesses transforming their operations today.</p>
                 <a href="{{ route('register.business') }}" class="btn btn-light btn-lg rounded-pill px-5 py-3 shadow-lg">
-                    {{ $free_trial_days > 0 ? "Start {$free_trial_days} Day Free Trial" : "Get Started" }}
+                    Get Started
                 </a>
                 <p class="mt-3 small text-white opacity-75">No credit card required &bull; Cancel anytime</p>
             </div>

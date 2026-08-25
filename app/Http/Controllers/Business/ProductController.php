@@ -348,7 +348,6 @@ class ProductController extends Controller
 
                 // Sync linked shared copies
                 Product::where('parent_product_id', $product->id)
-                    ->where('parent_business_id', $business_id)
                     ->where('share_type', 'shared')
                     ->update([
                         'name' => $request->name,

@@ -62,12 +62,12 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">Free Trial Period (Days)</label>
+                        <label class="form-label fw-bold">Free Registration Credits</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light rounded-start-pill border-end-0 px-3"><i class="bi bi-calendar-event"></i></span>
-                            <input type="number" name="free_trial_days" class="form-control border-start-0 rounded-end-pill px-3" value="{{ $setting->free_trial_days ?? 7 }}" required>
+                            <span class="input-group-text bg-light rounded-start-pill border-end-0 px-3"><i class="bi bi-gift"></i></span>
+                            <input type="number" name="free_credit" class="form-control border-start-0 rounded-end-pill px-3" value="{{ $setting->free_credit ?? 30 }}" required min="0">
                         </div>
-                        <small class="text-muted mt-2 d-block px-2">Default free trial duration for new business subscriptions.</small>
+                        <small class="text-muted mt-2 d-block px-2">Free credits automatically assigned to newly registered businesses.</small>
                     </div>
                 </div>
 

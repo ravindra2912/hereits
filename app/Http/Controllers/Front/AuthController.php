@@ -346,7 +346,7 @@ class AuthController extends Controller
                 )->find($request->business_category_id);
 
                 $site_setting = getSiteSetting();
-                $free_trial_days = $site_setting->free_trial_days ?? 7;
+                $free_credit = $site_setting->free_credit ?? 30;
 
                 // assign appoinment system to business
                 BusinessSetting::create([
@@ -354,7 +354,7 @@ class AuthController extends Controller
                     'is_appointment_system' => $request->business_type == 'Appointment' ? true : false,
                     'is_ecommerce_system' => $request->business_type == 'Product' ? true : false,
                     'is_service_system' => $request->business_type == 'Service' ? true : false,
-                    'credit' => 30,
+                    'credit' => $free_credit,
                     'deduct_credit_per_self_appointment' => $business_category->deduct_credit_per_self_appointment ?? 1,
                     'deduct_credit_per_customer_appointment' => $business_category->deduct_credit_per_customer_appointment ?? 1,
                     'deduct_credit_per_self_order' => $business_category->deduct_credit_per_self_order ?? 1,
