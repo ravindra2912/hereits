@@ -246,8 +246,11 @@ function getBusinessSettings($business_id = null)
             'is_order_creadit_diduct_manual' => false,
             'deduct_credit_per_customer_order' => 1,
             'deduct_credit_per_self_order' => 1,
+            'is_chat_creadit_diduct_manual' => false,
+            'deduct_credit_per_chat' => 1,
             'is_ecommerce_system' => false,
             'is_product_import_export' => false,
+            'is_share_products_to_business' => false,
             'is_service_system' => false,
             'credit' => 0,
             'is_verified' => false,
@@ -299,6 +302,55 @@ function getOrderCreditDeductionAmount($businessId, $orderType = 'self'): float
 function deductOrderCredit($businessId, $orderType = 'self'): bool
 {
     $deduction = getOrderCreditDeductionAmount($businessId, $orderType);
+    if ($deduction <= 0) {
+        return true;
+    }
+
+    $settings = \App\Models\BusinessSetting::where('business_id', $businessId)->first();
+    if ($settings) {
+        $settings->decrement('credit', $deduction);
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Get credit deduction amount for unlocking 24-hour chat session
+ * 
+ * @param int $businessId
+ * @return float
+ */
+function getChatCreditDeductionAmount($businessId): float
+{
+    $settings = \App\Models\BusinessSetting::where('business_id', $businessId)
+        ->first(['id', 'is_chat_creadit_diduct_manual', 'deduct_credit_per_chat']);
+
+    if ($settings && $settings->is_chat_creadit_diduct_manual) {
+        return (float)($settings->deduct_credit_per_chat ?? 1.0);
+    }
+
+    $business = \App\Models\Business::select('id', 'business_category_id')->find($businessId);
+    if ($business && $business->business_category_id) {
+        $category = \App\Models\BusinessCategory::select('id', 'deduct_credit_per_chat')
+            ->find($business->business_category_id);
+        if ($category) {
+            return (float)($category->deduct_credit_per_chat ?? 1.0);
+        }
+    }
+
+    return 1.0;
+}
+
+/**
+ * Deduct credit for chat session from business account
+ *
+ * @param int $businessId
+ * @return bool
+ */
+function deductChatCredit($businessId): bool
+{
+    $deduction = getChatCreditDeductionAmount($businessId);
     if ($deduction <= 0) {
         return true;
     }

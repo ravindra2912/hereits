@@ -16,12 +16,14 @@ class ChatConversation extends Model
         'last_message_id',
         'last_message_at',
         'is_active',
+        'business_unlocked_until',
     ];
 
     protected function casts(): array
     {
         return [
             'last_message_at' => 'datetime',
+            'business_unlocked_until' => 'datetime',
             'is_active' => 'boolean',
         ];
     }

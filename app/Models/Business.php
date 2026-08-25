@@ -55,6 +55,16 @@ class Business extends Model
         return $this->hasOne(Coupon::class, 'Influencer_business_id', 'id');
     }
 
+    public function sharedProductSettings()
+    {
+        return $this->hasMany(BusinessProductShareSetting::class, 'source_business_id', 'id');
+    }
+
+    public function receivedProductSettings()
+    {
+        return $this->hasMany(BusinessProductShareSetting::class, 'target_business_id', 'id');
+    }
+
     // ***************************
     // for dashboard calculation start
     // ***************************

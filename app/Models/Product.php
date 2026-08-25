@@ -8,6 +8,9 @@ class Product extends Model
 {
     protected $fillable = [
         'business_id',
+        'parent_product_id',
+        'parent_product_business_id',
+        'share_type',
         'category_id',
         'name',
         'sku',
@@ -21,6 +24,21 @@ class Product extends Model
         'quantity',
         'status',
     ];
+
+    public function parentProduct()
+    {
+        return $this->belongsTo(Product::class, 'parent_product_id', 'id');
+    }
+
+    public function parentProductBusiness()
+    {
+        return $this->belongsTo(Business::class, 'parent_product_business_id', 'id');
+    }
+
+    public function sharedCopies()
+    {
+        return $this->hasMany(Product::class, 'parent_product_id', 'id');
+    }
 
     public function category()
     {

@@ -160,6 +160,103 @@
         </div>
     </div>
 </div>
+
+<!-- View Product Details Modal -->
+<div class="modal fade" id="viewProductModal" tabindex="-1" aria-labelledby="viewProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-light border-bottom py-3 px-4">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                        <i class="bi bi-box-seam fs-5"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark mb-0" id="viewProductModalLabel">Product Details</h5>
+                        <small class="text-muted" id="view_product_sku_subtitle"></small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="viewProductLoader" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="viewProductContent" class="d-none">
+                    <!-- Shared Source Business Card (if shared product) -->
+                    <div id="view_shared_business_card" class="card border-primary border-opacity-25 bg-primary bg-opacity-10 rounded-4 p-3 mb-4 d-none">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                            <span class="badge bg-primary rounded-pill px-3 py-1 text-uppercase" style="font-size: 0.7rem;">
+                                <i class="bi bi-share me-1"></i> Shared Product
+                            </span>
+                            <span class="small text-muted fst-italic">Read-only (Synchronized from source)</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle overflow-hidden border bg-white shadow-sm d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; min-width: 52px;">
+                                <img id="view_shared_business_logo" src="" alt="Business Logo" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="flex-grow-1 min-w-0">
+                                <h6 class="fw-bold text-dark mb-1" id="view_shared_business_name"></h6>
+                                <div class="small text-muted d-flex flex-wrap gap-3">
+                                    <span id="view_shared_business_contact_wrapper"><i class="bi bi-telephone-fill me-1 text-secondary"></i><span id="view_shared_business_contact"></span></span>
+                                    <span id="view_shared_business_email_wrapper"><i class="bi bi-envelope-fill me-1 text-secondary"></i><span id="view_shared_business_email"></span></span>
+                                    <span id="view_shared_business_address_wrapper"><i class="bi bi-geo-alt-fill me-1 text-secondary"></i><span id="view_shared_business_address"></span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4">
+                        <!-- Product Images -->
+                        <div class="col-md-5">
+                            <div class="rounded-4 border overflow-hidden bg-light text-center p-2 mb-2 d-flex align-items-center justify-content-center" style="height: 240px;">
+                                <img id="view_product_main_image" src="" alt="Product Image" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                            </div>
+                            <div id="view_product_thumbnails" class="d-flex gap-2 overflow-x-auto pb-2"></div>
+                        </div>
+
+                        <!-- Product Info -->
+                        <div class="col-md-7">
+                            <h4 class="fw-bold text-dark mb-2" id="view_product_name"></h4>
+                            
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                <span class="badge bg-secondary rounded-pill px-3 py-2" id="view_product_category"></span>
+                                <span class="badge rounded-pill px-3 py-2" id="view_product_status"></span>
+                                <span class="badge rounded-pill px-3 py-2 d-none" id="view_product_share_badge"></span>
+                            </div>
+
+                            <div class="card bg-light border-0 rounded-4 p-3 mb-3">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="small text-muted text-uppercase fw-bold">SKU</div>
+                                        <div class="fw-semibold text-dark" id="view_product_sku"></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="small text-muted text-uppercase fw-bold">Stock Quantity</div>
+                                        <div class="fw-semibold text-dark" id="view_product_quantity"></div>
+                                    </div>
+                                    <div class="col-12 mt-2 pt-2 border-top">
+                                        <div class="small text-muted text-uppercase fw-bold">Price Details</div>
+                                        <div class="h5 fw-bold text-primary mb-0" id="view_product_price"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-2">
+                                <div class="small text-muted text-uppercase fw-bold mb-1">Description</div>
+                                <div class="text-secondary small bg-white border rounded-4 p-3" id="view_product_description" style="max-height: 150px; overflow-y: auto;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('style')
@@ -266,6 +363,121 @@
                 width: '100%',
                 placeholder: 'Select Category'
             });
+        });
+
+        // View Product Details Handler
+        $(document).on('click', '.btn-view-product', function() {
+            var productId = $(this).data('id');
+            
+            $('#viewProductLoader').removeClass('d-none');
+            $('#viewProductContent').addClass('d-none');
+            $('#viewProductModal').modal('show');
+
+            $.ajax({
+                url: "{{ route('business.product.show', ':id') }}".replace(':id', productId),
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.data) {
+                        var p = response.data;
+                        
+                        $('#view_product_name').text(p.name || 'N/A');
+                        $('#view_product_sku_subtitle').text(p.sku ? 'SKU: ' + p.sku : '');
+                        $('#view_product_sku').text(p.sku || 'N/A');
+                        $('#view_product_category').text(p.category_name || 'Uncategorized');
+                        $('#view_product_quantity').text(p.quantity ?? 0);
+                        $('#view_product_description').html(p.description ? p.description : '<span class="text-muted fst-italic">No description provided.</span>');
+
+                        // Status Badge
+                        if (p.status === 'active') {
+                            $('#view_product_status').removeClass('bg-danger bg-secondary').addClass('bg-success').text('Active');
+                        } else {
+                            $('#view_product_status').removeClass('bg-success bg-secondary').addClass('bg-danger').text('Inactive');
+                        }
+
+                        // Share Badge
+                        if (p.share_type === 'shared') {
+                            $('#view_product_share_badge').removeClass('d-none bg-success').addClass('bg-primary').text('Shared');
+                        } else if (p.share_type === 'copied') {
+                            $('#view_product_share_badge').removeClass('d-none bg-primary').addClass('bg-success').text('Copied');
+                        } else {
+                            $('#view_product_share_badge').addClass('d-none');
+                        }
+
+                        // Price
+                        if (p.price_type === 'FixPrice') {
+                            var priceHtml = '₹' + parseFloat(p.price || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                            if (p.sell_price && parseFloat(p.sell_price) > 0 && parseFloat(p.sell_price) < parseFloat(p.price)) {
+                                priceHtml = '₹' + parseFloat(p.sell_price).toLocaleString('en-IN', {minimumFractionDigits: 2}) + ' <span class="text-decoration-line-through text-muted fs-6 fw-normal ms-2">₹' + parseFloat(p.price).toLocaleString('en-IN', {minimumFractionDigits: 2}) + '</span>';
+                            }
+                            $('#view_product_price').html(priceHtml);
+                        } else if (p.price_type === 'PriceInRange') {
+                            $('#view_product_price').html('₹' + parseFloat(p.min_price || 0).toLocaleString('en-IN') + ' - ₹' + parseFloat(p.max_price || 0).toLocaleString('en-IN'));
+                        } else {
+                            $('#view_product_price').html('<span class="text-muted fs-6">Contact for Price</span>');
+                        }
+
+                        // Shared Business Info
+                        if (p.shared_business) {
+                            $('#view_shared_business_card').removeClass('d-none');
+                            $('#view_shared_business_name').text(p.shared_business.name || 'Partner Business');
+                            $('#view_shared_business_logo').attr('src', p.shared_business.logo);
+
+                            if (p.shared_business.contact) {
+                                $('#view_shared_business_contact_wrapper').removeClass('d-none');
+                                $('#view_shared_business_contact').text(p.shared_business.contact);
+                            } else {
+                                $('#view_shared_business_contact_wrapper').addClass('d-none');
+                            }
+
+                            if (p.shared_business.email) {
+                                $('#view_shared_business_email_wrapper').removeClass('d-none');
+                                $('#view_shared_business_email').text(p.shared_business.email);
+                            } else {
+                                $('#view_shared_business_email_wrapper').addClass('d-none');
+                            }
+
+                            if (p.shared_business.address) {
+                                $('#view_shared_business_address_wrapper').removeClass('d-none');
+                                $('#view_shared_business_address').text(p.shared_business.address);
+                            } else {
+                                $('#view_shared_business_address_wrapper').addClass('d-none');
+                            }
+                        } else {
+                            $('#view_shared_business_card').addClass('d-none');
+                        }
+
+                        // Images
+                        var thumbnailsHtml = '';
+                        if (p.images && p.images.length > 0) {
+                            $('#view_product_main_image').attr('src', p.images[0].url);
+                            p.images.forEach(function(img, index) {
+                                thumbnailsHtml += '<img src="' + img.url + '" class="rounded border p-1 view-thumb-item ' + (index === 0 ? 'border-primary' : '') + '" style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;">';
+                            });
+                        } else {
+                            $('#view_product_main_image').attr('src', "{{ getImage(null) }}");
+                        }
+                        $('#view_product_thumbnails').html(thumbnailsHtml);
+
+                        $('#viewProductLoader').addClass('d-none');
+                        $('#viewProductContent').removeClass('d-none');
+                    } else {
+                        Swal.fire('Error', 'Unable to load product details.', 'error');
+                        $('#viewProductModal').modal('hide');
+                    }
+                },
+                error: function() {
+                    Swal.fire('Error', 'An error occurred while fetching product details.', 'error');
+                    $('#viewProductModal').modal('hide');
+                }
+            });
+        });
+
+        // Image thumbnail click to switch main image
+        $(document).on('click', '.view-thumb-item', function() {
+            $('.view-thumb-item').removeClass('border-primary');
+            $(this).addClass('border-primary');
+            $('#view_product_main_image').attr('src', $(this).attr('src'));
         });
     });
 

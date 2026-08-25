@@ -37,6 +37,7 @@
             <th>Self Appt.</th>
             <th>Cust. Order</th>
             <th>Self Order</th>
+            <th>Chat Credit</th>
             <th>Status</th>
             <th>Action</th>
           </tr>
@@ -108,6 +109,11 @@
         {
           data: 'deduct_credit_per_self_order',
           name: 'deduct_credit_per_self_order',
+          className: 'text-center'
+        },
+        {
+          data: 'deduct_credit_per_chat',
+          name: 'deduct_credit_per_chat',
           className: 'text-center'
         },
         {

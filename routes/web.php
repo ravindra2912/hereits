@@ -81,6 +81,7 @@ Route::middleware(['web', 'front'])->group(function () {
         Route::post('conversations/{conversation}/update', 'updateGroup')->name('conversations.update');
         Route::post('conversations/{conversation}/add-member', 'addGroupMember')->name('conversations.add_member');
         Route::post('conversations/{conversation}/remove-member', 'removeGroupMember')->name('conversations.remove_member');
+        Route::post('conversations/{conversation}/unlock', 'unlock')->name('conversations.unlock');
         Route::get('participants/search', 'searchParticipants')->name('participants.search');
         Route::get('quotation/details/{id}', 'showQuotation')->name('quotation.details');
     });

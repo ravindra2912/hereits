@@ -44,6 +44,7 @@ Route::name('business.')->group(function () {
             Route::post('conversations/{conversation}/update', 'updateGroup')->name('conversations.update');
             Route::post('conversations/{conversation}/add-member', 'addGroupMember')->name('conversations.add_member');
             Route::post('conversations/{conversation}/remove-member', 'removeGroupMember')->name('conversations.remove_member');
+            Route::post('conversations/{conversation}/unlock', 'unlock')->name('conversations.unlock');
             Route::get('participants/search', 'searchParticipants')->name('participants.search');
         });
 
@@ -93,6 +94,17 @@ Route::name('business.')->group(function () {
             Route::post('quotation/convert/{id}', [\App\Http\Controllers\Business\QuotationController::class, 'convertToOrder'])->name('quotation.convert')->middleware('checkBusinessPerm:product,products');
             Route::post('quotation/cancel/{id}', [\App\Http\Controllers\Business\QuotationController::class, 'cancel'])->name('quotation.cancel')->middleware('checkBusinessPerm:product,products');
             Route::post('quotation/notify/{id}', [\App\Http\Controllers\Business\QuotationController::class, 'notify'])->name('quotation.notify')->middleware('checkBusinessPerm:product,products');
+
+            // Product Share Routes
+            Route::controller(\App\Http\Controllers\Business\ProductShareController::class)->prefix('product-share')->name('product.share.')->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('search-businesses', 'searchBusinesses')->name('search_businesses');
+                Route::post('/', 'store')->name('store');
+                Route::post('status-toggle', 'statusToggle')->name('status-toggle');
+                Route::get('{id}/manage', 'manage')->name('manage');
+                Route::post('{id}/action', 'action')->name('manage.action');
+                Route::delete('{id}', 'destroy')->name('destroy');
+            })->middleware('checkBusinessPerm:product,products');
         });
         Route::resource('banner', BannerController::class)->middleware('checkBusinessPerm:owner_only');
 

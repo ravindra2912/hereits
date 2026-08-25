@@ -41,6 +41,7 @@ class ChatController extends Controller
                 'update' => route($routePrefix . 'conversations.update', ['conversation' => '__ID__'], false),
                 'addMember' => route($routePrefix . 'conversations.add_member', ['conversation' => '__ID__'], false),
                 'removeMember' => route($routePrefix . 'conversations.remove_member', ['conversation' => '__ID__'], false),
+                'unlock' => route($routePrefix . 'conversations.unlock', ['conversation' => '__ID__'], false),
             ],
             'selectedConversationId' => $request->integer('conversation_id'),
             'actor' => $actor,
@@ -350,5 +351,57 @@ class ChatController extends Controller
         }
 
         abort(400, 'AJAX request required.');
+    }
+
+    public function unlock(Request $request, ChatConversation $conversation, ChatService $chatService): JsonResponse
+    {
+        $actor = $chatService->resolveCurrentActor();
+        $conversation = $chatService->getConversationOrFail($conversation->id, $actor);
+
+        if ($actor['type'] !== ChatService::PARTICIPANT_BUSINESS) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only businesses can unlock chat sessions with credits.'
+            ], 403);
+        }
+
+        if ($conversation->conversation_type !== ChatService::CONVERSATION_DIRECT) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Credit unlock is only required for direct customer conversations.'
+            ], 400);
+        }
+
+        $businessId = $actor['id'];
+        $creditCost = getChatCreditDeductionAmount($businessId);
+        $businessSetting = \App\Models\BusinessSetting::where('business_id', $businessId)->first();
+
+        if ($creditCost > 0 && (!$businessSetting || $businessSetting->credit < $creditCost)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient credits. You need ' . number_format($creditCost, 2) . ' credits to unlock 24 hours of chat.'
+            ], 400);
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($businessSetting, $creditCost, $conversation) {
+            if ($creditCost > 0 && $businessSetting) {
+                $businessSetting->decrement('credit', $creditCost);
+            }
+            $conversation->business_unlocked_until = now()->addHours(24);
+            $conversation->save();
+        });
+
+        $updatedConversation = $chatService->getConversationOrFail($conversation->id, $actor);
+        $summary = $chatService->conversationSummary($updatedConversation, $actor);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Chat unlocked successfully for 24 hours!',
+            'data' => [
+                'conversation' => $summary,
+                'unlocked_until' => $conversation->business_unlocked_until->toIso8601String(),
+                'remaining_credits' => (float)($businessSetting ? $businessSetting->fresh()->credit : 0),
+            ]
+        ]);
     }
 }

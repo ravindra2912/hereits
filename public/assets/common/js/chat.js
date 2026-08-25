@@ -96,6 +96,64 @@ if (root) {
     const composerAttachmentPreview = document.getElementById('chatComposerAttachmentPreview');
     const composerAttachmentList = document.getElementById('chatComposerAttachmentList');
 
+    // 24h Chat Session & Credit Unlock Elements (Business Side)
+    const sessionStatusBanner = document.getElementById('chatSessionStatusBanner');
+    const sessionExpiresAt = document.getElementById('chatSessionExpiresAt');
+    const countdownText = document.getElementById('chatCountdownText');
+    const sessionLockedBanner = document.getElementById('chatSessionLockedBanner');
+    const unlockSessionBtn = document.getElementById('chatUnlockSessionBtn');
+    const unlockCostText = document.getElementById('chatUnlockCostText');
+    const unlockConfirmModalElement = document.getElementById('chatUnlockConfirmModal');
+    const unlockConfirmModal = unlockConfirmModalElement ? new bootstrap.Modal(unlockConfirmModalElement) : null;
+    const modalUnlockRecipientName = document.getElementById('modalUnlockRecipientName');
+    const modalUnlockCreditCost = document.getElementById('modalUnlockCreditCost');
+    const modalAvailableCredits = document.getElementById('modalAvailableCredits');
+    const modalCreditWarning = document.getElementById('modalCreditWarning');
+    const confirmUnlockBtn = document.getElementById('chatConfirmUnlockBtn');
+    const unlockLoader = document.getElementById('chatUnlockLoader');
+    const unlockIcon = document.getElementById('chatUnlockIcon');
+    const unlockBtnText = document.getElementById('chatUnlockBtnText');
+    let sessionCountdownInterval = null;
+
+    const startSessionCountdown = (unlockedUntilStr) => {
+        if (sessionCountdownInterval) {
+            clearInterval(sessionCountdownInterval);
+            sessionCountdownInterval = null;
+        }
+
+        if (!unlockedUntilStr) return;
+        const targetDate = new Date(unlockedUntilStr);
+
+        const updateTimer = () => {
+            const now = new Date();
+            const diffMs = targetDate - now;
+
+            if (diffMs <= 0) {
+                if (sessionCountdownInterval) clearInterval(sessionCountdownInterval);
+                sessionCountdownInterval = null;
+                if (countdownText) countdownText.textContent = 'Expired';
+                if (state.activeConversation) {
+                    state.activeConversation.is_unlocked = false;
+                    renderMessages();
+                }
+                return;
+            }
+
+            const totalSec = Math.floor(diffMs / 1000);
+            const hours = Math.floor(totalSec / 3600);
+            const minutes = Math.floor((totalSec % 3600) / 60);
+            const seconds = totalSec % 60;
+
+            const pad = (n) => String(n).padStart(2, '0');
+            if (countdownText) {
+                countdownText.textContent = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+            }
+        };
+
+        updateTimer();
+        sessionCountdownInterval = setInterval(updateTimer, 1000);
+    };
+
     const state = {
         conversations: initialConversations,
         activeConversation: null,
@@ -233,25 +291,65 @@ if (root) {
     const renderMessages = () => {
         if (!state.activeConversation) {
             chatBoardHeader?.classList.add('d-none');
-            emptyNotice.classList.remove('d-none');
-            messageWrapper.classList.add('d-none');
-            composerShell.classList.add('d-none');
-            messageList.innerHTML = '';
-            conversationTitle.textContent = 'Select a conversation';
-            conversationSubtitle.textContent = 'Your messages will appear here';
-            chatConversationAvatarWrapper.innerHTML = '<i class="bi bi-person-circle fs-4"></i>';
-            chatConversationAvatarWrapper.classList.add('bg-secondary', 'bg-opacity-10', 'text-secondary');
-            chatActionDropdown.innerHTML = '';
-            composerHint.textContent = 'Choose a conversation first';
-            sendButton.disabled = true;
+            emptyNotice?.classList.remove('d-none');
+            messageWrapper?.classList.add('d-none');
+            composerShell?.classList.add('d-none');
+            sessionLockedBanner?.classList.add('d-none');
+            sessionStatusBanner?.classList.add('d-none');
+            if (sessionCountdownInterval) {
+                clearInterval(sessionCountdownInterval);
+                sessionCountdownInterval = null;
+            }
+            if (messageList) messageList.innerHTML = '';
+            if (conversationTitle) conversationTitle.textContent = 'Select a conversation';
+            if (conversationSubtitle) conversationSubtitle.textContent = 'Your messages will appear here';
+            if (chatConversationAvatarWrapper) {
+                chatConversationAvatarWrapper.innerHTML = '<i class="bi bi-person-circle fs-4"></i>';
+                chatConversationAvatarWrapper.classList.add('bg-secondary', 'bg-opacity-10', 'text-secondary');
+            }
+            if (chatActionDropdown) chatActionDropdown.innerHTML = '';
+            if (composerHint) composerHint.textContent = 'Choose a conversation first';
+            if (sendButton) sendButton.disabled = true;
             return;
         }
 
         chatBoardHeader?.classList.remove('d-none');
-        emptyNotice.classList.add('d-none');
-        messageWrapper.classList.remove('d-none');
-        composerShell.classList.remove('d-none');
-        composerShell.classList.remove('d-none');
+        emptyNotice?.classList.add('d-none');
+        messageWrapper?.classList.remove('d-none');
+
+        // Business side 24-hour lock check for direct chats
+        if (actorType === 'business' && state.activeConversation.conversation_type === 'direct') {
+            const isUnlocked = state.activeConversation.is_unlocked !== false;
+            if (!isUnlocked) {
+                sessionLockedBanner?.classList.remove('d-none');
+                sessionStatusBanner?.classList.add('d-none');
+                composerShell?.classList.add('d-none');
+                if (unlockCostText) {
+                    unlockCostText.textContent = Number(state.activeConversation.chat_credit_cost || 1).toFixed(2);
+                }
+                if (sessionCountdownInterval) {
+                    clearInterval(sessionCountdownInterval);
+                    sessionCountdownInterval = null;
+                }
+            } else {
+                sessionLockedBanner?.classList.add('d-none');
+                sessionStatusBanner?.classList.remove('d-none');
+                composerShell?.classList.remove('d-none');
+                if (sessionExpiresAt && state.activeConversation.unlocked_until) {
+                    const expiresDate = new Date(state.activeConversation.unlocked_until);
+                    sessionExpiresAt.textContent = `Unlocked until ${expiresDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, ${expiresDate.toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
+                }
+                startSessionCountdown(state.activeConversation.unlocked_until);
+            }
+        } else {
+            sessionLockedBanner?.classList.add('d-none');
+            sessionStatusBanner?.classList.add('d-none');
+            composerShell?.classList.remove('d-none');
+            if (sessionCountdownInterval) {
+                clearInterval(sessionCountdownInterval);
+                sessionCountdownInterval = null;
+            }
+        }
         
         if (state.isLoadingConversation) {
             messageList.innerHTML = `
@@ -442,7 +540,9 @@ if (root) {
             subscribeToConversations();
             renderConversationList();
             renderMessages();
-            messageWrapper.scrollTop = messageWrapper.scrollHeight;
+            if (messageWrapper) {
+                messageWrapper.scrollTop = messageWrapper.scrollHeight;
+            }
             
             await $.ajax({
                 url: routeTemplate(endpoints.markRead, conversationId),
@@ -923,6 +1023,66 @@ if (root) {
         pendingAction = { actionKey, conversationId };
         confirmModal.show();
     });
+
+    // ── 24h Chat Session Unlock event handlers (Business Side) ────────────────
+    if (unlockSessionBtn) {
+        unlockSessionBtn.addEventListener('click', () => {
+            if (!state.activeConversation) return;
+            const cost = Number(state.activeConversation.chat_credit_cost || 1);
+            const balance = Number(state.activeConversation.available_credits || 0);
+
+            if (modalUnlockRecipientName) modalUnlockRecipientName.textContent = state.activeConversation.display_name || 'this customer';
+            if (modalUnlockCreditCost) modalUnlockCreditCost.textContent = cost.toFixed(2);
+            if (modalAvailableCredits) modalAvailableCredits.textContent = balance.toFixed(2);
+
+            if (modalCreditWarning && confirmUnlockBtn) {
+                if (balance < cost) {
+                    modalCreditWarning.classList.remove('d-none');
+                    confirmUnlockBtn.disabled = true;
+                } else {
+                    modalCreditWarning.classList.add('d-none');
+                    confirmUnlockBtn.disabled = false;
+                }
+            }
+
+            unlockConfirmModal?.show();
+        });
+    }
+
+    if (confirmUnlockBtn) {
+        confirmUnlockBtn.addEventListener('click', async () => {
+            if (!state.activeConversation) return;
+
+            confirmUnlockBtn.disabled = true;
+            if (unlockLoader) unlockLoader.classList.remove('d-none');
+            if (unlockIcon) unlockIcon.classList.add('d-none');
+            if (unlockBtnText) unlockBtnText.textContent = 'Unlocking...';
+
+            try {
+                const response = await $.ajax({
+                    url: routeTemplate(endpoints.unlock, state.activeConversation.id),
+                    type: 'POST'
+                });
+
+                if (response.success) {
+                    state.activeConversation.is_unlocked = true;
+                    state.activeConversation.unlocked_until = response.data?.unlocked_until;
+                    state.activeConversation.available_credits = response.data?.remaining_credits;
+
+                    unlockConfirmModal?.hide();
+                    renderMessages();
+                    window.toastr?.success(response.message || 'Chat session unlocked for 24 hours!');
+                }
+            } catch (error) {
+                window.toastr?.error(error.responseJSON?.message || 'Failed to unlock chat session.');
+            } finally {
+                confirmUnlockBtn.disabled = false;
+                if (unlockLoader) unlockLoader.classList.add('d-none');
+                if (unlockIcon) unlockIcon.classList.remove('d-none');
+                if (unlockBtnText) unlockBtnText.textContent = 'Confirm & Unlock';
+            }
+        });
+    }
 
     confirmBtn.addEventListener('click', async () => {
         if (!pendingAction) return;

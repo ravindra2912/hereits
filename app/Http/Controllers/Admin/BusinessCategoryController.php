@@ -66,6 +66,7 @@ class BusinessCategoryController extends Controller
                 'deduct_credit_per_self_appointment' => 'required|numeric|min:0',
                 'deduct_credit_per_customer_order' => 'required|numeric|min:0',
                 'deduct_credit_per_self_order' => 'required|numeric|min:0',
+                'deduct_credit_per_chat' => 'required|numeric|min:0',
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -88,6 +89,7 @@ class BusinessCategoryController extends Controller
                 $insert->deduct_credit_per_self_appointment = $request->deduct_credit_per_self_appointment;
                 $insert->deduct_credit_per_customer_order = $request->deduct_credit_per_customer_order;
                 $insert->deduct_credit_per_self_order = $request->deduct_credit_per_self_order;
+                $insert->deduct_credit_per_chat = $request->deduct_credit_per_chat;
                 $insert->save();
 
                 Cache::forget('BusinessCategory');
@@ -133,6 +135,7 @@ class BusinessCategoryController extends Controller
                 'deduct_credit_per_self_appointment' => 'required|numeric|min:0',
                 'deduct_credit_per_customer_order' => 'required|numeric|min:0',
                 'deduct_credit_per_self_order' => 'required|numeric|min:0',
+                'deduct_credit_per_chat' => 'required|numeric|min:0',
                 'status' => 'required'
             ];
 
@@ -156,6 +159,7 @@ class BusinessCategoryController extends Controller
                 $update->deduct_credit_per_self_appointment = $request->deduct_credit_per_self_appointment;
                 $update->deduct_credit_per_customer_order = $request->deduct_credit_per_customer_order;
                 $update->deduct_credit_per_self_order = $request->deduct_credit_per_self_order;
+                $update->deduct_credit_per_chat = $request->deduct_credit_per_chat;
                 $update->status = $request->status;
                 $update->save();
 

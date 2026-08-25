@@ -102,6 +102,12 @@
     </a>
     @endif
 
+    @if (!empty($businessSettings->is_share_products_to_business) && (checkBusinessPermission('product', 'products', 'view') || Auth::user()->role === 'Business'))
+    <a href="{{ route('business.product.share.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('business.product.share.*') ? 'active' : '' }}">
+      <i class="bi bi-share me-2"></i>Product Share
+    </a>
+    @endif
+
 
     @endif
 

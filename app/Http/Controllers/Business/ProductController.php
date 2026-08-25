@@ -37,13 +37,20 @@ class ProductController extends Controller
                 ->addIndexColumn()
                 ->addColumn('product_info', function ($row) {
                     $img = getImage($row->firstImage?->image_url);
+                    $badge = '';
+                    if ($row->share_type === 'shared') {
+                        $badge = '<span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill ms-1 small" style="font-size:0.7rem;">Shared</span>';
+                    } elseif ($row->share_type === 'copied') {
+                        $badge = '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill ms-1 small" style="font-size:0.7rem;">Copied</span>';
+                    }
+
                     return '
                     <div class="d-flex align-items-center">
                         <div class="rounded-circle overflow-hidden border shadow-sm me-3 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; min-width: 45px;">
                             <img src="' . $img . '" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
                         <div>
-                            <div class="fw-bold text-dark">' . $row->name . '</div>
+                            <div class="fw-bold text-dark d-flex align-items-center flex-wrap">' . e($row->name) . ' ' . $badge . '</div>
                             <div class="small text-muted">' . (Str::limit($row->sku, 30) ?: 'No SKU') . '</div>
                         </div>
                     </div>';
@@ -80,9 +87,16 @@ class ProductController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<div class="btn-group">';
-                    if (checkBusinessPermission('product', 'products', 'update') || checkBusinessPermission('product', 'products', 'view')) {
-                        $btn .= '<a href="' . route('business.product.edit', $row->id) . '" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2">Edit</a>';
+                    if ($row->share_type === 'shared') {
+                        // Shared product is view-only (no edit)
+                        $btn .= '<button type="button" class="btn btn-outline-info btn-sm rounded-pill px-3 me-2 btn-view-product" data-id="' . $row->id . '" title="View Product Details"><i class="bi bi-eye me-1"></i>View</button>';
+                    } else {
+                        // Copied or original product: full edit access
+                        if (checkBusinessPermission('product', 'products', 'update') || checkBusinessPermission('product', 'products', 'view')) {
+                            $btn .= '<a href="' . route('business.product.edit', $row->id) . '" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2">Edit</a>';
+                        }
                     }
+
                     if (checkBusinessPermission('product', 'products', 'delete')) {
                         $btn .= '<button type="button" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm" onclick="deleteProduct(' . $row->id . ')" title="Delete Product"><i class="bi bi-trash text-danger"></i></button>';
                     }
@@ -199,9 +213,55 @@ class ProductController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Product $product)
+    public function show($id)
     {
-        //
+        $business_id = getBusinessId();
+        $product = Product::where('id', $id)
+            ->where('business_id', $business_id)
+            ->with([
+                'images' => fn($q) => $q->orderBy('sort_order', 'asc'),
+                'category',
+                'parentProductBusiness:id,owner_id,name,business_image,business_logo,contact,address',
+                'parentProductBusiness.owner:id,email'
+            ])
+            ->firstOrFail();
+
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'slug' => $product->slug,
+                    'description' => $product->description,
+                    'quantity' => $product->quantity,
+                    'price_type' => $product->price_type,
+                    'price' => $product->price,
+                    'sell_price' => $product->sell_price,
+                    'min_price' => $product->min_price,
+                    'max_price' => $product->max_price,
+                    'status' => $product->status,
+                    'share_type' => $product->share_type,
+                    'category_name' => $product->category?->name ?? 'Uncategorized',
+                    'images' => $product->images->map(fn($img) => [
+                        'id' => $img->id,
+                        'url' => getImage($img->image_url),
+                        'type' => $img->type ?? 'image',
+                    ]),
+                    'shared_business' => $product->parentProductBusiness ? [
+                        'id' => $product->parentProductBusiness->id,
+                        'name' => $product->parentProductBusiness->name,
+                        'logo' => getImage($product->parentProductBusiness->business_logo ?? $product->parentProductBusiness->business_image),
+                        'contact' => $product->parentProductBusiness->contact,
+                        'email' => $product->parentProductBusiness->owner?->email,
+                        'address' => $product->parentProductBusiness->address,
+                    ] : null,
+                ]
+            ]);
+        }
+
+        return redirect()->route('business.product.index');
     }
 
     /**
@@ -212,6 +272,12 @@ class ProductController extends Controller
         $product = Product::where('id', $id)->where('business_id', Auth::user()->business_id)->with(['images' => function ($query) {
             $query->orderBy('sort_order', 'asc');
         }])->firstOrFail();
+
+        // Shared products cannot be edited
+        if ($product->share_type === 'shared') {
+            return redirect()->route('business.product.index')->with('error', 'Shared products are synchronized with the source store and cannot be edited directly.');
+        }
+
         $categories = getProductCategory();
         $image_limit = config('const.product_images_upload_limit');
         $video_limit = config('const.product_videos_upload_limit');
@@ -232,6 +298,11 @@ class ProductController extends Controller
             DB::beginTransaction();
             $business_id = getBusinessId();
             $product = Product::where('id', $id)->where('business_id', $business_id)->lockForUpdate()->firstOrFail();
+
+            // Guard against editing shared products
+            if ($product->share_type === 'shared') {
+                return response()->json(['success' => false, 'message' => 'Shared products cannot be edited.']);
+            }
 
             $rules = [
                 'name' => 'required|string|max:255',
@@ -275,6 +346,21 @@ class ProductController extends Controller
                     'status' => $request->status,
                 ]);
 
+                // Sync linked shared copies
+                Product::where('parent_product_id', $product->id)
+                    ->where('parent_business_id', $business_id)
+                    ->where('share_type', 'shared')
+                    ->update([
+                        'name' => $request->name,
+                        'sku' => $request->sku,
+                        'description' => $request->description,
+                        'price_type' => $request->price_type,
+                        'price' => $request->price ?? 0,
+                        'sell_price' => $request->sell_price ?? 0,
+                        'min_price' => $request->min_price ?? 0,
+                        'max_price' => $request->max_price ?? 0,
+                    ]);
+
                 $success = true;
                 $message = 'Product updated successfully.';
                 DB::commit();
@@ -296,9 +382,22 @@ class ProductController extends Controller
             DB::beginTransaction();
             $product = Product::where('id', $id)->where('business_id', Auth::user()->business_id)->lockForUpdate()->firstOrFail();
 
-            // Delete images from storage
-            foreach ($product->images as $image) {
+            // Clean up linked shared products
+            $sharedProducts = Product::where('parent_product_id', $product->id)->where('share_type', 'shared')->get();
+            foreach ($sharedProducts as $sp) {
+                $sp->images()->delete();
+                $sp->delete();
+            }
 
+            // Detach parent reference for copied products
+            Product::where('parent_product_id', $product->id)->where('share_type', 'copied')->update([
+                'parent_product_id' => null,
+                'parent_product_business_id' => null,
+                'share_type' => null,
+            ]);
+
+            // Delete images from storage if not shared
+            foreach ($product->images as $image) {
                 $exists = ProductImage::query()
                     ->where('product_id', '!=', $image->product_id)
                     ->where('image_url', $image->image_url)
@@ -329,16 +428,24 @@ class ProductController extends Controller
             $product = Product::where('id', $image->product_id)->where('business_id', Auth::user()->business_id)->exists();
 
             if ($product) {
+                // Delete image/video from all shared child products
+                ProductImage::whereIn('product_id', function ($query) use ($image) {
+                    $query->select('id')
+                        ->from('products')
+                        ->where('parent_product_id', $image->product_id)
+                        ->where('share_type', '!=', 'copied');
+                })->where('image_url', $image->image_url)->delete();
+
                 $exists = ProductImage::query()
                     ->where('product_id', '!=', $image->product_id)
                     ->where('image_url', $image->image_url)
                     ->exists();
-                if (!$exists) {
+                if (!$exists && $image->type === 'image') {
                     fileRemoveStorage($image->image_url);
                 }
                 $image->delete();
                 DB::commit();
-                return response()->json(['success' => true, 'message' => 'Image deleted successfully.']);
+                return response()->json(['success' => true, 'message' => 'Media deleted successfully.']);
             }
 
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
@@ -368,6 +475,7 @@ class ProductController extends Controller
             $videoLimit = config('const.product_videos_upload_limit');
 
             $uploadedImages = [];
+            $sharedProducts = Product::where('parent_product_id', $product->id)->where('share_type', '!=', 'copied')->get();
 
             // Handle Images
             if ($request->hasFile('images')) {
@@ -384,6 +492,15 @@ class ProductController extends Controller
                         'type' => 'image',
                         'image_url' => $path,
                     ]);
+
+                    // Copy image to all shared child products
+                    foreach ($sharedProducts as $sharedProduct) {
+                        ProductImage::create([
+                            'product_id' => $sharedProduct->id,
+                            'type' => 'image',
+                            'image_url' => $path,
+                        ]);
+                    }
 
                     $uploadedImages[] = [
                         'id' => $productImage->id,
@@ -403,6 +520,15 @@ class ProductController extends Controller
                     'type' => 'video',
                     'image_url' => $request->video_url,
                 ]);
+
+                // Copy video to all shared child products
+                foreach ($sharedProducts as $sharedProduct) {
+                    ProductImage::create([
+                        'product_id' => $sharedProduct->id,
+                        'type' => 'video',
+                        'image_url' => $request->video_url,
+                    ]);
+                }
 
                 $uploadedImages[] = [
                     'id' => $productImage->id,

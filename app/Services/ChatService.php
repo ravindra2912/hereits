@@ -157,6 +157,7 @@ class ChatService
                 'last_message_id',
                 'last_message_at',
                 'is_active',
+                'business_unlocked_until',
                 'created_at',
             ])
             ->with([
@@ -227,6 +228,7 @@ class ChatService
                 'last_message_id',
                 'last_message_at',
                 'is_active',
+                'business_unlocked_until',
                 'created_at',
             ])
             ->with([
@@ -334,6 +336,12 @@ class ChatService
             throw new AuthorizationException('Message type is not allowed in this conversation.');
         }
 
+        if ($actor['type'] === self::PARTICIPANT_BUSINESS && $conversation->conversation_type === self::CONVERSATION_DIRECT) {
+            if (!$conversation->business_unlocked_until || $conversation->business_unlocked_until->isPast()) {
+                throw new AuthorizationException('Chat session is locked or has expired (24h limit). Please unlock chat using credits.');
+            }
+        }
+
         return DB::transaction(function () use ($conversation, $actor, $payload, $uploadedFiles) {
             $message = ChatMessage::query()->create([
                 'conversation_id' => $conversation->id,
@@ -401,6 +409,26 @@ class ChatService
         $display = $this->displayNameForConversation($conversation, $participants, $actor);
         $preview = $this->messagePreview($conversation->lastMessage);
 
+        $isUnlocked = true;
+        $unlockedUntil = null;
+        $remainingSeconds = 0;
+        $chatCreditCost = 1.0;
+        $availableCredits = 0.0;
+
+        if ($actor['type'] === self::PARTICIPANT_BUSINESS && $conversation->conversation_type === self::CONVERSATION_DIRECT) {
+            $chatCreditCost = getChatCreditDeductionAmount($actor['id']);
+            $bizSetting = \App\Models\BusinessSetting::where('business_id', $actor['id'])->first();
+            $availableCredits = (float)($bizSetting->credit ?? 0);
+
+            if ($conversation->business_unlocked_until && $conversation->business_unlocked_until->isFuture()) {
+                $isUnlocked = true;
+                $unlockedUntil = $conversation->business_unlocked_until->toIso8601String();
+                $remainingSeconds = max(0, now()->diffInSeconds($conversation->business_unlocked_until, false));
+            } else {
+                $isUnlocked = false;
+            }
+        }
+
         return [
             'id' => $conversation->id,
             'conversation_key' => $conversation->conversation_key,
@@ -417,6 +445,11 @@ class ChatService
             'is_unread' => filled($conversation->last_message_id)
                 && (int) $conversation->last_message_id > (int) ($currentParticipant?->last_read_message_id ?? 0),
             'current_participant_role' => $currentParticipant?->role ?? 'member',
+            'is_unlocked' => $isUnlocked,
+            'unlocked_until' => $unlockedUntil,
+            'remaining_seconds' => $remainingSeconds,
+            'chat_credit_cost' => $chatCreditCost,
+            'available_credits' => $availableCredits,
             'selected' => false,
         ];
     }

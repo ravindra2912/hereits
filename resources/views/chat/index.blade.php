@@ -99,6 +99,33 @@
                         <div class="chat-message-list d-flex flex-column gap-3" id="chatMessageList"></div>
                     </div>
 
+                    {{-- 24-Hour Active Session Indicator (Business Side) --}}
+                    <div class="chat-session-banner d-none px-3 py-2 bg-success bg-opacity-10 border-top border-success-subtle text-success small d-flex align-items-center justify-content-between flex-wrap gap-2" id="chatSessionStatusBanner">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="spinner-grow spinner-grow-sm text-success" role="status" style="width: 0.75rem; height: 0.75rem;"></span>
+                            <span class="fw-semibold">24h Chat Session Active</span>
+                            <span class="text-muted d-none d-sm-inline">·</span>
+                            <span class="text-muted" id="chatSessionExpiresAt"></span>
+                        </div>
+                        <div class="badge bg-success bg-opacity-25 text-success rounded-pill px-3 py-1 fw-bold" id="chatSessionCountdown">
+                            <i class="bi bi-clock me-1"></i> <span id="chatCountdownText">24:00:00</span>
+                        </div>
+                    </div>
+
+                    {{-- Locked Session Banner (Business Side) --}}
+                    <div class="chat-locked-banner d-none p-4 border-top bg-light text-center" id="chatSessionLockedBanner" style="background-color: #f8fafc !important;">
+                        <div class="mb-3">
+                            <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                                <i class="bi bi-lock-fill fs-3"></i>
+                            </div>
+                        </div>
+                        <h6 class="fw-bold text-dark mb-1">24-Hour Chat Session Required</h6>
+                        <p class="text-muted small mb-3" style="max-width: 420px; margin: 0 auto;">To start or continue messaging this customer, unlock a 24-hour chat session using your business credits.</p>
+                        <button type="button" class="btn btn-primary rounded-pill px-4 py-2 shadow-sm d-inline-flex align-items-center gap-2" id="chatUnlockSessionBtn">
+                            <i class="bi bi-unlock-fill"></i> Unlock 24h Chat (<span id="chatUnlockCostText">1.00</span> Credits)
+                        </button>
+                    </div>
+
                     <div class="chat-composer-shell d-none p-3 border-top" id="chatComposerShell" style="background-color: #f0f2f5;">
                         <form id="chatComposerForm" enctype="multipart/form-data" class="chat-composer-form mb-0">
                             <!-- Keep these hidden so JS doesn't break if it looks for them -->
@@ -287,6 +314,48 @@
             <div class="modal-footer border-0 pt-0 d-flex gap-2 justify-content-center">
                 <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn px-4" id="chatActionConfirmBtn"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Chat Session Unlock Confirmation Modal --}}
+<div class="modal fade" id="chatUnlockConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-body text-center p-4">
+                <div class="mb-3">
+                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                        <i class="bi bi-chat-heart-fill fs-2"></i>
+                    </div>
+                </div>
+                <h5 class="fw-bold mb-2">Unlock 24-Hour Chat Session?</h5>
+                <p class="text-muted small mb-3">
+                    You will be able to send messages, photos, inquiries, and quotations to <strong id="modalUnlockRecipientName">this customer</strong> for the next <strong>24 hours</strong>.
+                </p>
+
+                <div class="p-3 bg-light rounded-3 mb-3 text-start">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Session Unlock Fee:</span>
+                        <span class="fw-bold text-danger"><span id="modalUnlockCreditCost">1.00</span> Credits</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center border-top pt-2">
+                        <span class="text-muted small">Your Available Credits:</span>
+                        <span class="fw-bold text-success"><span id="modalAvailableCredits">0.00</span> Credits</span>
+                    </div>
+                </div>
+
+                <div id="modalCreditWarning" class="alert alert-danger py-2 small d-none mb-0 text-start">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> You do not have enough credits. Please recharge your business credits.
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 d-flex gap-2 justify-content-end px-4 pb-4">
+                <button type="button" class="btn btn-light border px-4 rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary px-4 rounded-pill shadow-sm" id="chatConfirmUnlockBtn">
+                    <span id="chatUnlockLoader" class="spinner-border spinner-border-sm d-none me-1" role="status" aria-hidden="true"></span>
+                    <i class="bi bi-unlock-fill me-1" id="chatUnlockIcon"></i>
+                    <span id="chatUnlockBtnText">Confirm & Unlock</span>
+                </button>
             </div>
         </div>
     </div>

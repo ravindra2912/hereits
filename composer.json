@@ -26,6 +26,7 @@
         "yajra/laravel-datatables": "^13.0"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^4.4",
         "fakerphp/faker": "^1.24",
         "laravel/breeze": "^2.4",
         "laravel/pail": "^1.2",
