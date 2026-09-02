@@ -385,6 +385,7 @@ class BusinessController extends Controller
                 $update->is_appointment_creadit_diduct_manual = $request->has('is_appointment_creadit_diduct_manual') ? 1 : 0;
                 $update->is_order_creadit_diduct_manual = $request->has('is_order_creadit_diduct_manual') ? 1 : 0;
                 $update->is_chat_creadit_diduct_manual = $request->has('is_chat_creadit_diduct_manual') ? 1 : 0;
+                $update->is_quotation_creadit_diduct_manual = $request->has('is_quotation_creadit_diduct_manual') ? 1 : 0;
 
                 $update->credit = $request->credit ?? 0;
                 $update->deduct_credit_per_customer_appointment = $request->deduct_credit_per_customer_appointment ?? 0;
@@ -392,6 +393,7 @@ class BusinessController extends Controller
                 $update->deduct_credit_per_customer_order = $request->deduct_credit_per_customer_order ?? 0;
                 $update->deduct_credit_per_self_order = $request->deduct_credit_per_self_order ?? 0;
                 $update->deduct_credit_per_chat = $request->deduct_credit_per_chat ?? 0;
+                $update->deduct_credit_per_quotation = $request->deduct_credit_per_quotation ?? 0;
 
                 $update->visibility = $request->visibility ?? 'public';
                 $update->save();

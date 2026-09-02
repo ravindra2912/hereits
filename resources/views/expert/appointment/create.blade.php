@@ -81,6 +81,11 @@
             @endif
 
 
+            <div class="alert alert-info py-2 px-3 mb-3 small d-flex align-items-center justify-content-between rounded-3 border-0 bg-primary bg-opacity-10 text-primary">
+                <span><i class="bi bi-coin me-1"></i> Credit Deduction:</span>
+                <span class="fw-bold">{{ number_format($creditDeductionAmount ?? 1, 2) }} Credit(s)</span>
+            </div>
+
             @if($settings->credit > 0)
             <button type="submit" class="btn btn-primary w-100 btn_action">
                 <span id="buttonText">Create Appointment</span>

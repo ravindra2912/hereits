@@ -373,20 +373,19 @@ class ChatController extends Controller
         }
 
         $businessId = $actor['id'];
-        $creditCost = getChatCreditDeductionAmount($businessId);
-        $businessSetting = \App\Models\BusinessSetting::where('business_id', $businessId)->first();
+        $creditService = app(\App\Services\CreditService::class);
+        $creditCost = $creditService->getChatCreditDeductionAmount($businessId);
+        $availableCredits = $creditService->getAvailableCredits($businessId);
 
-        if ($creditCost > 0 && (!$businessSetting || $businessSetting->credit < $creditCost)) {
+        if ($creditCost > 0 && $availableCredits < $creditCost) {
             return response()->json([
                 'success' => false,
                 'message' => 'Insufficient credits. You need ' . number_format($creditCost, 2) . ' credits to unlock 24 hours of chat.'
             ], 400);
         }
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($businessSetting, $creditCost, $conversation) {
-            if ($creditCost > 0 && $businessSetting) {
-                $businessSetting->decrement('credit', $creditCost);
-            }
+        \Illuminate\Support\Facades\DB::transaction(function () use ($creditService, $businessId, $conversation) {
+            $creditService->deductChatCredit($businessId, $conversation->id, 'Unlock 24h Chat Session');
             $conversation->business_unlocked_until = now()->addHours(24);
             $conversation->save();
         });
@@ -400,7 +399,7 @@ class ChatController extends Controller
             'data' => [
                 'conversation' => $summary,
                 'unlocked_until' => $conversation->business_unlocked_until->toIso8601String(),
-                'remaining_credits' => (float)($businessSetting ? $businessSetting->fresh()->credit : 0),
+                'remaining_credits' => $creditService->getAvailableCredits($businessId),
             ]
         ]);
     }

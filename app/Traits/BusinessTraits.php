@@ -93,18 +93,15 @@ trait BusinessTraits
     private function updateBusinessSettings($purchase_id)
     {
         try {
-            DB::beginTransaction();
             $purchase = Purchase::find($purchase_id);
-            $settings = BusinessSetting::where('business_id', $purchase->business_id)->first();
-            if (!$settings) {
-                $settings = BusinessSetting::create(['business_id' => $purchase->business_id]);
+            if ($purchase && $purchase->quantity > 0) {
+                app(\App\Services\CreditService::class)->addPurchaseCredit(
+                    $purchase->business_id,
+                    (float)$purchase->quantity,
+                    $purchase->id
+                );
             }
-            if ($purchase->quantity > 0) {
-                $settings->increment('credit', $purchase->quantity);
-            }
-            DB::commit();
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error("Failed to update business settings: " . $e->getMessage());
         }
     }

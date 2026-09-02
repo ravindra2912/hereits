@@ -342,7 +342,8 @@ class AuthController extends Controller
                     'deduct_credit_per_customer_appointment',
                     'deduct_credit_per_self_order',
                     'deduct_credit_per_customer_order',
-                    'deduct_credit_per_chat'
+                    'deduct_credit_per_chat',
+                    'deduct_credit_per_quotation'
                 )->find($request->business_category_id);
 
                 $site_setting = getSiteSetting();
@@ -360,6 +361,7 @@ class AuthController extends Controller
                     'deduct_credit_per_self_order' => $business_category->deduct_credit_per_self_order ?? 1,
                     'deduct_credit_per_customer_order' => $business_category->deduct_credit_per_customer_order ?? 1,
                     'deduct_credit_per_chat' => $business_category->deduct_credit_per_chat ?? 1,
+                    'deduct_credit_per_quotation' => $business_category->deduct_credit_per_quotation ?? 1,
                 ]);
 
                 // add business and expert timing

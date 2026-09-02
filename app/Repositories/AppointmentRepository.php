@@ -113,10 +113,11 @@ class AppointmentRepository
                 ], 400);
             }
 
-            $settings = BusinessSetting::where('business_id', $expert->business_id)
-                ->first(['id', 'credit', 'is_appointment_creadit_diduct_manual', 'deduct_credit_per_customer_appointment']);
+            $creditService = app(\App\Services\CreditService::class);
+            $requiredCredit = $creditService->getAppointmentCreditDeductionAmount($expert->business_id, 'customer');
+            $availableCredit = $creditService->getAvailableCredits($expert->business_id);
 
-            if (!$settings || $settings->credit < $settings->deduct_credit_per_customer_appointment) {
+            if ($availableCredit < $requiredCredit) {
                 DB::rollBack();
                 return response()->json([
                     'status_code' => 400,
@@ -242,15 +243,7 @@ class AppointmentRepository
             $insert->save();
 
             // Deduct credit
-            if ($settings->is_appointment_creadit_diduct_manual) {
-                $credit_deduction = $settings->deduct_credit_per_customer_appointment;
-            } else {
-                $businessCategory = BusinessCategory::select('deduct_credit_per_customer_appointment')
-                    ->find($expert->business->business_category_id);
-                $credit_deduction = $businessCategory->deduct_credit_per_customer_appointment ?? 1;
-            }
-
-            $settings->decrement('credit', $credit_deduction);
+            $creditService->deductAppointmentCredit($expert->business_id, 'customer', $insert->id, 'Appointment Booking Credit Deduction');
 
             DB::commit();
 

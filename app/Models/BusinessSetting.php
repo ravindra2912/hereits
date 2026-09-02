@@ -32,6 +32,8 @@ class BusinessSetting extends Model
         'deduct_credit_per_self_order',
         'is_chat_creadit_diduct_manual',
         'deduct_credit_per_chat',
+        'is_quotation_creadit_diduct_manual',
+        'deduct_credit_per_quotation',
         'is_pos_access',
         'is_verified',
     ];
@@ -53,6 +55,8 @@ class BusinessSetting extends Model
             'deduct_credit_per_self_order' => $this->deduct_credit_per_self_order,
             'is_chat_creadit_diduct_manual' => $this->is_chat_creadit_diduct_manual == '1' ? true : false,
             'deduct_credit_per_chat' => $this->deduct_credit_per_chat,
+            'is_quotation_creadit_diduct_manual' => $this->is_quotation_creadit_diduct_manual == '1' ? true : false,
+            'deduct_credit_per_quotation' => $this->deduct_credit_per_quotation,
             'is_ecommerce_system' => $this->is_ecommerce_system == '1' ? true : false,
             'is_product_import_export' => $this->is_product_import_export == '1' ? true : false,
             'is_share_products_to_business' => $this->is_share_products_to_business == '1' ? true : false,

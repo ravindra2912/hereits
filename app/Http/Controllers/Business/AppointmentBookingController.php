@@ -216,7 +216,8 @@ class AppointmentBookingController extends Controller
             $experts = Expert::select('id', 'expert_name', 'is_appointment_book_with_time_slot')->where('business_id', getBusinessId())->get();
         }
 
-        return view('business.appointment.booking.create', compact('departments', 'experts', 'businessSetting'));
+        $creditDeductionAmount = app(\App\Services\CreditService::class)->getAppointmentCreditDeductionAmount(getBusinessId(), 'self');
+        return view('business.appointment.booking.create', compact('departments', 'experts', 'businessSetting', 'creditDeductionAmount'));
     }
 
     public function getExpertTiming(Request $request)
@@ -274,8 +275,11 @@ class AppointmentBookingController extends Controller
             if ($validator->fails()) { // Validation fails
                 $message = $validator->errors();
             } else {
-                $settings = BusinessSetting::where('business_id', $businessId)->first();
-                if (!$settings || $settings->credit < $settings->deduct_credit_per_self_appointment) {
+                $creditService = app(\App\Services\CreditService::class);
+                $requiredCredit = $creditService->getAppointmentCreditDeductionAmount($businessId, 'self');
+                $availableCredit = $creditService->getAvailableCredits($businessId);
+
+                if ($availableCredit < $requiredCredit) {
                     $message = 'Credit is not available.';
                 } else {
                     $getLastToken = AppointmentBooking::where('expert_id', $request->expert_id)
@@ -315,13 +319,7 @@ class AppointmentBookingController extends Controller
                     $insert->save();
 
                     // Deduct credit
-                    if ($settings->is_appointment_creadit_diduct_manual) {
-                        $creadit_deduction = $settings->deduct_credit_per_self_appointment;
-                    } else {
-                        $businessCategory = BusinessCategory::select('deduct_credit_per_self_appointment')->find($expert->business->business_category_id);
-                        $creadit_deduction = $businessCategory->deduct_credit_per_self_appointment ?? 1;
-                    }
-                    $settings->decrement('credit', $creadit_deduction);
+                    $creditService->deductAppointmentCredit($businessId, 'self', $insert->id, 'Business Self Appointment Booking');
 
                     $success = true;
                     $message = 'Appoinment Create successfully.';

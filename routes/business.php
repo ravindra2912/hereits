@@ -167,6 +167,7 @@ Route::name('business.')->group(function () {
         // Credit Routes
         Route::controller(CreditController::class)->group(function () {
             Route::get('credits', 'index')->name('credits');
+            Route::get('credits/history-data', 'historyData')->name('credits.history.data');
             Route::get('credits/details', 'show')->name('credits.details');
             Route::post('credits/validate-coupon', 'validateCouponAjax')->name('credits.validate_coupon');
             Route::post('credits/buy', 'buy')->name('credits.buy');

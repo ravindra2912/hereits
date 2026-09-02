@@ -15,6 +15,7 @@ class BusinessCategory extends Model
         'deduct_credit_per_customer_order',
         'deduct_credit_per_self_order',
         'deduct_credit_per_chat',
+        'deduct_credit_per_quotation',
         'status',
     ];
     public function businesses()

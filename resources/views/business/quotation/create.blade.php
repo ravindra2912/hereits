@@ -168,12 +168,21 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-footer bg-white border-0 p-4 pt-0 d-flex justify-content-end gap-2">
-                    <a href="{{ route('business.quotation.index') }}" class="btn btn-light rounded-pill px-4">Cancel</a>
-                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" id="submit_form_btn">
-                        <span id="btn_loader" class="spinner-border spinner-border-sm d-none me-1" role="status"></span>
-                        Save Quotation
-                    </button>
+                @php
+                    $quotationCreditCharge = app(\App\Services\CreditService::class)->getQuotationCreditDeductionAmount(getBusinessId());
+                @endphp
+                <div class="card-footer bg-white border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
+                    <div class="alert alert-warning py-1 px-3 mb-0 small d-flex align-items-center rounded-pill border-0 bg-warning bg-opacity-10 text-dark">
+                        <i class="bi bi-coin me-1 text-warning"></i>
+                        <span>Quotation Charge: <strong class="text-primary">{{ number_format($quotationCreditCharge, 2) }} Credit(s)</strong></span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('business.quotation.index') }}" class="btn btn-light rounded-pill px-4">Cancel</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" id="submit_form_btn">
+                            <span id="btn_loader" class="spinner-border spinner-border-sm d-none me-1" role="status"></span>
+                            Save Quotation
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

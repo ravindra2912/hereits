@@ -251,9 +251,20 @@ class QuotationController extends Controller
         ]);
 
         try {
+            $businessId = getBusinessId();
+            $creditService = app(\App\Services\CreditService::class);
+            $requiredCredit = $creditService->getQuotationCreditDeductionAmount($businessId);
+            $availableCredit = $creditService->getAvailableCredits($businessId);
+
+            if ($requiredCredit > 0 && $availableCredit < $requiredCredit) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient credits to create a quotation. Please recharge credits.'
+                ], 400);
+            }
+
             DB::beginTransaction();
 
-            $businessId = getBusinessId();
             $subtotal = 0;
 
             // Prepare items array
@@ -339,6 +350,13 @@ class QuotationController extends Controller
                 'valid_until' => $request->valid_until,
                 'notes' => $request->notes,
             ]);
+
+            // Deduct credit for creating quotation
+            $creditService->deductQuotationCredit(
+                $businessId,
+                $quotation->id,
+                "Deducted " . number_format($requiredCredit, 2) . " Credit(s) for Created Quotation #{$quotation->quotation_no}"
+            );
 
             foreach ($itemsData as $item) {
                 QuotationItem::create([
@@ -608,9 +626,10 @@ class QuotationController extends Controller
 
             $businessId = getBusinessId();
 
-            $creditDeduction = getOrderCreditDeductionAmount($businessId, 'self');
-            $businessSetting = BusinessSetting::where('business_id', $businessId)->first();
-            if ($creditDeduction > 0 && (!$businessSetting || $businessSetting->credit < $creditDeduction)) {
+            $creditService = app(\App\Services\CreditService::class);
+            $creditDeduction = $creditService->getOrderCreditDeductionAmount($businessId, 'self');
+            $availableCredits = $creditService->getAvailableCredits($businessId);
+            if ($creditDeduction > 0 && $availableCredits < $creditDeduction) {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
@@ -664,9 +683,7 @@ class QuotationController extends Controller
             ]);
 
             // Deduct order credit from business account
-            if ($creditDeduction > 0 && $businessSetting) {
-                $businessSetting->decrement('credit', $creditDeduction);
-            }
+            $creditService->deductQuotationCredit($businessId, $order->id, 'Converted Quotation to Order');
 
             // Save order items & decrement stock
             foreach ($quotation->items as $item) {

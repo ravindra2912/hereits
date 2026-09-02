@@ -96,9 +96,18 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="text-center mb-4 py-3 bg-light rounded-4">
+                <div class="text-center mb-3 py-3 bg-light rounded-4">
                     <div class="text-secondary small text-uppercase fw-bold ls-1 mb-1">Payable Amount</div>
                     <div class="fs-1 fw-bold text-primary" id="modal_payable_amount">₹0.00</div>
+                </div>
+
+                @php
+                    $posDeductionAmount = app(\App\Services\CreditService::class)->getOrderCreditDeductionAmount(getPosBusinessId(), 'self');
+                    $posQuoteDeductionAmount = app(\App\Services\CreditService::class)->getQuotationCreditDeductionAmount(getPosBusinessId());
+                @endphp
+                <div class="alert alert-warning py-2 px-3 mb-4 small d-flex align-items-center justify-content-between rounded-pill border-0 bg-warning bg-opacity-10 text-dark">
+                    <span><i class="bi bi-coin me-1 text-warning"></i> Credit Charges:</span>
+                    <span>Order: <strong class="text-primary me-2">{{ number_format($posDeductionAmount, 2) }} Credit(s)</strong> | Quotation: <strong class="text-primary">{{ number_format($posQuoteDeductionAmount, 2) }} Credit(s)</strong></span>
                 </div>
 
                 <form id="checkout_form">

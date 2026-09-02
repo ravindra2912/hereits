@@ -140,7 +140,12 @@
         </div>
       </div>
 
-      <div class="d-flex justify-content-end gap-2 mt-4 border-top pt-3">
+      <div class="alert alert-info py-2 px-3 mt-3 mb-0 small d-flex align-items-center justify-content-between rounded-3 border-0 bg-primary bg-opacity-10 text-primary">
+        <span><i class="bi bi-coin me-1"></i> Credit Deduction for Appointment:</span>
+        <span class="fw-bold">{{ number_format($creditDeductionAmount ?? 1, 2) }} Credit(s)</span>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2 mt-3 border-top pt-3">
         <button class="btn btn-light border" type="button" onclick="history.back()">Cancel</button>
         <button class="btn btn-primary btn_action px-4" type="submit">
           <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>

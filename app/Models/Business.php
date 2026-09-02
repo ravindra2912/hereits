@@ -50,6 +50,11 @@ class Business extends Model
         return $this->hasOne(BusinessSetting::class, 'business_id', 'id');
     }
 
+    public function creditTransactions()
+    {
+        return $this->hasMany(BusinessCreditTransaction::class, 'business_id', 'id');
+    }
+
     public function influencerCoupon()
     {
         return $this->hasOne(Coupon::class, 'Influencer_business_id', 'id');

@@ -91,9 +91,10 @@ class PosSaleController extends Controller
         $user = Auth::guard('pos')->user();
         $business_id = getPosBusinessId();
 
-        $creditDeduction = getOrderCreditDeductionAmount($business_id, 'self');
-        $businessSetting = BusinessSetting::where('business_id', $business_id)->first();
-        if ($creditDeduction > 0 && (!$businessSetting || $businessSetting->credit < $creditDeduction)) {
+        $creditService = app(\App\Services\CreditService::class);
+        $creditDeduction = $creditService->getOrderCreditDeductionAmount($business_id, 'self');
+        $availableCredits = $creditService->getAvailableCredits($business_id);
+        if ($creditDeduction > 0 && $availableCredits < $creditDeduction) {
             return response()->json([
                 'success' => false,
                 'message' => 'Insufficient credits to place this order. Please recharge credits.'
@@ -129,9 +130,7 @@ class PosSaleController extends Controller
         ]);
 
         // Deduct order credit from business account
-        if ($creditDeduction > 0 && $businessSetting) {
-            $businessSetting->decrement('credit', $creditDeduction);
-        }
+        $creditService->deductPosCredit($business_id, $order->id, 'POS Sale Credit Deduction');
 
         foreach ($request->cart as $item) {
             OrderItem::create([

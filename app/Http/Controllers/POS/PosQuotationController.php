@@ -103,10 +103,21 @@ class PosQuotationController extends Controller
         ]);
 
         try {
-            DB::beginTransaction();
-
             $business_id = getPosBusinessId();
             $user = Auth::guard('pos')->user();
+
+            $creditService = app(\App\Services\CreditService::class);
+            $requiredCredit = $creditService->getQuotationCreditDeductionAmount($business_id);
+            $availableCredits = $creditService->getAvailableCredits($business_id);
+
+            if ($requiredCredit > 0 && $availableCredits < $requiredCredit) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient credits to create a quotation. Please recharge credits.'
+                ], 400);
+            }
+
+            DB::beginTransaction();
 
             $subtotal = 0;
             foreach ($request->cart as $item) {
@@ -131,6 +142,13 @@ class PosQuotationController extends Controller
                 'notes' => $request->notes ?? 'Created from POS Terminal',
                 'valid_until' => now()->addDays(7)->toDateString(), // 7 days default validity for POS quotes
             ]);
+
+            // Deduct credit for creating quotation
+            $creditService->deductQuotationCredit(
+                $business_id,
+                $quotation->id,
+                "Deducted " . number_format($requiredCredit, 2) . " Credit(s) for Created POS Quotation #{$quotationNo}"
+            );
 
             foreach ($request->cart as $item) {
                 QuotationItem::create([
@@ -187,9 +205,10 @@ class PosQuotationController extends Controller
             $business_id = getPosBusinessId();
             $user = Auth::guard('pos')->user();
 
-            $creditDeduction = getOrderCreditDeductionAmount($business_id, 'self');
-            $businessSetting = BusinessSetting::where('business_id', $business_id)->first();
-            if ($creditDeduction > 0 && (!$businessSetting || $businessSetting->credit < $creditDeduction)) {
+            $creditService = app(\App\Services\CreditService::class);
+            $creditDeduction = $creditService->getOrderCreditDeductionAmount($business_id, 'self');
+            $availableCredits = $creditService->getAvailableCredits($business_id);
+            if ($creditDeduction > 0 && $availableCredits < $creditDeduction) {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
@@ -240,9 +259,7 @@ class PosQuotationController extends Controller
             ]);
 
             // Deduct order credit from business account
-            if ($creditDeduction > 0 && $businessSetting) {
-                $businessSetting->decrement('credit', $creditDeduction);
-            }
+            $creditService->deductPosCredit($business_id, $order->id, 'Converted POS Quotation to Order');
 
             // Save order items & decrement stock
             foreach ($quotation->items as $item) {

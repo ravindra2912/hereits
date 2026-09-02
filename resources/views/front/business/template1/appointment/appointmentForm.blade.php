@@ -76,6 +76,13 @@
     <!-- Submit Button -->
     <div class="col-12 mt-4">
       @if($setting->credit > 0)
+      @php
+          $frontCreditDeduction = app(\App\Services\CreditService::class)->getAppointmentCreditDeductionAmount($setting->business_id ?? $businessDetails->id ?? 0, 'customer');
+      @endphp
+      <div class="alert alert-light border py-2 px-3 mb-3 small d-flex align-items-center justify-content-between rounded-pill">
+        <span class="text-muted"><i class="fas fa-coins text-warning me-1"></i> Credit Deduction for Booking:</span>
+        <span class="fw-bold text-dark">{{ number_format($frontCreditDeduction, 2) }} Credit(s)</span>
+      </div>
       @if (Auth::check())
       <button class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm fw-bold py-3 btn_action">
         <span id="buttonText">Confirm Booking</span>

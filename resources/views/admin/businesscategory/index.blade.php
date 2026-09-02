@@ -38,6 +38,7 @@
             <th>Cust. Order</th>
             <th>Self Order</th>
             <th>Chat Credit</th>
+            <th>Quotation Credit</th>
             <th>Status</th>
             <th>Action</th>
           </tr>
@@ -80,16 +81,15 @@
       responsive: true,
       autoWidth: false,
       columns: [{
-          data: 'img',
-          name: 'img',
+          data: 'image',
+          name: 'image',
           orderable: false,
           searchable: false,
           className: 'text-center'
         },
         {
           data: 'name',
-          name: 'name',
-          className: 'fw-bold'
+          name: 'name'
         },
         {
           data: 'deduct_credit_per_customer_appointment',
@@ -114,6 +114,11 @@
         {
           data: 'deduct_credit_per_chat',
           name: 'deduct_credit_per_chat',
+          className: 'text-center'
+        },
+        {
+          data: 'deduct_credit_per_quotation',
+          name: 'deduct_credit_per_quotation',
           className: 'text-center'
         },
         {

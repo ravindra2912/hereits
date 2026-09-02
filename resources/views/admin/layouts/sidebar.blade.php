@@ -34,6 +34,10 @@
       <i class="bi bi-coin me-2"></i>User Credit History
     </a>
 
+    <a href="{{ route('admin.business-credit-history.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.business-credit-history*') ? 'active' : '' }}">
+      <i class="bi bi-wallet2 me-2"></i>Business Credit History
+    </a>
+
     <a href="{{ route('admin.transactions.pending') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.transactions.pending*') ? 'active' : '' }}">
       <i class="bi bi-patch-check me-2"></i>Pending Payments
     </a>

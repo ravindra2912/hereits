@@ -493,6 +493,42 @@
         </div>
       </div>
 
+      <!-- 4.5. Quotation Credit Deduction System -->
+      <div class="mb-5">
+        <div class="d-flex align-items-center mb-3">
+          <div class="bg-primary bg-opacity-10 p-2 rounded-3 text-primary me-2">
+            <i class="bi bi-file-earmark-text fs-5"></i>
+          </div>
+          <div>
+            <h6 class="fw-bold mb-0">Quotation Credit Deduction Rules</h6>
+            <span class="text-muted small">Configure manual credit deduction amounts for creating quotations</span>
+          </div>
+        </div>
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+          <div class="row g-4 align-items-end">
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-muted">Feature: Manual Quotation Credit Deduction</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" role="switch" name="is_quotation_creadit_diduct_manual" id="is_quotation_creadit_diduct_manual" {{ $setting->is_quotation_creadit_diduct_manual ? 'checked' : '' }}>
+                </div>
+                <span class="small fw-semibold">Enabled</span>
+              </div>
+            </div>
+            <div class="row g-4 mt-2 quotation_credit_deduction_fields" style="display: {{ $setting->is_quotation_creadit_diduct_manual ? 'flex' : 'none' }};">
+              <div class="col-md-6">
+                <label class="form-label fw-bold small text-muted">Usage: Quotation Creation Cost</label>
+                <div class="input-group mb-3 mb-md-0">
+                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-file-earmark-text text-warning"></i></span>
+                  <input type="number" class="form-control border-start-0 ps-0" name="deduct_credit_per_quotation" value="{{ $setting->deduct_credit_per_quotation ?? 1 }}" min="0" step="0.01">
+                  <span class="input-group-text bg-light">Credits / Quotation</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 5. Business Credits Card -->
       <div class="mb-5">
         <div class="d-flex align-items-center mb-3">
@@ -584,6 +620,14 @@
         $('.chat_credit_deduction_fields').slideDown();
       } else {
         $('.chat_credit_deduction_fields').slideUp();
+      }
+    });
+
+    $('#is_quotation_creadit_diduct_manual').on('change', function() {
+      if ($(this).is(':checked')) {
+        $('.quotation_credit_deduction_fields').slideDown();
+      } else {
+        $('.quotation_credit_deduction_fields').slideUp();
       }
     });
   });

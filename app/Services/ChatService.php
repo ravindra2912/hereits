@@ -416,9 +416,9 @@ class ChatService
         $availableCredits = 0.0;
 
         if ($actor['type'] === self::PARTICIPANT_BUSINESS && $conversation->conversation_type === self::CONVERSATION_DIRECT) {
-            $chatCreditCost = getChatCreditDeductionAmount($actor['id']);
-            $bizSetting = \App\Models\BusinessSetting::where('business_id', $actor['id'])->first();
-            $availableCredits = (float)($bizSetting->credit ?? 0);
+            $creditService = app(\App\Services\CreditService::class);
+            $chatCreditCost = $creditService->getChatCreditDeductionAmount($actor['id']);
+            $availableCredits = $creditService->getAvailableCredits($actor['id']);
 
             if ($conversation->business_unlocked_until && $conversation->business_unlocked_until->isFuture()) {
                 $isUnlocked = true;

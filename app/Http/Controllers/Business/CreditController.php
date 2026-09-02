@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Business;
 use App\Models\Purchase;
 use App\Models\Business;
 use App\Models\SiteSetting;
+use App\Models\BusinessCreditTransaction;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\DataTables;
 
 class CreditController extends Controller
 {
@@ -24,6 +26,64 @@ class CreditController extends Controller
         $price = $site_setting->per_credit_price ?? 1;
 
         return view('business.credit.index', compact('site_setting', 'businessSettings', 'price'));
+    }
+
+    /**
+     * Get credit history DataTables JSON for business
+     */
+    public function historyData(Request $request)
+    {
+        $businessId = getBusinessId();
+
+        $query = BusinessCreditTransaction::where('business_id', $businessId);
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->addColumn('date', function ($row) {
+                return '<small class="text-muted fw-medium">' . $row->created_at->format('d M Y, h:i A') . '</small>';
+            })
+            ->addColumn('type_badge', function ($row) {
+                if ($row->type === 'credit') {
+                    return '<span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1"><i class="bi bi-plus-circle me-1"></i>Credit</span>';
+                }
+                return '<span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1"><i class="bi bi-dash-circle me-1"></i>Debit</span>';
+            })
+            ->addColumn('amount_col', function ($row) {
+                $isCredit = $row->type === 'credit';
+                $class = $isCredit ? 'text-success' : 'text-danger';
+                $sign  = $isCredit ? '+' : '-';
+                return '<span class="fw-bold ' . $class . '">' . $sign . number_format($row->amount, 2) . '</span>';
+            })
+            ->addColumn('reference_badge', function ($row) {
+                $map = [
+                    'order'       => ['bg' => 'bg-info bg-opacity-10 text-info', 'icon' => 'bi-cart-check', 'label' => 'Order'],
+                    'pos'         => ['bg' => 'bg-primary bg-opacity-10 text-primary', 'icon' => 'bi-receipt', 'label' => 'POS Sale'],
+                    'appointment' => ['bg' => 'bg-secondary bg-opacity-10 text-secondary', 'icon' => 'bi-calendar-event', 'label' => 'Appointment'],
+                    'chat'        => ['bg' => 'bg-warning bg-opacity-10 text-warning', 'icon' => 'bi-chat-dots', 'label' => 'Chat Unlock'],
+                    'quotation'   => ['bg' => 'bg-dark bg-opacity-10 text-dark', 'icon' => 'bi-file-earmark-text', 'label' => 'Quotation'],
+                    'purchase'    => ['bg' => 'bg-success bg-opacity-10 text-success', 'icon' => 'bi-bag-check', 'label' => 'Purchase'],
+                    'free'        => ['bg' => 'bg-success bg-opacity-10 text-success', 'icon' => 'bi-gift', 'label' => 'Free Bonus'],
+                ];
+                $info = $map[$row->reference_type] ?? ['bg' => 'bg-secondary bg-opacity-10 text-secondary', 'icon' => 'bi-dash', 'label' => ucfirst($row->reference_type)];
+                return '<span class="badge ' . $info['bg'] . ' rounded-pill px-2 py-1"><i class="bi ' . $info['icon'] . ' me-1"></i>' . $info['label'] . '</span>';
+            })
+            ->addColumn('desc', function ($row) {
+                return '<span class="small text-dark">' . e($row->description ?: '-') . '</span>';
+            })
+            ->rawColumns(['date', 'type_badge', 'amount_col', 'reference_badge', 'desc'])
+            ->make(true);
     }
 
     /**
