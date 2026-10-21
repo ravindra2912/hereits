@@ -82,9 +82,6 @@ class Business
                         $ownerOnlyRoutes = [
                             'business.appointment.customers',
                             'business.analytics',
-                            'business.product.plans',
-                            'business.service.plans',
-                            'business.subscription',
                             'business.credits',
                             'business.purchase.history',
                             'business.setting.business.seo',

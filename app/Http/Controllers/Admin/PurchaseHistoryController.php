@@ -12,7 +12,7 @@ class PurchaseHistoryController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Purchase::with(['business', 'plan', 'transaction', 'coupon'])
+            $data = Purchase::with(['business', 'transaction', 'coupon'])
                 ->select('purchases.*');
 
             if ($request->has('status') && !empty($request->status)) {
@@ -109,7 +109,7 @@ class PurchaseHistoryController extends Controller
 
     public function show($id)
     {
-        $purchase = Purchase::with(['business', 'plan', 'transaction', 'business.owner', 'coupon'])->find($id);
+        $purchase = Purchase::with(['business', 'transaction', 'business.owner', 'coupon'])->find($id);
         if (!$purchase) {
             return response()->json(['success' => false, 'message' => 'Purchase not found']);
         }
@@ -120,7 +120,7 @@ class PurchaseHistoryController extends Controller
 
     public function downloadInvoice($id)
     {
-        $purchase = Purchase::with(['transaction', 'plan', 'business', 'business.owner'])->findOrFail($id);
+        $purchase = Purchase::with(['transaction', 'business', 'business.owner'])->findOrFail($id);
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('business.purchase.invoice', compact('purchase'));
         return $pdf->download('invoice-' . $purchase->id . '.pdf');
     }

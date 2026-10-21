@@ -34,9 +34,6 @@ class AppointmentController extends Controller
     {
         $business = Business::select('id', 'name', 'slug', 'business_image', 'business_logo', 'address', 'contact', 'latitude', 'longitude', 'facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'seo_description', 'seo_keyword')
             ->where('slug', $business_slug)
-            ->whereHas('businessSetting', function ($query) {
-                $query->where('subscription_expiry_date', '>=', now());
-            })
             ->where('status', 'active')
             ->firstOrFail();
 
@@ -95,10 +92,7 @@ class AppointmentController extends Controller
                 }
             ])
             ->whereHas('business', function ($q) use ($business_slug) {
-                $q->where('slug', $business_slug)
-                    ->whereHas('businessSetting', function ($query) {
-                        $query->where('subscription_expiry_date', '>=', now());
-                    });
+                $q->where('slug', $business_slug);
             })
             ->where('status', 'active')
             ->where('slug', $expert_slug)
@@ -150,10 +144,7 @@ class AppointmentController extends Controller
                 }
             ])
             ->whereHas('business', function ($q) use ($business_slug) {
-                $q->where('slug', $business_slug)
-                    ->whereHas('businessSetting', function ($query) {
-                        $query->where('subscription_expiry_date', '>=', now());
-                    });
+                $q->where('slug', $business_slug);
             })
             ->where('status', 'active')
             ->where('slug', $expert_slug)

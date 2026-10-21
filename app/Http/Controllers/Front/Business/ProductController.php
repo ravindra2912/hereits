@@ -21,9 +21,6 @@ class ProductController extends Controller
     public function businessProducts($slug, Request $request): View
     {
         $business = Business::where('slug', $slug)
-            ->whereHas('businessSetting', function ($query) {
-                $query->where('subscription_expiry_date', '>=', now());
-            })
             ->where('status', 'active')
             ->firstOrFail();
 
@@ -118,10 +115,7 @@ class ProductController extends Controller
                 $query->orderBy('sort_order', 'asc')->select('id', 'product_id', 'image_url', 'type');
             }])
             ->whereHas('business', function ($q) use ($business_slug) {
-                $q->where('slug', $business_slug)
-                    ->whereHas('businessSetting', function ($query) {
-                        $query->where('subscription_expiry_date', '>=', now());
-                    });
+                $q->where('slug', $business_slug);
             })
             ->where('status', 'active')
             ->firstOrFail();

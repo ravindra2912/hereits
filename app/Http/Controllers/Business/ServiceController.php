@@ -13,7 +13,6 @@ use Illuminate\Support\Str;
 
 class ServiceController extends Controller
 {
-    use \App\Traits\ManageListingLimits;
     use \App\Traits\CacheManagement;
 
     /**
@@ -91,9 +90,8 @@ class ServiceController extends Controller
         $categories = getServiceCategory();
         $business_id = Auth::user()->business_id;
         $totalServices = Service::where('business_id', $business_id)->count();
-        $limit = $this->getEffectiveLimit($business_id, 'service');
 
-        return view('business.service.index', compact('categories', 'totalServices', 'limit'));
+        return view('business.service.index', compact('categories', 'totalServices'));
     }
 
     /**
@@ -137,11 +135,6 @@ class ServiceController extends Controller
                 $message = $validator->errors();
             } else {
                 $business_id = getBusinessId();
-                $limitCheck = $this->checkListingLimit($business_id, Service::class, 'service');
-
-                if ($limitCheck) {
-                    return response()->json(['success' => false, 'message' => $limitCheck]);
-                }
 
                 $image_url = '';
                 if ($request->hasFile('image')) {
@@ -236,13 +229,6 @@ class ServiceController extends Controller
                 $service->price = $request->price;
                 $service->min_price = $request->min_price;
                 $service->max_price = $request->max_price;
-                if ($service->status != 'active' && $request->status == 'active') {
-                    $limitCheck = $this->checkListingLimit($business_id, Service::class, 'service');
-
-                    if ($limitCheck) {
-                        return response()->json(['success' => false, 'message' => $limitCheck]);
-                    }
-                }
                 $service->status = $request->status;
 
                 $service->save();
@@ -305,10 +291,6 @@ class ServiceController extends Controller
             if ($service->status == 'active') {
                 $service->status = 'in-active';
             } else {
-                $limitCheck = $this->checkListingLimit(Auth::user()->business_id, Service::class, 'service');
-                if ($limitCheck) {
-                    return response()->json(['success' => false, 'message' => $limitCheck]);
-                }
                 $service->status = 'active';
             }
             

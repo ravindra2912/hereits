@@ -270,12 +270,6 @@
           </a>
           @endif
 
-          @if(Auth::user()->role === 'Business')
-          <a href="{{ route('business.product.plans') }}" class="sidebar-sub-link {{ request()->routeIs('business.product.plans') ? 'active' : '' }}">
-            <i class="bi bi-circle-fill" style="font-size: 0.4rem;"></i>
-            <span>Product Plans</span>
-          </a>
-          @endif
 
           @if ($businessSettings->is_pos_access)
             @if (Auth::user()->role === 'Business' || !empty(session('pos_permissions')['pos_access']))
@@ -321,12 +315,6 @@
           </a>
           @endif
 
-          @if(Auth::user()->role === 'Business')
-          <a href="{{ route('business.service.plans') }}" class="sidebar-sub-link {{ request()->routeIs('business.service.plans') ? 'active' : '' }}">
-            <i class="bi bi-circle-fill" style="font-size: 0.4rem;"></i>
-            <span>Service Plans</span>
-          </a>
-          @endif
         </div>
       </div>
     </div>
@@ -566,27 +554,22 @@
     @endif
 
 
-    <!-- Subscription & Billing Accordion -->
+    <!-- Credits & Billing Accordion -->
     @if(Auth::user()->role === 'Business')
     @php
-      $isBillingActive = request()->routeIs('business.subscription*') || request()->routeIs('business.credits*') || request()->routeIs('business.purchase*');
+      $isBillingActive = request()->routeIs('business.credits*') || request()->routeIs('business.purchase*');
     @endphp
     <div class="sidebar-nav-group">
       <button class="sidebar-accordion-header {{ $isBillingActive ? 'active-group' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#billingCollapse" aria-expanded="{{ $isBillingActive ? 'true' : 'false' }}" aria-controls="billingCollapse">
         <div class="d-flex align-items-center gap-2">
           <i class="bi bi-credit-card-2-front nav-icon"></i>
-          <span>Subscription & Billing</span>
+          <span>Credits & Billing</span>
         </div>
         <i class="bi bi-chevron-right chevron-icon"></i>
       </button>
 
       <div class="collapse {{ $isBillingActive ? 'show' : '' }}" id="billingCollapse" data-bs-parent="#sidebarAccordion">
         <div class="sidebar-sub-menu">
-          <a href="{{ route('business.subscription') }}" class="sidebar-sub-link {{ request()->routeIs('business.subscription') ? 'active' : '' }}">
-            <i class="bi bi-circle-fill" style="font-size: 0.4rem;"></i>
-            <span>Subscription</span>
-          </a>
-
           <a href="{{ route('business.credits') }}" class="sidebar-sub-link {{ request()->routeIs('business.credits') ? 'active' : '' }}">
             <i class="bi bi-circle-fill" style="font-size: 0.4rem;"></i>
             <span>Credits</span>

@@ -10,7 +10,6 @@ use App\Models\Expert;
 use App\Models\Faq;
 use App\Models\Favorite;
 use App\Models\LegalPage;
-use App\Models\Plan;
 use App\Models\Product;
 use App\Models\Service;
 use App\Models\SiteSetting;
@@ -179,36 +178,12 @@ class HomeController extends Controller
                 ->get();
         });
 
-        $plans = Cache::rememberForever('home_subscription_plans', function () {
-            return Plan::where('plan_type', 'subscription')
-                ->where('status', 'active')
-                ->orderBy('price', 'asc')
-                ->get();
-        });
-
-        $productPlans = Cache::rememberForever('home_product_plans', function () {
-            return Plan::where('plan_type', 'product')
-                ->where('status', 'active')
-                ->orderBy('duration', 'asc')
-                ->get();
-        });
-
-        $servicePlans = Cache::rememberForever('home_service_plans', function () {
-            return Plan::where('plan_type', 'service')
-                ->where('status', 'active')
-                ->orderBy('duration', 'asc')
-                ->get();
-        });
-
         $siteSetting = getSiteSetting();
 
         return view('front.why_join_with_us', compact(
             'businesses',
             'businessCategory',
             'blogs',
-            'plans',
-            'productPlans',
-            'servicePlans',
             'siteSetting'
         ));
     }

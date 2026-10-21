@@ -21,9 +21,6 @@
       <i class="bi bi-shop me-2"></i>Business
     </a>
 
-    <a href="{{ route('admin.plan.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.plan*') ? 'active' : '' }}">
-      <i class="bi bi-card-list me-2"></i>Plans
-    </a>
 
       <a href="{{ route('admin.coupon.index') }}" class="list-group-item list-group-item-action second-text {{ request()->routeIs('admin.coupon*') ? 'active' : '' }}">
         <i class="bi bi-ticket-perforated me-2"></i>Coupon

@@ -69,7 +69,7 @@ return [
     "payment_gateway" => ['upi_manual', 'cashfree', 'razorpay'],
     "purchase_plan_status" => ['pending', 'active', 'expired', 'override'],
     "purchase_status" => ['pending', 'paid', 'failed', 'refunded'],
-    "purchase_type" => ['subscription', 'product', 'service', 'credit'],
+    "purchase_type" => ['credit'],
 
     "product_price_type" => ['FixPrice' => 'Fixed Price', 'PriceInRange' => 'Price Range', 'WithoutPrice' => 'Without Price'],
     "product_images_upload_limit" => 5,
@@ -89,10 +89,7 @@ return [
     ],
     "category_type" => ['Services', 'Products'],
 
-    "plan_type" => ['subscription', 'product', 'service'],
-    "plan_usage_type" => ['one_time', 'recurring', 'unlimited'],
-
-    "coupon_compatibility" => ['all', 'subscription', 'product', 'service', 'credit'],
+    "coupon_compatibility" => ['all', 'credit'],
 
     // Orders 
     'order_status' => [

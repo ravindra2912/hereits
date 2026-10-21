@@ -201,10 +201,7 @@ class BusinessController extends Controller
                     'is_ecommerce_system',
                     'is_label',
                     'is_service_system',
-                    'is_private',
-                    'subscription_expiry_date',
-                    'product_limit',
-                    'service_limit'
+                    'is_private'
                 );
             },
             'state' => function ($q) {
@@ -314,10 +311,6 @@ class BusinessController extends Controller
                 $update->rating = $request->rating ?? 0;
                 $update->save();
 
-                // BusinessSetting::where('business_id', $id)->update([
-                //     'subscription_expiry_date' => $request->subscription_expiry_date,
-                //     'credit' => $request->credit,
-                // ]);
 
                 // Removed individual fileRemove calls as they are handled above within the existence checks
 
@@ -461,12 +454,6 @@ class BusinessController extends Controller
                 $update->deduct_credit_per_customer_appointment = $request->deduct_credit_per_customer_appointment ?? 0;
                 $update->deduct_credit_per_self_appointment = $request->deduct_credit_per_self_appointment ?? 0;
 
-                $update->product_limit = $request->product_limit ?? 0;
-                $update->service_limit = $request->service_limit ?? 0;
-
-                $update->subscription_expiry_date = $request->subscription_expiry_date;
-                $update->product_limit_expiry_date = $request->product_limit_expiry_date;
-                $update->service_limit_expiry_date = $request->service_limit_expiry_date;
                 $update->save();
 
                 $success = true;

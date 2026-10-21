@@ -60,7 +60,6 @@ class FavoriteTest extends TestCase
             'is_ecommerce_system' => true,
             'is_service_system' => true,
             'is_expert_system' => true,
-            'subscription_expiry_date' => now()->addYear(),
         ]);
 
         $cat = Category::create([

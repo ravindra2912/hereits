@@ -172,8 +172,8 @@
 
             <tr class="item">
                 <td>
-                    {{ $purchase->plan->name ?? ($purchase->plan_type == 'credit' ? 'Credit Recharge' : ucfirst($purchase->plan_type) . ' Plan') }} <br>
-                    <small>({{ $purchase->plan_type == 'subscription' ? ($purchase->plan->duration . ' Months') : ($purchase->quantity . ($purchase->plan_type == 'credit' ? ' Credits' : ' Units')) }})</small>
+                    {{ $purchase->plan->name ?? ($purchase->plan_type == 'credit' ? 'Credit Recharge' : ucfirst($purchase->plan_type ?? 'Credit') . ' Recharge') }} <br>
+                    <small>({{ $purchase->plan_type == 'subscription' ? (($purchase->plan?->duration ?? 1) . ' Months') : ($purchase->quantity . ($purchase->plan_type == 'credit' ? ' Credits' : ' Units')) }})</small>
                 </td>
 
                 <td>

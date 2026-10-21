@@ -13,11 +13,8 @@ use App\Http\Controllers\Business\OfferController;
 use App\Http\Controllers\Business\AppointmentBookingController;
 use App\Http\Controllers\Business\AppointmentDepartmentController;
 use App\Http\Controllers\Business\ProductController;
-use App\Http\Controllers\Business\ProductPlanController;
 use App\Http\Controllers\Business\BannerController;
 use App\Http\Controllers\Business\ServiceController;
-use App\Http\Controllers\Business\ServicePlanController;
-use App\Http\Controllers\Business\SubscriptionPlanController;
 use App\Http\Controllers\Business\CreditController;
 use App\Http\Controllers\Business\PurchaseHistoryController;
 use App\Http\Controllers\Business\GalleryController;
@@ -118,11 +115,7 @@ Route::name('business.')->group(function () {
                 Route::delete('home-management/leads/{id}', 'destroy')->name('home-management.leads.destroy');
             });
 
-            // Product Plan Routes
-            Route::controller(ProductPlanController::class)->group(function () {
-                Route::get('product-plans', 'index')->name('product.plans');
-                Route::post('product-plans/buy', 'buy')->name('product.plans.buy');
-            });
+
         });
         Route::resource('banner', BannerController::class);
 
@@ -133,11 +126,7 @@ Route::name('business.')->group(function () {
             Route::post('service-category/reorder', [\App\Http\Controllers\Business\ServiceCategoryController::class, 'reorder'])->name('service-category.reorder');
             Route::resource('service-category', \App\Http\Controllers\Business\ServiceCategoryController::class);
 
-            // Service Plan Routes
-            Route::controller(\App\Http\Controllers\Business\ServicePlanController::class)->group(function () {
-                Route::get('service-plans', 'index')->name('service.plans');
-                Route::post('service-plans/buy', 'buy')->name('service.plans.buy');
-            });
+
         });
         Route::post('gallery/status-toggle', [GalleryController::class, 'statusToggle'])->name('gallery.status-toggle');
         Route::resource('gallery', GalleryController::class);
@@ -253,26 +242,7 @@ Route::name('business.')->group(function () {
             Route::post('/{id}/entry/{entry_id}/update', 'updateEntry')->name('entry.update');
         });
 
-        Route::controller(ProductPlanController::class)->group(function () {
-            Route::get('product-plan', 'index')->name('product.plan');
-            Route::get('product-plan/details/{id}', 'show')->name('product.plan.details');
-            Route::post('product-plan/validate-coupon', 'validateCouponAjax')->name('product.plan.validate_coupon');
-            Route::post('product-plan/buy', 'buy')->name('product.plan.buy');
-        });
 
-        Route::controller(ServicePlanController::class)->group(function () {
-            Route::get('service-plan', 'index')->name('service.plan');
-            Route::get('service-plan/details/{id}', 'show')->name('service.plan.details');
-            Route::post('service-plan/validate-coupon', 'validateCouponAjax')->name('service.plan.validate_coupon');
-            Route::post('service-plan/buy', 'buy')->name('service.plan.buy');
-        });
-
-        Route::controller(SubscriptionPlanController::class)->group(function () {
-            Route::get('subscription', 'index')->name('subscription');
-            Route::get('subscription/details/{id}', 'show')->name('subscription.details');
-            Route::post('subscription/validate-coupon', 'validateCouponAjax')->name('subscription.validate_coupon');
-            Route::post('subscription/buy', 'buy')->name('subscription.buy');
-        });
 
         Route::controller(PurchaseHistoryController::class)->group(function () {
             Route::get('purchase-history', 'index')->name('purchase.history');

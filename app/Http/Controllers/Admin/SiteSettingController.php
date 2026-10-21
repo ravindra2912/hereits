@@ -24,8 +24,6 @@ class SiteSettingController extends Controller
         try {
             $rules = [
                 'per_credit_price' => 'required|numeric|min:1',
-                'free_product_limit' => 'required|integer|min:1',
-                'free_service_limit' => 'required|integer|min:1',
                 'free_credit' => 'required|integer|min:0',
                 'charge_place_order_on_website' => 'required|numeric|min:0',
                 'charge_place_order_on_pos' => 'required|numeric|min:0',
@@ -46,8 +44,6 @@ class SiteSettingController extends Controller
             }
 
             $setting->per_credit_price = $request->per_credit_price;
-            $setting->free_product_limit = $request->free_product_limit;
-            $setting->free_service_limit = $request->free_service_limit;
             $setting->free_credit = $request->free_credit;
             $setting->charge_place_order_on_website = $request->charge_place_order_on_website;
             $setting->charge_place_order_on_pos = $request->charge_place_order_on_pos;

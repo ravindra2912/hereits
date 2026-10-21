@@ -32,11 +32,6 @@ class Purchase extends Model
         return $this->belongsTo(Business::class);
     }
 
-    public function plan()
-    {
-        return $this->belongsTo(Plan::class);
-    }
-
     public function transaction()
     {
         return $this->belongsTo(Transactions::class, 'transaction_id');

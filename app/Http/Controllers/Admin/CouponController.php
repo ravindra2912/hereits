@@ -354,7 +354,7 @@ class CouponController extends Controller
     public function usageHistory($id)
     {
         $coupon = Coupon::findOrFail($id);
-        $purchases = Purchase::with(['business', 'plan', 'transaction'])
+        $purchases = Purchase::with(['business', 'transaction'])
             ->where('coupon_id', $id)
             ->whereIn('status', ['success', 'paid'])
             ->orderBy('id', 'desc')

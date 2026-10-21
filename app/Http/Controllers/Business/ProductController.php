@@ -21,7 +21,6 @@ use Illuminate\Support\Facades\Cache;
 
 class ProductController extends Controller
 {
-    use \App\Traits\ManageListingLimits;
     use \App\Traits\CacheManagement;
 
     /**
@@ -105,9 +104,8 @@ class ProductController extends Controller
         $businessSetting = BusinessSetting::where('business_id', $business_id)->first(['is_product_import_export', 'is_update_stock_and_price_using_exel']);
         $categories = getProductCategory();
         $totalProducts = Product::where('business_id', $business_id)->count();
-        $limit = $this->getEffectiveLimit($business_id, 'product');
 
-        return view('business.product.index', compact('categories', 'totalProducts', 'limit', 'businessSetting'));
+        return view('business.product.index', compact('categories', 'totalProducts', 'businessSetting'));
     }
 
     /**
@@ -152,12 +150,7 @@ class ProductController extends Controller
                 $message = $validator->errors();
             } else if (Product::where('sku', $request->sku)->where('business_id', getBusinessId())->exists()) {
                 $message = 'SKU already exists.';
-            } else {
                 $business_id = getBusinessId();
-                $limitCheck = $this->checkListingLimit($business_id, Product::class, 'product');
-                if ($limitCheck) {
-                    return response()->json(['success' => false, 'message' => $limitCheck]);
-                }
 
                 $product = Product::create([
                     'business_id' => $business_id,
@@ -304,13 +297,6 @@ class ProductController extends Controller
             } else if (Product::where('sku', $request->sku)->where('business_id', $business_id)->where('id', '!=', $id)->exists()) {
                 $message = 'SKU already exists.';
             } else {
-
-                if ($product->status != 'active' && $request->status == 'active') {
-                    $limitCheck = $this->checkListingLimit($business_id, Product::class, 'product');
-                    if ($limitCheck) {
-                        return response()->json(['success' => false, 'message' => $limitCheck]);
-                    }
-                }
 
                 $sellPrice = $request->filled('sell_price')
                     ? (float)$request->sell_price
@@ -750,10 +736,6 @@ class ProductController extends Controller
             if ($product->status == 'active') {
                 $product->status = 'in-active';
             } else {
-                $limitCheck = $this->checkListingLimit(Auth::user()->business_id, Product::class, 'product');
-                if ($limitCheck) {
-                    return response()->json(['success' => false, 'message' => $limitCheck]);
-                }
                 $product->status = 'active';
             }
 

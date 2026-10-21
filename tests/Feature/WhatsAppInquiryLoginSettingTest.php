@@ -50,7 +50,6 @@ class WhatsAppInquiryLoginSettingTest extends TestCase
             'is_create_quotation_on_inquiry' => true,
             'is_login_required' => false,
             'accept_cash_on_delivery' => true,
-            'subscription_expiry_date' => now()->addDays(30),
         ]);
 
         return [$owner, $business, $setting];

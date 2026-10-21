@@ -149,18 +149,6 @@ class Business extends Model
     // for dashboard calculation end
     // ***************************
 
-
-
-    public function hasActivePlan($type = 'subscription')
-    {
-        return $this->purchases()
-            ->where('plan_type', $type)
-            ->where('status', 'paid')
-            ->where('plan_status', 'active')
-            ->where('end_date', '>', now())
-            ->exists();
-    }
-
     public function getFullAddressAttribute(): string
     {
         $parts = array_filter([

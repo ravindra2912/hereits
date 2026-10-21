@@ -104,14 +104,14 @@
               <div class="row mb-4">
                 <div class="col-6">
                   <div class="p-3 bg-light rounded text-center shadow-sm">
-                    <h4 class="fw-bold text-primary mb-0"><span id="view_product_count">0</span> / <span id="view_product_limit" class="text-secondary small">0</span></h4>
-                    <small class="text-muted text-uppercase fw-bold ls-1" style="font-size: 10px;">Products (Count/Limit)</small>
+                    <h4 class="fw-bold text-primary mb-0"><span id="view_product_count">0</span></h4>
+                    <small class="text-muted text-uppercase fw-bold ls-1" style="font-size: 10px;">Products</small>
                   </div>
                 </div>
                 <div class="col-6">
                   <div class="p-3 bg-light rounded text-center shadow-sm">
-                    <h4 class="fw-bold text-success mb-0"><span id="view_service_count">0</span> / <span id="view_service_limit" class="text-secondary small">0</span></h4>
-                    <small class="text-muted text-uppercase fw-bold ls-1" style="font-size: 10px;">Services (Count/Limit)</small>
+                    <h4 class="fw-bold text-success mb-0"><span id="view_service_count">0</span></h4>
+                    <small class="text-muted text-uppercase fw-bold ls-1" style="font-size: 10px;">Services</small>
                   </div>
                 </div>
               </div>
@@ -172,10 +172,6 @@
                 <div class="col-md-6 mb-2">
                   <small class="text-muted d-block">Service System</small>
                   <span id="view_is_service" class="badge"></span>
-                </div>
-                <div class="col-md-6 mb-2">
-                  <small class="text-muted d-block">Subscription Expiry</small>
-                  <span id="view_expiry_date" class="fw-bold text-danger"></span>
                 </div>
               </div>
             </div>
@@ -294,8 +290,6 @@
 
             $('#view_product_count').text(business.products_count);
             $('#view_service_count').text(business.services_count);
-            $('#view_product_limit').text(business.business_setting ? business.business_setting.product_limit : 0);
-            $('#view_service_limit').text(business.business_setting ? business.business_setting.service_limit : 0);
             $('#view_appointment_count').text(business.bookings_count);
             $('#view_credit_count').text(business.business_setting ? business.business_setting.credit : 0);
 
@@ -307,10 +301,8 @@
               $('#view_is_appointment').text(setting.is_appointment_system ? 'Yes' : 'No').removeClass('bg-success bg-danger').addClass(setting.is_appointment_system ? 'bg-success' : 'bg-danger');
               $('#view_is_ecommerce').text(setting.is_ecommerce_system ? 'Yes' : 'No').removeClass('bg-success bg-danger').addClass(setting.is_ecommerce_system ? 'bg-success' : 'bg-danger');
               $('#view_is_service').text(setting.is_service_system ? 'Yes' : 'No').removeClass('bg-success bg-danger').addClass(setting.is_service_system ? 'bg-success' : 'bg-danger');
-              $('#view_expiry_date').text(setting.subscription_expiry_date || 'N/A');
             } else {
               $('#view_is_appointment, #view_is_ecommerce, #view_is_service').text('No').removeClass('bg-success bg-danger').addClass('bg-danger');
-              $('#view_expiry_date').text('N/A');
             }
 
             $('#view_edit_link').attr('href', "{{ route('admin.business.index') }}/" + id + "/edit");

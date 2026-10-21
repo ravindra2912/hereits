@@ -145,8 +145,8 @@
                   <span class="fw-medium">{{ isset($business->businessCategory) ? $business->businessCategory->name : '-' }}</span>
                 </div>
                 <div class="bg-white p-2 rounded border">
-                  <small class="text-muted d-block text-uppercase fw-bold brand-badge-label">Expiry</small>
-                  <span class="fw-medium text-danger">{{ $business->businessSetting->subscription_expiry_date }}</span>
+                  <small class="text-muted d-block text-uppercase fw-bold brand-badge-label">Credits</small>
+                  <span class="fw-medium text-primary">{{ number_format($business->businessSetting->credit ?? 0, 2) }}</span>
                 </div>
               </div>
             </div>

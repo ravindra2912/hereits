@@ -25,8 +25,7 @@ class CheckoutController extends Controller
             ->with('state:id,name')
             ->where('slug', $business_slug)
             ->whereHas('businessSetting', function ($query) {
-                $query->where('subscription_expiry_date', '>=', now())
-                    ->where('is_ecommerce_system', 1)
+                $query->where('is_ecommerce_system', 1)
                     ->where('is_order_place_on_website', 1);
             })
             ->where('status', 'active')

@@ -38,7 +38,7 @@ class DashboarController extends Controller
         $businessDetails = Business::select('id', 'status')
             ->with([
                 'businessSetting' => function ($q) {
-                    $q->select('business_id', 'is_ecommerce_system', 'is_service_system', 'is_appointment_system', 'is_appointment_with_department', 'subscription_expiry_date', 'credit');
+                    $q->select('business_id', 'is_ecommerce_system', 'is_service_system', 'is_appointment_system', 'is_appointment_with_department', 'credit');
                 }
             ])
             ->withCount([

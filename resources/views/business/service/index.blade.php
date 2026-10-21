@@ -20,20 +20,14 @@
         <div class="d-flex flex-wrap align-items-center justify-content-md-end gap-2 pe-3">
             <div class="me-auto me-md-0">
                 <span class="badge bg-light text-dark border py-2 rounded-pill">
-                    <i class="bi bi-bar-chart-fill me-1 text-primary"></i> {{ $totalServices }} / {{ $limit }} <span class="d-none d-sm-inline">Limit</span>
+                    <i class="bi bi-bar-chart-fill me-1 text-primary"></i> {{ $totalServices }} <span class="d-none d-sm-inline">Total</span>
                 </span>
             </div>
             @if(checkBusinessPermission('add_services'))
             <div class="d-flex gap-2 flex-grow-1 flex-md-grow-0">
-                @if($totalServices >= $limit)
-                <a href="{{ route('business.service.plans') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm flex-fill">
-                    <i class="bi bi-cart-plus me-1"></i> <span class="d-none d-sm-inline">Buy More</span>
-                </a>
-                @else
                 <a href="{{ route('business.service.create') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm flex-fill">
                     <i class="bi bi-plus-lg me-1"></i> <span class="d-none d-sm-inline">Add Service</span>
                 </a>
-                @endif
             </div>
             @endif
         </div>

@@ -17,7 +17,7 @@ class PurchaseHistoryController extends Controller
         $business_id = getBusinessId();
 
         $history = Purchase::where('business_id', $business_id)
-            ->with(['transaction', 'plan'])
+            ->with(['transaction'])
             ->orderBy('id', 'desc')
             ->paginate(10);
 
@@ -32,7 +32,7 @@ class PurchaseHistoryController extends Controller
         $business_id = getBusinessId();
 
         $purchase = Purchase::where('business_id', $business_id)
-            ->with(['transaction', 'plan', 'business'])
+            ->with(['transaction', 'business'])
             ->findOrFail($id);
 
         return view('business.purchase.detail', compact('purchase'));
@@ -46,7 +46,7 @@ class PurchaseHistoryController extends Controller
         $business_id = getBusinessId();
 
         $purchase = Purchase::where('business_id', $business_id)
-            ->with(['transaction', 'plan', 'business'])
+            ->with(['transaction', 'business'])
             ->findOrFail($id);
 
         $pdf = Pdf::loadView('business.purchase.invoice', compact('purchase'));

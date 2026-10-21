@@ -57,7 +57,6 @@ class BusinessAnalyticsTest extends TestCase
         $setting = new BusinessSetting();
         $setting->forceFill([
             'business_id' => $this->business->id,
-            'subscription_expiry_date' => now()->addYear(),
             'is_ecommerce_system' => 1,
             'is_service_system' => 1,
             'is_appointment_system' => 1,

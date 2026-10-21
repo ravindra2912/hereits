@@ -19,7 +19,6 @@ class DatabaseSeeder extends Seeder
             $this->call(AdminSeeder::class);
             $this->call(LegalPageSeeder::class);
             $this->call(BusinessSeeder::class);
-            $this->call(PlanSeeder::class);
             $this->call(FaqSeeder::class);
         } else {
             $this->call(SiteSettingSeeder::class);
@@ -30,7 +29,6 @@ class DatabaseSeeder extends Seeder
             $this->call(BlogSeeder::class);
             $this->call(ProductSeeder::class);
             $this->call(ServiceSeeder::class);
-            $this->call(PlanSeeder::class);
             $this->call(AppointmentDepartmentSeeder::class);
             $this->call(ExpertSeeder::class);
             $this->call(FaqSeeder::class);

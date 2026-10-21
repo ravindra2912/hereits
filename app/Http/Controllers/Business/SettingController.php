@@ -18,7 +18,6 @@ use App\Models\SiteSetting;
 use App\Models\Purchase;
 use App\Models\Transactions;
 use Illuminate\Support\Facades\DB;
-use App\Models\Plan;
 
 class SettingController extends Controller
 {

@@ -52,15 +52,7 @@ class PaymentController extends Controller
                 $data->redirectUrl = route('business.purchase.history.detail', $purchaseData->id);
 
                 // Set cancellation return URL
-                if ($type == 'subscription') {
-                    $data->cancelUrl = route('business.subscription');
-                } elseif ($type == 'product') {
-                    $data->cancelUrl = route('business.product.plans');
-                } elseif ($type == 'service') {
-                    $data->cancelUrl = route('business.service.plans');
-                } else {
-                    $data->cancelUrl = route('business.credits');
-                }
+                $data->cancelUrl = route('business.credits');
 
                 $success = true;
             } else {
