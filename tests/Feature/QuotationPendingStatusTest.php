@@ -268,11 +268,18 @@ class QuotationPendingStatusTest extends TestCase
             'status' => 'active',
         ])->save();
 
+        $bizCustomer = \App\Models\BusinessCustomer::create([
+            'business_id' => $business->id,
+            'customer_id' => $registeredCustomer->id,
+            'customer_name' => 'Amitabh Bachchan',
+            'contact' => '9876543210',
+        ]);
+
         // Quotation 1: with registered customer
         Quotation::create([
             'business_id' => $business->id,
             'quotation_no' => 'QT-' . date('Ymd') . '-AMIT',
-            'customer_id' => $registeredCustomer->id,
+            'business_customer_id' => $bizCustomer->id,
             'subtotal' => 500,
             'total' => 500,
             'status' => Quotation::STATUS_INPROGRESS,

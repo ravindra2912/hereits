@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('business_campaign_leads', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('business_id')->nullable()->constrained('businesses')->nullOnDelete();
             $table->foreignId('popup_id')->nullable()->constrained('business_home_popups')->onDelete('set null');
             $table->foreignId('assigned_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('set null');
@@ -31,9 +32,11 @@ return new class extends Migration
                 'spam'
             ])->default('new');
             $table->dateTime('scheduled_at')->nullable();
+            $table->boolean('is_webhook_sent')->default(false);
             $table->timestamps();
 
             $table->index(['popup_id', 'status']);
+            $table->index(['business_id', 'status']);
         });
     }
 

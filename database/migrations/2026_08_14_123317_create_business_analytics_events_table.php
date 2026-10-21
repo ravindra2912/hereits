@@ -106,6 +106,15 @@ return new class extends Migration
                 'business_id',
                 'created_at',
             ]);
+
+            $table->index('created_at', 'idx_analytics_created_at');
+            $table->index(['event', 'created_at', 'visitor_hash'], 'idx_analytics_event_created_visitor');
+            $table->index(['event', 'page_type', 'created_at'], 'idx_analytics_event_page_created_at');
+            $table->index(['business_id', 'event', 'page_type', 'created_at'], 'idx_analytics_biz_event_page_created');
+            $table->index(
+                ['business_id', 'visitor_hash', 'page_type', 'page_id', 'created_at'],
+                'idx_analytics_dup_check'
+            );
         });
     }
 

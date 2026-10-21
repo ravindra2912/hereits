@@ -31,7 +31,9 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            // $table->foreign('business_id')->references('id')->on('businesses')->cascadeOnDelete();
+            $table->index('business_id', 'idx_users_business_id');
+            $table->index(['role', 'status'], 'idx_users_role_status');
+            $table->index('referrer_business_id', 'idx_users_referrer_biz_id');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

@@ -14,38 +14,37 @@ class SiteSettingSeeder extends Seeder
      */
     public function run(): void
     {
-
-        SiteSetting::create([
-            'per_credit_price' => 1,
-            'free_product_limit' => 20,
-            'free_service_limit' => 10,
-            'free_credit' => 30,
-            'charge_place_order_on_website' => 0.1,
-            'charge_place_order_on_pos' => 0.05,
-        ]);
-
-        $countries = database_path('sql/countries.sql');
-        if (!File::exists($countries)) {
-            echo "SQL file not found.";
-            return;
+        if (!SiteSetting::first()) {
+            SiteSetting::create([
+                'per_credit_price' => 1,
+                'free_credit' => 30,
+                'charge_place_order_on_website' => 0.1,
+                'charge_place_order_on_pos' => 0.05,
+                'draw_credit_per_scratch' => 1.00,
+                'charge_per_quotation' => 1.00,
+                'payment_gateway' => 'cashfree',
+            ]);
         }
-        DB::unprepared(File::get($countries));
 
-        $states = database_path('sql/states.sql');
-
-        if (!File::exists($states)) {
-            echo "SQL file not found.";
-            return;
+        if (DB::table('countries')->count() === 0) {
+            $countries = database_path('sql/countries.sql');
+            if (File::exists($countries)) {
+                DB::unprepared(File::get($countries));
+            }
         }
-        DB::unprepared(File::get($states));
 
-
-        $cities = database_path('sql/cities.sql');
-
-        if (!File::exists($cities)) {
-            echo "SQL file not found.";
-            return;
+        if (DB::table('states')->count() === 0) {
+            $states = database_path('sql/states.sql');
+            if (File::exists($states)) {
+                DB::unprepared(File::get($states));
+            }
         }
-        DB::unprepared(File::get($cities));
+
+        if (DB::table('cities')->count() === 0) {
+            $cities = database_path('sql/cities.sql');
+            if (File::exists($cities)) {
+                DB::unprepared(File::get($cities));
+            }
+        }
     }
 }

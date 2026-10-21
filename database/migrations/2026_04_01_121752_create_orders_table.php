@@ -18,8 +18,11 @@ return new class extends Migration
             $table->unsignedBigInteger('business_id')->index();
             $table->unsignedBigInteger('created_user_id')->nullable()->index();
             $table->unsignedBigInteger('customer_id')->nullable()->index();
+            $table->unsignedBigInteger('business_customer_id')->nullable()->index();
+            $table->unsignedBigInteger('assign_to')->nullable()->index();
 
             // 🔹 Frequently searched
+            $table->string('transaction_id')->nullable()->index();
             $table->string('invoice_number')->nullable()->index();
 
             // 🔹 Order filters (VERY IMPORTANT for dashboard queries)
@@ -42,13 +45,14 @@ return new class extends Migration
             $table->decimal('subtotal', 10, 2)->default(0);
             $table->decimal('discount', 10, 2)->default(0);
             $table->decimal('shipping_charge', 10, 2)->default(0);
+            $table->boolean('is_pf')->default(false);
+            $table->decimal('packing_charge', 10, 2)->default(0);
             $table->decimal('total', 15, 2)->default(0);
 
             $table->text('address')->nullable();
             $table->text('notes')->nullable();
 
             // 🔹 Status filters (VERY COMMON in admin panels)
-            $table->enum('payment_method', ['cash', 'upi', 'card', 'online'])->index();
             $table->enum('payment_status', ['pending', 'paid', 'failed', 'refunded'])->default('pending')->index();
 
             $table->enum('order_status', [
@@ -74,6 +78,8 @@ return new class extends Migration
             $table->foreign('business_id')->references('id')->on('businesses')->onDelete('cascade');
             $table->foreign('customer_id')->references('id')->on('users')->noActionOnDelete();
             $table->foreign('created_user_id')->references('id')->on('users')->noActionOnDelete();
+            $table->foreign('business_customer_id')->references('id')->on('business_customers')->nullOnDelete();
+            $table->foreign('assign_to')->references('id')->on('users')->nullOnDelete();
         });
     }
 

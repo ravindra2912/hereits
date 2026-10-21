@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('business_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->string('image_url');
+            $table->enum('type', ['image', 'youtube_url'])->default('image');
             $table->enum('status', ['active', 'in-active'])->default('active');
             $table->timestamps();
         });

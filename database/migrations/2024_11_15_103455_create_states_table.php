@@ -21,6 +21,7 @@ return new class extends Migration
 
             
             $table->foreign('country_id')->references('id')->on('countries')->cascadeOnDelete();
+            $table->index('status', 'idx_states_status');
         });
     }
 

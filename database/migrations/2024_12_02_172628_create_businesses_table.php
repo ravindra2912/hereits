@@ -48,6 +48,7 @@ return new class extends Migration
             $table->foreign('country_id')->references('id')->on('countries')->cascadeOnDelete();
             $table->foreign('state_id')->references('id')->on('states')->cascadeOnDelete();
             $table->foreign('city_id')->references('id')->on('cities')->cascadeOnDelete();
+            $table->index('status', 'idx_businesses_status');
         });
     }
 

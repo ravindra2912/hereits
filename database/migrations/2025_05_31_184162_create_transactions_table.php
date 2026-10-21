@@ -31,6 +31,7 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->foreign('business_id')->references('id')->on('businesses')->cascadeOnDelete();
+            $table->index('status', 'idx_transactions_status');
         });
     }
 

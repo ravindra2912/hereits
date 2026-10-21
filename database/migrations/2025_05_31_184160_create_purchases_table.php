@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('plan_id')->index()->nullable();
             $table->unsignedBigInteger('transaction_id')->nullable()->index();
             $table->bigInteger('coupon_id')->nullable();
-            $table->enum('plan_type', ['subscription', 'product', 'service', 'appointment']);
+            $table->enum('plan_type', ['subscription', 'product', 'service', 'credit'])->default('credit');
 
             $table->decimal('subtotal', 10, 2);                              // 🔥 subtotal amount
             $table->integer('quantity')->nullable();                      // 🔥 products limit/services limit/appoinment credit
@@ -37,7 +37,8 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->foreign('business_id')->references('id')->on('businesses')->cascadeOnDelete();
-            $table->foreign('plan_id')->references('id')->on('plans')->noActionOnDelete();
+            $table->index('coupon_id', 'idx_purchases_coupon_id');
+            $table->index('status', 'idx_purchases_status');
         });
     }
 

@@ -127,44 +127,42 @@ class BusinessSeeder extends Seeder
         ];
 
         foreach ($businessSubCategories as $businessSubCategory) {
-            BusinessCategory::create([
-                'name' => Str::title(str_replace('_', ' ', $businessSubCategory)),
-                'slug' => $businessSubCategory
-            ]);
+            BusinessCategory::firstOrCreate(
+                ['slug' => $businessSubCategory],
+                ['name' => Str::title(str_replace('_', ' ', $businessSubCategory))]
+            );
         }
 
         $user = User::where('role', 'Business')->first() ?? User::first();
 
-        $insert = new Business();
-        $insert->owner_id = $user->id;
-        $insert->name = 'clinic';
-        $insert->slug = 'clinic';
-        $insert->contact = '9876543210';
-        $insert->city_id = 1041;
-        $insert->state_id = 12;
-        $insert->country_id = 101;
-        $insert->area = 'vesu';
-        $insert->pincode = '395007';
-        $insert->business_category_id = BusinessCategory::first()->id;
-        $insert->address = 'vesu suart';
-        $insert->longitude = 72.2345;
-        $insert->latitude = 102.2345;
-        $insert->rating = 4.5;
-        $insert->save();
+        $insert = Business::firstOrCreate(
+            ['slug' => 'clinic'],
+            [
+                'owner_id' => $user->id,
+                'name' => 'clinic',
+                'contact' => '9876543210',
+                'city_id' => 1041,
+                'state_id' => 12,
+                'country_id' => 101,
+                'area' => 'vesu',
+                'pincode' => '395007',
+                'business_category_id' => BusinessCategory::first()->id,
+                'address' => 'vesu suart',
+                'longitude' => 72.2345,
+                'latitude' => 102.2345,
+                'rating' => 4.5,
+            ]
+        );
 
-        BusinessSetting::create([
-            'business_id' => $insert->id,
-            'is_appointment_system' => 1,
-            'is_appointment_with_department' => 1,
-            'is_appointment_price_required' => 1,
-            'is_ecommerce_system' => 1,
-            'is_service_system' => 1,
-            // 'is_education_system' => 1,
-            // 'is_real_estate_system' => 1,
-            // 'is_automobile_system' => 1,
-            // 'is_travel_system' => 1,
-            // 'is_fitness_system' => 1,
-            // 'is_creative_system' => 1,
-        ]);
+        BusinessSetting::firstOrCreate(
+            ['business_id' => $insert->id],
+            [
+                'is_appointment_system' => 1,
+                'is_appointment_with_department' => 1,
+                'is_appointment_price_required' => 1,
+                'is_ecommerce_system' => 1,
+                'is_service_system' => 1,
+            ]
+        );
     }
 }

@@ -22,28 +22,34 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
 
-        \App\Models\Admin::create([
-            'first_name' => 'Super',
-            'last_name' => 'Admin',
-            'email' => 'admin@gmail.com',
-            'role' => 'superadmin',
-            'password' => Hash::make('password'),
-        ]);
+        \App\Models\Admin::firstOrCreate(
+            ['email' => 'admin@gmail.com'],
+            [
+                'first_name' => 'Super',
+                'last_name' => 'Admin',
+                'role' => 'superadmin',
+                'password' => Hash::make('password'),
+            ]
+        );
 
-        User::create([
-            'first_name' => 'Seller',
-            'last_name' => 'User',
-            'email' => 'saller@gmail.com',
-            'role' => 'Business',
-            'password' => Hash::make('password'),
-        ]);
+        User::firstOrCreate(
+            ['email' => 'saller@gmail.com'],
+            [
+                'first_name' => 'Seller',
+                'last_name' => 'User',
+                'role' => 'Business',
+                'password' => Hash::make('password'),
+            ]
+        );
 
-        User::create([
-            'first_name' => 'Customer',
-            'last_name' => 'User',
-            'email' => 'customer@gmail.com',
-            'role' => 'User',
-            'password' => Hash::make('password'),
-        ]);
+        User::firstOrCreate(
+            ['email' => 'customer@gmail.com'],
+            [
+                'first_name' => 'Customer',
+                'last_name' => 'User',
+                'role' => 'User',
+                'password' => Hash::make('password'),
+            ]
+        );
     }
 }

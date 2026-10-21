@@ -22,6 +22,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
+            $table->index(['review_type', 'review_on_id'], 'idx_reviews_type_on_id');
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
             $table->foreign('business_id')->references('id')->on('businesses')->cascadeOnDelete();
         });

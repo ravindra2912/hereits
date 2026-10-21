@@ -28,6 +28,9 @@ return new class extends Migration
 
             $table->foreign('business_id')->references('id')->on('businesses')->cascadeOnDelete();
             $table->foreign('category_id')->references('id')->on('categories')->nullOnDelete();
+
+            $table->index('slug', 'idx_services_slug');
+            $table->index(['business_id', 'status'], 'idx_services_business_status');
         });
     }
 

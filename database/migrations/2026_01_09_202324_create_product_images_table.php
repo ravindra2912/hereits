@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('product_id');
             $table->string('image_url')->nullable();
+            $table->enum('type', ['image', 'youtube_url'])->default('image');
             $table->integer('sort_order')->default(0);
             $table->timestamps();
 

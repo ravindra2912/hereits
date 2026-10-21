@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('note', 250)->nullable();
             $table->string('expert_note', 250)->nullable();
             $table->double('amount', 10, 2)->default(0);
+            $table->decimal('product_amount', 10, 2)->default(0);
             $table->enum('payment_type', ['Cash', 'Online'])->default('Cash');
             $table->unsignedBigInteger('review_id')->nullable();
             $table->enum('appointment_for', ['self', 'other'])->default('self');
@@ -38,6 +39,10 @@ return new class extends Migration
             $table->foreign('department_id')->references('id')->on('appointment_departments')->noActionOnDelete();
             $table->foreign('expert_id')->references('id')->on('experts')->noActionOnDelete();
             $table->foreign('review_id')->references('id')->on('review_and_ratings')->noActionOnDelete();
+
+            $table->index(['business_id', 'booking_date'], 'idx_bookings_biz_date');
+            $table->index(['business_id', 'status'], 'idx_bookings_biz_status');
+            $table->index('status', 'idx_bookings_status');
         });
     }
 

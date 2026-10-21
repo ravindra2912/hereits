@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('business_id')->constrained('businesses')->onDelete('cascade');
             $table->enum('section_type', [
                 'banner_custom',
+                'slider_banner',
                 'product_categories',
                 'product_category_items',
                 'service_categories',
@@ -27,8 +28,10 @@ return new class extends Migration
             ])->default('banner_custom');
             $table->string('title')->nullable();
             $table->unsignedTinyInteger('image_count')->nullable(); // 1, 2, 3, 4, 6
+            $table->string('slider_banner')->nullable();
             $table->enum('ui_style', ['style_1', 'style_2', 'style_3'])->nullable();
             $table->enum('item_selection_type', ['manual', 'random'])->nullable()->default('random');
+            $table->json('settings')->nullable();
             $table->unsignedInteger('sort_order')->default(0);
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
@@ -46,6 +49,7 @@ return new class extends Migration
             $table->foreignId('expert_id')->nullable()->constrained('experts')->onDelete('cascade');
             $table->string('image_path')->nullable();
             $table->string('redirect_url')->nullable();
+            $table->enum('status', ['active', 'in-active'])->default('active');
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
 

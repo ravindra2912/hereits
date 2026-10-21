@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('business_id')->constrained('businesses')->onDelete('cascade');
             $table->enum('transaction_type', ['credit', 'debit']);
-            $table->enum('type', ['order', 'appointment', 'quotation', 'lucky_draw', 'recharge', 'manual', 'other'])->default('other');
+            $table->enum('type', ['order', 'appointment', 'quotation', 'lucky_draw', 'recharge', 'manual', 'registration', 'other'])->default('other');
             $table->decimal('amount', 10, 2);
             $table->decimal('balance_after', 10, 2)->default(0.00);
             $table->string('description')->nullable();

@@ -11,8 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::dropIfExists('order_histories');
-
         Schema::create('user_activity_histories', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('business_id')->index();
@@ -24,7 +22,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('business_id')->references('id')->on('businesses')->onDelete('cascade');
+            $table->foreign('business_id')->references('id')->on('businesses')->cascadeOnDelete();
             $table->foreign('user_id')->references('id')->on('users')->noActionOnDelete();
         });
     }
@@ -35,33 +33,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('user_activity_histories');
-
-        Schema::create('order_histories', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('business_id')->index();
-            $table->unsignedBigInteger('order_id')->index();
-            $table->enum('status', [
-                'pending',
-                'confirmed',
-                'processing',
-                'ready_to_deliver',
-                'delivered',
-                'canceled',
-                'canceled_by_user'
-            ])->default('pending')->index();
-            $table->unsignedBigInteger('changed_by')->nullable()->index();
-            $table->text('remark')->nullable();
-            $table->timestamps();
-            $table->softDeletes();
-
-            $table->index(['business_id', 'order_id']);
-            $table->index(['business_id', 'status']);
-            $table->index(['business_id', 'changed_by']);
-            $table->index(['business_id', 'created_at']);
-
-            $table->foreign('business_id')->references('id')->on('businesses')->onDelete('cascade');
-            $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
-            $table->foreign('changed_by')->references('id')->on('users')->noActionOnDelete();
-        });
     }
 };

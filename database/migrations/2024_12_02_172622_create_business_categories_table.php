@@ -21,6 +21,7 @@ return new class extends Migration
             $table->enum('status', ['active', 'in-active'])->default('active');
             $table->timestamps();
             $table->softDeletes();
+            $table->index('status', 'idx_biz_categories_status');
         });
     }
 

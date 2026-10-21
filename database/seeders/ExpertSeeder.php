@@ -28,7 +28,7 @@ class ExpertSeeder extends Seeder
                 'first_name' => 'Clinic',
                 'last_name' => 'Expert',
                 'password' => Hash::make('password'),
-                'role' => 'Expert',
+                'role' => 'User',
             ]
         );
 

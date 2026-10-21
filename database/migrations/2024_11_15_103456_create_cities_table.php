@@ -19,6 +19,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
+            $table->index(['state_id', 'status'], 'idx_cities_state_status');
             // $table->foreign('state_id')->references('id')->on('states')->cascadeOnDelete();
         });
     }
