@@ -1,7 +1,6 @@
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-3" style="z-index: 1021;">
     <div class="container d-flex align-items-center">
-        @if(config('app.is_near_by_home_page'))
         <!-- 1. Menu Toggler (Mobile Only) -->
         <button class="navbar-toggler border-0 p-0 order-0 d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#navbarOffcanvas" aria-controls="navbarOffcanvas" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon" style="width: 22px; height: 22px;"></span>
@@ -55,7 +54,7 @@
 
                 @if(request()->routeIs('account.*'))
                 @php
-                $lastVisited = json_decode(request()->cookie('last_visited_business'), true);
+                $lastVisited = request()->cookie('last_visited_business') ? json_decode(request()->cookie('last_visited_business'), true) : null;
                 @endphp
                 @if($lastVisited)
                 <li class="nav-item d-flex align-items-center ms-lg-2">
@@ -110,98 +109,6 @@
                 </li>
             </ul>
         </div>
-        @else
-        <!-- Original Navbar for when IS_NEAR_BY_HOME_PAGE is false -->
-        <button class="navbar-toggler border-0 p-0 me-3 order-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#navbarOffcanvas" aria-controls="navbarOffcanvas" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <a class="navbar-brand order-1 order-lg-0 mx-auto mx-lg-0" href="{{ route('home') }}">
-            <img src="{{ config('const.site_setting.logo-bg-white', config('const.site_setting.logo')) }}" alt="Logo" class="img-fluid" style="max-height: 40px;" loading="lazy">
-        </a>
-        <div class="d-lg-none order-2" style="width: 48px;"></div>
-        <div class="d-none d-lg-flex collapse navbar-collapse order-3" id="navbarNav">
-            <ul class="navbar-nav ms-auto gap-2 gap-lg-3 text-center text-lg-start shadow-sm-mobile">
-                @if(!request()->routeIs('account.*'))
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('aboutUs') ? 'active' : '' }}" href="{{ route('aboutUs') }}">About Us</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('blog.*') ? 'active' : '' }}" href="{{ route('blog.index') }}">Blog</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ request()->routeIs('home') ? '#pricing' : route('home') . '#pricing' }}">Pricing</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('contactUs') ? 'active' : '' }}" href="{{ route('contactUs') }}">Contact</a>
-                </li>
-                <li class="nav-item d-flex align-items-center ms-lg-2">
-                    <a class="nav-link highlight-register-btn px-3 py-2 rounded-pill fw-bold text-white shadow-sm" href="{{ route('register.business') }}">
-                        <i class="fas fa-plus-circle me-1 pulse-icon"></i>List Your Business
-                    </a>
-                </li>
-                @endif
-
-                @if(request()->routeIs('account.*'))
-                @php
-                $lastVisited = json_decode(request()->cookie('last_visited_business'), true);
-                @endphp
-                @if($lastVisited)
-                <li class="nav-item d-flex align-items-center ms-lg-2">
-                    <a class="nav-link bg-dark text-white px-3 py-2 rounded-pill fw-bold shadow-sm" href="{{ route('business-details', $lastVisited['slug']) }}">
-                        <i class="fas fa-store me-1"></i>Go to {{ $lastVisited['name'] }}
-                    </a>
-                </li>
-                @endif
-                @endif
-
-                <li class="nav-item ms-lg-3">
-                    @auth
-                    <div class="dropdown">
-                        <a href="#" class="d-flex align-items-center text-dark text-decoration-none dropdown-toggle gap-2 py-1 px-2 rounded-pill hover-bg-light transition-all" id="userMenuMain" data-bs-toggle="dropdown" aria-expanded="false">
-                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 35px; height: 35px;">
-                                <i class="fas fa-user-circle fs-5"></i>
-                            </div>
-                            <span class="d-none d-md-inline fw-bold small text-dark">{{ Auth::user()->first_name }}</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2 py-2" aria-labelledby="userMenuMain" style="min-width: 180px;">
-                            <li>
-                                <a class="dropdown-item py-2 d-flex align-items-center gap-3" href="{{ route('account.index') }}">
-                                    <i class="fas fa-chart-line text-muted"></i>
-                                    <span>Account</span>
-                                </a>
-                            </li>
-                            @if(Auth::user()->role == 'Business')
-                            <li>
-                                <a class="dropdown-item py-2 d-flex align-items-center gap-3" href="{{ route('business.dashboard') }}">
-                                    <i class="fas fa-chart-line text-muted"></i>
-                                    <span>Dashboard</span>
-                                </a>
-                            </li>
-                            @endif
-                            <li>
-                                <hr class="dropdown-divider opacity-50">
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2 d-flex align-items-center gap-3 text-danger" href="{{ route('logout') }}">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    <span>Logout</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                    @else
-                    <div class="d-flex flex-column flex-lg-row gap-2 mt-3 mt-lg-0 align-items-center">
-                        <span data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')" class="btn btn-outline-dark rounded-pill px-4 cursor-pointer">Login</span>
-                        <span data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('register')" class="btn btn-primary rounded-pill px-4 cursor-pointer">Register</span>
-                    </div>
-                    @endauth
-                </li>
-            </ul>
-        </div>
-        @endif
     </div>
 </nav>
 
@@ -215,71 +122,36 @@
     </div>
     <div class="offcanvas-body">
         <ul class="navbar-nav gap-2">
-            @if(config('app.is_near_by_home_page'))
-                @if(!request()->routeIs('account.*'))
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">
-                        <i class="fas fa-home me-2"></i>Home
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('business-list') ? 'active' : '' }}" href="{{ route('business-list') }}">
-                        <i class="fas fa-store me-2"></i>Explore Businesses
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('categories-list') ? 'active' : '' }}" href="{{ route('categories-list') }}">
-                        <i class="fas fa-th-large me-2"></i>Categories
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('why-join-with-us') ? 'active' : '' }}" href="{{ route('why-join-with-us') }}">
-                        <i class="fas fa-rocket me-2"></i>Why Join With Us
-                    </a>
-                </li>
-                <li class="nav-item mt-2">
-                    <a class="nav-link bg-gradient-primary text-white px-3 py-2 rounded-3 fw-bold shadow-sm" href="{{ route('why-join-with-us') }}">
-                        <i class="fas fa-plus-circle me-2"></i>List Your Business
-                    </a>
-                </li>
-                @endif
-            @else
-                @if(!request()->routeIs('account.*'))
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">
-                        <i class="fas fa-home me-2"></i>Home
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('aboutUs') ? 'active' : '' }}" href="{{ route('aboutUs') }}">
-                        <i class="fas fa-info-circle me-2"></i>About Us
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('blog.*') ? 'active' : '' }}" href="{{ route('blog.index') }}">
-                        <i class="fas fa-blog me-2"></i>Blog
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ request()->routeIs('home') ? '#pricing' : route('home') . '#pricing' }}">
-                        <i class="fas fa-tags me-2"></i>Pricing
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('contactUs') ? 'active' : '' }}" href="{{ route('contactUs') }}">
-                        <i class="fas fa-envelope me-2"></i>Contact
-                    </a>
-                </li>
-                <li class="nav-item mt-2">
-                    <a class="nav-link bg-gradient-primary text-white px-3 py-2 rounded-3 fw-bold shadow-sm" href="{{ route('register.business') }}">
-                        <i class="fas fa-plus-circle me-2"></i>List Your Business
-                    </a>
-                </li>
-                @endif
+            @if(!request()->routeIs('account.*'))
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">
+                    <i class="fas fa-home me-2"></i>Home
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('business-list') ? 'active' : '' }}" href="{{ route('business-list') }}">
+                    <i class="fas fa-store me-2"></i>Explore Businesses
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('categories-list') ? 'active' : '' }}" href="{{ route('categories-list') }}">
+                    <i class="fas fa-th-large me-2"></i>Categories
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('why-join-with-us') ? 'active' : '' }}" href="{{ route('why-join-with-us') }}">
+                    <i class="fas fa-rocket me-2"></i>Why Join With Us
+                </a>
+            </li>
+            <li class="nav-item mt-2">
+                <a class="nav-link bg-gradient-primary text-white px-3 py-2 rounded-3 fw-bold shadow-sm" href="{{ route('why-join-with-us') }}">
+                    <i class="fas fa-plus-circle me-2"></i>List Your Business
+                </a>
+            </li>
             @endif
 
             @php
-            $lastVisited = json_decode(request()->cookie('last_visited_business'), true);
+            $lastVisited = request()->cookie('last_visited_business') ? json_decode(request()->cookie('last_visited_business'), true) : null;
             @endphp
             @if($lastVisited && request()->routeIs('account.*'))
             <li class="nav-item mt-2">

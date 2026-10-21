@@ -390,7 +390,6 @@
                     </button>
                 </form>
 
-                @if(isGoogleLoginEnabled())
                 <div class="auth-divider">
                     <span>or continue with</span>
                 </div>
@@ -404,7 +403,6 @@
                     </svg>
                     <span>Sign in with Google</span>
                 </a>
-                @endif
             </div>
 
             <!-- Forgot Password Section -->

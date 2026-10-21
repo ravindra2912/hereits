@@ -5,7 +5,6 @@
     'class' => ''
 ])
 
-@if(isGoogleLoginEnabled())
     @if($divider)
     <div class="d-flex align-items-center my-3 text-muted">
         <hr class="flex-grow-1 my-0 border-secondary-subtle">
@@ -25,4 +24,3 @@
         </svg>
         <span>{{ $text }}</span>
     </a>
-@endif

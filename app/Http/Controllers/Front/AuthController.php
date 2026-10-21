@@ -464,10 +464,6 @@ class AuthController extends Controller
 
     public function redirectToGoogle(Request $request)
     {
-        if (!isGoogleLoginEnabled()) {
-            return redirect()->back()->with('error', 'Google login is currently disabled.');
-        }
-
         $token = '';
         if (isset($request->notificationtoken) && !empty($request->notificationtoken)) {
             $token = $request->notificationtoken;
@@ -483,10 +479,6 @@ class AuthController extends Controller
     public function handleGoogleCallback()
     {
         try {
-            if (!isGoogleLoginEnabled()) {
-                return redirect('/')->with('error', 'Google login is currently disabled.');
-            }
-
             $notificationtoken = '';
             $session = session('googleAuth');
             if ($session && (isset($session['data']) != null || $session['redirectUrl'] != null)) {

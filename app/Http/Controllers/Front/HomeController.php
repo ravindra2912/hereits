@@ -22,15 +22,11 @@ use Illuminate\View\View;
 class HomeController extends Controller
 {
     /**
-     * Display the home page based on is_near_by_home_page configuration.
+     * Display the home page (nearby home).
      */
     public function index(Request $request): View
     {
-        if (config('app.is_near_by_home_page')) {
-            return $this->nearbyHome($request);
-        }
-
-        return $this->whyJoinWithUs($request);
+        return $this->nearbyHome($request);
     }
 
     /**

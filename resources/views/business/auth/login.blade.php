@@ -535,7 +535,6 @@
           </button>
         </form>
 
-        @if(isGoogleLoginEnabled())
         <div class="divider fadeIn delay-1">
           <span>or continue with</span>
         </div>
@@ -549,7 +548,6 @@
           </svg>
           <span>Sign In with Google</span>
         </a>
-        @endif
 
         <div class="register-prompt fadeIn delay-2">
           <p>Don't have a business account? <br><br>

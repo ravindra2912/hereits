@@ -79,7 +79,7 @@
 	<!-- Custom CSS -->
 	<link rel="stylesheet" href="{{ asset('assets/front/css/style.css') }}?v={{ filemtime(public_path('assets/front/css/style.css')) }}">
 
-	@if(config('app.is_near_by_home_page') && file_exists(public_path('assets/front/css/global-search.css')))
+	@if(file_exists(public_path('assets/front/css/global-search.css')))
 	<link rel="stylesheet" href="{{ asset('assets/front/css/global-search.css') }}?v={{ filemtime(public_path('assets/front/css/global-search.css')) }}">
 	@endif
 
@@ -207,9 +207,7 @@
 
 	<!-- Footer -->
 	@include('front.layouts.footer')
-	@if(config('app.is_near_by_home_page'))
 	@include('front.layouts.location_modal')
-	@endif
 	@include('front.layouts.auth_modals')
 
 	<!-- Bootstrap 5 JS -->
@@ -221,7 +219,7 @@
 
 	<script src="{{ asset('assets/common/js/ajax.js') }}?v={{ filemtime(public_path('assets/common/js/ajax.js')) }}"></script>
 
-	@if(config('app.is_near_by_home_page') && file_exists(public_path('assets/front/js/global-search.js')))
+	@if(file_exists(public_path('assets/front/js/global-search.js')))
 	<script src="{{ asset('assets/front/js/global-search.js') }}?v={{ filemtime(public_path('assets/front/js/global-search.js')) }}"></script>
 	@endif
 

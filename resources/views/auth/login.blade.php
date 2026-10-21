@@ -45,7 +45,6 @@
         </div>
     </form>
 
-    @if(isGoogleLoginEnabled())
         <div class="relative flex py-4 items-center">
             <div class="flex-grow border-t border-gray-300 dark:border-gray-700"></div>
             <span class="flex-shrink mx-4 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold">{{ __('or continue with') }}</span>
@@ -63,5 +62,4 @@
                 <span>{{ __('Continue with Google') }}</span>
             </a>
         </div>
-    @endif
 </x-guest-layout>

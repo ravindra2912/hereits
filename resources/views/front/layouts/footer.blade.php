@@ -12,9 +12,7 @@
           <li class="mb-2"><a href="{{ route('aboutUs') }}">About Us</a></li>
           <li class="mb-2"><a href="{{ route('contactUs') }}">Contact Us</a></li>
           <li class="mb-2"><a href="{{ route('blog.index') }}">Blogs</a></li>
-          @if(config('app.is_near_by_home_page'))
           <li class="mb-2"><a href="{{ route('why-join-with-us') }}">Why Join With Us</a></li>
-          @endif
           <li class="mb-2"><a href="{{ route('register.business') }}" class="text-primary fw-bold">List Your Business</a></li>
           <li class="mb-2"><a href="{{ route('termAndCondition') }}">Terms & Conditions</a></li>
           <li class="mb-2"><a href="{{ route('privacyPolicy') }}">Privacy Policy</a></li>

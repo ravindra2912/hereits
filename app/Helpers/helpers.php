@@ -1011,17 +1011,13 @@ if (!function_exists('cleanHtml')) {
 
 if (!function_exists('isGoogleLoginEnabled')) {
     /**
-     * Check if Google login is enabled via configuration or environment variable.
+     * Check if Google login is enabled.
      *
      * @return bool
      */
     function isGoogleLoginEnabled(): bool
     {
-        $enabled = config('services.google.is_login_with_google');
-        if ($enabled === null) {
-            $enabled = env('IS_LOGIN_WITH_GOOGLE', env('is_login_with_google', true));
-        }
-        return filter_var($enabled, FILTER_VALIDATE_BOOLEAN);
+        return true;
     }
 }
 
