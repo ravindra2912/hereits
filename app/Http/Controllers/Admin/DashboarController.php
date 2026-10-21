@@ -40,12 +40,12 @@ class DashboarController extends Controller
         $activeBusinessCount = $businessByStatus['active'] ?? 0;
         $pendingBusinessCount = $businessByStatus['pending'] ?? 0;
 
-        // Base date (call now() ONCE)
-        $now = Carbon::now();
+        // Base date (set to start of month to prevent date overflow/underflow bugs on months with fewer days)
+        $now = Carbon::now()->startOfMonth();
 
         // Date range (last 12 months)
-        $startDate = $now->copy()->subMonths(11)->startOfMonth();
-        $endDate   = $now->copy()->endOfMonth();
+        $startDate = $now->copy()->subMonths(11);
+        $endDate   = Carbon::now()->endOfMonth();
 
         // Prepare months list (Y-m as key, M Y as label)
         $months = collect(range(0, 11))->mapWithKeys(function ($i) use ($now) {

@@ -33,11 +33,11 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('user_id')->references('id')->on('users')->noActionOnDelete();
             $table->foreign('business_id')->references('id')->on('businesses')->cascadeOnDelete();
-            $table->foreign('department_id')->references('id')->on('appointment_departments')->cascadeOnDelete();
-            $table->foreign('expert_id')->references('id')->on('experts')->cascadeOnDelete();
-            $table->foreign('review_id')->references('id')->on('review_and_ratings')->cascadeOnDelete();
+            $table->foreign('department_id')->references('id')->on('appointment_departments')->noActionOnDelete();
+            $table->foreign('expert_id')->references('id')->on('experts')->noActionOnDelete();
+            $table->foreign('review_id')->references('id')->on('review_and_ratings')->noActionOnDelete();
         });
     }
 

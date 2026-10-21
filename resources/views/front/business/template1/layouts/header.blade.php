@@ -16,9 +16,11 @@
                 </span>
             </div>
             <div class="col-md-6 d-flex align-items-center justify-content-end gap-4">
-                <a href="tel:{{ $business->contact ?? '' }}" class="text-white text-decoration-none d-flex align-items-center">
-                    <i class="fas fa-phone-alt text-primary me-2"></i> {{ $business->contact ?? '' }}
+                @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
+                <a href="tel:{{ $business->contact }}" class="text-white text-decoration-none d-flex align-items-center">
+                    <i class="fas fa-phone-alt text-primary me-2"></i> {{ $business->contact }}
                 </a>
+                @endif
                 @if(isset($business->rating))
                 <span class="d-flex align-items-center">
                     <i class="fas fa-star text-warning me-1"></i>
@@ -42,10 +44,9 @@
             </button>
 
             <!-- Logo & Identity -->
-            @if(isset($setting->visibility) && $setting->visibility == 'private')
             <a class="navbar-brand d-flex align-items-center gap-2 order-1 order-lg-0 mx-auto mx-lg-0" href="{{ route('business-details', $business->slug) }}">
                 @if ($business->business_logo)
-                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_logo) }}"
+                <img src="{{ getImage($business->business_logo) }}"
                     alt="{{ $business->name }}"
                     class="img-fluid rounded logo-thumb-sm"
                     loading="lazy">
@@ -55,15 +56,6 @@
                 </span>
                 @endif
             </a>
-            @else
-            <a class="navbar-brand order-1 order-lg-0 ms-lg-0 d-none d-lg-block" href="{{ route('home') }}">
-                <img src="{{ config('const.site_setting.logo') }}" alt="Logo" class="img-fluid" style="max-height: 40px;" loading="lazy">
-            </a>
-            <!-- Mobile Logo for Public -->
-            <a class="navbar-brand order-1 d-lg-none mx-auto" href="{{ route('home') }}">
-                <img src="{{ config('const.site_setting.logo') }}" alt="Logo" class="img-fluid" style="max-height: 30px;" loading="lazy">
-            </a>
-            @endif
 
             <!-- Universal Search Box (Handles both Desktop & Mobile) -->
             <div class="header-search-container mx-lg-4 order-lg-1 position-relative" id="universalSearchBox">
@@ -125,8 +117,14 @@
                 </li>
 
                 <li class="nav-item">
+                    <a class="nav-link fw-500 {{ request()->routeIs('business-blogs') || request()->routeIs('business-blog-details') ? 'active text-primary' : '' }}" href="{{ route('business-blogs', $business->slug) }}">Blogs</a>
+                </li>
+
+                @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
+                <li class="nav-item">
                     <a class="nav-link fw-500" href="{{ route('business-details', $business->slug) }}#contact-us">Contact Us</a>
                 </li>
+                @endif
             </ul>
 
             <!-- Right Actions -->
@@ -179,21 +177,15 @@
 <!-- Mobile Offcanvas Menu -->
 <div class="offcanvas offcanvas-start" tabindex="-1" id="businessOffcanvas" aria-labelledby="businessOffcanvasLabel">
     <div class="offcanvas-header border-bottom">
-        @if(isset($setting->visibility) && $setting->visibility == 'private')
         <a href="{{ route('business-details', $business->slug) }}" class="offcanvas-title d-flex align-items-center gap-2" id="businessOffcanvasLabel">
             @if ($business->business_logo)
-            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_logo) }}" alt="{{ $business->name }}" class="img-fluid rounded offcanvas-logo-sm" loading="lazy">
+            <img src="{{ getImage($business->business_logo) }}" alt="{{ $business->name }}" class="img-fluid rounded offcanvas-logo-sm" loading="lazy">
             @else
             <span class="fw-bold fs-5 text-uppercase logo-text-gradient">
                 {{ $business->name }}
             </span>
             @endif
         </a>
-        @else
-        <a href="{{ route('home') }}" class="offcanvas-title" id="businessOffcanvasLabel">
-            <img src="{{ config('const.site_setting.logo') }}" alt="Logo" class="img-fluid" style="max-height: 35px;" loading="lazy">
-        </a>
-        @endif
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
@@ -243,10 +235,18 @@
             </li>
 
             <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('business-blogs') || request()->routeIs('business-blog-details') ? 'active' : '' }}" href="{{ route('business-blogs', $business->slug) }}">
+                    <i class="fas fa-journal-text me-2"></i>Blogs
+                </a>
+            </li>
+
+            @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
+            <li class="nav-item">
                 <a class="nav-link" href="{{ route('business-details', $business->slug) }}#contact-us">
                     <i class="fas fa-envelope me-2"></i>Contact Us
                 </a>
             </li>
+            @endif
 
             @auth
             <li class="nav-item mt-3 pt-3 border-top">
@@ -265,6 +265,19 @@
                     <i class="fas fa-user-cog me-2"></i>My Account
                 </a>
             </li>
+            @if(Auth::user()->role == 'Business')
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('business.dashboard') }}">
+                    <i class="fas fa-chart-line me-2"></i>Dashboard
+                </a>
+            </li>
+            @elseif(Auth::user()->role == 'Admin')
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('admin.dashboard') }}">
+                    <i class="fas fa-chart-line me-2"></i>Dashboard
+                </a>
+            </li>
+            @endif
             <li class="nav-item">
                 <a class="nav-link text-danger" href="{{ route('logout') }}">
                     <i class="fas fa-sign-out-alt me-2"></i>Logout

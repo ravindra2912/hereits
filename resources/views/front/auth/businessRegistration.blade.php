@@ -1,7 +1,7 @@
 @extends('front.layouts.main', ['seo' => [
-'title' => 'Register your business | Hereits',
-'description' => 'Register your business with Hereits and get more customers',
-'keywords' => 'register, business, Hereits',
+'title' => 'Register your business | brandbatao',
+'description' => 'Register your business with brandbatao and get more customers',
+'keywords' => 'register, business, brandbatao',
 'image' => '' ,
 'city' => '',
 'state' => '',
@@ -24,6 +24,7 @@
             @if(Auth::check())
             <form id="loginForm2" action="{{ route('register.business.store') }}" method="POST" enctype="multipart/form-data" data-action="redirect" class="formaction">
                 @csrf
+                <input type="hidden" name="plan_id" value="{{ request()->plan_id }}">
                 <!-- Section 1: Basic Information -->
                 <div class="form-section">
                     <div class="section-header text-center">
@@ -42,7 +43,7 @@
                                         <label for="profile"><i class="fas fa-camera"></i></label>
                                     </div>
                                     <div class="avatar-preview">
-                                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage('') }}" class="avtar_img" id="imagePreview" loading="lazy" onclick="document.getElementById('profile').click()" style="cursor: pointer;">
+                                        <img src="{{ getImage('') }}" class="avtar_img" id="imagePreview" loading="lazy">
                                     </div>
                                     <div class="text-center mt-3">
                                         <span class="small fw-bold text-muted">Business Image <span class="text-danger">*</span></span>
@@ -56,7 +57,7 @@
                                         <label for="logo"><i class="fas fa-camera"></i></label>
                                     </div>
                                     <div class="avatar-preview" style="border-radius: 50%;">
-                                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage('') }}" class="avtar_img" id="logoPreview" loading="lazy" onclick="document.getElementById('logo').click()" style="cursor: pointer;">
+                                        <img src="{{ getImage('') }}" class="avtar_img" id="logoPreview" loading="lazy">
                                     </div>
                                     <div class="text-center mt-3">
                                         <span class="small fw-bold text-muted">Business Logo <span class="text-danger">*</span></span>
@@ -74,7 +75,7 @@
 
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Whatsapp Number <span class="text-danger">*</span></label>
+                                <label class="form-label">Contact Number <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control required numeric" name="business_contact" id="business_contact" placeholder="+91 99999 00000" required>
                             </div>
                         </div>
@@ -103,10 +104,33 @@
                             </div>
                         </div>
 
-                        <div class="col-12">
+                        <div class="col-12 mt-2">
                             <div class="form-group">
-                                <label class="form-label">Referral Code <span class="text-muted">(Optional)</span></label>
-                                <input type="text" class="form-control" name="user_referral_code" id="user_referral_code" placeholder="Enter referral code if you have one">
+                                <label class="form-label d-block">Business Visibility <span class="text-danger">*</span></label>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="border rounded-3 p-3 h-100 bg-white shadow-sm">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="is_private" id="visibility_public" value="0" checked>
+                                                <label class="form-check-label fw-bold text-dark" for="visibility_public">
+                                                    <i class="fas fa-globe-americas text-primary me-1"></i> Public
+                                                </label>
+                                                <div class="text-muted small mt-1">Listed in search directory, home page, and discoverable by all customers.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="border rounded-3 p-3 h-100 bg-white shadow-sm">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="is_private" id="visibility_private" value="1">
+                                                <label class="form-check-label fw-bold text-dark" for="visibility_private">
+                                                    <i class="fas fa-lock text-secondary me-1"></i> Private
+                                                </label>
+                                                <div class="text-muted small mt-1">Unlisted business. Only accessible directly or privately managed.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -578,15 +602,23 @@
             placeholder: $(this).data('placeholder') || 'Select an option',
             allowClear: true
         });
-
-        @if(!Auth::check())
-            $('#authModal').modal('show');
-            if (typeof switchAuthSection === 'function') {
-                switchAuthSection('login');
-            }
-        @endif
     });
 </script>
+
+@guest
+<script>
+    $(document).ready(function() {
+        if (typeof switchAuthSection === 'function') {
+            switchAuthSection('login');
+        }
+        var authModalEl = document.getElementById('authModal');
+        if (authModalEl) {
+            var authModal = bootstrap.Modal.getOrCreateInstance(authModalEl);
+            authModal.show();
+        }
+    });
+</script>
+@endguest
 @endpush
 
 @endsection

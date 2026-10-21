@@ -26,7 +26,6 @@ class OrderSeeder extends Seeder
 
         $order_statuses = config('const.order_status');
         $payment_statuses = config('const.order_payment_status');
-        $payment_methods = config('const.order_payment_method');
         $order_sources = config('const.order_source');
         $order_types = config('const.order_type');
 
@@ -70,7 +69,6 @@ class OrderSeeder extends Seeder
                 'subtotal' => $subtotal,
                 'total_tax' => $total_tax,
                 'total' => $total,
-                'payment_method' => $payment_methods[array_rand($payment_methods)],
                 'payment_status' => $payment_status,
                 'order_status' => $order_status,
             ]);

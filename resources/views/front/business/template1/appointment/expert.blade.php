@@ -1,8 +1,8 @@
 @extends('front.business.template1.layouts.main', ['seo' => [
-'title' => $expert->expert_name . ' | ' . $business->name . ' | Hereits',
+'title' => ($expert->user?->name ?? 'Expert') . ' | ' . $business->name . ' | brandbatao',
 'description' => \Illuminate\Support\Str::limit($expert->description, 160) ?? $business->seo_description,
-'keywords' => $expert->expert_name . ', ' . ($expert->title ?? 'Expert') . ', ' . ($business->seo_keyword ?? $business->name),
-'image' => getImage($expert->expert_image) ,
+'keywords' => ($expert->user?->name ?? 'Expert') . ', ' . ($expert->title ?? 'Expert') . ', ' . ($business->seo_keyword ?? $business->name),
+'image' => getImage($expert->user?->profile) ,
 'city' => isset($business->city) && !empty($business->city->name) ? $business->city->name : '',
 'state' => isset($business->state) && !empty($business->state->name) ? $business->state->name : '',
 'position' => $business->latitude . ':' . $business->longitude
@@ -35,11 +35,21 @@ $business = $expert->business;
         <div>
 
           <!-- Profile Card -->
-          <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+          <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden position-relative">
+            @php $isFavExpert = isFavorite('expert', $expert->id); @endphp
+            <button type="button" class="btn-toggle-favorite position-absolute top-0 end-0 m-3 {{ $isFavExpert ? 'active' : '' }}"
+              data-type="expert"
+              data-id="{{ $expert->id }}"
+              data-business-id="{{ $expert->business_id ?? $business->id }}"
+              title="{{ $isFavExpert ? 'Remove from favorites' : 'Add to favorites' }}"
+              style="width: 38px; height: 38px; font-size: 16px; z-index: 3;">
+              <i class="{{ $isFavExpert ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }}"></i>
+            </button>
+
             <div class="card-body text-center p-4">
               <div class="position-relative d-inline-block mb-3">
-                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($expert->expert_image, 'expert') }}"
-                  alt="{{ $expert->expert_name }}"
+                <img src="{{ getImage($expert->user?->profile, 'expert') }}"
+                  alt="{{ $expert->user?->name }}"
                   class="rounded-circle shadow-lg border border-3 border-white object-fit-cover expert-profile-img"
                   style="width: 150px; height: 150px;" loading="lazy">
                 @php
@@ -54,7 +64,7 @@ $business = $expert->business;
                 @endif
               </div>
 
-              <h4 class="fw-bold mb-1">{{ $expert->expert_name }}</h4>
+              <h4 class="fw-bold mb-1">{{ $expert->user?->name }}</h4>
               <p class="text-muted mb-2">{{ $expert->title }}</p>
 
               <!-- Rating -->
@@ -72,17 +82,10 @@ $business = $expert->business;
               @endif
 
               <div class="d-flex justify-content-center gap-2 mt-3">
-                <button class="btn btn-outline-primary rounded-pill btn-sm px-3 flex-grow-1" onclick="openShareModal('{{ url()->current() }}', 'Expert', '{{ $expert->expert_name }}')">
+                <button class="btn btn-outline-primary rounded-pill btn-sm px-3" onclick="openShareModal('{{ url()->current() }}', 'Expert', '{{ e(addslashes($expert->user?->name ?? 'Expert')) }}')">
                   <i class="fas fa-share-alt me-1"></i> Share
                 </button>
-                <button type="button" class="btn btn-outline-danger rounded-pill btn-sm px-3 toggle-favorite-btn"
-                  data-item-id="{{ $expert->id }}"
-                  data-business-id="{{ $expert->business_id }}"
-                  data-type="expert"
-                  title="{{ $expert->is_favorited ? 'Remove from Favorites' : 'Add to Favorites' }}">
-                  <i class="{{ $expert->is_favorited ? 'fas fa-heart' : 'far fa-heart' }}"></i>
-                </button>
-                <a href="{{ route('expert.board', [$business->slug, $expert->slug]) }}" target="_blank" class="btn btn-outline-dark rounded-pill btn-sm px-3 flex-grow-1">
+                <a href="{{ route('expert.board', [$business->slug, $expert->slug]) }}" target="_blank" class="btn btn-outline-dark rounded-pill btn-sm px-3">
                   <i class="far fa-clipboard me-1"></i> Live Board
                 </a>
               </div>
@@ -170,7 +173,7 @@ $business = $expert->business;
         @if(!empty($expert->description))
         <div class="card border-0 shadow-sm rounded-4 mb-4">
           <div class="card-body p-4 p-lg-5">
-            <h5 class="fw-bold mb-3">About {{ $expert->expert_name }}</h5>
+            <h5 class="fw-bold mb-3">About {{ $expert->user?->name }}</h5>
             <p class="text-muted mb-0" style="line-height: 1.7;">{{ $expert->description }}</p>
           </div>
         </div>
@@ -185,7 +188,7 @@ $business = $expert->business;
               </div>
               <div>
                 <h4 class="fw-bold mb-1">Book Appointment</h4>
-                <p class="text-muted mb-0">Schedule your visit with <span class="fw-semibold text-dark">{{ $expert->expert_name }}</span></p>
+                <p class="text-muted mb-0">Schedule your visit with <span class="fw-semibold text-dark">{{ $expert->user?->name }}</span></p>
               </div>
             </div>
             <!-- Decorative circle -->

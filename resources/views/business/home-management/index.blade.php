@@ -408,10 +408,11 @@
                     toastr.error(response.message);
                 }
             },
-            error: function() {
+            error: function(xhr) {
                 $('#loader_' + btnId).addClass('d-none');
                 $('#text_' + btnId).removeClass('d-none');
-                toastr.error('Something went wrong!');
+                let msg = xhr.responseJSON?.message || (xhr.status === 403 ? 'Unauthorized. You do not have permission to edit home settings.' : 'Something went wrong!');
+                toastr.error(msg);
             }
         });
     }
@@ -455,7 +456,8 @@
                     error: function(e) {
                         $('#icon-remove-' + listType + '-' + id).removeClass('d-none');
                         $('#loader-remove-' + listType + '-' + id).addClass('d-none');
-                        toastr.error('Something went wrong!');
+                        let msg = e.responseJSON?.message || (e.status === 403 ? 'Unauthorized. You do not have permission to edit home settings.' : 'Something went wrong!');
+                        toastr.error(msg);
                     }
                 });
             }

@@ -23,7 +23,7 @@ class PurchaseSuccessMail extends Mailable implements ShouldQueue
      */
     public function __construct(Purchase $purchase)
     {
-        $this->purchase = $purchase->load(['transaction', 'business', 'business.owner']);
+        $this->purchase = $purchase->load(['transaction', 'plan', 'business', 'business.owner']);
     }
 
     /**
@@ -53,6 +53,10 @@ class PurchaseSuccessMail extends Mailable implements ShouldQueue
      */
     public function attachments(): array
     {
-        return [];
+        $pdf = Pdf::loadView('business.purchase.invoice', ['purchase' => $this->purchase]);
+        return [
+            Attachment::fromData(fn () => $pdf->output(), 'invoice-' . $this->purchase->id . '.pdf')
+                ->withMime('application/pdf'),
+        ];
     }
 }

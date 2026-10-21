@@ -3,7 +3,7 @@
 @section('title', 'Booking Details')
 
 @section('content')
-<div class="bg-light pb-5 pt-3 pt-lg-5">
+<div class="bg-light py-5">
     <div class="container">
         <div class="row g-4">
             <!-- User Sidebar -->
@@ -61,7 +61,7 @@
                                         <div class="bg-light rounded-circle p-3 text-primary"><i class="fas fa-user-tie"></i></div>
                                         <div>
                                             <span class="text-muted small d-block">Assigned Expert</span>
-                                            <span class="fw-bold text-dark">{{ $booking->expert->expert_name }}</span>
+                                            <span class="fw-bold text-dark">{{ $booking->expert?->user?->name }}</span>
                                         </div>
                                     </div>
                                     @if($booking->slot_start_time)
@@ -102,6 +102,49 @@
                                 @endif
                             </div>
                         </div>
+
+                        @php
+                            $bizSettings = getBusinessSettings($booking->business_id);
+                        @endphp
+
+                        @if ($bizSettings->allow_appointment_product_selection && $booking->appointmentProducts->isNotEmpty())
+                        <div class="border-top pt-4 mt-4">
+                            <h5 class="fw-bold mb-3">Selected Products & Costs</h5>
+                            <div class="table-responsive rounded-3 border bg-white shadow-sm mb-0">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-3 border-0 small text-secondary text-uppercase fw-bold">Product</th>
+                                            <th class="border-0 small text-secondary text-uppercase fw-bold text-center" style="width: 120px;">Price</th>
+                                            <th class="border-0 small text-secondary text-uppercase fw-bold text-center" style="width: 100px;">Qty</th>
+                                            <th class="pe-3 border-0 small text-secondary text-uppercase fw-bold text-end" style="width: 120px;">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @php $productsTotal = 0; @endphp
+                                        @foreach ($booking->appointmentProducts as $ap)
+                                        @php
+                                            $lineTotal = $ap->product_price * $ap->qty;
+                                            $productsTotal += $lineTotal;
+                                        @endphp
+                                        <tr>
+                                            <td class="ps-3">
+                                                <div class="fw-bold text-dark">{{ $ap->product_name }}</div>
+                                            </td>
+                                            <td class="text-center">{{ currencyFormat($ap->product_price) }}</td>
+                                            <td class="text-center">{{ $ap->qty }}</td>
+                                            <td class="pe-3 text-end fw-bold text-dark">{{ currencyFormat($lineTotal) }}</td>
+                                        </tr>
+                                        @endforeach
+                                        <tr class="table-light border-top">
+                                            <td colspan="3" class="text-end fw-bold ps-3">Total Cost:</td>
+                                            <td class="pe-3 text-end fw-bold text-primary">{{ currencyFormat($productsTotal) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        @endif
 
                         @if($booking->status == 'pending' || $booking->status == 'confirmed')
                         <div class="mt-5 text-center">

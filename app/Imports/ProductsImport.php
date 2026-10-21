@@ -67,6 +67,10 @@ class ProductsImport implements ToCollection, WithHeadingRow
                 'sell_price' => isset($row['sell_price']) ? $row['sell_price'] : 0,
                 'min_price' => isset($row['min_price']) ? $row['min_price'] : null,
                 'max_price' => isset($row['max_price']) ? $row['max_price'] : null,
+                'length' => isset($row['length']) ? $row['length'] : null,
+                'width' => isset($row['width']) ? $row['width'] : null,
+                'height' => isset($row['height']) ? $row['height'] : null,
+                'weight' => isset($row['weight']) ? $row['weight'] : null,
             ];
 
             $productImages = collect();
@@ -146,6 +150,7 @@ class ProductsImport implements ToCollection, WithHeadingRow
                         if (!$alreadyAttached) {
                             ProductImage::create([
                                 'product_id' => $product->id,
+                                'type' => 'image',
                                 'image_url' => $processedPath
                             ]);
                         }
@@ -155,12 +160,14 @@ class ProductsImport implements ToCollection, WithHeadingRow
 
             // Remove images that were NOT in the import list
             foreach ($productImages as $productImage) {
-                $existsInOther = ProductImage::where('product_id', '!=', $productImage->product_id)
-                    ->where('image_url', $productImage->image_url)
-                    ->exists();
+                if (($productImage->type ?? 'image') !== 'youtube_url') {
+                    $existsInOther = ProductImage::where('product_id', '!=', $productImage->product_id)
+                        ->where('image_url', $productImage->image_url)
+                        ->exists();
 
-                if (!$existsInOther) {
-                    fileRemoveStorage($productImage->image_url);
+                    if (!$existsInOther) {
+                        fileRemoveStorage($productImage->image_url);
+                    }
                 }
                 $productImage->delete();
             }

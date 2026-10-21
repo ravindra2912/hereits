@@ -2,20 +2,11 @@
 <div class="row g-4">
     @foreach($services as $service)
     <div class="col-md-6">
-        <div class="card h-100 border-0 shadow-sm hover-lift">
+        <div class="card h-100 border-0 shadow-sm hover-lift service-theme-card">
             <div class="card-body p-3">
-                <div class="position-absolute top-0 end-0 p-3">
-                    <button type="button" class="favorite-btn rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
-                        data-item-id="{{ $service->id }}"
-                        data-business-id="{{ $business->id }}"
-                        data-type="service"
-                        style="width: 28px; height: 28px; background: rgba(0,0,0,0.05); z-index: 10; transition: all 0.3s ease;">
-                        <i class="{{ $service->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }}" style="font-size: 0.75rem;"></i>
-                    </button>
-                </div>
                 <div class="d-flex gap-3">
                     <a href="{{ route('service-details', ['business_slug' => $business->slug, 'service_slug' => $service->slug]) }}" class="text-decoration-none">
-                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($service->image_url) }}"
+                        <img src="{{ getImage($service->image_url) }}"
                             class="object-fit-cover service-img-thumb"
                             alt="{{ $service->name }}"
                             loading="lazy">
@@ -36,6 +27,16 @@
                                 <p class="text-muted small mb-0 mt-1">{{ \Illuminate\Support\Str::limit($service->description, 100) }}</p>
                                 @endif
                             </div>
+
+                            @php $isFavService = isFavorite('service', $service->id); @endphp
+                            <button type="button" class="btn-toggle-favorite ms-2 flex-shrink-0 {{ $isFavService ? 'active' : '' }}"
+                                data-type="service"
+                                data-id="{{ $service->id }}"
+                                data-business-id="{{ $service->business_id ?? $business->id }}"
+                                title="{{ $isFavService ? 'Remove from favorites' : 'Add to favorites' }}"
+                                style="width: 32px; height: 32px; font-size: 14px;">
+                                <i class="{{ $isFavService ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }}"></i>
+                            </button>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-end mt-3">

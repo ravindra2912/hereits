@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Business;
 
 use App\Models\Order;
-use App\Models\OrderHistory;
+use App\Services\UserActivityHistoryService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -18,8 +18,16 @@ class OrderController extends Controller
     public function index()
     {
         $business_id = getBusinessId();
+        $user = Auth::user();
         if (request()->ajax()) {
-            $data = Order::where('business_id', $business_id);
+            $data = Order::select('id', 'business_id', 'invoice_number', 'created_at', 'customer_name', 'customer_contact', 'total', 'order_status', 'payment_status')
+                ->where('business_id', $business_id);
+
+            if ($user && $user->role !== 'Business') {
+                $allowedStatuses = getPosAllowedOrderStatuses();
+                $statusVariants = getPosAllowedOrderStatusQueryVariants($allowedStatuses);
+                $data->whereIn('order_status', $statusVariants);
+            }
 
             if (request()->has('order_status') && !empty(request()->order_status)) {
                 $data->where('order_status', request()->order_status);
@@ -27,10 +35,6 @@ class OrderController extends Controller
 
             if (request()->has('payment_status') && !empty(request()->payment_status)) {
                 $data->where('payment_status', request()->payment_status);
-            }
-
-            if (request()->has('payment_method') && !empty(request()->payment_method)) {
-                $data->where('payment_method', request()->payment_method);
             }
 
             if (request()->has('order_source') && !empty(request()->order_source)) {
@@ -97,11 +101,10 @@ class OrderController extends Controller
 
         $order_statuses = config('const.order_status');
         $payment_statuses = config('const.order_payment_status');
-        $payment_methods = config('const.order_payment_method');
         $order_sources = config('const.order_source');
         $order_types = config('const.order_type');
 
-        return view('business.order.index', compact('order_statuses', 'payment_statuses', 'payment_methods', 'order_sources', 'order_types'));
+        return view('business.order.index', compact('order_statuses', 'payment_statuses', 'order_sources', 'order_types'));
     }
 
     /**
@@ -110,8 +113,24 @@ class OrderController extends Controller
     public function edit($id)
     {
         $business_id = getBusinessId();
-        $order = Order::with(['items', 'history', 'history.user'])->where('id', $id)->where('business_id', $business_id)->firstOrFail();
-        $order_statuses = config('const.order_status');
+        $user = Auth::user();
+        $query = Order::select('id', 'business_id', 'invoice_number', 'order_status', 'payment_status', 'customer_name', 'customer_contact', 'address', 'city', 'state', 'pincode', 'order_source', 'order_type', 'created_at', 'subtotal', 'discount', 'shipping_charge', 'total_tax', 'total')
+            ->with([
+                'items:id,order_id,item_name,price,quantity',
+                'history:id,source_id,user_id,title,remark,created_at',
+                'history.user:id,first_name'
+            ])
+            ->where('id', $id)
+            ->where('business_id', $business_id);
+
+        if ($user && $user->role !== 'Business') {
+            $allowedStatuses = getPosAllowedOrderStatuses();
+            $statusVariants = getPosAllowedOrderStatusQueryVariants($allowedStatuses);
+            $query->whereIn('order_status', $statusVariants);
+        }
+
+        $order = $query->firstOrFail();
+        $order_statuses = config('const.order_status', []);
         $payment_statuses = config('const.order_payment_status');
 
         return view('business.order.edit', compact('order', 'order_statuses', 'payment_statuses'))->render();
@@ -120,7 +139,7 @@ class OrderController extends Controller
     /**
      * Update the order status and payment status.
      */
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(Request $request, $id, UserActivityHistoryService $activityService)
     {
         $request->validate([
             'order_status' => 'required|in:' . implode(',', config('const.order_status')),
@@ -128,10 +147,18 @@ class OrderController extends Controller
             'remark' => 'nullable|string|max:255'
         ]);
 
+        $user = Auth::user();
+
         try {
             DB::beginTransaction();
             $business_id = getBusinessId();
-            $order = Order::where('id', $id)->where('business_id', $business_id)->lockForUpdate()->firstOrFail();
+            $query = Order::where('id', $id)->where('business_id', $business_id);
+            if ($user && $user->role !== 'Business') {
+                $allowedStatuses = getPosAllowedOrderStatuses();
+                $statusVariants = getPosAllowedOrderStatusQueryVariants($allowedStatuses);
+                $query->whereIn('order_status', $statusVariants);
+            }
+            $order = $query->lockForUpdate()->firstOrFail();
 
             $old_status = $order->order_status;
             $new_status = $request->order_status;
@@ -142,13 +169,14 @@ class OrderController extends Controller
             ]);
 
             if ($old_status != $new_status) {
-                OrderHistory::create([
-                    'business_id' => $business_id,
-                    'order_id' => $order->id,
-                    'status' => $new_status,
-                    'changed_by' => Auth::id(),
-                    'remark' => $request->remark ?? 'Status updated from ' . $old_status . ' to ' . $new_status
-                ]);
+                $activityService->logActivity(
+                    $business_id,
+                    Auth::id(),
+                    'order',
+                    $order->id,
+                    'Order Updated',
+                    $request->remark ?? 'Order status updated from ' . str_replace('_', ' ', $old_status) . ' to ' . str_replace('_', ' ', $new_status)
+                );
             }
 
             DB::commit();
@@ -162,7 +190,7 @@ class OrderController extends Controller
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => checkResponse($e)
             ], 500);
         }
     }
@@ -201,7 +229,7 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => checkResponse($e)
             ], 500);
         }
     }

@@ -29,9 +29,4 @@ class Service extends Model
     {
         return $this->belongsTo(Business::class);
     }
-
-    public function favorites()
-    {
-        return $this->hasMany(Favorite::class, 'favorite_item_id', 'id')->where('favorite_type', 'service');
-    }
 }

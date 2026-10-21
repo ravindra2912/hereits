@@ -117,7 +117,7 @@
         <tr>
           <td align="center" style="padding: 30px 40px; border-bottom: 1px solid #edf2f7; background-color: #ffffff;">
             <a href="{{ route('home') }}">
-              <img src="{{ config('const.site_setting.logo') }}" alt="{{ config('const.site_setting.name') }}" style="height: 48px; width: auto; border: 0; display: block;">
+              <img src="{{ config('const.site_setting.logo-bg-white') }}" alt="{{ config('const.site_setting.name') }}" style="height: 48px; width: auto; border: 0; display: block;">
             </a>
           </td>
         </tr>

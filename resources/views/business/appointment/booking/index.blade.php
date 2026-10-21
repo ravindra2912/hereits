@@ -23,12 +23,10 @@
         <i class="bi bi-filter"></i> Filters
       </button>
 
-      @if(checkBusinessPermission('appointments', 'appointments', 'view'))
       <button id="export_btn" class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-sm flex-fill flex-sm-grow-0">
         <i class="bi bi-file-earmark-spreadsheet me-1"></i> <span class="d-none d-sm-inline">Export</span>
       </button>
-      @endif
-      @if(checkBusinessPermission('appointments', 'appointments', 'add'))
+      @if(checkBusinessPermission('add_appointments'))
       <a href="{{ route('business.appointment.bookings.create') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm flex-fill flex-sm-grow-0">
         <i class="bi bi-plus-lg me-1"></i> <span class="d-none d-sm-inline">Add Booking</span>
       </a>
@@ -71,7 +69,7 @@
           <select class="form-control form-control-sm filter-input" id="expert_id" data-sync="m_expert_id">
             <option value="">All Experts</option>
             @foreach ( $experts as $expert)
-            <option value="{{ $expert->id }}">{{ $expert->expert_name }}</option>
+            <option value="{{ $expert->id }}">{{ $expert->user?->name }}</option>
             @endforeach
           </select>
         </div>
@@ -159,7 +157,7 @@
           <select class="form-select mobile-filter-input" id="m_expert_id" data-sync="expert_id">
             <option value="">All Experts</option>
             @foreach ( $experts as $expert)
-            <option value="{{ $expert->id }}">{{ $expert->expert_name }}</option>
+            <option value="{{ $expert->id }}">{{ $expert->user?->name }}</option>
             @endforeach
           </select>
         </div>
@@ -256,7 +254,7 @@
           className: "ps-4 py-3"
         }, {
           data: 'expert_info',
-          name: 'expert.expert_name',
+          name: 'expert_info',
           className: "py-3"
         }, {
           data: 'user_info',
@@ -413,7 +411,8 @@
           }
         },
         error: function(e) {
-          toastr.error('Something went wrong');
+          let msg = e.responseJSON?.message || (e.status === 403 ? 'Unauthorized. You do not have permission to update appointment status.' : 'Something went wrong');
+          toastr.error(msg);
           console.log(e);
         }
       });
@@ -493,7 +492,8 @@
               }
             },
             error: function(e) {
-              Swal.fire('Error', 'Something went wrong', 'error');
+              let msg = e.responseJSON?.message || (e.status === 403 ? 'Unauthorized. You do not have permission to delete appointments.' : 'Something went wrong');
+              Swal.fire('Error', msg, 'error');
             }
           });
         }

@@ -89,25 +89,52 @@
 
 <!-- Checkout Modal -->
 <div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow rounded-4">
             <div class="modal-header border-0 pb-0 pt-4 px-4">
                 <h5 class="modal-title fw-bold" id="checkoutModalLabel">Review order</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="text-center mb-3 py-3 bg-light rounded-4">
-                    <div class="text-secondary small text-uppercase fw-bold ls-1 mb-1">Payable Amount</div>
-                    <div class="fs-1 fw-bold text-primary" id="modal_payable_amount">₹0.00</div>
-                </div>
+                <div class="text-center mb-4 py-3 bg-light rounded-4">
+                    <div class="row g-0">
+                        <div class="col-3 border-end">
+                            <div class="text-secondary small text-uppercase fw-bold ls-1 mb-1" style="font-size: 0.75rem;">Subtotal</div>
+                            <div class="fs-4 fw-bold text-dark" id="modal_subtotal">₹0.00</div>
+                        </div>
+                        <div class="col-3 border-end">
+                            <div class="text-secondary small text-uppercase fw-bold ls-1 mb-1" style="font-size: 0.75rem;">Discount</div>
+                            <div class="d-flex justify-content-center align-items-center">
+                                <span class="fs-4 fw-bold text-dark">₹</span>
+                                <input type="number" id="modal_discount_amount" class="form-control text-center fw-bold fs-4 text-dark border-0 p-0" style="width: 80px; background: transparent; box-shadow: none; border-bottom: 1px dashed #ccc !important; border-radius: 0; outline: none;" value="0.00" step="any" min="0">
+                            </div>
+                        </div>
+                        <div class="col-3 border-end">
+                            <div class="text-secondary small text-uppercase fw-bold ls-1 mb-1" style="font-size: 0.75rem;">Delivery Charge</div>
+                            <div class="d-flex justify-content-center align-items-center">
+                                <span class="fs-4 fw-bold text-dark">₹</span>
+                                <input type="number" id="modal_delivery_charge" class="form-control text-center fw-bold fs-4 text-dark border-0 p-0" style="width: 80px; background: transparent; box-shadow: none; border-bottom: 1px dashed #ccc !important; border-radius: 0; outline: none;" value="0.00" step="any" min="0">
+                            </div>
+                            <style>
+                                #modal_delivery_charge::-webkit-outer-spin-button,
+                                #modal_delivery_charge::-webkit-inner-spin-button,
+                                #modal_discount_amount::-webkit-outer-spin-button,
+                                #modal_discount_amount::-webkit-inner-spin-button {
+                                    -webkit-appearance: none;
+                                    margin: 0;
+                                }
 
-                @php
-                    $posDeductionAmount = app(\App\Services\CreditService::class)->getOrderCreditDeductionAmount(getPosBusinessId(), 'self');
-                    $posQuoteDeductionAmount = app(\App\Services\CreditService::class)->getQuotationCreditDeductionAmount(getPosBusinessId());
-                @endphp
-                <div class="alert alert-warning py-2 px-3 mb-4 small d-flex align-items-center justify-content-between rounded-pill border-0 bg-warning bg-opacity-10 text-dark">
-                    <span><i class="bi bi-coin me-1 text-warning"></i> Credit Charges:</span>
-                    <span>Order: <strong class="text-primary me-2">{{ number_format($posDeductionAmount, 2) }} Credit(s)</strong> | Quotation: <strong class="text-primary">{{ number_format($posQuoteDeductionAmount, 2) }} Credit(s)</strong></span>
+                                #modal_delivery_charge,
+                                #modal_discount_amount {
+                                    -moz-appearance: textfield;
+                                }
+                            </style>
+                        </div>
+                        <div class="col-3">
+                            <div class="text-secondary small text-uppercase fw-bold ls-1 mb-1" style="font-size: 0.75rem;">Payable Amount</div>
+                            <div class="fs-4 fw-bold text-primary" id="modal_payable_amount">₹0.00</div>
+                        </div>
+                    </div>
                 </div>
 
                 <form id="checkout_form">
@@ -134,7 +161,7 @@
                                 </div>
                             </div>
 
-                            <div class="mb-3">
+                            <div class="mb-3" id="payment_method_container">
                                 <label class="form-label small fw-bold text-secondary">Payment Method</label>
                                 <div class="d-flex gap-2">
                                     <input type="radio" class="btn-check" name="payment_method" id="pay_cash" value="cash" checked autocomplete="off">
@@ -143,9 +170,14 @@
                                     <input type="radio" class="btn-check" name="payment_method" id="pay_upi" value="upi" autocomplete="off">
                                     <label class="btn btn-outline-primary btn-sm flex-grow-1 rounded-pill py-2 shadow-none" for="pay_upi">UPI</label>
 
-                                    <input type="radio" class="btn-check" name="payment_method" id="pay_card" value="card" autocomplete="off">
-                                    <label class="btn btn-outline-primary btn-sm flex-grow-1 rounded-pill py-2 shadow-none" for="pay_card">Card</label>
+                                    <!-- <input type="radio" class="btn-check" name="payment_method" id="pay_card" value="card" autocomplete="off">
+                                    <label class="btn btn-outline-primary btn-sm flex-grow-1 rounded-pill py-2 shadow-none" for="pay_card">Card</label> -->
                                 </div>
+                            </div>
+
+                            <div class="mb-3 d-none" id="upi_transaction_container">
+                                <label class="form-label small fw-bold text-secondary">UPI Transaction ID / UTR <span class="text-danger">*</span></label>
+                                <input type="text" id="upi_transaction_id" class="form-control bg-light border-0 py-2 px-3 rounded-pill shadow-none" placeholder="Enter UPI Transaction ID">
                             </div>
 
                             <div class="mb-0">
@@ -174,13 +206,19 @@
                             </div>
 
                             <div class="row g-2">
+
+                                <div class="col-4">
+                                    <label class="form-label small fw-bold text-secondary">State</label>
+                                    <select id="order_state" class="form-select bg-light border-0 py-2 px-3 rounded-pill shadow-none">
+                                        <option value="">State</option>
+                                        @foreach($states as $state)
+                                        <option value="{{ $state->id }}" {{ (isset($business_state_id) && $business_state_id == $state->id) ? 'selected' : '' }}>{{ $state->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                                 <div class="col-5">
                                     <label class="form-label small fw-bold text-secondary">City</label>
                                     <input type="text" id="order_city" class="form-control bg-light border-0 py-2 px-3 rounded-pill shadow-none" placeholder="City">
-                                </div>
-                                <div class="col-4">
-                                    <label class="form-label small fw-bold text-secondary">State</label>
-                                    <input type="text" id="order_state" class="form-control bg-light border-0 py-2 px-3 rounded-pill shadow-none" placeholder="State">
                                 </div>
                                 <div class="col-3">
                                     <label class="form-label small fw-bold text-secondary">Pin</label>
@@ -191,16 +229,18 @@
                     </div>
                 </form>
             </div>
-            <div class="modal-footer border-0 p-4 pt-0">
-                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-none" id="save_quotation_btn">
-                    <span id="quote_btn_text">Save as Quotation</span>
-                    <span id="quote_btn_spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
-                </button>
-                <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-none" id="place_order_final">
-                    <span id="order_btn_text">Place Order & Print</span>
-                    <span id="order_btn_spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
-                </button>
+            <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    <i class="bi bi-coin text-warning me-1"></i>
+                    <span>Note: <strong>{{ number_format($posOrderCharge ?? 0.05, 2) }}</strong> credits will be deducted for placing this order.</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-none" id="place_order_final">
+                        <span id="order_btn_text">Place Order & Print</span>
+                        <span id="order_btn_spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -379,6 +419,7 @@
             });
             $('#cart_subtotal').text(`₹${formattedSubtotal}`);
             $('#cart_total').text(`₹${formattedSubtotal}`);
+            $('#modal_subtotal').text(`₹${formattedSubtotal}`);
             $('#modal_payable_amount').text(`₹${formattedSubtotal}`);
         }
 
@@ -394,6 +435,159 @@
             $('#checkoutModal').modal('show');
         });
 
+        let delivery_charge = 0;
+        let discount_amount = 0;
+
+        let deliveryChargeXHR = null;
+        let deliveryChargeTimer = null;
+
+        function calculateDeliveryCharge() {
+            if (deliveryChargeTimer) clearTimeout(deliveryChargeTimer);
+
+            let order_type = $('#order_type').val();
+            let state_id = $('#order_state').val();
+
+            if (order_type !== 'delivery' || !state_id) {
+                if (deliveryChargeXHR) {
+                    deliveryChargeXHR.abort();
+                    deliveryChargeXHR = null;
+                }
+                delivery_charge = 0;
+                updateModalTotals();
+                return;
+            }
+
+            deliveryChargeTimer = setTimeout(function() {
+                if (deliveryChargeXHR) {
+                    deliveryChargeXHR.abort();
+                    deliveryChargeXHR = null;
+                }
+
+                deliveryChargeXHR = $.ajax({
+                    url: "{{ route('pos.sale.calculate-shipping') }}",
+                    method: "POST",
+                    data: {
+                        cart: cart,
+                        state_id: state_id
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            delivery_charge = parseFloat(response.delivery_charge) || 0;
+                        } else {
+                            delivery_charge = 0;
+                        }
+                        updateModalTotals();
+                    },
+                    error: function() {
+                        delivery_charge = 0;
+                        updateModalTotals();
+                    },
+                    complete: function() {
+                        deliveryChargeXHR = null;
+                    }
+                });
+            }, 300);
+        }
+
+        function updateModalTotals() {
+            let subtotal = 0;
+            cart.forEach(item => {
+                subtotal += (parseFloat(item.price) || 0) * (parseInt(item.qty) || 0);
+            });
+
+            let total = Math.max(0, (subtotal + delivery_charge) - discount_amount);
+
+            let formattedSubtotal = subtotal.toLocaleString('en-IN', {
+                minimumFractionDigits: 2
+            });
+            let formattedTotal = total.toLocaleString('en-IN', {
+                minimumFractionDigits: 2
+            });
+
+            $('#modal_subtotal').text(`₹${formattedSubtotal}`);
+            if (!$('#modal_discount_amount').is(':focus')) {
+                $('#modal_discount_amount').val(discount_amount.toFixed(2));
+            }
+            if (!$('#modal_delivery_charge').is(':focus')) {
+                $('#modal_delivery_charge').val(delivery_charge.toFixed(2));
+            }
+            $('#modal_payable_amount').text(`₹${formattedTotal}`);
+        }
+
+        $(document).on('input change', '#modal_discount_amount', function() {
+            discount_amount = parseFloat($(this).val()) || 0;
+            if (discount_amount < 0) {
+                discount_amount = 0;
+            }
+            updateModalTotals();
+        });
+
+        $(document).on('blur', '#modal_discount_amount', function() {
+            $(this).val(discount_amount.toFixed(2));
+        });
+
+        $(document).on('input change', '#modal_delivery_charge', function() {
+            delivery_charge = parseFloat($(this).val()) || 0;
+            if (delivery_charge < 0) {
+                delivery_charge = 0;
+            }
+            updateModalTotals();
+        });
+
+        $(document).on('blur', '#modal_delivery_charge', function() {
+            $(this).val(delivery_charge.toFixed(2));
+        });
+
+        $('#order_type').change(function() {
+            let val = $(this).val();
+            if (val === 'delivery') {
+                $('#order_address, #order_city, #order_state, #order_pincode').prop('required', true);
+            } else {
+                $('#order_address, #order_city, #order_state, #order_pincode').prop('required', false);
+            }
+            calculateDeliveryCharge();
+        });
+
+        $('#order_state').change(function() {
+            calculateDeliveryCharge();
+        });
+
+        function togglePaymentMethodDetails() {
+            let payment_status = $('#payment_status').val();
+            let payment_method = $('input[name="payment_method"]:checked').val();
+
+            if (payment_status === 'paid' && payment_method === 'upi') {
+                $('#upi_transaction_container').removeClass('d-none');
+                $('#upi_transaction_id').prop('required', true);
+            } else {
+                $('#upi_transaction_container').addClass('d-none');
+                $('#upi_transaction_id').prop('required', false).val('');
+            }
+        }
+
+        $('#payment_status').change(function() {
+            let status = $(this).val();
+            if (status === 'pending') {
+                $('#payment_method_container').addClass('d-none');
+            } else {
+                $('#payment_method_container').removeClass('d-none');
+            }
+            togglePaymentMethodDetails();
+        });
+
+        $(document).on('change', 'input[name="payment_method"]', function() {
+            togglePaymentMethodDetails();
+        });
+
+        $('#checkoutModal').on('show.bs.modal', function() {
+            delivery_charge = 0;
+            discount_amount = 0;
+            $('#checkout_form')[0].reset();
+            $('#order_type').val('in_store').trigger('change');
+            $('#payment_status').val('paid').trigger('change');
+            updateModalTotals();
+        });
+
         $('#toggle_more_info').click(function() {
             let section = $('#more_info_section');
             if (section.hasClass('d-none')) {
@@ -407,68 +601,15 @@
             }
         });
 
-        $('#save_quotation_btn').click(function() {
-            let btn = $(this);
-            let customer_name = $('#customer_name').val();
-            let customer_contact = $('#customer_contact').val();
-            let order_notes = $('#order_notes').val();
-
-            if (!customer_name || !customer_contact) {
-                alert('Please enter customer name and contact details.');
-                return;
-            }
-
-            btn.prop('disabled', true);
-            $('#quote_btn_text').addClass('d-none');
-            $('#quote_btn_spinner').removeClass('d-none');
-
-            $.ajax({
-                url: "{{ route('pos.quotation.store') }}",
-                method: "POST",
-                data: {
-                    customer_name,
-                    customer_contact,
-                    notes: order_notes,
-                    cart: cart
-                },
-                success: function(response) {
-                    if (response.success) {
-                        if (typeof toastr !== 'undefined') toastr.success(response.message);
-                        else alert(response.message);
-
-                        cart = [];
-                        renderCart();
-                        $('#checkoutModal').modal('hide');
-                        $('#checkout_form')[0].reset();
-                        $('#product_search').focus();
-                    } else {
-                        alert(response.message || 'Something went wrong');
-                    }
-                },
-                error: function(xhr) {
-                    let msg = 'Failed to save quotation';
-                    if (xhr.status === 422) {
-                        let errors = xhr.responseJSON.errors;
-                        msg = Object.values(errors).flat().join('\n');
-                    }
-                    alert(msg);
-                },
-                complete: function() {
-                    btn.prop('disabled', false);
-                    $('#quote_btn_text').removeClass('d-none');
-                    $('#quote_btn_spinner').addClass('d-none');
-                }
-            });
-        });
-
         $('#place_order_final').click(function() {
             let btn = $(this);
             let customer_name = $('#customer_name').val();
             let customer_contact = $('#customer_contact').val();
-            let payment_method = $('input[name="payment_method"]:checked').val();
+            let payment_status = $('#payment_status').val();
+            let payment_method = payment_status === 'paid' ? $('input[name="payment_method"]:checked').val() : null;
+            let upi_transaction_id = $('#upi_transaction_id').val();
             let order_notes = $('#order_notes').val();
             let order_type = $('#order_type').val();
-            let payment_status = $('#payment_status').val();
             let order_address = $('#order_address').val();
             let order_city = $('#order_city').val();
             let order_state = $('#order_state').val();
@@ -476,6 +617,11 @@
 
             if (!customer_name || !customer_contact) {
                 alert('Please enter customer name and contact details.');
+                return;
+            }
+
+            if (payment_status === 'paid' && payment_method === 'upi' && !upi_transaction_id) {
+                alert('Please enter UPI Transaction ID.');
                 return;
             }
 
@@ -497,7 +643,10 @@
                     state: order_state,
                     pincode: order_pincode,
                     notes: order_notes,
-                    cart: cart
+                    cart: cart,
+                    discount: discount_amount,
+                    delivery_charge: delivery_charge,
+                    upi_transaction_id: upi_transaction_id
                 },
                 success: function(response) {
                     if (response.success) {
@@ -528,68 +677,6 @@
                 }
             });
         });
-
-        // Barcode Scanner Logic
-        let barcodeBuffer = "";
-        let lastKeyTime = Date.now();
-        let scannerStatus = $('#global_scanner_status');
-
-        $(document).on('keypress', function(e) {
-            // Only process if not typing in an input field (unless it's the main search)
-            if ($(e.target).is('input, textarea') && !$(e.target).is('#product_search')) {
-                return;
-            }
-
-            const currentTime = Date.now();
-            
-            // Typical human typing is > 50ms per key. Scanners are much faster (< 20ms).
-            if (currentTime - lastKeyTime > 100) {
-                barcodeBuffer = ""; // Reset buffer if too slow
-            }
-
-            if (e.which === 13) { // Enter key - often sent by scanners after the code
-                if (barcodeBuffer.length >= 3) {
-                    handleBarcodeScan(barcodeBuffer);
-                    barcodeBuffer = "";
-                    e.preventDefault();
-                }
-            } else {
-                barcodeBuffer += String.fromCharCode(e.which);
-            }
-            
-            lastKeyTime = currentTime;
-        });
-
-        function handleBarcodeScan(code) {
-            console.log("Scanned:", code);
-            
-            // Visual feedback for scanner "connection"
-            scannerStatus.removeClass('text-secondary border-secondary-subtle')
-                         .addClass('text-success border-success-subtle bg-success-subtle')
-                         .html('<i class="bi bi-upc-scan me-1"></i> Scanner Connected');
-
-            // Find product by SKU/Barcode
-            $.ajax({
-                url: "{{ route('pos.sale.search') }}",
-                data: { search: code },
-                success: function(response) {
-                    // Since the controller returns HTML, we'll look for the first product in the hidden list if possible
-                    // Or we could parse the response.html to find the product data.
-                    // A better way is to have the controller return JSON data for direct matches.
-                    
-                    let tempDiv = $('<div>').append(response.html);
-                    let productCard = tempDiv.find('.product-card').first();
-                    
-                    if (productCard.length > 0) {
-                        let productData = productCard.data();
-                        addToCart(productData);
-                        if (typeof toastr !== 'undefined') toastr.success(`Added: ${productData.name}`);
-                    } else {
-                        if (typeof toastr !== 'undefined') toastr.error(`Product not found: ${code}`);
-                    }
-                }
-            });
-        }
 
         renderCart();
         // fetchProducts();

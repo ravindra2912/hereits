@@ -1,7 +1,7 @@
 @extends('front.layouts.main', ['seo' => [
 'title' => config('app.name') . ' - Growth Platform for Local Businesses',
-'description' => 'Hereits helps your local business grow with smart scheduling, e-commerce, and service listings. Reach more customers and manage your business effortlessly.',
-'keywords' => 'local business growth, online booking system, e-commerce for local stores, service directory, Hereits',
+'description' => 'BrandBatao helps your local business grow with smart scheduling, e-commerce, and service listings. Reach more customers and manage your business effortlessly.',
+'keywords' => 'local business growth, online booking system, e-commerce for local stores, service directory, BrandBatao',
 'image' => asset('assets/front/img/poster.png')
 ]])
 
@@ -22,20 +22,23 @@
         <div class="row align-items-center">
             <div class="col-lg-6 mb-5 mb-lg-0">
                 <span class="badge bg-primary text-white rounded-pill px-3 py-2 mb-3 fw-bold shadow-sm">
-                    <i class="fas fa-rocket me-2"></i> Grow Your Business
+                    <i class="fas fa-rocket me-2"></i> All-in-One Business Growth
                 </span>
                 <h1 class="display-4 fw-bold mb-4 lh-base text-dark">
-                    All-in-One Solution for <span class="text-primary position-relative">Business Growth<svg class="position-absolute start-0 top-100 translate-middle-y w-100" height="12" viewBox="0 0 100 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="z-index:-1">
+                    Complete Platform for <span class="text-primary position-relative">E-Commerce, Services & Appointments<svg class="position-absolute start-0 top-100 translate-middle-y w-100" height="12" viewBox="0 0 100 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="z-index:-1">
                             <path d="M2 10C20 4 50 2 98 10" stroke="#6366f1" stroke-width="3" stroke-linecap="round" />
                         </svg></span>
                 </h1>
-                <p class="lead text-secondary mb-5">
-                    Manage appointments, sell products, and list your services—all from one powerful platform. Join thousands of businesses today.
+                <p class="lead text-secondary mb-4">
+                    Sell products online with an integrated e-commerce store, showcase your expert service listings, and accept automated 24/7 appointment bookings—all from one powerful dashboard.
                 </p>
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill shadow-xs"><i class="fas fa-shopping-bag text-success me-2"></i>E-Commerce Store</span>
+                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill shadow-xs"><i class="fas fa-list-ul text-info me-2"></i>Service Directory</span>
+                    <span class="badge bg-light text-dark border px-3 py-2 rounded-pill shadow-xs"><i class="fas fa-calendar-check text-primary me-2"></i>Book Appointments</span>
+                </div>
                 <div class="d-flex gap-3 flex-column flex-sm-row">
-                    <a href="{{ route('register.business') }}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
-                        Get Started
-                    </a>
+                    <a href="{{ route('register.business') }}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">Start Free Trial</a>
                     <a href="#how-it-works" class="btn btn-outline-dark btn-lg rounded-pill px-5">How It Works</a>
                 </div>
                 <div class="mt-5 d-flex align-items-center gap-4">
@@ -103,60 +106,6 @@
         </div>
     </div>
 </section>
-
-@if(isset($plans) && $plans->count() > 0)
-<!-- 10.5. Pricing Section -->
-<section id="pricing" class="py-5 bg-white">
-    <div class="container py-lg-5">
-        <div class="text-center mb-5">
-            <h6 class="text-primary fw-bold text-uppercase ls-1 mb-2">Pricing Plans</h6>
-            <h2 class="fw-bold display-5 mb-3">Choose the Right <span class="text-primary">Plan for Your Business</span></h2>
-            <p class="text-secondary mx-auto" style="max-width: 600px;">
-                Transparent pricing with no hidden fees. Select a plan that fits your growth ambitions.
-            </p>
-        </div>
-
-        <div class="row g-4 justify-content-center">
-            @foreach($plans as $plan)
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 border-0 shadow-sm rounded-4 p-4 p-lg-5 text-center transition-all hover-lift @if($loop->iteration == 2) border-primary border-top border-5 @endif">
-                    @if($loop->iteration == 2)
-                    <div class="position-absolute top-0 start-50 translate-middle">
-                        <span class="badge bg-primary rounded-pill px-3 py-2 shadow-sm">MOST POPULAR</span>
-                    </div>
-                    @endif
-
-                    <h4 class="fw-bold mb-2">{{ $plan->name }}</h4>
-                    <div class="mb-4">
-                        <span class="display-4 fw-bold text-dark">₹{{ number_format($plan->price, 0) }}</span>
-                        <span class="text-secondary">/{{ $plan->duration }} {{ $plan->duration > 1 ? 'Months' : 'Month' }}</span>
-                    </div>
-
-                    <p class="text-secondary mb-4">{{ $plan->description }}</p>
-
-                    @if($plan->benefits)
-                    <ul class="list-unstyled mb-5 text-start">
-                        @foreach(explode(",", $plan->benefits) as $benefit)
-                        <li class="mb-3 d-flex align-items-start">
-                            <i class="fas fa-check-circle text-success mt-1 me-3"></i>
-                            <span>{{ trim($benefit) }}</span>
-                        </li>
-                        @endforeach
-                    </ul>
-                    @endif
-
-                    <div class="mt-auto">
-                        <a href="{{ route('register.business', ['plan_id' => $plan->id]) }}" class="btn @if($loop->iteration == 2) btn-primary @else btn-outline-primary @endif btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
-                            {{ $free_trial_days > 0 ? "Start {$free_trial_days} Day Free Trial" : "Get Started" }}
-                        </a>
-                    </div>
-                </div>
-            </div>
-            @endforeach
-        </div>
-    </div>
-</section>
-@endif
 
 <!-- 3. Appointment Module Features -->
 <section class="py-5">
@@ -285,13 +234,13 @@
                 <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden hover-lift">
                     <div class="bg-light position-relative" style="aspect-ratio: 16/9; overflow: hidden;">
                         <!-- Cover Image Placeholder -->
-                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($item->business_image) }}" alt="Cover" class="w-100 h-100 object-fit-cover" loading="lazy">
+                        <img src="{{ getImage($item->business_image) }}" alt="Cover" class="w-100 h-100 object-fit-cover" loading="lazy">
                         <span class="badge bg-success position-absolute top-0 end-0 m-3">Open</span>
 
                     </div>
                     <div class="card-body pt-0 text-center">
                         <div class="position-relative mx-auto mt-n4 mb-3" style="width: 80px;">
-                            <!-- <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($item->business_logo) }}" alt="Logo" class="rounded-circle border border-3 border-white shadow-sm w-100"> -->
+                            <!-- <img src="{{ getImage($item->business_logo) }}" alt="Logo" class="rounded-circle border border-3 border-white shadow-sm w-100"> -->
                         </div>
                         <h5 class="fw-bold mb-1 d-flex align-items-center justify-content-center gap-1">
                             {{ $item->name }}
@@ -404,7 +353,503 @@
     </div>
 </section>
 
+@if((isset($plans) && $plans->count() > 0) || (isset($productPlans) && $productPlans->count() > 0) || (isset($servicePlans) && $servicePlans->count() > 0) || isset($siteSetting))
+<!-- 10.5. Pricing Section -->
+<section id="pricing" class="py-5 bg-white">
+    <div class="container py-lg-5">
+        <div class="text-center mb-5">
+            <h6 class="text-primary fw-bold text-uppercase ls-1 mb-2">Pricing & Plans</h6>
+            <h2 class="fw-bold display-5 mb-3">Choose the Right <span class="text-primary">Plan for Your Business</span></h2>
+            <p class="text-secondary mx-auto" style="max-width: 600px;">
+                Transparent pricing with no hidden fees. Select a subscription, top-up plan, or check per-order placement charges.
+            </p>
 
+            <!-- Pricing Category Tabs -->
+            <div class="d-flex justify-content-center mt-4">
+                <ul class="nav nav-pills bg-light p-2 rounded-pill shadow-sm" id="pricingTabs" role="tablist">
+                    @if(isset($plans) && $plans->count() > 0)
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active rounded-pill px-4 py-2 fw-bold" id="subscription-tab" data-bs-toggle="pill" data-bs-target="#subscription-plans" type="button" role="tab" aria-controls="subscription-plans" aria-selected="true">
+                            <i class="fas fa-crown me-2 text-warning"></i> Business Subscriptions
+                        </button>
+                    </li>
+                    @endif
+                    @if(isset($productPlans) && $productPlans->count() > 0)
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill px-4 py-2 fw-bold @if(!isset($plans) || $plans->count() == 0) active @endif" id="product-tab" data-bs-toggle="pill" data-bs-target="#product-plans" type="button" role="tab" aria-controls="product-plans" aria-selected="false">
+                            <i class="fas fa-box me-2 text-primary"></i> Product Add-On Plans
+                        </button>
+                    </li>
+                    @endif
+                    @if(isset($servicePlans) && $servicePlans->count() > 0)
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill px-4 py-2 fw-bold @if((!isset($plans) || $plans->count() == 0) && (!isset($productPlans) || $productPlans->count() == 0)) active @endif" id="service-tab" data-bs-toggle="pill" data-bs-target="#service-plans" type="button" role="tab" aria-controls="service-plans" aria-selected="false">
+                            <i class="fas fa-concierge-bell me-2 text-success"></i> Service Add-On Plans
+                        </button>
+                    </li>
+                    @endif
+                    @if(isset($siteSetting))
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill px-4 py-2 fw-bold @if((!isset($plans) || $plans->count() == 0) && (!isset($productPlans) || $productPlans->count() == 0) && (!isset($servicePlans) || $servicePlans->count() == 0)) active @endif" id="order-pricing-tab" data-bs-toggle="pill" data-bs-target="#order-pricing-plans" type="button" role="tab" aria-controls="order-pricing-plans" aria-selected="false">
+                            <i class="fas fa-receipt me-2 text-info"></i> Credit & Transaction Charges
+                        </button>
+                    </li>
+                    @endif
+                </ul>
+            </div>
+        </div>
+
+        <div class="tab-content" id="pricingTabsContent">
+            <!-- 1. Subscription Plans Tab -->
+            @if(isset($plans) && $plans->count() > 0)
+            <div class="tab-pane fade show active" id="subscription-plans" role="tabpanel" aria-labelledby="subscription-tab">
+                <div class="row g-4 justify-content-center">
+                    @foreach($plans as $plan)
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm rounded-4 p-4 p-lg-5 text-center transition-all hover-lift @if($loop->iteration == 2) border-primary border-top border-5 @endif">
+                            @if($loop->iteration == 2)
+                            <div class="position-absolute top-0 start-50 translate-middle">
+                                <span class="badge bg-primary rounded-pill px-3 py-2 shadow-sm">MOST POPULAR</span>
+                            </div>
+                            @endif
+
+                            <h4 class="fw-bold mb-2">{{ $plan->name }}</h4>
+                            <div class="mb-3">
+                                <span class="display-4 fw-bold text-dark">₹{{ number_format($plan->price, 0) }}</span>
+                                <span class="text-secondary">/{{ $plan->duration }} {{ $plan->duration > 1 ? 'Months' : 'Month' }}</span>
+                            </div>
+
+                            <p class="text-secondary mb-3">{{ $plan->description }}</p>
+
+                            <!-- Subscription Free Included Badges -->
+                            <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+                                <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-bold">
+                                    <i class="fas fa-box me-1"></i> {{ $siteSetting->free_product_limit }} Free Products
+                                </span>
+                                <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2 fw-bold">
+                                    <i class="fas fa-concierge-bell me-1"></i> {{ $siteSetting->free_service_limit }} Free Services
+                                </span>
+                                <span class="badge bg-info-subtle text-info rounded-pill px-3 py-2 fw-bold">
+                                    <i class="fas fa-coins me-1"></i> Free {{ $siteSetting->free_credit }} Credits
+                                </span>
+                            </div>
+
+                            @if($plan->benefits)
+                            <ul class="list-unstyled mb-5 text-start">
+
+                                @foreach(explode(",", $plan->benefits) as $benefit)
+                                @php
+                                $bTrim = strtolower(trim($benefit));
+                                @endphp
+                                <li class="mb-3 d-flex align-items-start">
+                                    <i class="fas fa-check-circle text-success mt-1 me-3"></i>
+                                    <span>
+                                        {{ ucwords(trim($benefit)) }}
+                                    </span>
+                                </li>
+                                @endforeach
+                            </ul>
+                            @endif
+
+                            <div class="mt-auto">
+                                <a href="{{ route('register.business', ['plan_id' => $plan->id]) }}" class="btn @if($loop->iteration == 2) btn-primary @else btn-outline-primary @endif btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    Start Free Trial
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+                            <!-- 2. Product Plans Tab -->
+            @if(isset($productPlans) && $productPlans->count() > 0)
+            <div class="tab-pane fade @if(!isset($plans) || $plans->count() == 0) show active @endif" id="product-plans" role="tabpanel" aria-labelledby="product-tab">
+                <div class="alert alert-primary bg-primary-subtle text-primary border-0 rounded-4 text-center mb-4 py-3">
+                    <i class="fas fa-plus-circle me-2"></i> <strong>Product Limit Top-Up Add-Ons:</strong> Need to list more products in your store? Purchase an add-on plan anytime to increase your listing limit.
+                </div>
+                <div class="row g-4 justify-content-center">
+                    @foreach($productPlans as $plan)
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm rounded-4 p-4 p-lg-5 text-center transition-all hover-lift @if($loop->iteration == 2) border-primary border-top border-5 @endif">
+                            <div class="position-absolute top-0 start-50 translate-middle">
+                                <span class="badge bg-primary rounded-pill px-3 py-2 shadow-sm">PRODUCT ADD-ON</span>
+                            </div>
+
+                            <h4 class="fw-bold mb-2">{{ $plan->name }}</h4>
+                            <div class="mb-3">
+                                @if(isset($plan->per_product_price) && $plan->per_product_price > 0)
+                                <span class="display-4 fw-bold text-dark">₹{{ $plan->per_product_price == floor($plan->per_product_price) ? number_format($plan->per_product_price, 0) : number_format($plan->per_product_price, 2) }}</span>
+                                <span class="text-secondary">/product/month</span>
+                                @else
+                                <span class="display-4 fw-bold text-dark">₹{{ $plan->price == floor($plan->price) ? number_format($plan->price, 0) : number_format($plan->price, 2) }}</span>
+                                <span class="text-secondary">/{{ $plan->duration }} {{ $plan->duration > 1 ? 'Months' : 'Month' }}</span>
+                                @endif
+                            </div>
+
+                            <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
+                                @if(isset($plan->max_product_limit) && $plan->max_product_limit > 0)
+                                <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-bold">
+                                    <i class="fas fa-boxes me-1"></i> Add-On Limit: +{{ $plan->max_product_limit }} Products
+                                </span>
+                                @endif
+                                @if(isset($plan->duration) && $plan->duration > 0)
+                                <span class="badge bg-info-subtle text-info rounded-pill px-3 py-2 fw-bold">
+                                    <i class="fas fa-clock me-1"></i> {{ $plan->duration }} {{ $plan->duration > 1 ? 'Months' : 'Month' }} Plan
+                                </span>
+                                @endif
+                            </div>
+
+                            <p class="text-secondary mb-4">{{ $plan->description ?? 'Add-on plan to increase your store\'s product listing limit.' }}</p>
+
+                            @if($plan->benefits)
+                            <ul class="list-unstyled mb-5 text-start">
+                                @foreach(explode(",", $plan->benefits) as $benefit)
+                                <li class="mb-3 d-flex align-items-start">
+                                    <i class="fas fa-check-circle text-success mt-1 me-3"></i>
+                                    <span>{{ trim($benefit) }}</span>
+                                </li>
+                                @endforeach
+                            </ul>
+                            @else
+                            <ul class="list-unstyled mb-5 text-start">
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Instantly expand product catalog limit</span></li>
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Real-time inventory tracking & order management</span></li>
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Integrated payment gateway support</span></li>
+                            </ul>
+                            @endif
+
+                            <div class="mt-auto">
+                                @if(Auth::check() && Auth::user()->role == 'Business')
+                                <a href="{{ route('business.product.plan') }}" class="btn btn-primary btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    Top-Up Product Limit
+                                </a>
+                                @else
+                                <a href="{{ route('register.business') }}" class="btn btn-outline-primary btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    Get Started
+                                </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            <!-- 3. Service Plans Tab -->
+            @if(isset($servicePlans) && $servicePlans->count() > 0)
+            <div class="tab-pane fade @if((!isset($plans) || $plans->count() == 0) && (!isset($productPlans) || $productPlans->count() == 0)) show active @endif" id="service-plans" role="tabpanel" aria-labelledby="service-tab">
+                <div class="alert alert-success bg-success-subtle text-success border-0 rounded-4 text-center mb-4 py-3">
+                    <i class="fas fa-plus-circle me-2"></i> <strong>Service Limit Top-Up Add-Ons:</strong> Need to list more services? Purchase an add-on plan anytime to increase your service limit.
+                </div>
+                <div class="row g-4 justify-content-center">
+                    @foreach($servicePlans as $plan)
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm rounded-4 p-4 p-lg-5 text-center transition-all hover-lift @if($loop->iteration == 2) border-success border-top border-5 @endif">
+                            <div class="position-absolute top-0 start-50 translate-middle">
+                                <span class="badge bg-success rounded-pill px-3 py-2 shadow-sm">SERVICE ADD-ON</span>
+                            </div>
+
+                            <h4 class="fw-bold mb-2">{{ $plan->name }}</h4>
+                            <div class="mb-3">
+                                @if(isset($plan->per_service_price) && $plan->per_service_price > 0)
+                                <span class="display-4 fw-bold text-dark">₹{{ $plan->per_service_price == floor($plan->per_service_price) ? number_format($plan->per_service_price, 0) : number_format($plan->per_service_price, 2) }}</span>
+                                <span class="text-secondary">/service/month</span>
+                                @else
+                                <span class="display-4 fw-bold text-dark">₹{{ $plan->price == floor($plan->price) ? number_format($plan->price, 0) : number_format($plan->price, 2) }}</span>
+                                <span class="text-secondary">/{{ $plan->duration }} {{ $plan->duration > 1 ? 'Months' : 'Month' }}</span>
+                                @endif
+                            </div>
+
+                            <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
+                                @if(isset($plan->max_service_limit) && $plan->max_service_limit > 0)
+                                <span class="badge bg-success-subtle text-success rounded-pill px-3 py-2 fw-bold">
+                                    <i class="fas fa-concierge-bell me-1"></i> Add-On Limit: +{{ $plan->max_service_limit }} Services
+                                </span>
+                                @endif
+                                @if(isset($plan->duration) && $plan->duration > 0)
+                                <span class="badge bg-info-subtle text-info rounded-pill px-3 py-2 fw-bold">
+                                    <i class="fas fa-clock me-1"></i> {{ $plan->duration }} {{ $plan->duration > 1 ? 'Months' : 'Month' }} Plan
+                                </span>
+                                @endif
+                            </div>
+
+                            <p class="text-secondary mb-4">{{ $plan->description ?? 'Add-on plan to increase your business service listing limit.' }}</p>
+
+                            @if($plan->benefits)
+                            <ul class="list-unstyled mb-5 text-start">
+                                @foreach(explode(",", $plan->benefits) as $benefit)
+                                <li class="mb-3 d-flex align-items-start">
+                                    <i class="fas fa-check-circle text-success mt-1 me-3"></i>
+                                    <span>{{ trim($benefit) }}</span>
+                                </li>
+                                @endforeach
+                            </ul>
+                            @else
+                            <ul class="list-unstyled mb-5 text-start">
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Instantly expand service listing capacity</span></li>
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Direct customer inquiries & appointment bookings</span></li>
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Local SEO optimization & verified reviews</span></li>
+                            </ul>
+                            @endif
+
+                            <div class="mt-auto">
+                                @if(Auth::check() && Auth::user()->role == 'Business')
+                                <a href="{{ route('business.service.plan') }}" class="btn btn-success btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    Top-Up Service Limit
+                                </a>
+                                @else
+                                <a href="{{ route('register.business') }}" class="btn btn-outline-success btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    Get Started
+                                </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            <!-- 4. Order, Quotation, Appointment & Lucky Draw Charges Tab -->
+            @if(isset($siteSetting))
+            <div class="tab-pane fade @if((!isset($plans) || $plans->count() == 0) && (!isset($productPlans) || $productPlans->count() == 0) && (!isset($servicePlans) || $servicePlans->count() == 0)) show active @endif" id="order-pricing-plans" role="tabpanel" aria-labelledby="order-pricing-tab">
+                <div class="alert alert-info bg-info-subtle text-info border-0 rounded-4 text-center mb-4 py-3">
+                    <i class="fas fa-info-circle me-2"></i> <strong>Pay-Per-Transaction Charges:</strong> Transparent credit deduction for order creation, quotation generation, appointment bookings, and lucky draw scratch cards.
+                </div>
+                <div class="row g-4 justify-content-center">
+                    <!-- Website Order Charges Card -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm rounded-4 p-4 p-lg-5 text-center transition-all hover-lift border-info border-top border-5">
+                            <div class="position-absolute top-0 start-50 translate-middle">
+                                <span class="badge bg-info text-white rounded-pill px-3 py-2 shadow-sm">WEBSITE ORDERS</span>
+                            </div>
+
+                            <h4 class="fw-bold mb-2">Online Store Orders</h4>
+                            <div class="mb-3">
+                                <span class="display-4 fw-bold text-dark">{{ number_format($siteSetting->charge_place_order_on_website ?? 0.10, 2) }}</span>
+                                <span class="text-secondary"> credits/order</span>
+                            </div>
+                            <div class="mb-3">
+                                <span class="badge bg-info-subtle text-info rounded-pill px-3 py-2 fw-bold">
+                                    1 Credit = ₹{{ number_format($siteSetting->per_credit_price ?? 1, 2) }}
+                                </span>
+                            </div>
+
+                            <p class="text-secondary mb-4">Nominal credit charge deducted automatically when a customer places an order on your website.</p>
+
+                            <ul class="list-unstyled mb-5 text-start">
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Automatic credit deduction per website order</span></li>
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Instant customer notification & order tracking</span></li>
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Top-up credits as your business scales</span></li>
+                            </ul>
+
+                            <div class="mt-auto">
+                                @if(Auth::check() && Auth::user()->role == 'Business')
+                                <a href="{{ route('business.dashboard') }}" class="btn btn-info text-white btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    View Credit Balance
+                                </a>
+                                @else
+                                <a href="{{ route('register.business') }}" class="btn btn-outline-info btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    Get Started
+                                </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- POS Order Charges Card -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm rounded-4 p-4 p-lg-5 text-center transition-all hover-lift border-secondary border-top border-5">
+                            <div class="position-absolute top-0 start-50 translate-middle">
+                                <span class="badge bg-secondary text-white rounded-pill px-3 py-2 shadow-sm">POS ORDERS</span>
+                            </div>
+
+                            <h4 class="fw-bold mb-2">POS Counter Orders</h4>
+                            <div class="mb-3">
+                                <span class="display-4 fw-bold text-dark">{{ number_format($siteSetting->charge_place_order_on_pos ?? 0.05, 2) }}</span>
+                                <span class="text-secondary"> credits/order</span>
+                            </div>
+                            <div class="mb-3">
+                                <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2 fw-bold">
+                                    1 Credit = ₹{{ number_format($siteSetting->per_credit_price ?? 1, 2) }}
+                                </span>
+                            </div>
+
+                            <p class="text-secondary mb-4">Low fee deducted from your credit balance when staff creates in-store POS counter orders.</p>
+
+                            <ul class="list-unstyled mb-5 text-start">
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Fast POS checkout & receipt generation</span></li>
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Automated inventory sync per counter sale</span></li>
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Staff performance & daily sales tracking</span></li>
+                            </ul>
+
+                            <div class="mt-auto">
+                                @if(Auth::check() && Auth::user()->role == 'Business')
+                                <a href="{{ route('business.dashboard') }}" class="btn btn-secondary text-white btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    View Credit Balance
+                                </a>
+                                @else
+                                <a href="{{ route('register.business') }}" class="btn btn-outline-secondary btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    Get Started
+                                </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quotation Charges Card -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm rounded-4 p-4 p-lg-5 text-center transition-all hover-lift border-primary border-top border-5">
+                            <div class="position-absolute top-0 start-50 translate-middle">
+                                <span class="badge bg-primary text-white rounded-pill px-3 py-2 shadow-sm">QUOTATIONS</span>
+                            </div>
+
+                            <h4 class="fw-bold mb-2">Quotation Creation</h4>
+                            <div class="mb-3">
+                                <span class="display-4 fw-bold text-dark">{{ number_format($siteSetting->charge_per_quotation ?? 0.10, 2) }}</span>
+                                <span class="text-secondary"> credits/quotation</span>
+                            </div>
+                            <div class="mb-3">
+                                <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fw-bold">
+                                    1 Credit = ₹{{ number_format($siteSetting->per_credit_price ?? 1, 2) }}
+                                </span>
+                            </div>
+
+                            <p class="text-secondary mb-4">Nominal credit fee deducted per sales quotation created for your clients.</p>
+
+                            <ul class="list-unstyled mb-5 text-start">
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Automatic deduction per quotation created</span></li>
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Instant PDF export & WhatsApp sharing</span></li>
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Custom business-level rate overrides</span></li>
+                            </ul>
+
+                            <div class="mt-auto">
+                                @if(Auth::check() && Auth::user()->role == 'Business')
+                                <a href="{{ route('business.dashboard') }}" class="btn btn-primary text-white btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    View Credit Balance
+                                </a>
+                                @else
+                                <a href="{{ route('register.business') }}" class="btn btn-outline-primary btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    Get Started
+                                </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lucky Draw Scratch Card Charges Card -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm rounded-4 p-4 p-lg-5 text-center transition-all hover-lift border-danger border-top border-5">
+                            <div class="position-absolute top-0 start-50 translate-middle">
+                                <span class="badge bg-danger text-white rounded-pill px-3 py-2 shadow-sm">LUCKY DRAW</span>
+                            </div>
+
+                            <h4 class="fw-bold mb-2">Lucky Draw Scratch Card</h4>
+                            <div class="mb-3">
+                                <span class="display-4 fw-bold text-dark">{{ number_format($siteSetting->draw_credit_per_scratch ?? 1, 0) }}</span>
+                                <span class="text-secondary"> credits/scratch</span>
+                            </div>
+                            <div class="mb-3">
+                                <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-2 fw-bold">
+                                    1 Credit = ₹{{ number_format($siteSetting->per_credit_price ?? 1, 2) }}
+                                </span>
+                            </div>
+
+                            <p class="text-secondary mb-4">Nominal credit charge deducted per customer scratch card link generated for marketing campaigns.</p>
+
+                            <ul class="list-unstyled mb-5 text-start">
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Deducted per scratch card link issued</span></li>
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Interactive digital scratch card experience</span></li>
+                                <li class="mb-3 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-3"></i> <span>Custom prize probabilities & WhatsApp sharing</span></li>
+                            </ul>
+
+                            <div class="mt-auto">
+                                @if(Auth::check() && Auth::user()->role == 'Business')
+                                <a href="{{ route('business.dashboard') }}" class="btn btn-danger text-white btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    View Credit Balance
+                                </a>
+                                @else
+                                <a href="{{ route('register.business') }}" class="btn btn-outline-danger btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    Get Started
+                                </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appointment Booking Charges Card -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border-0 shadow-sm rounded-4 p-4 p-lg-5 text-center transition-all hover-lift border-warning border-top border-5">
+                            <div class="position-absolute top-0 start-50 translate-middle">
+                                <span class="badge bg-warning text-dark rounded-pill px-3 py-2 shadow-sm">APPOINTMENT BOOKINGS</span>
+                            </div>
+
+                            <h4 class="fw-bold mb-2">Appointment Booking</h4>
+                            <div class="mb-3">
+                                <span class="fs-4 fw-bold text-dark">Category-based</span>
+                                <span class="text-secondary"> credit deduction</span>
+                            </div>
+                            <div class="mb-3">
+                                <span class="badge bg-warning-subtle text-dark rounded-pill px-3 py-2 fw-bold">
+                                    1 Credit = ₹{{ number_format($siteSetting->per_credit_price ?? 1, 2) }}
+                                </span>
+                            </div>
+
+                            <p class="text-secondary mb-3 small">Deducted per appointment based on your business category:</p>
+
+                            @if(isset($businessCategory) && $businessCategory->count() > 0)
+                            <div class="table-responsive my-3" style="max-height: 170px; overflow-y: auto;">
+                                <table class="table table-sm text-start mb-0 align-middle small">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Category</th>
+                                            <th class="text-center">Online</th>
+                                            <th class="text-center">Self</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($businessCategory as $cat)
+                                        <tr>
+                                            <td class="fw-bold text-truncate" style="max-width: 110px;">{{ $cat->name }}</td>
+                                            <td class="text-center"><span class="badge bg-primary-subtle text-primary">{{ $cat->deduct_credit_per_customer_appointment ?? 0 }} cr</span></td>
+                                            <td class="text-center"><span class="badge bg-secondary-subtle text-dark">{{ $cat->deduct_credit_per_self_appointment ?? 0 }} cr</span></td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            @else
+                            <p class="text-muted small">Charges vary per business category setting.</p>
+                            @endif
+
+                            <ul class="list-unstyled mb-4 text-start small">
+                                <li class="mb-2 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-2"></i> <span>Automated slot calendar & expert scheduling</span></li>
+                                <li class="mb-2 d-flex align-items-start"><i class="fas fa-check-circle text-success mt-1 me-2"></i> <span>Deducted per online or walk-in appointment</span></li>
+                            </ul>
+
+                            <div class="mt-auto">
+                                @if(Auth::check() && Auth::user()->role == 'Business')
+                                <a href="{{ route('business.dashboard') }}" class="btn btn-warning text-dark btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    View Credit Balance
+                                </a>
+                                @else
+                                <a href="{{ route('register.business') }}" class="btn btn-outline-warning btn-lg rounded-pill w-100 fw-bold py-3 shadow-sm">
+                                    Get Started
+                                </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+        </div>
+    </div>
+</section>
+@endif
 
 <!-- 10. Latest Blogs -->
 @if(isset($blogs) && $blogs->count() > 0)
@@ -422,7 +867,7 @@
             <div class="col-lg-3 col-md-6">
                 <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden hover-lift transition-all">
                     <div class="overflow-hidden" style="height: 180px;">
-                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($blog->image) }}" class="w-100 h-100 object-fit-cover transition-all blog-img" alt="{{ $blog->title }}" loading="lazy">
+                        <img src="{{ getImage($blog->image) }}" class="w-100 h-100 object-fit-cover transition-all blog-img" alt="{{ $blog->title }}" loading="lazy">
                     </div>
                     <div class="card-body p-4">
                         <small class="text-primary fw-bold mb-2 d-block">{{ $blog->published_at ? $blog->published_at->format('M d, Y') : $blog->created_at->format('M d, Y') }}</small>
@@ -453,9 +898,7 @@
             <div class="position-relative" style="z-index: 1;">
                 <h2 class="fw-bold mb-3 text-white display-5">Ready to Grow Your Business?</h2>
                 <p class="lead text-white mb-5">Join thousands of businesses transforming their operations today.</p>
-                <a href="{{ route('register.business') }}" class="btn btn-light btn-lg rounded-pill px-5 py-3 shadow-lg">
-                    Get Started
-                </a>
+                <a href="{{ route('register.business') }}" class="btn btn-light btn-lg rounded-pill px-5 py-3 shadow-lg">Start Free Trial</a>
                 <p class="mt-3 small text-white opacity-75">No credit card required &bull; Cancel anytime</p>
             </div>
         </div>

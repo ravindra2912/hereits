@@ -12,7 +12,7 @@
 
                 <div class="text-center mb-4">
                     <div class="position-relative d-inline-block">
-                        <img onerror="this.src='{{ getImage(null) }}'" id="preview_image" src="{{ getImage($expert->expert_image) }}"
+                        <img id="preview_image" src="{{ getImage($expert->user?->profile) }}"
                             class="rounded-circle border border-4 border-white shadow-sm object-fit-cover"
                             style="width: 150px; height: 150px;" loading="lazy">
 
@@ -37,14 +37,20 @@
                     }
                 </script>
 
-                <div class="mb-3">
-                    <label class="form-label">Name</label>
-                    <input type="text" name="expert_name" class="form-control" required value="{{ old('expert_name', $expert->expert_name) }}">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">First Name <span class="text-danger">*</span></label>
+                        <input type="text" name="first_name" class="form-control" required value="{{ old('first_name', $expert->user->first_name ?? '') }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ old('last_name', $expert->user->last_name ?? '') }}">
+                    </div>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Email</label>
-                    <input type="email" name="email" class="form-control" required value="{{ old('email', $expert->email) }}">
+                    <input type="email" name="email" class="form-control" required value="{{ old('email', $expert->user?->email) }}">
                 </div>
 
                 <div class="mb-3">

@@ -44,7 +44,7 @@
         <select class="form-select form-select-sm" id="expert_id">
           <option value="">All Experts</option>
           @foreach ( $experts as $expert)
-          <option value="{{ $expert->id }}">{{ $expert->expert_name }}</option>
+          <option value="{{ $expert->id }}">{{ $expert->user?->name }}</option>
           @endforeach
         </select>
       </div>
@@ -109,7 +109,7 @@
           name: 'token_number'
         }, {
           data: 'expert_info',
-          name: 'expert.expert_name',
+          name: 'expert_info',
         }, {
           data: 'user_info',
           name: 'user_name'
@@ -233,10 +233,11 @@
           }
         },
         error: function(e) {
+          let msg = e.responseJSON?.message || (e.status === 403 ? 'Unauthorized. You do not have permission to update appointment status.' : 'Something went wrong');
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Something went wrong'
+            text: msg
           });
           console.log(e);
         }
@@ -301,7 +302,8 @@
               }
             },
             error: function(e) {
-              Swal.fire('Error', 'Something went wrong', 'error');
+              let msg = e.responseJSON?.message || (e.status === 403 ? 'Unauthorized. You do not have permission to delete appointments.' : 'Something went wrong');
+              Swal.fire('Error', msg, 'error');
             }
           });
         }

@@ -33,7 +33,7 @@
                         <div class="card-body">
                             <div class="mb-3">
                                 <div id="image-preview" class="mb-3 text-center bg-light rounded d-flex align-items-center justify-content-center border" style="height: 200px; overflow: hidden; cursor: pointer;" onclick="$('#image').click()">
-                                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($service->image_url) }}" class="img-fluid" id="preview-img" loading="lazy">
+                                    <img src="{{ getImage($service->image_url) }}" class="img-fluid" id="preview-img" loading="lazy">
                                 </div>
                                 <div class="d-grid">
                                     <button type="button" class="btn btn-outline-primary mb-2" onclick="$('#image').click()">
@@ -70,7 +70,7 @@
                                 <select class="form-select required select2-search" id="category_id" name="category_id" data-placeholder="Select Category">
                                     <option value="">Select Category</option>
                                     @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" {{ $category->id == $service->category_id ? 'selected' : '' }}>{{ $category->name }}</option>
+                                    <option value="{{ $category->id }}" {{ $category->id == $service->category_id ? 'selected' : '' }}>{{ $category->display_name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -125,12 +125,10 @@
                         </div>
                         <div class="card-footer bg-white py-3 text-end">
                             <a href="{{ route('business.service.index') }}" class="btn btn-light border px-4 me-2">Cancel</a>
-                            @if(checkBusinessPermission('service', 'service_list', 'update'))
                             <button type="submit" class="btn btn-primary px-5 btn_action">
                                 <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                                 <span id="buttonText">Update Service</span>
                             </button>
-                            @endif
                         </div>
                     </div>
                 </div>

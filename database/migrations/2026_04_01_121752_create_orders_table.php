@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('invoice_number')->nullable()->index();
 
             // 🔹 Order filters (VERY IMPORTANT for dashboard queries)
-            $table->enum('order_source', ['web', 'pos'])->index();
+            $table->enum('order_source', ['web', 'pos', 'quotation'])->index();
             $table->enum('order_type', ['delivery', 'pickup', 'in_store'])->index();
 
             $table->string('customer_name'); // search/filter
@@ -72,8 +72,8 @@ return new class extends Migration
 
             // 🔹 Foreign keys
             $table->foreign('business_id')->references('id')->on('businesses')->onDelete('cascade');
-            $table->foreign('customer_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('created_user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('customer_id')->references('id')->on('users')->noActionOnDelete();
+            $table->foreign('created_user_id')->references('id')->on('users')->noActionOnDelete();
         });
     }
 

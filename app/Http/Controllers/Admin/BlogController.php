@@ -100,7 +100,7 @@ class BlogController extends Controller
             }
         } catch (\Exception $e) {
             Log::error('Blog store error: ' . $e->getMessage());
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_name) && !empty($image_name)) {
                 fileRemoveStorage($image_name);
             }
@@ -166,7 +166,7 @@ class BlogController extends Controller
             }
         } catch (\Exception $e) {
             Log::error('Blog update error: ' . $e->getMessage());
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_name) && !empty($image_name)) {
                 fileRemoveStorage($image_name);
             }
@@ -232,7 +232,7 @@ class BlogController extends Controller
             }
         } catch (\Exception $e) {
             Log::error('Blog destroy error: ' . $e->getMessage());
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }

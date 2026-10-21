@@ -4,11 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Notification extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
         'user_id',
         'business_id',
@@ -19,35 +25,32 @@ class Notification extends Model
         'read_at',
     ];
 
-    protected $casts = [
-        'data' => 'array',
-        'read_at' => 'datetime',
-    ];
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'data' => 'array',
+            'read_at' => 'datetime',
+        ];
+    }
 
-    public function user()
+    /**
+     * Get the user that owns the notification.
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function business()
+    /**
+     * Get the business associated with the notification.
+     */
+    public function business(): BelongsTo
     {
         return $this->belongsTo(Business::class);
-    }
-
-    public function scopeUnread($query)
-    {
-        return $query->whereNull('read_at');
-    }
-
-    public function scopeRead($query)
-    {
-        return $query->whereNotNull('read_at');
-    }
-
-    public function markAsRead()
-    {
-        if (is_null($this->read_at)) {
-            $this->forceFill(['read_at' => $this->freshTimestamp()])->save();
-        }
     }
 }

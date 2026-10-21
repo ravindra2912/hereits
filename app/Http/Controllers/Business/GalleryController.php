@@ -7,17 +7,40 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Traits\CacheManagement;
 
 class GalleryController extends Controller
 {
+    use CacheManagement;
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $business_id = Auth::user()->business_id;
-        $galleries = Gallery::where('business_id', $business_id)->latest()->get();
-        return view('business.gallery.index', compact('galleries'));
+        $query = Gallery::where('business_id', $business_id)
+            ->select('id', 'title', 'type', 'image_url', 'status', 'created_at');
+
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->filled('type') && in_array($request->type, ['image', 'youtube_url'])) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('status') && in_array($request->status, ['active', 'in-active'])) {
+            $query->where('status', $request->status);
+        }
+
+        $galleries = $query->latest()->paginate(20)->withQueryString();
+        $totalCount = Gallery::where('business_id', $business_id)->count();
+
+        if ($request->ajax()) {
+            return view('business.gallery.partials.gallery_grid', compact('galleries', 'totalCount'))->render();
+        }
+
+        return view('business.gallery.index', compact('galleries', 'totalCount'));
     }
 
     /**
@@ -25,6 +48,15 @@ class GalleryController extends Controller
      */
     public function create()
     {
+        if (!checkBusinessPermission('add_gallery')) {
+            abort(403, 'Unauthorized. You do not have permission to add gallery images.');
+        }
+
+        $existingCount = Gallery::where('business_id', Auth::user()->business_id)->count();
+        if ($existingCount >= 20) {
+            return redirect()->route('business.gallery.index')->with('error', 'Maximum limit of 20 media items reached.');
+        }
+
         return view('business.gallery.create');
     }
 
@@ -33,23 +65,35 @@ class GalleryController extends Controller
      */
     public function store(Request $request)
     {
+        if (!checkBusinessPermission('add_gallery')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to add gallery images.'], 403);
+        }
+
+        $business_id = Auth::user()->business_id;
+        $existingCount = Gallery::where('business_id', $business_id)->count();
+        if ($existingCount >= 20) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Maximum limit of 20 media items reached for gallery. Please delete an existing item to add a new one.'
+            ], 422);
+        }
+
         $success = false;
         $message = 'Something Wrong!';
         $redirect = route('business.gallery.index');
 
         try {
+            $type = $request->input('type', 'image');
             $rules = [
                 'title' => 'required|string|max:255',
-                'type' => 'required|in:image,video,doc',
+                'type' => 'required|in:image,youtube_url',
                 'status' => 'required',
             ];
 
-            if ($request->type == 'image') {
-                $rules['file'] = 'required|image|mimes:jpeg,png,jpg,webp|max:2048';
-            } elseif ($request->type == 'video') {
-                $rules['link'] = ['required', 'url', 'regex:/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/.*$/'];
+            if ($type === 'youtube_url') {
+                $rules['youtube_url'] = 'required|string';
             } else {
-                $rules['link'] = 'required|url';
+                $rules['image'] = 'required|image|mimes:jpeg,png,jpg,webp|max:2048';
             }
 
             $validator = Validator::make($request->all(), $rules);
@@ -57,27 +101,33 @@ class GalleryController extends Controller
             if ($validator->fails()) {
                 $message = $validator->errors();
             } else {
-                $image_url = '';
-                if ($request->type == 'image' && $request->hasFile('file')) {
-                    $image_url = fileUploadStorage($request->file('file'), 'gallery', 800, 600);
+                if ($type === 'youtube_url') {
+                    if (!getYoutubeId($request->youtube_url)) {
+                        return response()->json(['success' => false, 'message' => ['youtube_url' => ['Please enter a valid YouTube video or shorts URL.']]], 422);
+                    }
+                    $image_url = $request->youtube_url;
                 } else {
-                    $image_url = $request->link;
+                    $image_url = '';
+                    if ($request->hasFile('image')) {
+                        $image_url = fileUploadStorage($request->file('image'), 'gallery', 800, 600);
+                    }
                 }
 
                 Gallery::create([
                     'business_id' => Auth::user()->business_id,
                     'title' => $request->title,
-                    'type' => $request->type,
+                    'type' => $type,
                     'image_url' => $image_url,
                     'status' => $request->status,
                 ]);
 
                 $success = true;
-                $message = 'Gallery item created successfully.';
+                $message = 'Gallery ' . ($type === 'youtube_url' ? 'video' : 'image') . ' created successfully.';
+                $this->clearBusinessGalleryCache(Auth::user()->business_id);
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
-            if (isset($image_url) && !filter_var($image_url, FILTER_VALIDATE_URL)) {
+            $message = checkResponse($e);
+            if (isset($image_url) && ($type ?? 'image') === 'image') {
                 fileRemoveStorage($image_url);
             }
         }
@@ -90,10 +140,35 @@ class GalleryController extends Controller
      */
     public function edit($id)
     {
-        $gallery = Gallery::where('id', $id)->where('business_id', Auth::user()->business_id)->firstOrFail();
-        if (request()->ajax()) {
-            return response()->json(['success' => true, 'data' => $gallery]);
+        if (!checkBusinessPermission('edit_gallery')) {
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to edit gallery.'], 403);
+            }
+            abort(403, 'Unauthorized. You do not have permission to edit gallery media.');
         }
+
+        $gallery = Gallery::where('id', $id)
+            ->where('business_id', Auth::user()->business_id)
+            ->select('id', 'title', 'type', 'image_url', 'status')
+            ->firstOrFail();
+
+        if (request()->ajax()) {
+            $isYt = ($gallery->type ?? 'image') === 'youtube_url';
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $gallery->id,
+                    'title' => $gallery->title,
+                    'type' => $gallery->type ?? 'image',
+                    'image_url' => $gallery->image_url,
+                    'status' => $gallery->status,
+                    'preview_url' => $isYt
+                        ? (getYoutubeThumbnail($gallery->image_url) ?: getImage(null))
+                        : getImage($gallery->image_url),
+                ]
+            ]);
+        }
+
         return view('business.gallery.edit', compact('gallery'));
     }
 
@@ -102,25 +177,31 @@ class GalleryController extends Controller
      */
     public function update(Request $request, $id)
     {
+        if (!checkBusinessPermission('edit_gallery')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to edit gallery images.'], 403);
+        }
         $success = false;
         $message = 'Something Wrong!';
         $redirect = route('business.gallery.index');
 
         try {
             $gallery = Gallery::where('id', $id)->where('business_id', Auth::user()->business_id)->firstOrFail();
+            $type = $request->input('type', $gallery->type ?? 'image');
 
             $rules = [
                 'title' => 'required|string|max:255',
-                'type' => 'required|in:image,video,doc',
+                'type' => 'required|in:image,youtube_url',
                 'status' => 'required',
             ];
 
-            if ($request->type == 'image') {
-                $rules['file'] = 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048';
-            } elseif ($request->type == 'video') {
-                $rules['link'] = ['required', 'url', 'regex:/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/.*$/'];
+            if ($type === 'youtube_url') {
+                $rules['youtube_url'] = 'required|string';
             } else {
-                $rules['link'] = 'required|url';
+                if (($gallery->type ?? 'image') !== 'image' && !$request->hasFile('image')) {
+                    $rules['image'] = 'required|image|mimes:jpeg,png,jpg,webp|max:2048';
+                } else {
+                    $rules['image'] = 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048';
+                }
             }
 
             $validator = Validator::make($request->all(), $rules);
@@ -128,35 +209,43 @@ class GalleryController extends Controller
             if ($validator->fails()) {
                 $message = $validator->errors();
             } else {
-                $image_url = $gallery->image_url;
-                if ($request->type == 'image') {
-                    if ($request->hasFile('file')) {
-                        $oldimg = $gallery->image_url;
-                        $image_url = fileUploadStorage($request->file('file'), 'gallery', 800, 600);
-                        
-                        if (isset($oldimg) && !filter_var($oldimg, FILTER_VALIDATE_URL)) {
-                            fileRemoveStorage($oldimg);
-                        }
+                $oldType = $gallery->type ?? 'image';
+                $oldUrl = $gallery->image_url;
+
+                if ($type === 'youtube_url') {
+                    if (!getYoutubeId($request->youtube_url)) {
+                        return response()->json(['success' => false, 'message' => ['youtube_url' => ['Please enter a valid YouTube video or shorts URL.']]], 422);
+                    }
+                    $gallery->image_url = $request->youtube_url;
+                    $gallery->type = 'youtube_url';
+
+                    if ($oldType === 'image' && !empty($oldUrl)) {
+                        fileRemoveStorage($oldUrl);
                     }
                 } else {
-                    // For video/doc, if it was previously an uploaded file, remove it
-                    if (!filter_var($gallery->image_url, FILTER_VALIDATE_URL)) {
-                        fileRemoveStorage($gallery->image_url);
+                    $gallery->type = 'image';
+                    if ($request->hasFile('image')) {
+                        $newimg = fileUploadStorage($request->file('image'), 'gallery', 800, 600);
+                        $gallery->image_url = $newimg;
+                        if ($oldType === 'image' && !empty($oldUrl)) {
+                            fileRemoveStorage($oldUrl);
+                        }
                     }
-                    $image_url = $request->link;
                 }
 
                 $gallery->title = $request->title;
-                $gallery->type = $request->type;
-                $gallery->image_url = $image_url;
                 $gallery->status = $request->status;
                 $gallery->save();
 
                 $success = true;
-                $message = 'Gallery item updated successfully.';
+                $message = 'Gallery updated successfully.';
+                $this->clearBusinessGalleryCache(Auth::user()->business_id);
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
+            if (isset($newimg)) {
+                fileRemoveStorage($newimg);
+            }
         }
 
         return response()->json(['success' => $success, 'message' => $message, 'redirect' => $redirect]);
@@ -167,10 +256,36 @@ class GalleryController extends Controller
      */
     public function destroy($id)
     {
+        if (!checkBusinessPermission('delete_gallery')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to delete gallery images.'], 403);
+        }
         $gallery = Gallery::where('id', $id)->where('business_id', Auth::user()->business_id)->firstOrFail();
-        fileRemoveStorage($gallery->image_url);
+        if (($gallery->type ?? 'image') !== 'youtube_url') {
+            fileRemoveStorage($gallery->image_url);
+        }
         $gallery->delete();
+        $this->clearBusinessGalleryCache(Auth::user()->business_id);
 
-        return response()->json(['success' => true, 'message' => 'Gallery item deleted successfully.']);
+        return response()->json(['success' => true, 'message' => 'Gallery deleted successfully.']);
+    }
+
+    public function statusToggle(Request $request)
+    {
+        if (!checkBusinessPermission('edit_gallery')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to edit gallery images.'], 403);
+        }
+        try {
+            $gallery = Gallery::where('id', $request->id)
+                ->where('business_id', Auth::user()->business_id)
+                ->firstOrFail();
+
+            $gallery->status = $gallery->status == 'active' ? 'in-active' : 'active';
+            $gallery->save();
+            $this->clearBusinessGalleryCache(Auth::user()->business_id);
+
+            return response()->json(['success' => true, 'message' => 'Status updated successfully.', 'status' => $gallery->status]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to update status.']);
+        }
     }
 }

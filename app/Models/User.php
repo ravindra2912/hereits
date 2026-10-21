@@ -15,19 +15,6 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, SoftDeletes, HasApiTokens;
 
-    protected static function booted()
-    {
-        static::creating(function ($user) {
-            if (empty($user->referral_code)) {
-                $namePart = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $user->first_name ?? 'USER'), 0, 6));
-                do {
-                    $code = $namePart . rand(1000, 9999);
-                } while (static::where('referral_code', $code)->exists());
-                $user->referral_code = $code;
-            }
-        });
-    }
-
     /**
      * The attributes that are mass assignable.
      *
@@ -45,7 +32,6 @@ class User extends Authenticatable
         'business_id',
         'role',
         'status',
-        'referral_code',
     ];
 
     /**
@@ -71,6 +57,24 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Sanitize contact before saving to BIGINT column.
+     */
+    protected function contact(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            set: fn ($value) => !empty($value) ? (preg_replace('/[^0-9]/', '', (string)$value) ?: null) : null,
+        );
+    }
+
+    /**
+     * Get full name of the user.
+     */
+    public function getNameAttribute(): string
+    {
+        return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
+    }
+
     public function getBusinessDetails()
     {
         return $this->belongsTo(Business::class, 'business_id', 'id');
@@ -86,11 +90,6 @@ class User extends Authenticatable
         return $this->hasMany(AppointmentBooking::class, 'user_id');
     }
 
-    public function creditTransactions()
-    {
-        return $this->hasMany(UserCreditTransaction::class, 'user_id');
-    }
-
     public function devices()
     {
         return $this->hasMany(UserDevice::class, 'user_id');
@@ -101,16 +100,9 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class, 'user_id');
     }
 
-    public function analyticsEvents()
+    public function experts()
     {
-        return $this->hasMany(BusinessAnalyticsEvent::class, 'user_id');
-    }
-
-    public function getAvailableCreditsAttribute()
-    {
-        $credits = $this->creditTransactions()->where('type', 'credit')->sum('amount');
-        $debits = $this->creditTransactions()->where('type', 'debit')->sum('amount');
-        return $credits - $debits;
+        return $this->hasMany(Expert::class, 'user_id');
     }
 
     //+++++++++++++++ For api responce ================
@@ -124,8 +116,7 @@ class User extends Authenticatable
             'email' => $this->email,
             'contact' => (int)$this->contact,
             'dob' => $this->dob,
-            'gender' => $this->gender,
-            'referral_code' => $this->referral_code,
+            'gender' => $this->gender
         ];
 
         return $data;
@@ -135,138 +126,68 @@ class User extends Authenticatable
         return $this->hasMany(BusinessUser::class, 'user_id');
     }
 
-    public function chatParticipants()
+    public function businessCustomers()
     {
-        return $this->morphMany(ChatConversationParticipant::class, 'participant');
+        return $this->hasMany(BusinessCustomer::class, 'customer_id');
     }
 
-    public function chatMessages()
+    public function orders()
     {
-        return $this->morphMany(ChatMessage::class, 'sender');
+        return $this->hasMany(Order::class, 'customer_id');
+    }
+
+    public function quotations()
+    {
+        return $this->hasManyThrough(Quotation::class, BusinessCustomer::class, 'customer_id', 'business_customer_id', 'id', 'id');
     }
 
     /**
-     * Get the permissions for the user from session.
-     *
+     * Get the POS permissions for the user from session.
+     * 
      * @return array
      */
     public function getPosPermissionsAttribute()
     {
-        return session('permissions', []);
+        return session('pos_permissions', []);
     }
 
     /**
-     * Get the business panel role name for the user from session.
-     *
+     * Get the POS role name for the user from session.
+     * 
      * @return string
      */
     public function getRoleNameAttribute()
     {
-        return session('role_name', $this->role == 'Business' ? 'Business Owner' : 'Staff Member');
+        return session('pos_role_name', $this->role == 'Business' ? 'Business Owner' : 'Staff Member');
     }
 
     /**
-     * Get the current business name from session.
-     *
+     * Get the current POS business name from session.
+     * 
      * @return string
      */
     public function getBusinessNameAttribute()
     {
-        return session('business_name', 'My Business');
-    }
-
-    public function syncBusinessContextToSession(): void
-    {
-        $businessColumns = [
-            'id',
-            'name',
-            'slug',
-            'business_logo',
-            'contact',
-            'address',
-            'area',
-            'city_id',
-            'state_id',
-            'country_id',
-            'pincode',
-            'status',
-        ];
-
-        $businessRelations = [
-            'city:id,name',
-            'state:id,name',
-            'country:id,name',
-        ];
-
-        $currentBusiness = $this->getBusinessDetails()
-            ->select($businessColumns)
-            ->with($businessRelations)
-            ->first();
-
-        $currentBusinessData = null;
-
-        if ($currentBusiness) {
-            $currentBusinessData = $currentBusiness->toArray();
-            $currentBusinessData['full_address'] = $currentBusiness->full_address;
-        }
-
-        $businesses = $this->getBusinesses()
-            ->select($businessColumns)
-            ->with($businessRelations)
-            ->whereIn('status', ['active', 'pending'])
-            ->orderBy('name')
-            ->get()
-            ->map(function ($business) {
-                $businessData = $business->toArray();
-                $businessData['full_address'] = $business->full_address;
-
-                return $businessData;
-            })
-            ->values()
-            ->all();
-
-        session([
-            'currentBusiness' => $currentBusinessData,
-            'businesses' => $businesses,
-        ]);
+        return session('pos_business_name', 'My Business');
     }
 
     public function syncPermissionsToSession($businessId = null)
     {
-        $permissions = [];
-        $roleName = 'Staff Member';
-        $businessName = 'My Business';
-
-        if ($this->role == 'Business') {
-            $permissions = ['all_access' => true];
-            $roleName = 'Business Owner';
-
-            // Get business name for owner
-            $business = Business::where('owner_id', $this->id)->first();
-            $businessName = $business->name ?? 'My Business';
-        } else {
-            // Get permissions from their role in the current business context
-            if (!$businessId) {
-                // Try guessing from the auth context
-                $businessId = Auth::guard('pos')->check() ? getPosBusinessId() : getBusinessId();
-            }
-
-            $businessUser = BusinessUser::with(['role', 'business'])
-                ->where('business_id', $businessId)
-                ->where('user_id', $this->id)
-                ->first();
-
-            if ($businessUser) {
-                if ($businessUser->role) {
-                    $permissions = $businessUser->role->permissions ?? [];
-                    $roleName = $businessUser->role->name;
-                }
-                $businessName = $businessUser->business->name ?? 'My Business';
-            }
+        if (function_exists('syncPosSessionData')) {
+            syncPosSessionData($this, $businessId);
         }
-        // Unified session keys used by both business and POS panels
-        session(['permissions'   => $permissions]);
-        session(['role_name'     => $roleName]);
-        session(['business_name' => $businessName]);
+    }
+
+    public function syncBusinessPermissionsToSession($businessId = null)
+    {
+        app(\App\Services\BusinessSynchronizationService::class)->syncPermissions($this, $businessId);
+    }
+
+    /**
+     * Synchronize all required user, business, list, and setting data to session.
+     */
+    public function syncBusinessSessionData($businessId = null)
+    {
+        app(\App\Services\BusinessSynchronizationService::class)->syncAll($this, $businessId);
     }
 }

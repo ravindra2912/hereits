@@ -9,6 +9,24 @@ class AppointmentBooking extends Model
 {
     use SoftDeletes;
 
+    protected static function booted()
+    {
+        static::saved(function ($appointment) {
+            if ($appointment->user_id) {
+                \App\Models\BusinessCustomer::firstOrCreate(
+                    [
+                        'business_id' => $appointment->business_id,
+                        'customer_id' => $appointment->user_id
+                    ],
+                    [
+                        'customer_name' => $appointment->user_name,
+                        'contact' => $appointment->user_contact,
+                    ]
+                );
+            }
+        });
+    }
+
     public function department()
     {
         return $this->belongsTo(AppointmentDepartment::class, 'department_id', 'id')->select('id', 'department_name', 'department_image');
@@ -32,5 +50,10 @@ class AppointmentBooking extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function appointmentProducts()
+    {
+        return $this->hasMany(AppointmentProduct::class, 'appointment_id', 'id');
     }
 }

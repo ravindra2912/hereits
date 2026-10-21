@@ -5,7 +5,7 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
   <div>
     <h1 class="h3 mb-0 text-gray-800">Edit Expert Profile</h1>
-    <p class="text-muted small mb-0">Update information and booking settings for {{ $expert->expert_name }}.</p>
+    <p class="text-muted small mb-0">Update information and booking settings for {{ $expert->user?->name }}.</p>
   </div>
   <div class="btn-toolbar mb-2 mb-md-0">
     <nav aria-label="breadcrumb">
@@ -36,7 +36,7 @@
                 <label for="profile"><i class="bi bi-pencil-fill"></i></label>
               </div>
               <div class="avtar-preview">
-                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($expert->expert_image) }}" id="preview-image" alt="Expert Image" loading="lazy" />
+                <img src="{{ getImage($expert->user?->profile) }}" id="preview-image" alt="Expert Image" loading="lazy" />
               </div>
             </div>
           </div>
@@ -45,15 +45,24 @@
             <label class="form-label fw-bold">Email Address <span class="text-danger">*</span></label>
             <div class="input-group">
               <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
-              <input type="email" class="form-control border-start-0 required" name="email" value="{{ $expert->email }}" placeholder="expert@example.com" />
+              <input type="email" class="form-control border-start-0 required" name="email" value="{{ $expert->user?->email }}" placeholder="expert@example.com" />
             </div>
+            @if($expert->user)
+            <div class="alert alert-info py-2 px-3 small mt-2 mb-0 d-flex align-items-center">
+              <i class="bi bi-person-check-fill me-2 fs-6"></i>
+              <span>Linked to User: <strong>{{ $expert->user->first_name }} {{ $expert->user->last_name }}</strong> (#{{ $expert->user_id }})</span>
+            </div>
+            @endif
           </div>
 
           <div class="mb-0">
             <label class="form-label fw-bold">Password</label>
-            <div class="input-group">
+            <div class="input-group position-relative">
               <span class="input-group-text bg-light border-end-0"><i class="bi bi-key text-muted"></i></span>
-              <input type="password" class="form-control border-start-0" name="password" placeholder="Leave blank to keep current" />
+              <input type="password" class="form-control border-start-0 pe-5" id="expert_edit_password" name="password" placeholder="Leave blank to keep current" autocomplete="new-password" />
+              <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-muted text-decoration-none pe-3 toggle-password-visibility" tabindex="-1" style="z-index: 5;">
+                <i class="bi bi-eye"></i>
+              </button>
             </div>
             <div class="form-text small">Only provide if updating the password.</div>
           </div>
@@ -70,8 +79,13 @@
         <div class="card-body">
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label fw-bold">Full Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control required" name="expert_name" value="{{ $expert->expert_name }}" placeholder="Enter expert name" />
+              <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control required" id="first_name" name="first_name" value="{{ $expert->user->first_name ?? '' }}" placeholder="Enter first name" />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Last Name</label>
+              <input type="text" class="form-control" id="last_name" name="last_name" value="{{ $expert->user->last_name ?? '' }}" placeholder="Enter last name" />
             </div>
 
             <div class="col-md-6">
@@ -146,12 +160,10 @@
 
           <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
             <button class="btn btn-light border px-4" type="button" onclick="history.back()">Cancel</button>
-            @if(checkBusinessPermission('appointments', 'experts', 'update'))
             <button class="btn btn-primary px-4 btn_action" type="submit">
               <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
               <span id="buttonText">Update Expert Profile</span>
             </button>
-            @endif
           </div>
         </div>
       </div>
@@ -174,6 +186,20 @@
       }
       reader.readAsDataURL(input.files[0]);
     }
-  })
+  });
+
+  // Password visibility toggle
+  $(document).on('click', '.toggle-password-visibility', function(e) {
+    e.preventDefault();
+    var input = $('#expert_edit_password');
+    var icon = $(this).find('i');
+    if (input.attr('type') === 'password') {
+      input.attr('type', 'text');
+      icon.removeClass('bi-eye').addClass('bi-eye-slash');
+    } else {
+      input.attr('type', 'password');
+      icon.removeClass('bi-eye-slash').addClass('bi-eye');
+    }
+  });
 </script>
 @endpush

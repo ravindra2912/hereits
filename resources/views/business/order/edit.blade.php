@@ -39,7 +39,12 @@
                                 <td class="text-end py-2 pe-4 text-danger text-dark">-₹{{ number_format($order->discount, 2) }}</td>
                             </tr>
                             @endif
-                            @if($order->shipping_charge > 0)
+                            @if(!empty($order->is_pf) || ($order->packing_charge ?? 0) > 0)
+                            <tr>
+                                <td colspan="3" class="text-end py-2 ps-4 text-secondary">Packing & Forwarding:</td>
+                                <td class="text-end py-2 pe-4 text-dark">₹{{ number_format($order->packing_charge, 2) }}</td>
+                            </tr>
+                            @elseif($order->shipping_charge > 0)
                             <tr>
                                 <td colspan="3" class="text-end py-2 ps-4 text-secondary">Shipping:</td>
                                 <td class="text-end py-2 pe-4 text-dark">₹{{ number_format($order->shipping_charge, 2) }}</td>
@@ -71,7 +76,7 @@
                     @foreach($order->history->sortByDesc('created_at') as $history)
                     <div class="timeline-item mb-4 position-relative ps-4 border-start">
                         <span class="position-absolute translate-middle p-1 bg-primary border border-light rounded-circle" style="left: -1px; top: 0;"></span>
-                        <div class="fw-bold text-dark text-uppercase small">{{ ucfirst(str_replace('_', ' ', $history->status)) }}</div>
+                        <div class="fw-bold text-dark text-uppercase small">{{ $history->title }}</div>
                         <div class="text-muted small mb-1">{{ $history->created_at->format('d M Y, h:i A') }}</div>
                         <div class="text-dark small">{{ $history->remark }}</div>
                         <div class="text-secondary small mt-1">Changed by: {{ $history->user?->first_name ?? 'System' }}</div>

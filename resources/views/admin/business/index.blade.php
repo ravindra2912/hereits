@@ -86,14 +86,14 @@
               <div class="row mb-4">
                 <div class="col-6">
                   <div class="p-3 bg-light rounded text-center shadow-sm">
-                    <h4 class="fw-bold text-primary mb-0"><span id="view_product_count">0</span></h4>
-                    <small class="text-muted text-uppercase fw-bold ls-1" style="font-size: 10px;">Products</small>
+                    <h4 class="fw-bold text-primary mb-0"><span id="view_product_count">0</span> / <span id="view_product_limit" class="text-secondary small">0</span></h4>
+                    <small class="text-muted text-uppercase fw-bold ls-1" style="font-size: 10px;">Products (Count/Limit)</small>
                   </div>
                 </div>
                 <div class="col-6">
                   <div class="p-3 bg-light rounded text-center shadow-sm">
-                    <h4 class="fw-bold text-success mb-0"><span id="view_service_count">0</span></h4>
-                    <small class="text-muted text-uppercase fw-bold ls-1" style="font-size: 10px;">Services</small>
+                    <h4 class="fw-bold text-success mb-0"><span id="view_service_count">0</span> / <span id="view_service_limit" class="text-secondary small">0</span></h4>
+                    <small class="text-muted text-uppercase fw-bold ls-1" style="font-size: 10px;">Services (Count/Limit)</small>
                   </div>
                 </div>
               </div>
@@ -122,10 +122,6 @@
                 <div class="col-md-6 mb-2">
                   <small class="text-muted d-block">Business Type</small>
                   <span id="view_business_type" class="fw-bold"></span>
-                </div>
-                <div class="col-md-6 mb-2">
-                  <small class="text-muted d-block">Referral Code</small>
-                  <span id="view_business_code" class="fw-bold"></span>
                 </div>
                 <div class="col-md-12 mb-2">
                   <small class="text-muted d-block">Address</small>
@@ -158,6 +154,14 @@
                 <div class="col-md-6 mb-2">
                   <small class="text-muted d-block">Service System</small>
                   <span id="view_is_service" class="badge"></span>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <small class="text-muted d-block">Label System</small>
+                  <span id="view_is_label" class="badge"></span>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <small class="text-muted d-block">Subscription Expiry</small>
+                  <span id="view_expiry_date" class="fw-bold text-danger"></span>
                 </div>
               </div>
             </div>
@@ -280,7 +284,6 @@
             $('#view_business_status').text(business.status.toUpperCase()).removeClass('bg-success bg-warning').addClass(statusClass);
 
             $('#view_business_contact').text(business.contact || 'N/A');
-            $('#view_business_code').text(business.user_referral_code || 'N/A');
             var fullAddress = business.address || '';
             if (business.city) fullAddress += ', ' + business.city.name;
             if (business.state) fullAddress += ', ' + business.state.name;
@@ -316,8 +319,11 @@
               $('#view_is_appointment').text(setting.is_appointment_system ? 'Yes' : 'No').removeClass('bg-success bg-danger').addClass(setting.is_appointment_system ? 'bg-success' : 'bg-danger');
               $('#view_is_ecommerce').text(setting.is_ecommerce_system ? 'Yes' : 'No').removeClass('bg-success bg-danger').addClass(setting.is_ecommerce_system ? 'bg-success' : 'bg-danger');
               $('#view_is_service').text(setting.is_service_system ? 'Yes' : 'No').removeClass('bg-success bg-danger').addClass(setting.is_service_system ? 'bg-success' : 'bg-danger');
+              $('#view_is_label').text(setting.is_label ? 'Yes' : 'No').removeClass('bg-success bg-danger').addClass(setting.is_label ? 'bg-success' : 'bg-danger');
+              $('#view_expiry_date').text(setting.subscription_expiry_date || 'N/A');
             } else {
-              $('#view_is_appointment, #view_is_ecommerce, #view_is_service').text('No').removeClass('bg-success bg-danger').addClass('bg-danger');
+              $('#view_is_appointment, #view_is_ecommerce, #view_is_service, #view_is_label').text('No').removeClass('bg-success bg-danger').addClass('bg-danger');
+              $('#view_expiry_date').text('N/A');
             }
 
             $('#view_edit_link').attr('href', "{{ route('admin.business.index') }}/" + id + "/edit");

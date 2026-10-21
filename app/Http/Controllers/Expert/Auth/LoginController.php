@@ -14,7 +14,7 @@ class LoginController extends Controller
         try {
             return view('expert.auth.login');
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', checkResponse($e));
         }
     }
 
@@ -30,12 +30,28 @@ class LoginController extends Controller
         }
 
         try {
-            if (Auth::guard('expert')->attempt($request->only('email', 'password'))) {
-                $request->session()->regenerate();
+            $user = \App\Models\User::where('email', $request->email)->first();
+
+            if ($user && \Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+                $expert = \App\Models\Expert::where('user_id', $user->id)
+                    ->where('status', 'active')
+                    ->first();
+
+                if ($expert) {
+                    Auth::guard('expert')->login($expert);
+                    $request->session()->regenerate();
+                    app(\App\Services\SessionLogoutService::class)->logoutOtherDevices($expert->id);
+
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Login successful',
+                        'redirect' => route('expert.dashboard')
+                    ]);
+                }
+
                 return response()->json([
-                    'success' => true,
-                    'message' => 'Login successful',
-                    'redirect' => route('expert.dashboard')
+                    'success' => false,
+                    'message' => ['email' => ['No active expert account found for this user.']]
                 ]);
             }
 
@@ -44,7 +60,7 @@ class LoginController extends Controller
                 'message' => ['email' => ['The provided credentials do not match our records.']]
             ]);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => checkResponse($e)]);
         }
     }
 
@@ -52,11 +68,10 @@ class LoginController extends Controller
     {
         try {
             Auth::guard('expert')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+            $request->session()->regenerate();
             return redirect()->route('expert.login');
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', checkResponse($e));
         }
     }
 }

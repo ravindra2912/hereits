@@ -1,4 +1,4 @@
-  <form id="appointment-form" action="{{ route('book.appointment') }}" data-action="call" data-reset="true" class="row formaction g-3">
+  <form id="appointment-form" action="{{ route('book.appointment', $business->slug ?? $expert->business->slug ?? request()->route('business_slug') ?? '') }}" data-action="call" data-reset="true" class="row formaction g-3">
     @csrf
 
     <input type="hidden" name="expert_id" id="expert_id" value="{{ $expert->id }}">
@@ -12,13 +12,13 @@
       <div class="d-flex gap-2">
         <div class="flex-grow-1">
           <input type="radio" class="btn-check" name="appointment_for" id="Self" value="self" checked>
-          <label class="btn btn-outline-primary w-100 py-2 rounded-3" for="Self">
+          <label class="btn btn-outline-primary w-100 py-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center" for="Self">
             <i class="far fa-user me-2"></i> Myself
           </label>
         </div>
         <div class="flex-grow-1">
           <input type="radio" class="btn-check" name="appointment_for" id="Other" value="other">
-          <label class="btn btn-outline-primary w-100 py-2 rounded-3" for="Other">
+          <label class="btn btn-outline-primary w-100 py-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center" for="Other">
             <i class="fas fa-user-friends me-2"></i> Someone Else
           </label>
         </div>
@@ -76,13 +76,6 @@
     <!-- Submit Button -->
     <div class="col-12 mt-4">
       @if($setting->credit > 0)
-      @php
-          $frontCreditDeduction = app(\App\Services\CreditService::class)->getAppointmentCreditDeductionAmount($setting->business_id ?? $businessDetails->id ?? 0, 'customer');
-      @endphp
-      <div class="alert alert-light border py-2 px-3 mb-3 small d-flex align-items-center justify-content-between rounded-pill">
-        <span class="text-muted"><i class="fas fa-coins text-warning me-1"></i> Credit Deduction for Booking:</span>
-        <span class="fw-bold text-dark">{{ number_format($frontCreditDeduction, 2) }} Credit(s)</span>
-      </div>
       @if (Auth::check())
       <button class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm fw-bold py-3 btn_action">
         <span id="buttonText">Confirm Booking</span>
@@ -137,7 +130,7 @@
         }
         $.ajax({
           type: "POST",
-          url: "{{ route('get.expert.timing') }}",
+          url: "{{ route('get.expert.timing', $business->slug ?? $expert->business->slug ?? request()->route('business_slug') ?? '') }}",
           data: {
             expert_id: $('#expert_id').val(),
             business_id: $('#business_id').val(),

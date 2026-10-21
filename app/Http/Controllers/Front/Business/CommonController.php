@@ -18,11 +18,14 @@ class CommonController extends Controller
     {
         $business = Business::select('id', 'name', 'slug', 'business_image', 'business_logo', 'contact', 'address', 'city_id', 'state_id', 'facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'seo_description', 'seo_keyword')
             ->with(['city', 'state'])
+            ->whereHas('businessSetting', function ($query) {
+                $query->where('subscription_expiry_date', '>=', now());
+            })
             ->where('slug', $slug)
             ->where('status', 'active')
             ->firstOrFail();
 
-        $galleries = Gallery::select('id', 'image_url', 'title', 'business_id', 'type', 'created_at')
+        $galleries = Gallery::select('id', 'image_url', 'title', 'business_id', 'created_at', 'type')
             ->where('business_id', $business->id)
             ->where('status', 'active')
             ->latest()
@@ -64,7 +67,7 @@ class CommonController extends Controller
                 });
             $results = $results->concat($products);
 
-            $productCategories = Category::select('id', 'name', 'image_url')
+            $productCategories = Category::select('id', 'name', 'slug', 'image_url')
                 ->where('business_id', $business->id)
                 ->where('type', 'Products')
                 ->where('status', 'active')
@@ -75,7 +78,7 @@ class CommonController extends Controller
                     return [
                         'title' => $item->name,
                         'type' => 'Product Category',
-                        'url' => route('business-products', ['business_slug' => $slug, 'category_id' => $item->id]),
+                        'url' => route('business-products', ['business_slug' => $slug, 'category' => $item->slug ?? $item->id]),
                         'image' => getImage($item->image_url)
                     ];
                 });
@@ -100,7 +103,7 @@ class CommonController extends Controller
                 });
             $results = $results->concat($services);
 
-            $serviceCategories = Category::select('id', 'name', 'image_url')
+            $serviceCategories = Category::select('id', 'name', 'slug', 'image_url')
                 ->where('business_id', $business->id)
                 ->where('type', 'Services')
                 ->where('status', 'active')
@@ -111,7 +114,7 @@ class CommonController extends Controller
                     return [
                         'title' => $item->name,
                         'type' => 'Service Category',
-                        'url' => route('business-services', ['business_slug' => $slug, 'category_id' => $item->id]),
+                        'url' => route('business-services', ['business_slug' => $slug, 'category_id' => $item->slug ?? $item->id]),
                         'image' => getImage($item->image_url)
                     ];
                 });
@@ -120,18 +123,23 @@ class CommonController extends Controller
 
         // Search Experts if appointment system is enabled
         if (isset($setting->is_appointment_system) && $setting->is_appointment_system) {
-            $experts = Expert::select('id', 'expert_name', 'slug', 'business_id', 'expert_image')
+            $experts = Expert::select('id', 'slug', 'business_id', 'user_id')
+                ->with('user:id,first_name,last_name,profile')
                 ->where('business_id', $business->id)
                 ->where('status', 'active')
-                ->where('expert_name', 'LIKE', "%{$query}%")
+                ->whereHas('user', function ($uq) use ($query) {
+                    $uq->where(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$query}%")
+                       ->orWhere('first_name', 'like', "%{$query}%")
+                       ->orWhere('last_name', 'like', "%{$query}%");
+                })
                 ->limit(5)
                 ->get()
                 ->map(function ($item) use ($slug) {
                     return [
-                        'title' => $item->expert_name,
+                        'title' => $item->user?->name ?? '',
                         'type' => 'Expert',
                         'url' => route('expert', [$slug, $item->slug]),
-                        'image' => getImage($item->expert_image)
+                        'image' => getImage($item->user?->profile)
                     ];
                 });
             $results = $results->concat($experts);

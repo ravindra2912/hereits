@@ -21,8 +21,11 @@ use App\Models\UserRole;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 
+use App\Traits\CacheManagement;
+
 class AppointmentDepartmentController extends Controller
 {
+    use CacheManagement;
     /**
      * Display the user's profile form.
      */
@@ -35,19 +38,20 @@ class AppointmentDepartmentController extends Controller
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    $html = '<div class="text-center">';
-                    if (checkBusinessPermission('appointments', 'department', 'update') || checkBusinessPermission('appointments', 'department', 'view')) {
-                        $html .= '<a href="' . route('business.appointment.department.edit', $row->id) . '" class="btn btn-outline-primary btn-sm" title="Edit"><i class="bi bi-pencil"></i></a>';
+                    $url = route('business.appointment.department.destroy', $row->id);
+                    $url = "'" . $url . "'";
+                    $btn = '<div class="text-center">';
+                    if (checkBusinessPermission('edit_department')) {
+                        $btn .= '<a href="' . route('business.appointment.department.edit', $row->id) . '" class="btn btn-outline-primary btn-sm" title="Edit"><i class="bi bi-pencil"></i></a>';
                     }
-                    if (checkBusinessPermission('appointments', 'department', 'delete')) {
-                        $url = "'" . route('business.appointment.department.destroy', $row->id) . "'";
-                        $html .= '<button onclick="destroy(' . $url . ', ' . $row->id . ')" class="btn btn-outline-danger btn-sm ms-1 btn_delete-' . $row->id . '" title="Delete">
-                                    <i id="buttonText" class="bi bi-trash"></i>
-                                    <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                                  </button>';
+                    if (checkBusinessPermission('delete_department')) {
+                        $btn .= '<button onclick="destroy(' . $url . ', ' . $row->id . ')" class="btn btn-outline-danger btn-sm ms-1 btn_delete-' . $row->id . '" title="Delete">
+                            <i id="buttonText" class="bi bi-trash"></i>
+                            <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        </button>';
                     }
-                    $html .= '</div>';
-                    return $html;
+                    $btn .= '</div>';
+                    return $btn;
                 })
                 ->rawColumns(['action'])
                 ->make(true);
@@ -61,6 +65,9 @@ class AppointmentDepartmentController extends Controller
      */
     public function create()
     {
+        if (!checkBusinessPermission('add_department')) {
+            abort(403, 'Unauthorized. You do not have permission to add departments.');
+        }
         return view('business.appointment.department.create');
     }
 
@@ -69,6 +76,9 @@ class AppointmentDepartmentController extends Controller
      */
     public function store(Request $request)
     {
+        if (!checkBusinessPermission('add_department')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to add departments.'], 403);
+        }
         $success = false;
         $message = 'Something Wrong!';
         $redirect = Route('business.appointment.department.index');
@@ -92,9 +102,10 @@ class AppointmentDepartmentController extends Controller
 
                 $success = true;
                 $message = 'Department Create successfully.';
+                $this->clearBusinessExpertCache(getBusinessId());
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -109,12 +120,18 @@ class AppointmentDepartmentController extends Controller
 
     public function edit(Request $request, $id)
     {
+        if (!checkBusinessPermission('edit_department')) {
+            abort(403, 'Unauthorized. You do not have permission to edit departments.');
+        }
         $department = AppointmentDepartment::find($id);
         return view('business.appointment.department.edit', compact('department'));
     }
 
     public function update(Request $request, $id)
     {
+        if (!checkBusinessPermission('edit_department')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to edit departments.'], 403);
+        }
         $success = false;
         $message = 'Something Wrong!';
         $redirect = Route('business.appointment.department.index');
@@ -137,9 +154,10 @@ class AppointmentDepartmentController extends Controller
 
                 $success = true;
                 $message = 'Department Update successfully.';
+                $this->clearBusinessExpertCache(getBusinessId());
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -149,6 +167,9 @@ class AppointmentDepartmentController extends Controller
      */
     public function destroy(string $id)
     {
+        if (!checkBusinessPermission('delete_department')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to delete departments.'], 403);
+        }
         $success = false;
         $message = 'Something Wrong!';
         $redirect = Route('business.appointment.department.index');
@@ -166,10 +187,11 @@ class AppointmentDepartmentController extends Controller
 
                     $success = true;
                     $message = 'Department deleted successfully.';
+                    $this->clearBusinessExpertCache(getBusinessId());
                 }
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }

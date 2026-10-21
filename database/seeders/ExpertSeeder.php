@@ -18,16 +18,28 @@ class ExpertSeeder extends Seeder
      */
     public function run(): void
     {
+        $business = Business::first();
+        $businessId = $business ? $business->id : 1;
+        $department = AppointmentDepartment::where('business_id', $businessId)->first();
+
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => 'expert@gmail.com'],
+            [
+                'first_name' => 'Clinic',
+                'last_name' => 'Expert',
+                'password' => Hash::make('password'),
+                'role' => 'Expert',
+            ]
+        );
+
         Expert::create([
-            'business_id' => 1000,
-            'department_id' => 1,
-            'expert_name' => 'clinic',
+            'business_id' => $businessId,
+            'department_id' => $department ? $department->id : null,
+            'user_id' => $user->id,
             'slug' => 'expert',
-            'email' => 'expert@gmail.com',
             'is_appointment_book_with_time_slot' => false,
             'is_need_booking_confirmation' => false,
             'is_default' => true,
-            'password' => Hash::make('password')
         ]);
     }
 }

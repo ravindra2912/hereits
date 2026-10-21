@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('business_id')->index();
             $table->unsignedBigInteger('order_id')->index();
-            $table->unsignedBigInteger('item_id')->index();
+            $table->unsignedBigInteger('item_id')->nullable()->index();
             $table->string('item_name', 100);
             $table->decimal('price', 10, 2);
             $table->integer('quantity');
@@ -29,7 +29,7 @@ return new class extends Migration
 
             $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
             $table->foreign('business_id')->references('id')->on('businesses')->onDelete('cascade');
-            $table->foreign('item_id')->references('id')->on('products')->onDelete('cascade');
+            $table->foreign('item_id')->references('id')->on('products')->nullOnDelete();
         });
     }
 

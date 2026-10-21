@@ -49,7 +49,10 @@ class CouponController extends Controller
                     foreach ($types as $type) {
                         $color = match ($type) {
                             'all' => 'bg-primary',
-                            'credit' => 'bg-success',
+                            'subscription' => 'bg-info',
+                            'product' => 'bg-warning text-dark',
+                            'service' => 'bg-success',
+                            'credit' => 'bg-danger',
                             default => 'bg-secondary'
                         };
                         $badges .= '<span class="badge ' . $color . ' me-1 mb-1">' . ucfirst($type) . '</span>';
@@ -171,7 +174,7 @@ class CouponController extends Controller
             'discount_type' => 'required|in:flat,percentage',
             'discount_value' => 'required|numeric|min:0',
             'applicable_for' => 'required|array',
-            'applicable_for.*' => 'in:' . implode(',', config('const.coupon_compatibility', ['all', 'subscription', 'credit'])),
+            'applicable_for.*' => 'in:' . implode(',', config('const.coupon_compatibility', ['all', 'subscription', 'product', 'service', 'credit'])),
             'max_discount' => 'nullable|numeric|min:0',
             'min_purchase' => 'nullable|numeric|min:0',
             'usage_type' => 'required|in:one_time,recurring,unlimited',
@@ -223,7 +226,7 @@ class CouponController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
+                'message' => checkResponse($e)
             ]);
         }
     }
@@ -266,7 +269,7 @@ class CouponController extends Controller
             'discount_type' => 'required|in:flat,percentage',
             'discount_value' => 'required|numeric|min:0',
             'applicable_for' => 'required|array',
-            'applicable_for.*' => 'in:' . implode(',', config('const.coupon_compatibility', ['all', 'subscription', 'credit'])),
+            'applicable_for.*' => 'in:' . implode(',', config('const.coupon_compatibility', ['all', 'subscription', 'product', 'service', 'credit'])),
             'max_discount' => 'nullable|numeric|min:0',
             'min_purchase' => 'nullable|numeric|min:0',
             'usage_type' => 'required|in:one_time,recurring,unlimited',
@@ -319,7 +322,7 @@ class CouponController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
+                'message' => checkResponse($e)
             ]);
         }
     }
@@ -340,7 +343,7 @@ class CouponController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => checkResponse($e)
             ]);
         }
     }
@@ -351,7 +354,7 @@ class CouponController extends Controller
     public function usageHistory($id)
     {
         $coupon = Coupon::findOrFail($id);
-        $purchases = Purchase::with(['business', 'transaction'])
+        $purchases = Purchase::with(['business', 'plan', 'transaction'])
             ->where('coupon_id', $id)
             ->whereIn('status', ['success', 'paid'])
             ->orderBy('id', 'desc')

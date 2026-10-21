@@ -46,6 +46,10 @@ class AuthController extends Controller
 
         if (Auth::guard('admin')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+            $adminUser = Auth::guard('admin')->user();
+            if ($adminUser) {
+                app(\App\Services\SessionLogoutService::class)->logoutOtherDevices($adminUser->id);
+            }
             return redirect()->intended(route('admin.dashboard', absolute: false));
         }
 
@@ -57,14 +61,8 @@ class AuthController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-
         Auth::guard('admin')->logout();
-
-        // Note: we might NOT want to invalidate the whole session if we want business to stay logged in.
-        // But Laravel session guard's logout only removes the key for THAT guard.
-        // $request->session()->invalidate();
-        // $request->session()->regenerateToken();
-
+        $request->session()->regenerate();
 
         return redirect()->route('admin.login');
     }

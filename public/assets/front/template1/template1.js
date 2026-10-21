@@ -2,9 +2,47 @@ $(document).ready(function () {
     const businessName = $('meta[name="business-name"]').attr('content') || 'Store';
     let businessContact = $('meta[name="business-contact"]').attr('content') || '';
 
+    // Helper function to check WhatsApp inquiry login requirement
+    function checkWhatsAppInquiryLogin(pendingUrl = null) {
+        const isLoginRequired = parseInt($('meta[name="is-login-required"]').attr('content') || 0) === 1;
+        const isLoggedIn = parseInt($('meta[name="user-logged-in"]').attr('content') || 0) === 1;
+
+        if (isLoginRequired && !isLoggedIn) {
+            if (pendingUrl) {
+                sessionStorage.setItem('pending_whatsapp_inquiry_url', pendingUrl);
+            }
+            $('.cart-drawer').removeClass('open');
+            $('.cart-overlay').removeClass('show');
+            toastr.info('Please login to proceed with WhatsApp inquiry.');
+            $('#authModal').modal('show');
+            return false;
+        }
+        return true;
+    }
+
+    // Direct WhatsApp Inquiry link click handler
+    $(document).on('click', '.whatsapp-inquiry-link', function (e) {
+        const targetUrl = $(this).attr('href');
+        if (!checkWhatsAppInquiryLogin(targetUrl)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    // Resume pending inquiry URL after login reload
+    const pendingInquiryUrl = sessionStorage.getItem('pending_whatsapp_inquiry_url');
+    if (pendingInquiryUrl && parseInt($('meta[name="user-logged-in"]').attr('content') || 0) === 1) {
+        sessionStorage.removeItem('pending_whatsapp_inquiry_url');
+        window.open(pendingInquiryUrl, '_blank');
+    }
+
     // WhatsApp Contact Form Handler
     $('#whatsappContactForm').on('submit', function (e) {
         e.preventDefault();
+
+        if (!checkWhatsAppInquiryLogin()) {
+            return false;
+        }
 
         const name = $('#contact_name').val();
         const subject = $('#contact_subject').val();
@@ -159,48 +197,5 @@ $(document).ready(function () {
                 $searchResults.addClass('d-none');
             }
         }
-    });
-});
-
-$(document).ready(function () {
-    $('.toggle-favorite-btn').on('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const btn = $(this);
-        const icon = btn.find('i');
-        const itemId = btn.data('item-id') || btn.data('business-id');
-        const businessId = btn.data('business-id');
-        const type = btn.data('type') || 'business';
-
-        $.ajax({
-            url: route('toggle-favorite'),
-            type: "POST",
-            data: {
-                _token: $('meta[name="csrf-token"]').attr('content'),
-                item_id: itemId,
-                business_id: businessId,
-                type: type
-            },
-            success: function (response) {
-                if (response.status === 'added') {
-                    icon.removeClass('far text-muted').addClass('fas text-danger');
-                    toastr.success(response.message);
-                } else if (response.status === 'removed') {
-                    icon.removeClass('fas text-danger').addClass('far text-muted');
-                    toastr.success(response.message);
-                }
-            },
-            error: function (xhr) {
-                if (xhr.status === 401) {
-                    $('#authModal').modal('show');
-                    if (typeof switchAuthSection === 'function') {
-                        switchAuthSection('login');
-                    }
-                } else {
-                    toastr.error('Something went wrong. Please try again.');
-                }
-            }
-        });
     });
 });

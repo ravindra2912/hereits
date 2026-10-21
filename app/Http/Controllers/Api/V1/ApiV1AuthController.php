@@ -2,291 +2,180 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use Auth;
-use Carbon\Carbon;
-use App\Models\OwnerOfUser;
-use App\Models\UserSetting;
-use Illuminate\Support\Str;
+use App\Http\Controllers\Api\BaseApiController;
+use App\Http\Requests\Api\V1\Auth\ApiV1ForgotPasswordRequest;
+use App\Http\Requests\Api\V1\Auth\ApiV1LoginRequest;
+use App\Http\Requests\Api\V1\Auth\ApiV1RegisterRequest;
+use App\Http\Requests\Api\V1\Auth\ApiV1ResetPasswordRequest;
+use App\Http\Requests\Api\V1\Auth\ApiV1UpdatePasswordRequest;
+use App\Http\Requests\Api\V1\Auth\ApiV1UpdateProfileRequest;
+use App\Http\Resources\Api\V1\ApiV1UserResource;
+use App\Services\Api\V1\ApiV1AuthService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Mail\ResetPasswordEmail;
-use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Validator;
-use App\Models\{Categories, User, UserCategory};
 
-class ApiV1AuthController extends Controller
+class ApiV1AuthController extends BaseApiController
 {
-	public function login(Request $request)
-	{
-		$success = false;
-		$message = 'Something Wrong!';
-		$data = array();
-		$statuscode = 422;
+    /**
+     * @param ApiV1AuthService $authService
+     */
+    public function __construct(
+        protected ApiV1AuthService $authService
+    ) {}
 
-		try {
-			$msg = [];
+    /**
+     * Authenticate user and issue token.
+     *
+     * @param ApiV1LoginRequest $request
+     * @return JsonResponse
+     */
+    public function login(ApiV1LoginRequest $request): JsonResponse
+    {
+        $result = $this->authService->login($request->validated());
 
-			$rules['email'] = 'required|string|max:255';
-			$rules['password'] = 'required|string|min:6';
+        if (!$result['success']) {
+            return $this->sendError($result['message'], [], $result['status_code']);
+        }
 
-			$validator = Validator::make($request->all(), $rules, $msg);
-			if ($validator->fails()) {
-				$message = $validator->errors()->first();
-			} else {
-				$identifier = $request->email;
-				$user = User::query()
-					->where(function ($q) use ($identifier) {
-						$q->where('email', $identifier);
-						if (is_numeric($identifier) && $identifier > 0) {
-							$q->orWhere('contact', $identifier);
-						}
-					})
-					->first();
+        $userResource = new ApiV1UserResource($result['data']['user']);
 
-				if ($user && !Hash::check($request->password, $user->password)) {
-					$message = "Password mismatch";
-					return apiResponce($statuscode, $success, $message, $data);
-				}
+        $data = [
+            'user' => $userResource,
+            'user_details' => $userResource,
+            'token' => $result['data']['token'],
+            'token_type' => $result['data']['token_type'],
+        ];
 
-				if ($user) {
-					$token = $user->createToken('Laravel Password Grant Client')->accessToken;
-					$data['user_details'] = $user->apiObject();
-					$data['token'] = $token;
-					$user->save();
+        return $this->sendResponse($data, $result['message'], $result['status_code']);
+    }
 
-					$statuscode = 200;
-					$success = true;
-					$message = 'Success';
-				} else {
-					$statuscode = 51;
-					$message = 'User does not exist';
-				}
-			}
-		} catch (\Exception $e) {
-			$message = $e->getMessage();
-		}
-		return apiResponce($statuscode, $success, $message, $data);
-	}
+    /**
+     * Register a new user account.
+     *
+     * @param ApiV1RegisterRequest $request
+     * @return JsonResponse
+     */
+    public function register(ApiV1RegisterRequest $request): JsonResponse
+    {
+        $result = $this->authService->register($request->validated());
 
-	public function register(Request $request)
-	{
-		$success = false;
-		$message = 'Something Wrong!';
-		$data = array();
-		$statuscode = 422;
+        $userResource = new ApiV1UserResource($result['data']['user']);
 
-		$msgs = [];
-		$rules = [
-			'first_name' => 'required|max:191',
-			'last_name' => 'required|max:191',
-			'contact' => 'required|numeric|digits:10|unique:users,contact',
-			'email' => 'required|email|unique:users,email|max:191',
-			'dob' => 'nullable|date',
-			'password' => 'required|min:6',
-			'confirm_password' => 'required|min:6',
-		];
+        $data = [
+            'user' => $userResource,
+            'user_details' => $userResource,
+            'token' => $result['data']['token'],
+            'token_type' => $result['data']['token_type'],
+        ];
 
+        return $this->sendResponse($data, $result['message'], $result['status_code']);
+    }
 
-		$validator = Validator::make($request->all(), $rules, $msgs);
-		if ($validator->fails()) { // Validation fails
-			$message = $validator->errors()->first();
-		} elseif ($request->password != $request->confirm_password) {
-			$message =  'Confirm password is not match';
-		} else {
-			try {
-				$User = new User();
-				$User->first_name = trim($request->first_name);
-				$User->last_name = trim($request->last_name);
-				$User->email = trim($request->email);
-				$User->contact = $request->contact == 0 ? null : $request->contact;
-				$User->dob = $request->dob;
-				$User->role = 'User';
-				$User->password = Hash::make($request->password);
-				$User->save();
+    /**
+     * Request password reset token.
+     *
+     * @param ApiV1ForgotPasswordRequest $request
+     * @return JsonResponse
+     */
+    public function forgotPassword(ApiV1ForgotPasswordRequest $request): JsonResponse
+    {
+        $result = $this->authService->forgotPassword($request->validated()['email']);
 
-				$user = User::find($User->id);
-				$token = $user->createToken('Laravel Password Grant Client')->accessToken;
-				$data['user_details'] = $user->apiObject();
-				$data['token'] = $token;
+        if (!$result['success']) {
+            return $this->sendError($result['message'], [], $result['status_code']);
+        }
 
-				$success = true;
-				$message =  'User register SuccessFully';
-				$statuscode = 200;
-			} catch (\Exception $e) {
-				$message = $e->getMessage();
-			}
-		}
-		return apiResponce($statuscode, $success, $message, $data);
-	}
+        return $this->sendResponse([], $result['message'], $result['status_code']);
+    }
 
-	public function forgotPassword(Request $request)
-	{
-		$success = false;
-		$message = 'Something Wrong!';
-		$data = array();
-		$statuscode = 422;
+    /**
+     * Reset password using token.
+     *
+     * @param ApiV1ResetPasswordRequest $request
+     * @return JsonResponse
+     */
+    public function resetPassword(ApiV1ResetPasswordRequest $request): JsonResponse
+    {
+        $result = $this->authService->resetPassword($request->validated());
 
-		$rules = [
-			'email' => 'required|email',
-		];
+        if (!$result['success']) {
+            return $this->sendError($result['message'], [], $result['status_code']);
+        }
 
-		$validator = Validator::make($request->all(), $rules);
+        return $this->sendResponse([], $result['message'], $result['status_code']);
+    }
 
-		if ($validator->fails()) { // Validation fails
-			$message = $validator->errors()->first();
-		} else {
-			try {
-				$User = User::where('email', $request->email)->first();
-				if ($User) {
-					if ($request->email) {
-						DB::table('password_reset_tokens')->where('email', $request->email)->delete();
-					}
-					$token = Str::random(64);
-					DB::table('password_reset_tokens')->insert([
-						'email' => $request->email,
-						'token' => $token,
-						'created_at' => Carbon::now()
-					]);
-					$maildata = [
-						'username' => $User->username,
-						'token' => $token,
-						'url' => route('password.reset', [$token, $request->email])
-					];
+    /**
+     * Get authenticated user profile.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function profile(Request $request): JsonResponse
+    {
+        $userResource = new ApiV1UserResource($request->user());
+        $userData = $userResource->resolve();
 
-					Mail::to($request->email)->send(new ResetPasswordEmail($maildata));
-					$success = true;
-					$message =  'Successfully varification code send from you email address, please check your email';
-					$statuscode = 200;
-				} else {
-					$message =  'Please enter registered email address';
-				}
-			} catch (\Exception $e) {
-				$message = $e->getMessage();
-			}
-		}
-		return apiResponce($statuscode, $success, $message, $data);
-	}
+        return $this->sendResponse(array_merge($userData, [
+            'user' => $userResource,
+            'user_details' => $userResource,
+        ]), 'Profile retrieved successfully.');
+    }
 
-	public function ResetPassword(Request $request)
-	{
-		$success = false;
-		$message = 'Something Wrong!';
-		$data = array();
-		$statuscode = 422;
+    /**
+     * Update authenticated user profile.
+     *
+     * @param ApiV1UpdateProfileRequest $request
+     * @return JsonResponse
+     */
+    public function updateProfile(ApiV1UpdateProfileRequest $request): JsonResponse
+    {
+        $result = $this->authService->updateProfile(
+            $request->user(),
+            $request->validated(),
+            $request->file('profile')
+        );
 
-		$rules = [
-			'email' => 'required|email|exists:users,email',
-			'token' => 'required|string',
-			'password' => 'required|min:6',
-			'confirm_password' => 'required|min:6',
-		];
+        $userResource = new ApiV1UserResource($result['user']);
+        $userData = $userResource->resolve();
 
-		$validator = Validator::make($request->all(), $rules);
+        return $this->sendResponse(array_merge($userData, [
+            'user' => $userResource,
+            'user_details' => $userResource,
+        ]), $result['message'], $result['status_code']);
+    }
 
-		if ($validator->fails()) { // Validation fails
-			$message = $validator->errors()->first();
-		} elseif ($request->password != $request->confirm_password) {
-			$message =  'Confirm password is not match';
-		} else {
-			try {
-				$reset = DB::table('password_reset_tokens')
-					->where('email', $request->email)
-					->where('token', $request->token)
-					->first();
+    /**
+     * Update authenticated user password.
+     *
+     * @param ApiV1UpdatePasswordRequest $request
+     * @return JsonResponse
+     */
+    public function updatePassword(ApiV1UpdatePasswordRequest $request): JsonResponse
+    {
+        $result = $this->authService->updatePassword(
+            $request->user(),
+            $request->validated()['current_password'],
+            $request->validated()['new_password']
+        );
 
-				if ($reset) {
-					$createdAt = Carbon::parse($reset->created_at);
-					if ($createdAt->addMinutes(60)->isPast()) {
-						$message = 'Reset token has expired';
-					} else {
-						$User = User::where('email', $request->email)->first();
-						$User->password = Hash::make($request->password);
-						$User->save();
+        if (!$result['success']) {
+            return $this->sendError($result['message'], [], $result['status_code']);
+        }
 
-						DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+        return $this->sendResponse([], $result['message'], $result['status_code']);
+    }
 
-						$success = true;
-						$message = 'Success';
-						$statuscode = 200;
-					}
-				} else {
-					$message = 'Invalid reset token';
-				}
-			} catch (\Exception $e) {
-				$message = $e->getMessage();
-			}
-		}
-		return apiResponce($statuscode, $success, $message, $data);
-	}
+    /**
+     * Logout authenticated user.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function logout(Request $request): JsonResponse
+    {
+        $result = $this->authService->logout($request->user());
 
-	public function googleLogin(Request $request)
-	{
-		$success = false;
-		$message = 'Something Wrong!';
-		$data = array();
-		$statuscode = 422;
-
-		try {
-			$rules = [
-				'email' => 'required|email|max:255',
-			];
-
-			$validator = Validator::make($request->all(), $rules);
-			if ($validator->fails()) {
-				$message = $validator->errors()->first();
-			} else {
-				$email = trim($request->email);
-				$user = User::where('email', $email)->first();
-
-				if (!$user) {
-					$firstName = trim($request->first_name ?? '');
-					$lastName = trim($request->last_name ?? '');
-
-					if (empty($firstName)) {
-						$nameParts = explode('@', $email);
-						$firstName = ucfirst($nameParts[0]);
-					}
-
-					$user = new User();
-					$user->first_name = $firstName;
-					$user->last_name = $lastName;
-					$user->email = $email;
-					$user->role = 'User';
-					$user->password = Hash::make(Str::random(16));
-					$user->save();
-				}
-
-				$token = $user->createToken('Laravel Password Grant Client')->accessToken;
-				$data['user_details'] = $user->apiObject();
-				$data['token'] = $token;
-
-				$statuscode = 200;
-				$success = true;
-				$message = 'Google login successful';
-			}
-		} catch (\Exception $e) {
-			$message = $e->getMessage();
-		}
-		return apiResponce($statuscode, $success, $message, $data);
-	}
-
-	public function logout(Request $request)
-	{
-		$success = false;
-		$message = 'Something Wrong!';
-		$data = array();
-		$statuscode = 422;
-		try {
-			$user = $request->user();
-			$user->tokens()->delete();
-			$success = true;
-			$message =  'Logouted';
-			$statuscode = 200;
-		} catch (\Exception $e) {
-			$message = $e->getMessage();
-		}
-		return apiResponce($statuscode, $success, $message, $data);
-	}
+        return $this->sendResponse([], $result['message'], $result['status_code']);
+    }
 }

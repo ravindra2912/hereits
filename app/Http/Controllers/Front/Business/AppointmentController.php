@@ -18,101 +18,95 @@ use App\Models\AppointmentDepartment;
 use App\Models\BusinessCategory;
 use Illuminate\Support\Facades\Validator;
 use App\Models\BusinessSetting;
-use App\Repositories\AppointmentRepository;
 use App\Services\BusinessAnalyticsService;
+use App\Services\CreditService;
+use App\Services\ExpertService;
 
 class AppointmentController extends Controller
 {
-    public function __construct(protected AppointmentRepository $appointmentRepository) {}
+    public function __construct(
+        protected BusinessAnalyticsService $analyticsService,
+        protected ExpertService $expertService
+    ) {
+    }
 
     public function expertList(Request $request, $business_slug): View
     {
         $business = Business::select('id', 'name', 'slug', 'business_image', 'business_logo', 'address', 'contact', 'latitude', 'longitude', 'facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'seo_description', 'seo_keyword')
             ->where('slug', $business_slug)
+            ->whereHas('businessSetting', function ($query) {
+                $query->where('subscription_expiry_date', '>=', now());
+            })
             ->where('status', 'active')
             ->firstOrFail();
 
         $setting = getBusinessSettings($business->id);
-        if (!$setting->is_appointment_system) {
-            return abort(404);
-        }
 
         $departments = array();
         if ($setting->is_appointment_with_department) {
             $departments = AppointmentDepartment::select('id', 'department_name')->where('business_id', $business->id)->get();
         }
 
-        $limit = 12;
-        $query = Expert::select('id', 'business_id', 'title', 'expert_name', 'expert_image', 'department_id', 'slug', 'rating', 'description', 'is_appointment_book_with_time_slot')
-            ->with(['department'])
+        $query = Expert::select('id', 'business_id', 'user_id', 'title', 'department_id', 'slug', 'rating', 'is_appointment_book_with_time_slot', 'timing_per_appointment')
+            ->with(['department:id,department_name', 'business:id,name,slug', 'user:id,first_name,last_name,profile'])
             ->where('business_id', $business->id)
             ->where('status', 'active');
 
-        if ($request->has('department_id') && !empty($request->department_id)) {
-            $query->where('department_id', $request->department_id);
+        if ($request->has('department') && !empty($request->department) && $request->department != 'all') {
+            $query->where('department_id', $request->department);
         }
 
-        $experts = $query->paginate($limit);
-
-        // in-memory favorite check
-        if (auth()->check()) {
-            $favoriteExpertIds = \App\Models\Favorite::where('user_id', auth()->id())
-                ->where('favorite_type', 'expert')
-                ->pluck('favorite_item_id')
-                ->toArray();
-
-            $collection = $experts instanceof \Illuminate\Pagination\LengthAwarePaginator
-                ? $experts->getCollection()
-                : $experts;
-
-            $collection->each(function ($expert) use ($favoriteExpertIds) {
-                $expert->is_favorited = in_array($expert->id, $favoriteExpertIds);
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', function ($uq) use ($search) {
+                    $uq->where(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%")
+                       ->orWhere('first_name', 'like', "%{$search}%")
+                       ->orWhere('last_name', 'like', "%{$search}%");
+                })->orWhere('title', 'like', "%{$search}%");
             });
         }
 
-        return view('front.business.template1.appointment.experts', compact('business', 'experts', 'setting', 'departments'));
+        $experts = $query->paginate(12);
+
+        return view('front.business.template1.appointment.expert_list', compact('business', 'experts', 'departments', 'setting'));
     }
 
-    public function expertDetails(Request $request, $business_slug, $expert_slug): View
+    public function index(Request $request, $business_slug, $expert_slug = null): View
     {
-        $expert = Expert::select('id', 'business_id', 'title', 'expert_name', 'expert_image', 'department_id', 'slug', 'rating', 'description', 'timing_per_appointment', 'is_appointment_book_with_time_slot', 'appointment_price')
+        $expert = Expert::select('id', 'department_id', 'business_id', 'user_id', 'slug', 'title', 'description', 'rating', 'is_appointment_book_with_time_slot')
             ->with([
-                'department',
+                'user:id,first_name,last_name,profile',
                 'business' => function ($q) {
-                    return $q->select('id', 'name', 'slug', 'address', 'contact', 'rating', 'latitude', 'longitude', 'business_logo', 'facebook', 'twitter', 'instagram', 'linkedin', 'youtube');
+                    return $q->select('id', 'name', 'slug', 'address', 'contact', 'rating', 'latitude', 'longitude', 'business_logo', 'facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'seo_description', 'seo_keyword');
                 },
-                'timings',
-                'specializations:id,name',
-                'languages:id,name',
-                'faqs:id,question,answer,expert_id',
                 'reviews' => function ($q) {
-                    $q->select('id', 'user_id', 'review_on_id', 'review_type', 'rating', 'review', 'created_at')
-                        ->with(['user' => function ($qu) {
-                            $qu->select('id', 'first_name', 'last_name', 'profile_image');
-                        }])
-                        ->where('status', 'approved');
+                    $q->select('id', 'business_id', 'user_id', 'review_on_id', 'rating', 'review', 'created_at')
+                        ->with([
+                            'user' => function ($query) {
+                                $query->select('id', 'first_name', 'last_name', 'profile');
+                            }
+                        ])
+                        ->limit(6);
+                },
+                'timings' => function ($q) {
+                    $q->select('id', 'business_id', 'expert_id', 'day', 'start_time', 'end_time')
+                        ->orderByRaw("FIELD(day, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')");
                 }
             ])
-            ->when(auth()->check(), function ($query) {
-                $query->withExists(['favorites as is_favorited' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }]);
-            })
             ->whereHas('business', function ($q) use ($business_slug) {
-                $q->where('slug', $business_slug);
+                $q->where('slug', $business_slug)
+                    ->whereHas('businessSetting', function ($query) {
+                        $query->where('subscription_expiry_date', '>=', now());
+                    });
             })
             ->where('status', 'active')
             ->where('slug', $expert_slug)
             ->firstOrFail();
 
+        $this->analyticsService->trackView($expert->business_id, 'expert', $expert->id, $request);
+
         if ($expert) {
-            app(BusinessAnalyticsService::class)->trackExpertView($expert, $request);
-
-            $setting = getBusinessSettings($expert->business_id);
-            if (!$setting->is_appointment_system) {
-                return abort(404);
-            }
-
             // review and rating count
             $expert->ReviewAndRating = ReviewAndRating::select(
                 DB::raw('SUM(CASE WHEN rating = "1" THEN 1 ELSE 0 END) as reviewCount1'),
@@ -121,6 +115,8 @@ class AppointmentController extends Controller
                 DB::raw('SUM(CASE WHEN rating = "4" THEN 1 ELSE 0 END) as reviewCount4'),
                 DB::raw('SUM(CASE WHEN rating = "5" THEN 1 ELSE 0 END) as reviewCount5'),
                 DB::raw('COUNT(rating) as totalReview'),
+                // DB::raw('AVG(rating) as avgRating'),
+                // DB::raw('SELECT * FROM review_and_ratings WHERE business_id = '.$business->id.' AND review_type = "business" AND user_id = '.Auth::user()->id.' as is_reviewed'),
             )
                 ->where('review_on_id', $expert->id)
                 ->where('review_type', 'expert')
@@ -128,36 +124,43 @@ class AppointmentController extends Controller
 
             $timeSlots = [];
             if ($expert->is_appointment_book_with_time_slot) {
-                $timeSlots = $this->appointmentRepository->resolveExpertTimeSlots($expert->id, Carbon::now(), null, $expert->business_id);
+                $timeSlots = $this->expertService->getExpertTiming((int) $expert->id, Carbon::now(), null, (int) $expert->business_id);
             }
 
-            $expert->timing = isExpertAvailable($expert->id);
+            $expert->timing = $this->expertService->isExpertAvailable((int) $expert->id, (int) $expert->business_id);
+
+            $setting = getBusinessSettings($expert->business_id);
+
             $expertTimings = $expert->timings->groupBy('day');
 
             return view('front.business.template1.appointment.expert', compact('expert', 'timeSlots', 'setting', 'expertTimings'));
         } else {
-            return abort(404);
+            return view('errors.404');
         }
     }
 
 
     public function board(Request $request, $business_slug, $expert_slug = null): View
     {
-        $expert = Expert::select('id', 'department_id', 'business_id', 'timing_per_appointment', 'expert_image', 'expert_name', 'slug', 'title', 'description')
+        $expert = Expert::select('id', 'department_id', 'business_id', 'user_id', 'timing_per_appointment', 'slug', 'title', 'description')
             ->with([
+                'user:id,first_name,last_name,profile',
                 'business' => function ($q) {
                     return $q->select('id', 'name', 'slug', 'address', 'contact', 'rating', 'latitude', 'longitude', 'business_logo', 'facebook', 'twitter', 'instagram', 'linkedin', 'youtube');
                 }
             ])
             ->whereHas('business', function ($q) use ($business_slug) {
-                $q->where('slug', $business_slug);
+                $q->where('slug', $business_slug)
+                    ->whereHas('businessSetting', function ($query) {
+                        $query->where('subscription_expiry_date', '>=', now());
+                    });
             })
             ->where('status', 'active')
             ->where('slug', $expert_slug)
             ->firstOrFail();
 
         if ($expert) {
-            $timing = isExpertAvailable($expert->id, $expert->business_id);
+            $timing = $this->expertService->isExpertAvailable((int) $expert->id, (int) $expert->business_id);
             $appointmentFirst = null;
             if ($timing['data']) {
                 $appointmentFirst = $timing['data'];
@@ -180,13 +183,167 @@ class AppointmentController extends Controller
         }
     }
 
-    public function getExpertTiming(Request $request)
+    public function getExpertTiming(Request $request, ?string $business_slug = null)
     {
-        return $this->appointmentRepository->getExpertTiming($request);
+        $slots = $this->expertService->getExpertTiming((int) $request->expert_id, (string) $request->date, null, $request->business_id ? (int) $request->business_id : null);
+        return response()->json($slots);
     }
 
-    public function bookAppointment(Request $request)
+    public function bookAppointment(Request $request, CreditService $creditService, ?string $business_slug = null)
     {
-        return $this->appointmentRepository->bookAppointment($request);
+        $success = false;
+        $message = 'Something Wrong!';
+        $redirect = '';
+        $data = array();
+
+        try {
+            DB::beginTransaction();
+
+            $expert = Expert::select('id', 'business_id', 'number_of_bookings_per_day', 'is_appointment_book_with_time_slot', 'is_need_booking_confirmation')
+                ->with(['business:id,business_category_id'])
+                ->where('id', $request->expert_id)
+                ->lockForUpdate() // Lock expert to read stable configuration
+                ->first();
+
+            $rules = [
+                'user_name' => $request->appointment_for == 'other' ? 'required' : 'nullable',
+                'user_contact' => ($request->appointment_for == 'other' ? 'required' : 'nullable') . '|numeric|digits_between:10,12',
+                'booking_date' => 'required|date',
+                'timeslote' => $expert->is_appointment_book_with_time_slot ? 'required' : 'nullable',
+                'expert_id' => 'required',
+                'note' => 'nullable|string|max:250',
+            ];
+
+            $validator = Validator::make($request->all(), $rules);
+
+            if ($validator->fails()) { // Validation fails
+                $message = $validator->errors();
+                // $message = $validator->errors()->first();
+            } else if (Auth::check() == false) {
+                $message = 'pease login form book your appointment';
+            } else {
+
+                try {
+                    $creditService->checkCustomerAppointmentCredit($expert->business_id);
+                } catch (\Exception $e) {
+                    $message = checkResponse($e);
+                    DB::rollBack();
+                    goto LAST;
+                }
+
+                // check business timing 
+                if (!$expert->is_appointment_book_with_time_slot && Carbon::parse($request->booking_date)->isToday()) {
+                    $day = Carbon::now()->format('l');
+                    $now = Carbon::now();
+                    $timings = BusinessTiming::select('id', 'start_time', 'end_time')
+                        ->where('day', $day)
+                        ->where('expert_id', $request->expert_id)
+                        ->where('business_id', $request->business_id)
+                        ->orderBy('start_time', 'asc')
+                        ->get();
+
+                    $startTiming = $timings->first(); // ⬅️ First slot (earliest start_time)
+                    $endTiming = $timings->last();
+
+
+                    if ($startTiming == null || $endTiming == null || !$now->between(Carbon::createFromFormat('H:i:s', $startTiming->start_time), Carbon::createFromFormat('H:i:s', $endTiming->end_time))) {
+                        $message = 'Today appointment is closed, please try next date.';
+                        DB::rollBack();
+                        goto LAST;
+                    }
+                }
+
+                //check same time slot booking with same date
+                if ($expert->is_appointment_book_with_time_slot) {
+                    $timeslote = explode(' - ', $request->timeslote);
+                    $checkBooking = AppointmentBooking::query()
+                        ->where('expert_id', $request->expert_id)
+                        ->whereDate('booking_date', Carbon::parse($request->booking_date))
+                        ->whereTime('slot_start_time', Carbon::parse($timeslote[0])->format('H:i:s'))
+                        ->whereTime('slot_end_time', Carbon::parse($timeslote[1])->format('H:i:s'))
+                        // ->where('status', 'pending')
+                        ->where('business_id', $request->business_id)
+                        ->exists();
+
+                    if ($checkBooking) {
+                        $message = 'This time slot is already booked, please try another time slot.';
+                        DB::rollBack();
+                        goto LAST;
+                    }
+                } else {
+                    // check maximum booking
+                    if ($expert) {
+                        $getAllbooking = AppointmentBooking::select('id', 'token_number')
+                            ->where('expert_id', $request->expert_id)
+                            ->whereDate('booking_date', Carbon::parse($request->booking_date))
+                            ->where('status', 'pending')
+                            ->where('business_id', $request->business_id)
+                            ->lockForUpdate() // Prevent race condition on count check
+                            ->count();
+
+                        if ($expert->number_of_bookings_per_day > 0 && $getAllbooking >= $expert->number_of_bookings_per_day) {
+                            $message = 'Sorry! This expert has already booked the maximum number of booking for this date.';
+                            DB::rollBack();
+                            return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
+                        }
+                    }
+                }
+
+
+
+                $getLastToken = AppointmentBooking::where('expert_id', $request->expert_id)
+                    ->whereDate('booking_date', Carbon::parse($request->booking_date))
+                    ->where('business_id', $request->business_id)
+                    ->lockForUpdate() // Lock to ensure token number is sequential and safe
+                    ->orderBy('token_number', 'desc')
+                    ->first();
+
+                if ($getLastToken) {
+                    $tokenNumber = $getLastToken->token_number + 1;
+                } else {
+                    $tokenNumber = 1;
+                }
+                $insert = new AppointmentBooking();
+                $insert->business_id  = $request->business_id;
+                $insert->user_id = Auth::user() ? Auth::user()->id : null;
+                $insert->token_number  = $tokenNumber;
+                $insert->department_id = $request->department_id;
+                $insert->expert_id = $request->expert_id;
+                if ($request->appointment_for == 'self') {
+                    $insert->user_name = Auth::user()->first_name . ' ' . Auth::user()->last_name;
+                    $insert->user_contact = Auth::user()->contact;
+                } else {
+                    $insert->user_name = $request->user_name;
+                    $insert->user_contact = $request->user_contact;
+                }
+                $insert->appointment_for = $request->appointment_for;
+                $insert->booking_date = $request->booking_date;
+                $insert->note = $request->note;
+
+                if ($expert->is_appointment_book_with_time_slot) {
+                    $timeslote = explode(' - ', $request->timeslote);
+                    $insert->slot_start_time = Carbon::parse($request->booking_date . ' ' . $timeslote[0]);
+                    $insert->slot_end_time = Carbon::parse($request->booking_date . ' ' . $timeslote[1]);
+                }
+                $insert->status =  $expert->is_need_booking_confirmation ? 'pending' : 'confirmed';
+                $insert->save();
+
+                $data['status_url'] = route('account.booking.details', $insert->id);
+
+                // Deduct credit
+                $creditService->deductCustomerAppointmentCharge($expert->business_id);
+
+
+                $success = true;
+                $message = 'Appointment Book Successfully.';
+                DB::commit();
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // dd($e);
+            $message = checkResponse($e);
+        }
+        LAST:
+        return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
 }

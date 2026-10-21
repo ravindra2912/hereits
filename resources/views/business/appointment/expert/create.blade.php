@@ -31,11 +31,11 @@
           <div class="text-center mb-4">
             <div class="avtar-upload">
               <div class="avtar-edit">
-                <input type="file" name="expert_image" class="img-hide required" id="profile" accept="image/png, image/webp, image/jpeg" />
+                <input type="file" name="expert_image" class="img-hide" id="profile" accept="image/png, image/webp, image/jpeg" />
                 <label for="profile"><i class="bi bi-camera-fill"></i></label>
               </div>
               <div class="avtar-preview">
-                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage('') }}" id="preview-image" alt="Expert Image" loading="lazy" />
+                <img src="{{ getImage('') }}" id="preview-image" alt="Expert Image" loading="lazy" />
               </div>
             </div>
             <div class="small text-muted mt-2">Professional photo recommended</div>
@@ -43,19 +43,27 @@
 
           <div class="mb-3">
             <label class="form-label fw-bold">Email Address <span class="text-danger">*</span></label>
-            <div class="input-group">
-              <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
-              <input type="email" class="form-control border-start-0 required" name="email" placeholder="expert@example.com" autocomplete="off" />
+            <div class="position-relative">
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+                <input type="email" class="form-control border-start-0 required pe-5" id="expert_email" name="email" placeholder="expert@example.com" autocomplete="off" />
+              </div>
+              <span id="email-check-spinner" class="spinner-border spinner-border-sm text-primary position-absolute end-0 top-50 translate-middle-y me-3 d-none" role="status" aria-hidden="true" style="z-index: 5;"></span>
             </div>
-            <div class="form-text small">Used for expert workspace login.</div>
+            <div id="user-status-container" class="mt-2" style="display: none;"></div>
+            <div class="form-text small" id="email-default-help">Used to check or link User account.</div>
           </div>
 
           <div class="mb-0">
-            <label class="form-label fw-bold">Password <span class="text-danger">*</span></label>
-            <div class="input-group">
+            <label class="form-label fw-bold" id="password-label">Password <span class="text-danger">*</span></label>
+            <div class="input-group position-relative">
               <span class="input-group-text bg-light border-end-0"><i class="bi bi-key text-muted"></i></span>
-              <input type="password" class="form-control border-start-0 required" name="password" placeholder="Minimum 6 characters" autocomplete="new-password" />
+              <input type="password" class="form-control border-start-0 required pe-5" id="expert_password" name="password" placeholder="Minimum 6 characters" autocomplete="new-password" />
+              <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-muted text-decoration-none pe-3 toggle-password-visibility" tabindex="-1" style="z-index: 5;">
+                <i class="bi bi-eye"></i>
+              </button>
             </div>
+            <div class="form-text small" id="password-help-text">Enter password to authenticate / create user.</div>
           </div>
         </div>
       </div>
@@ -70,8 +78,13 @@
         <div class="card-body">
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label fw-bold">Full Name <span class="text-danger">*</span></label>
-              <input type="text" class="form-control required" name="expert_name" placeholder="Enter expert name" />
+              <label class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control required" id="first_name" name="first_name" placeholder="Enter first name" />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Last Name</label>
+              <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Enter last name" />
             </div>
 
             <div class="col-md-6">
@@ -172,6 +185,118 @@
       }
       reader.readAsDataURL(input.files[0]);
     }
-  })
+  });
+
+  // Password visibility toggle
+  $(document).on('click', '.toggle-password-visibility', function(e) {
+    e.preventDefault();
+    var input = $('#expert_password');
+    var icon = $(this).find('i');
+    if (input.attr('type') === 'password') {
+      input.attr('type', 'text');
+      icon.removeClass('bi-eye').addClass('bi-eye-slash');
+    } else {
+      input.attr('type', 'password');
+      icon.removeClass('bi-eye-slash').addClass('bi-eye');
+    }
+  });
+
+  // Dynamic user email check
+  var emailCheckTimeout = null;
+  var emailCheckXHR = null;
+
+  function resetPasswordState() {
+    $('#password-label').html('Password <span class="text-danger">*</span>');
+    $('#expert_password').attr('placeholder', 'Minimum 6 characters');
+    $('#password-help-text').text('Enter password to authenticate / create user.');
+    $('#user-status-container').hide().empty();
+    $('#preview-image').attr('src', "{{ getImage('') }}");
+    $('.btn_action').prop('disabled', false);
+  }
+
+  $('#expert_email').on('input', function() {
+    var email = $(this).val().trim();
+    clearTimeout(emailCheckTimeout);
+
+    if (emailCheckXHR) {
+      emailCheckXHR.abort();
+      emailCheckXHR = null;
+    }
+
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (email && emailRegex.test(email)) {
+      $('#email-check-spinner').removeClass('d-none');
+
+      emailCheckTimeout = setTimeout(function() {
+        emailCheckXHR = $.ajax({
+          url: "{{ route('business.appointment.expert.check-user') }}",
+          type: "POST",
+          data: {
+            email: email,
+            _token: "{{ csrf_token() }}"
+          },
+          success: function(response) {
+            if (response.success) {
+              if (response.exists) {
+                if (response.already_expert) {
+                  $('#user-status-container').html(
+                    '<div class="alert alert-danger py-2 px-3 small mb-0 d-flex align-items-center">' +
+                    '<i class="bi bi-exclamation-triangle-fill me-2 fs-6"></i>' +
+                    '<span>This user is already registered as an expert.</span>' +
+                    '</div>'
+                  ).slideDown();
+                  $('.btn_action').prop('disabled', true);
+                  $('#password-label').html('Current Password <span class="text-danger">*</span>');
+                  $('#expert_password').attr('placeholder', 'Enter user\'s current password');
+                  $('#password-help-text').text('User already added in this business.');
+                } else {
+                  var userName = response.user?.name || 'Registered User';
+                  $('#user-status-container').html(
+                    '<div class="alert alert-success py-2 px-3 small mb-0 d-flex align-items-center">' +
+                    '<i class="bi bi-person-check-fill me-2 fs-6"></i>' +
+                    '<span>User found: <strong>' + userName + '</strong>. Enter their <strong>current password</strong> to link this expert.</span>' +
+                    '</div>'
+                  ).slideDown();
+                  $('.btn_action').prop('disabled', false);
+                  $('#password-label').html('Current Password <span class="text-danger">*</span>');
+                  $('#expert_password').attr('placeholder', 'Enter user\'s current password');
+                  $('#password-help-text').text('Enter this user\'s current password to authenticate and link the account.');
+
+                  // Pre-fill first and last name if empty
+                  if ($('#first_name').val().trim() === '' && response.user?.first_name) {
+                    $('#first_name').val(response.user.first_name);
+                  }
+                  if ($('#last_name').val().trim() === '' && response.user?.last_name) {
+                    $('#last_name').val(response.user.last_name);
+                  }
+
+                  // Pre-fill profile image if user already has one
+                  if (response.user?.profile) {
+                    $('#preview-image').attr('src', response.user.profile);
+                  }
+                }
+              } else {
+                $('#user-status-container').slideUp(200, function() {
+                  $(this).empty();
+                });
+                $('.btn_action').prop('disabled', false);
+                $('#password-label').html('Password <span class="text-danger">*</span>');
+                $('#expert_password').attr('placeholder', 'Minimum 6 characters');
+                $('#password-help-text').text('Enter password for this new user account.');
+              }
+            }
+          },
+          complete: function() {
+            $('#email-check-spinner').addClass('d-none');
+            emailCheckXHR = null;
+          }
+        });
+      }, 350);
+    } else {
+      $('#email-check-spinner').addClass('d-none');
+      resetPasswordState();
+    }
+  });
 </script>
 @endpush

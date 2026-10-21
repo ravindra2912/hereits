@@ -10,15 +10,19 @@ class Expert extends Authenticatable
 {
     use SoftDeletes, Notifiable;
 
-    protected $guarded = [];
+    protected $guarded = [
+        'id',
+        'business_id',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
 
     protected $hidden = [
-        'password',
         'remember_token',
     ];
 
     protected $casts = [
-        'password' => 'hashed',
         'is_appointment_book_with_time_slot' => 'boolean',
         'is_need_booking_confirmation' => 'boolean',
         'is_default' => 'boolean',
@@ -44,13 +48,13 @@ class Expert extends Authenticatable
         return $this->hasMany(ReviewAndRating::class, 'review_on_id', 'id')->where('review_type', 'expert');
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id')->select('id', 'first_name', 'last_name', 'email', 'profile');
+    }
+
     public function timings()
     {
         return $this->hasMany(BusinessTiming::class, 'expert_id', 'id');
-    }
-
-    public function favorites()
-    {
-        return $this->hasMany(Favorite::class, 'favorite_item_id', 'id')->where('favorite_type', 'expert');
     }
 }

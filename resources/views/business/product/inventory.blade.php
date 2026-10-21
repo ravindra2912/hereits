@@ -26,7 +26,7 @@
                 <select class="form-select form-select-sm border-0 bg-light rounded-pill px-3" id="category_filter" style="width: 180px;">
                     <option value="">All Categories</option>
                     @foreach($categories as $category)
-                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                    <option value="{{ $category->id }}">{{ $category->display_name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -91,6 +91,15 @@
 <script>
     $(function() {
         var table = $('#inventory-table').DataTable({
+            stateSave: true,
+            stateSaveParams: function(settings, data) {
+                data.category_id = $('#category_filter').val();
+            },
+            stateLoadParams: function(settings, data) {
+                if (data.category_id !== undefined) {
+                    $('#category_filter').val(data.category_id);
+                }
+            },
             processing: true,
             serverSide: true,
             ajax: {
@@ -150,7 +159,7 @@
         });
 
         $('#category_filter').change(function() {
-            table.draw();
+            table.page('first').draw('page');
         });
 
         $('#addQtyForm').on('submit', function(e) {

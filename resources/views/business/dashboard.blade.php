@@ -44,7 +44,7 @@
     </div>
     @endif
 
-    @if ($businessSettings->is_appointment_system && checkBusinessPermission('appointments', 'appointments', 'view'))
+    @if ($businessSettings->is_appointment_system && checkBusinessPermission('view_appointments'))
     <div class="col-xl-3 col-md-6 col-6 mb-4">
       <a href="{{ route('business.appointment.bookings.index') }}" class="text-decoration-none col-card">
         <div class="card border-0 shadow-sm h-100 rounded-4 transition-all hover-lift">
@@ -59,8 +59,8 @@
       </a>
     </div>
     @endif
-
-    @if ($businessSettings->is_ecommerce_system && checkBusinessPermission('product', 'products', 'view'))
+ 
+    @if ($businessSettings->is_ecommerce_system && checkBusinessPermission('view_products'))
     <div class="col-xl-3 col-md-6 col-6 mb-4">
       <a href="{{ route('business.product.index') }}" class="text-decoration-none col-card">
         <div class="card border-0 shadow-sm h-100 rounded-4 transition-all hover-lift">
@@ -75,8 +75,8 @@
       </a>
     </div>
     @endif
-
-    @if ($businessSettings->is_service_system && checkBusinessPermission('service', 'service_list', 'view'))
+ 
+    @if ($businessSettings->is_service_system && checkBusinessPermission('view_services'))
     <div class="col-xl-3 col-md-6 col-6 mb-4">
       <a href="{{ route('business.service.index') }}" class="text-decoration-none col-card">
         <div class="card border-0 shadow-sm h-100 rounded-4 transition-all hover-lift">
@@ -91,8 +91,8 @@
       </a>
     </div>
     @endif
-
-    @if (checkBusinessPermission('customers'))
+ 
+    @if (Auth::user()->role === 'Business')
     <div class="col-xl-3 col-md-6 col-6 mb-4">
       <a href="{{ route('business.appointment.customers.index') }}" class="text-decoration-none col-card">
         <div class="card border-0 shadow-sm h-100 rounded-4 transition-all hover-lift">
@@ -115,34 +115,35 @@
     <div class="col-12">
       <div class="sidebar-heading text-secondary text-uppercase fw-bold mb-3" style="font-size: 0.85rem; letter-spacing: 1px;">Management Tools</div>
     </div>
-
-    @if ($businessSettings->is_appointment_system && checkBusinessPermission('appointments', 'experts', 'view'))
-    <div class="col-lg-3 col-md-4 col-6 mb-4">
-      <a href="{{ route('business.appointment.expert.index') }}" class="text-decoration-none">
-        <div class="card border-0 shadow-sm rounded-4 hover-lift">
-          <div class="card-body p-3 text-center">
-            <i class="bi bi-person-badge fs-3 text-secondary mb-2 d-xl-block"></i>
-            <span class="d-block fw-bold text-dark small">Experts</span>
+    @if ($businessSettings->is_appointment_system)
+      @if(checkBusinessPermission('view_experts'))
+      <div class="col-lg-3 col-md-4 col-6 mb-4">
+        <a href="{{ route('business.appointment.expert.index') }}" class="text-decoration-none">
+          <div class="card border-0 shadow-sm rounded-4 hover-lift">
+            <div class="card-body p-3 text-center">
+              <i class="bi bi-person-badge fs-3 text-secondary mb-2 d-xl-block"></i>
+              <span class="d-block fw-bold text-dark small">Experts</span>
+            </div>
           </div>
-        </div>
-      </a>
-    </div>
+        </a>
+      </div>
+      @endif
+      
+      @if ($businessSettings->is_appointment_with_department && checkBusinessPermission('view_department'))
+      <div class="col-lg-3 col-md-4 col-6 mb-4">
+        <a href="{{ route('business.appointment.department.index') }}" class="text-decoration-none">
+          <div class="card border-0 shadow-sm rounded-4 hover-lift">
+            <div class="card-body p-3 text-center">
+              <i class="bi bi-diagram-3 fs-3 text-secondary mb-2 d-xl-block"></i>
+              <span class="d-block fw-bold text-dark small">Departments</span>
+            </div>
+          </div>
+        </a>
+      </div>
+      @endif
     @endif
 
-    @if ($businessSettings->is_appointment_system && $businessSettings->is_appointment_with_department && checkBusinessPermission('appointments', 'department', 'view'))
-    <div class="col-lg-3 col-md-4 col-6 mb-4">
-      <a href="{{ route('business.appointment.department.index') }}" class="text-decoration-none">
-        <div class="card border-0 shadow-sm rounded-4 hover-lift">
-          <div class="card-body p-3 text-center">
-            <i class="bi bi-diagram-3 fs-3 text-secondary mb-2 d-xl-block"></i>
-            <span class="d-block fw-bold text-dark small">Departments</span>
-          </div>
-        </div>
-      </a>
-    </div>
-    @endif
-
-    @if (checkBusinessPermission('store_management', 'gallery', 'view'))
+    @if(checkBusinessPermission('view_gallery'))
     <div class="col-lg-3 col-md-4 col-6 mb-4">
       <a href="{{ route('business.gallery.index') }}" class="text-decoration-none">
         <div class="card border-0 shadow-sm rounded-4 hover-lift">
@@ -154,8 +155,8 @@
       </a>
     </div>
     @endif
-
-    @if (checkBusinessPermission('analytics'))
+    
+    @if(Auth::user()->role === 'Business')
     <div class="col-lg-3 col-md-4 col-6 mb-4">
       <a href="{{ route('business.analytics') }}" class="text-decoration-none">
         <div class="card border-0 shadow-sm rounded-4 hover-lift">
@@ -167,7 +168,6 @@
       </a>
     </div>
     @endif
-
   </div>
 
   <!-- Settings Group -->
@@ -175,8 +175,8 @@
     <div class="col-12">
       <div class="sidebar-heading text-secondary text-uppercase fw-bold mb-3" style="font-size: 0.85rem; letter-spacing: 1px;">Configuration</div>
     </div>
-
-    @if (Auth::user()->role === 'Business')
+    
+    @if(Auth::user()->role === 'Business')
     <div class="col-md-4 mb-4">
       <a href="{{ route('business.setting.business') }}" class="text-decoration-none">
         <div class="card border-0 shadow-sm rounded-4 bg-light hover-lift">
@@ -192,9 +192,7 @@
         </div>
       </a>
     </div>
-    @endif
-
-    @if (checkBusinessPermission('store_management', 'timing', 'view'))
+    
     <div class="col-md-4 mb-4">
       <a href="{{ route('business.setting.business.timing') }}" class="text-decoration-none">
         <div class="card border-0 shadow-sm rounded-4 bg-light hover-lift">
@@ -211,7 +209,7 @@
       </a>
     </div>
     @endif
-
+    
     <div class="col-md-4 mb-4">
       <a href="{{ route('business.setting.profile') }}" class="text-decoration-none">
         <div class="card border-0 shadow-sm rounded-4 bg-light hover-lift">
@@ -228,7 +226,7 @@
       </a>
     </div>
 
-    @if (Auth::user()->role === 'Business')
+    @if(Auth::user()->role === 'Business')
     <div class="col-md-4 mb-4">
       <a href="{{ route('business.setting.business.configuration') }}" class="text-decoration-none">
         <div class="card border-0 shadow-sm rounded-4 bg-light hover-lift">
@@ -260,68 +258,6 @@
           </div>
         </div>
       </a>
-    </div>
-  </div>
-
-  <!-- Floating Share Button -->
-  <div class="floating-share-btn shadow-lg" data-bs-toggle="modal" data-bs-target="#shareDashboardModal" title="Share Business">
-    <i class="bi bi-share-fill"></i>
-  </div>
-
-  <!-- Share Modal -->
-  <div class="modal fade" id="shareDashboardModal" tabindex="-1" aria-labelledby="shareDashboardModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow rounded-4">
-        <div class="modal-header border-bottom-0 pb-0">
-          <h5 class="modal-title fw-bold" id="shareDashboardModalLabel">Share Business</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body p-4">
-          <p class="text-muted mb-4">Share your business link with customers to grow your reach.</p>
-
-          <label class="form-label small fw-bold text-uppercase text-muted">Public URL</label>
-          <div class="mb-4">
-            <input type="text" id="shareUrlInput" class="form-control form-control-lg bg-light" value="{{ route('business-details', $businessDetails->slug) }}" readonly>
-          </div>
-
-          <div class="d-grid gap-3">
-            <button type="button" class="btn btn-outline-success rounded-pill py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#whatsappShareModal">
-              <i class="bi bi-whatsapp me-2"></i>Share on WhatsApp
-            </button>
-            <button type="button" class="btn btn-outline-primary rounded-pill py-2 fw-bold" id="copyShareLink">
-              <i class="bi bi-link-45deg me-2"></i>Copy Link
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- WhatsApp Share Modal -->
-  <div class="modal fade" id="whatsappShareModal" tabindex="-1" aria-labelledby="whatsappShareModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow rounded-4">
-        <div class="modal-header border-bottom-0 pb-0">
-          <h5 class="modal-title fw-bold" id="whatsappShareModalLabel">Share via WhatsApp</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body p-4">
-          <p class="text-muted mb-4">Enter the contact number (with country code) to share your business link.</p>
-          <div class="mb-3">
-            <label for="whatsappNumber" class="form-label small fw-bold text-uppercase text-muted">Contact Number</label>
-            <div class="input-group">
-              <span class="input-group-text bg-light border-end-0"><i class="bi bi-telephone"></i></span>
-              <input type="number" class="form-control bg-light border-start-0" id="whatsappNumber" placeholder="Enter contact number here">
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer border-top-0 pt-0">
-          <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-success rounded-pill px-4 fw-bold" id="submitWhatsappShare">
-            <i class="bi bi-share me-2"></i>Share
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -365,74 +301,6 @@
   .col-card:hover .card {
     border-bottom: 4px solid var(--primary-color) !important;
   }
-
-  .floating-share-btn {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0d6efd 0%, #0043a8 100%);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    cursor: pointer;
-    z-index: 1050;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 10px 20px rgba(13, 110, 253, 0.3);
-  }
-
-  .floating-share-btn:hover {
-    transform: scale(1.1) rotate(5deg);
-    box-shadow: 0 15px 30px rgba(13, 110, 253, 0.4);
-    color: white;
-  }
-
-  @media (max-width: 767.98px) {
-    .floating-share-btn {
-      bottom: 20px;
-      right: 20px;
-      width: 55px;
-      height: 55px;
-      font-size: 22px;
-    }
-  }
 </style>
-
-@push('js')
-<script>
-  $(document).ready(function() {
-    $('#copyShareLink').click(function() {
-      var url = $('#shareUrlInput').val();
-      var $temp = $("<input>");
-      $("body").append($temp);
-      $temp.val(url).select();
-      document.execCommand("copy");
-      $temp.remove();
-      toastr.success("Link copied to clipboard");
-    });
-
-    $('#submitWhatsappShare').click(function() {
-      var number = $('#whatsappNumber').val();
-      var url = $('#shareUrlInput').val();
-
-      if (!number) {
-        toastr.error("Please enter a contact number");
-        return;
-      }
-
-      number = number.replace(/\D/g, '');
-      var whatsappUrl = "https://wa.me/91" + number + "?text=" + encodeURIComponent("Check out my business: " + url);
-      window.open(whatsappUrl, '_blank');
-
-      var modal = bootstrap.Modal.getInstance(document.getElementById('whatsappShareModal'));
-      modal.hide();
-    });
-  });
-</script>
-@endpush
 
 @endsection

@@ -73,7 +73,7 @@
         <div class="col-md-4 text-center">
           <label class="form-label fw-bold text-muted small text-uppercase mb-3 d-block">Business Logo</label>
           <div class="avtar mx-auto bg-light rounded-circle" style="width: 150px; height: 150px;">
-            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_logo) }}" id="logo_preview" class="avtar_img rounded-circle border border-4 border-white w-100 h-100 object-fit-contain shadow-sm" alt="Business Logo" loading="lazy" />
+            <img src="{{ getImage($business->business_logo) }}" id="logo_preview" class="avtar_img rounded-circle border border-4 border-white w-100 h-100 object-fit-contain shadow-sm" alt="Business Logo" loading="lazy" />
             <label for="business_logo" title="Change Logo" class="bg-primary text-white p-2 rounded-circle shadow-sm" style="bottom: 0px; right: 0px;"><i class="bi bi-camera-fill"></i></label>
             <input type="file" name="business_logo" class="avtar_input logo_input" id="business_logo" accept="image/png, image/webp, image/jpeg" />
           </div>
@@ -81,7 +81,7 @@
         <div class="col-md-8">
           <label class="form-label fw-bold text-muted small text-uppercase mb-3 d-block text-center text-md-start">Business Banner</label>
           <div class="avtar mx-left bg-light rounded-4" style="width: 100%; aspect-ratio: 21/9; max-height: 250px;">
-            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image) }}" id="banner_preview" class="avtar_img rounded-4 border border-4 border-white w-100 h-100 object-fit-contain shadow-sm" alt="Business Image" loading="lazy" />
+            <img src="{{ getImage($business->business_image) }}" id="banner_preview" class="avtar_img rounded-4 border border-4 border-white w-100 h-100 object-fit-contain shadow-sm" alt="Business Image" loading="lazy" />
             <label for="profile" title="Change Image" class="bg-primary text-white p-2 rounded-circle shadow-sm" style="top: 10px; right: 10px;"><i class="bi bi-camera-fill"></i></label>
             <input type="file" name="business_image" class="avtar_input banner_input" id="profile" accept="image/png, image/webp, image/jpeg" />
           </div>
@@ -131,12 +131,6 @@
               <option value="{{ $type }}" {{ $business->business_type == $type ? 'selected':'' }}>{{ $type }}</option>
               @endforeach
             </select>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="mb-3">
-            <label class="form-label small fw-bold">Referral Code</label>
-            <input type="text" class="form-control" value="{{ $business->user_referral_code }}" name="user_referral_code" placeholder="Referral Code (Optional)" />
           </div>
         </div>
         <div class="col-md-3">
@@ -320,22 +314,57 @@
           </div>
 
           <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 transition-hover border-active">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 transition-hover">
               <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
-                  <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary me-3">
-                    <i class="bi bi-eye-fill fs-4 text-primary"></i>
+                  <div class="rounded-circle bg-warning bg-opacity-10 p-3 text-warning me-3">
+                    <i class="bi bi-gift-fill fs-4"></i>
                   </div>
                   <div>
-                    <h6 class="mb-0 fw-bold">Visibility</h6>
-                    <small class="text-muted">Public/Private Mode</small>
+                    <h6 class="mb-0 fw-bold">Lucky Draw</h6>
+                    <small class="text-muted">Scratch Card System</small>
                   </div>
                 </div>
                 <div class="form-check form-switch m-0">
-                    <select name="visibility" class="form-select form-select-sm border-0 shadow-none bg-light fw-bold" style="width: auto;">
-                        <option value="public" {{ $setting->visibility == 'public' ? 'selected' : '' }}>Public</option>
-                        <option value="private" {{ $setting->visibility == 'private' ? 'selected' : '' }}>Private</option>
-                    </select>
+                  <input class="form-check-input custom-switch" type="checkbox" role="switch" name="is_lucky_draw" id="is_lucky_draw" {{ !empty($setting->is_lucky_draw) ? 'checked' : '' }}>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 transition-hover">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                  <div class="rounded-circle bg-primary bg-opacity-10 p-3 text-primary me-3">
+                    <i class="bi bi-patch-check-fill fs-4 text-success"></i>
+                  </div>
+                  <div>
+                    <h6 class="mb-0 fw-bold">Verified Business</h6>
+                    <small class="text-muted">Verification Status</small>
+                  </div>
+                </div>
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input custom-switch" type="checkbox" role="switch" name="is_verified" {{ $setting->is_verified ? 'checked' : '' }}>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 transition-hover">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                  <div class="rounded-circle bg-secondary bg-opacity-10 p-3 text-secondary me-3">
+                    <i class="bi bi-shield-lock-fill fs-4"></i>
+                  </div>
+                  <div>
+                    <h6 class="mb-0 fw-bold">Private Business</h6>
+                    <small class="text-muted">Visibility & Privacy</small>
+                  </div>
+                </div>
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input custom-switch" type="checkbox" role="switch" name="is_private" id="is_private" {{ ($setting->is_private ?? true) ? 'checked' : '' }}>
                 </div>
               </div>
             </div>
@@ -352,7 +381,7 @@
         </div>
         <div class="card border-0 shadow-sm rounded-4 p-4">
           <div class="row g-4 align-items-end">
-            <div class="col-md-6">
+            <div class="col-md-3">
               <label class="form-label fw-bold small text-muted">Feature: Product Import/Export</label>
               <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
                 <div class="form-check form-switch m-0">
@@ -361,40 +390,148 @@
                 <span class="small fw-semibold">Enabled</span>
               </div>
             </div>
-            <div class="col-md-6">
-              <label class="form-label fw-bold small text-muted">Feature: Share Products to Business</label>
+            <div class="col-md-3">
+              <label class="form-label fw-bold small text-muted">Feature: Update Stock & Price (Excel)</label>
               <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
                 <div class="form-check form-switch m-0">
-                  <input class="form-check-input" type="checkbox" role="switch" name="is_share_products_to_business" {{ $setting->is_share_products_to_business ? 'checked' : '' }}>
+                  <input class="form-check-input" type="checkbox" role="switch" name="is_update_stock_and_price_using_exel" id="is_update_stock_and_price_using_exel" {{ $setting->is_update_stock_and_price_using_exel ? 'checked' : '' }}>
                 </div>
                 <span class="small fw-semibold">Enabled</span>
               </div>
             </div>
-            <div class="col-md-6">
-              <label class="form-label fw-bold small text-muted">Feature: Manual Order Credit Deduction</label>
+            <div class="col-md-3">
+              <label class="form-label fw-bold small text-muted">Feature: Label System</label>
               <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
                 <div class="form-check form-switch m-0">
-                  <input class="form-check-input" type="checkbox" role="switch" name="is_order_creadit_diduct_manual" id="is_order_creadit_diduct_manual" {{ $setting->is_order_creadit_diduct_manual ? 'checked' : '' }}>
+                  <input class="form-check-input" type="checkbox" role="switch" name="is_label" id="admin_is_label" {{ $setting->is_label ? 'checked' : '' }}>
                 </div>
                 <span class="small fw-semibold">Enabled</span>
               </div>
             </div>
-            <div class="row g-4 mt-2 order_credit_deduction_fields" style="display: {{ $setting->is_order_creadit_diduct_manual ? 'flex' : 'none' }};">
-              <div class="col-md-6">
-                <label class="form-label fw-bold small text-muted">Usage: Customer Order Cost</label>
-                <div class="input-group mb-3 mb-md-0">
-                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-cart-dash text-danger"></i></span>
-                  <input type="number" class="form-control border-start-0 ps-0" name="deduct_credit_per_customer_order" value="{{ $setting->deduct_credit_per_customer_order ?? 1 }}" min="0" step="0.01">
-                  <span class="input-group-text bg-light">Credits / order</span>
+            <div class="col-md-3">
+              <label class="form-label fw-bold small text-muted">Feature: Order Placement</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" role="switch" name="is_order_place_on_website" id="is_order_place_on_website" {{ $setting->is_order_place_on_website ? 'checked' : '' }}>
+                </div>
+                <span class="small fw-semibold">Enabled</span>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold small text-muted">Feature: Product Sharing</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" role="switch" name="is_share_products_to_business" id="is_share_products_to_business" {{ $setting->is_share_products_to_business ? 'checked' : '' }}>
+                </div>
+                <span class="small fw-semibold">Enabled</span>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold small text-muted">Feature: Customer Group Offer</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" role="switch" name="is_offer_with_customer_group" id="is_offer_with_customer_group" {{ $setting->is_offer_with_customer_group ? 'checked' : '' }}>
+                </div>
+                <span class="small fw-semibold">Enabled</span>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold small text-muted">Feature: WhatsApp Inquiry Quotation</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" role="switch" name="is_create_quotation_on_inquiry" id="admin_is_create_quotation_on_inquiry" {{ !empty($setting->is_create_quotation_on_inquiry) ? 'checked' : '' }}>
+                </div>
+                <span class="small fw-semibold">Enabled</span>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-bold small text-muted">Feature: Login Required (Checkout & Inquiry)</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" role="switch" name="is_login_required" id="admin_is_login_required" {{ (!empty($setting->is_login_required) || !empty($setting->is_login_requird)) ? 'checked' : '' }}>
+                </div>
+                <span class="small fw-semibold">Enabled</span>
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
+          <div class="row g-4">
+            <!-- Delivery Charges -->
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-muted">Delivery Charges</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light mb-3">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" role="switch" name="show_delivery_charges" id="admin_show_delivery_charges" {{ $setting->show_delivery_charges ? 'checked' : '' }}>
+                </div>
+                <span class="small fw-semibold">Enable Delivery Charges</span>
+              </div>
+              <div class="admin_delivery_charges_fields" style="display: {{ $setting->show_delivery_charges ? 'block' : 'none' }};">
+                <div class="mb-2">
+                  <label class="form-label small fw-bold text-muted mb-1">Same State (per kg)</label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white">₹</span>
+                    <input type="number" step="0.01" class="form-control" name="same_state_shipping_charge_per_kg" value="{{ $setting->same_state_shipping_charge_per_kg ?? 40.00 }}">
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label small fw-bold text-muted mb-1">Other State (per kg)</label>
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-white">₹</span>
+                    <input type="number" step="0.01" class="form-control" name="other_state_shipping_charge_per_kg" value="{{ $setting->other_state_shipping_charge_per_kg ?? 90.00 }}">
+                  </div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold small text-muted">Usage: Self / POS Order Cost</label>
-                <div class="input-group">
-                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-cart-check text-success"></i></span>
-                  <input type="number" class="form-control border-start-0 ps-0" name="deduct_credit_per_self_order" value="{{ $setting->deduct_credit_per_self_order ?? 1 }}" min="0" step="0.01">
-                  <span class="input-group-text bg-light">Credits / order</span>
+            </div>
+
+            <!-- Online Payments -->
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-muted">Online Payments</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light mb-3">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" role="switch" name="accept_online_payments" id="admin_accept_online_payments" {{ $setting->accept_online_payments ? 'checked' : '' }}>
                 </div>
+                <span class="small fw-semibold">Accept Online Payments</span>
+              </div>
+              <div class="admin_online_payments_fields" style="display: {{ $setting->accept_online_payments ? 'block' : 'none' }};">
+                <div class="mb-2">
+                  <label class="form-label small fw-bold text-muted mb-1">Payment Method</label>
+                  <select class="form-select form-select-sm" name="online_payment_method" id="admin_online_payment_method">
+                    <option value="manual_upi" {{ (($paymentConfig->payment_method ?? $setting->online_payment_method ?? 'manual_upi') == 'manual_upi') ? 'selected' : '' }}>Manual UPI</option>
+                    <option value="razorpay" {{ (($paymentConfig->payment_method ?? $setting->online_payment_method ?? '') == 'razorpay') ? 'selected' : '' }}>Razorpay</option>
+                  </select>
+                </div>
+                <div class="admin_upi_id_fields" style="display: {{ (($paymentConfig->payment_method ?? $setting->online_payment_method ?? 'manual_upi') == 'manual_upi') ? 'block' : 'none' }};">
+                  <label class="form-label small fw-bold text-muted mb-1">UPI ID</label>
+                  <input type="text" class="form-control form-control-sm" name="upi_id" placeholder="example@upi" value="{{ $paymentConfig->upi_id ?? $setting->upi_id ?? '' }}">
+                </div>
+                <div class="admin_razorpay_fields mt-2" style="display: {{ (($paymentConfig->payment_method ?? $setting->online_payment_method ?? '') == 'razorpay') ? 'block' : 'none' }};">
+                  <div class="mb-2">
+                    <label class="form-label small fw-bold text-muted mb-1">Razorpay Key ID</label>
+                    <input type="text" class="form-control form-control-sm" name="razorpay_key_id" placeholder="rzp_live_xxxxxxxxxxxxxx" value="{{ $paymentConfig->razorpay_key_id ?? $setting->razorpay_key_id ?? '' }}">
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label small fw-bold text-muted mb-1">
+                      Razorpay Key Secret
+                      @if(!empty($paymentConfig?->razorpay_key_secret))
+                        <span class="badge bg-success-subtle text-success ms-1"><i class="bi bi-check-circle me-1"></i>Saved</span>
+                      @endif
+                    </label>
+                    <input type="password" class="form-control form-control-sm" name="razorpay_key_secret" placeholder="{{ !empty($paymentConfig?->razorpay_key_secret) ? '•••••••••••••••• (Leave blank to keep existing)' : 'Enter Razorpay Key Secret' }}" autocomplete="new-password">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cash on Delivery -->
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-muted">Cash on Delivery</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" role="switch" name="accept_cash_on_delivery" id="admin_accept_cash_on_delivery" {{ $setting->accept_cash_on_delivery ? 'checked' : '' }}>
+                </div>
+                <span class="small fw-semibold">Accept Cash on Delivery (COD)</span>
               </div>
             </div>
           </div>
@@ -411,7 +548,7 @@
         </div>
         <div class="card border-0 shadow-sm rounded-4 p-4">
           <div class="row g-4 align-items-end">
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label class="form-label fw-bold small text-muted">Feature: Departments</label>
               <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
                 <div class="form-check form-switch m-0">
@@ -420,7 +557,7 @@
                 <span class="small fw-semibold">Mandatory</span>
               </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label class="form-label fw-bold small text-muted">Feature: Price Required</label>
               <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
                 <div class="form-check form-switch m-0">
@@ -429,8 +566,17 @@
                 <span class="small fw-semibold">Mandatory</span>
               </div>
             </div>
-            <div class="col-md-4">
-              <label class="form-label fw-bold small text-muted">Feature: Manual Appointment Credit Deduction</label>
+            <div class="col-md-3">
+              <label class="form-label fw-bold small text-muted">Feature: Product Selection</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input" type="checkbox" role="switch" name="allow_appointment_product_selection" {{ $setting->allow_appointment_product_selection ? 'checked' : '' }}>
+                </div>
+                <span class="small fw-semibold">Enabled</span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-muted">Feature: Manual Credit Deduction</label>
               <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
                 <div class="form-check form-switch m-0">
                   <input class="form-check-input" type="checkbox" role="switch" name="is_appointment_creadit_diduct_manual" id="is_appointment_creadit_diduct_manual" {{ $setting->is_appointment_creadit_diduct_manual ? 'checked' : '' }}>
@@ -438,9 +584,17 @@
                 <span class="small fw-semibold">Enabled</span>
               </div>
             </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-muted">Current Credits</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-wallet2 text-primary"></i></span>
+                <input type="number" class="form-control border-start-0 ps-0 fw-bold" name="credit" value="{{ $setting->credit }}" min="0" readonly>
+                <span class="input-group-text bg-light fw-bold">CREDITS AVAILABLE</span>
+              </div>
+            </div>
             <div class="row g-4 mt-2 credit_deduction_fields" style="display: {{ $setting->is_appointment_creadit_diduct_manual ? 'flex' : 'none' }};">
               <div class="col-md-6">
-                <label class="form-label fw-bold small text-muted">Usage: Customer Appointment Booking Cost</label>
+                <label class="form-label fw-bold small text-muted">Usage: Customer Booking Cost</label>
                 <div class="input-group mb-3 mb-md-0">
                   <span class="input-group-text bg-white border-end-0"><i class="bi bi-person-dash text-danger"></i></span>
                   <input type="number" class="form-control border-start-0 ps-0" name="deduct_credit_per_customer_appointment" value="{{ $setting->deduct_credit_per_customer_appointment }}" min="0" step="0.01">
@@ -448,7 +602,7 @@
                 </div>
               </div>
               <div class="col-md-6">
-                <label class="form-label fw-bold small text-muted">Usage: Self Appointment Booking Cost</label>
+                <label class="form-label fw-bold small text-muted">Usage: Self Booking Cost</label>
                 <div class="input-group">
                   <span class="input-group-text bg-white border-end-0"><i class="bi bi-person-check text-success"></i></span>
                   <input type="number" class="form-control border-start-0 ps-0" name="deduct_credit_per_self_appointment" value="{{ $setting->deduct_credit_per_self_appointment }}" min="0" step="0.01">
@@ -460,68 +614,82 @@
         </div>
       </div>
 
-      <!-- 4. Chat Detailed Settings -->
-      <div class="mb-5">
-        <div class="d-flex align-items-center mb-3">
-          <div class="bg-info bg-opacity-10 p-2 rounded-3 text-info me-2">
-            <i class="bi bi-chat-dots fs-5"></i>
-          </div>
-          <h6 class="fw-bold text-uppercase m-0 small tracking-wider text-muted">Chat Controls</h6>
-        </div>
-        <div class="card border-0 shadow-sm rounded-4 p-4">
-          <div class="row g-4 align-items-end">
-            <div class="col-md-6">
-              <label class="form-label fw-bold small text-muted">Feature: Manual Chat Credit Deduction</label>
-              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
-                <div class="form-check form-switch m-0">
-                  <input class="form-check-input" type="checkbox" role="switch" name="is_chat_creadit_diduct_manual" id="is_chat_creadit_diduct_manual" {{ $setting->is_chat_creadit_diduct_manual ? 'checked' : '' }}>
-                </div>
-                <span class="small fw-semibold">Enabled</span>
-              </div>
-            </div>
-            <div class="row g-4 mt-2 chat_credit_deduction_fields" style="display: {{ $setting->is_chat_creadit_diduct_manual ? 'flex' : 'none' }};">
-              <div class="col-md-6">
-                <label class="form-label fw-bold small text-muted">Usage: 24-Hour Chat Session Unlock Cost</label>
-                <div class="input-group mb-3 mb-md-0">
-                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-chat-left-text text-info"></i></span>
-                  <input type="number" class="form-control border-start-0 ps-0" name="deduct_credit_per_chat" value="{{ $setting->deduct_credit_per_chat ?? 1 }}" min="0" step="0.01">
-                  <span class="input-group-text bg-light">Credits / 24h</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 4.5. Quotation Credit Deduction System -->
+      <!-- 4. Quotation Controls -->
       <div class="mb-5">
         <div class="d-flex align-items-center mb-3">
           <div class="bg-primary bg-opacity-10 p-2 rounded-3 text-primary me-2">
             <i class="bi bi-file-earmark-text fs-5"></i>
           </div>
-          <div>
-            <h6 class="fw-bold mb-0">Quotation Credit Deduction Rules</h6>
-            <span class="text-muted small">Configure manual credit deduction amounts for creating quotations</span>
-          </div>
+          <h6 class="fw-bold text-uppercase m-0 small tracking-wider text-muted">Quotation Controls</h6>
         </div>
         <div class="card border-0 shadow-sm rounded-4 p-4">
           <div class="row g-4 align-items-end">
             <div class="col-md-6">
-              <label class="form-label fw-bold small text-muted">Feature: Manual Quotation Credit Deduction</label>
+              <label class="form-label fw-bold small text-muted">Create Quotation on Inquiry</label>
               <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
                 <div class="form-check form-switch m-0">
-                  <input class="form-check-input" type="checkbox" role="switch" name="is_quotation_creadit_diduct_manual" id="is_quotation_creadit_diduct_manual" {{ $setting->is_quotation_creadit_diduct_manual ? 'checked' : '' }}>
+                  <input class="form-check-input custom-switch" type="checkbox" role="switch" name="is_create_quotation_on_inquiry" id="is_create_quotation_on_inquiry" {{ !empty($setting->is_create_quotation_on_inquiry) ? 'checked' : '' }}>
                 </div>
-                <span class="small fw-semibold">Enabled</span>
+                <span class="small fw-semibold">Auto-create Quotation on WhatsApp Inquiry</span>
               </div>
             </div>
-            <div class="row g-4 mt-2 quotation_credit_deduction_fields" style="display: {{ $setting->is_quotation_creadit_diduct_manual ? 'flex' : 'none' }};">
-              <div class="col-md-6">
-                <label class="form-label fw-bold small text-muted">Usage: Quotation Creation Cost</label>
-                <div class="input-group mb-3 mb-md-0">
-                  <span class="input-group-text bg-white border-end-0"><i class="bi bi-file-earmark-text text-warning"></i></span>
-                  <input type="number" class="form-control border-start-0 ps-0" name="deduct_credit_per_quotation" value="{{ $setting->deduct_credit_per_quotation ?? 1 }}" min="0" step="0.01">
-                  <span class="input-group-text bg-light">Credits / Quotation</span>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-muted">Quotation Charge Mode</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input custom-switch" type="checkbox" role="switch" name="is_quotation_charge_manual" id="is_quotation_charge_manual" {{ !empty($setting->is_quotation_charge_manual) ? 'checked' : '' }}>
+                </div>
+                <span class="small fw-semibold">Manual Charge (Override Global Site Setting)</span>
+              </div>
+            </div>
+            <div class="col-md-6 quotation_charge_field" style="display: {{ !empty($setting->is_quotation_charge_manual) ? 'block' : 'none' }};">
+              <label class="form-label fw-bold small text-muted">Charge Per Quotation (Credits)</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-coin text-warning"></i></span>
+                <input type="number" step="0.01" min="0" class="form-control border-start-0 ps-0" name="charge_per_quotation" value="{{ $setting->charge_per_quotation ?? 0.10 }}">
+                <span class="input-group-text bg-light">Credits / quotation</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Order Charge Controls -->
+      <div class="mb-5">
+        <div class="d-flex align-items-center mb-3">
+          <div class="bg-success bg-opacity-10 p-2 rounded-3 text-success me-2">
+            <i class="bi bi-cart-check-fill fs-5"></i>
+          </div>
+          <h6 class="fw-bold text-uppercase m-0 small tracking-wider text-muted">Order Charge Controls</h6>
+        </div>
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+          <div class="row g-4 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-muted">Order Charge Mode</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input custom-switch" type="checkbox" role="switch" name="is_order_charge_manual" id="is_order_charge_manual" {{ !empty($setting->is_order_charge_manual) ? 'checked' : '' }}>
+                </div>
+                <span class="small fw-semibold">Manual Charge (Override Global Site Setting)</span>
+              </div>
+            </div>
+            <div class="col-md-8 order_charge_fields" style="display: {{ !empty($setting->is_order_charge_manual) ? 'block' : 'none' }};">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small text-muted">Website Order Charge (Credits)</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-globe text-primary"></i></span>
+                    <input type="number" step="0.01" min="0" class="form-control border-start-0 ps-0" name="charge_place_order_on_website" value="{{ $setting->charge_place_order_on_website ?? 0.00 }}">
+                    <span class="input-group-text bg-light">Credits / order</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold small text-muted">POS Order Charge (Credits)</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-calculator text-success"></i></span>
+                    <input type="number" step="0.01" min="0" class="form-control border-start-0 ps-0" name="charge_place_order_on_pos" value="{{ $setting->charge_place_order_on_pos ?? 0.00 }}">
+                    <span class="input-group-text bg-light">Credits / order</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -529,22 +697,80 @@
         </div>
       </div>
 
-      <!-- 5. Business Credits Card -->
+      <!-- 6. Lucky Draw Charge Controls -->
       <div class="mb-5">
         <div class="d-flex align-items-center mb-3">
-          <div class="bg-primary bg-opacity-10 p-2 rounded-3 text-primary me-2">
-            <i class="bi bi-wallet2 fs-5"></i>
+          <div class="bg-warning bg-opacity-10 p-2 rounded-3 text-warning me-2">
+            <i class="bi bi-gift-fill fs-5"></i>
           </div>
-          <h6 class="fw-bold text-uppercase m-0 small tracking-wider text-muted">Business Credits</h6>
+          <h6 class="fw-bold text-uppercase m-0 small tracking-wider text-muted">Lucky Draw Charge Controls</h6>
         </div>
         <div class="card border-0 shadow-sm rounded-4 p-4">
-          <div class="row g-4">
+          <div class="row g-4 align-items-end">
             <div class="col-md-6">
-              <label class="form-label fw-bold small text-muted">Current Credits Available</label>
+              <label class="form-label fw-bold small text-muted">Lucky Draw Charge Mode</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input custom-switch" type="checkbox" role="switch" name="is_draw_charge_manual" id="is_draw_charge_manual" {{ !empty($setting->is_draw_charge_manual) ? 'checked' : '' }}>
+                </div>
+                <span class="small fw-semibold">Manual Charge (Override Global Site Setting)</span>
+              </div>
+            </div>
+            <div class="col-md-6 draw_charge_field" style="display: {{ !empty($setting->is_draw_charge_manual) ? 'block' : 'none' }};">
+              <label class="form-label fw-bold small text-muted">Charge Per Scratch Card (Credits)</label>
               <div class="input-group">
-                <span class="input-group-text bg-white border-end-0"><i class="bi bi-wallet2 text-primary"></i></span>
-                <input type="number" class="form-control border-start-0 ps-0 fw-bold" name="credit" value="{{ $setting->credit }}" min="0" readonly>
-                <span class="input-group-text bg-light fw-bold">CREDITS AVAILABLE</span>
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-coin text-warning"></i></span>
+                <input type="number" step="0.01" min="0" class="form-control border-start-0 ps-0" name="draw_credit_per_scratch" value="{{ $setting->draw_credit_per_scratch ?? 1.00 }}">
+                <span class="input-group-text bg-light">Credits / scratch</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Limits & Expiry -->
+      <div class="mb-4">
+        <div class="d-flex align-items-center mb-3">
+          <div class="bg-danger bg-opacity-10 p-2 rounded-3 text-danger me-2">
+            <i class="bi bi-shield-lock fs-5"></i>
+          </div>
+          <h6 class="fw-bold text-uppercase m-0 small tracking-wider text-muted">Quotas & Expirations</h6>
+        </div>
+        <div class="row g-4">
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+              <label class="form-label fw-bold small text-muted text-uppercase mb-3"><i class="bi bi-box-seam me-1"></i> Product Quota</label>
+              <div class="mb-3">
+                <input type="number" class="form-control form-control-lg fw-bold" name="product_limit" value="{{ $setting->product_limit }}" min="0">
+              </div>
+              <div class="mt-auto">
+                <label class="small text-muted mb-1">Limit Expiry Date</label>
+                <input type="date" class="form-control form-control-sm" name="product_limit_expiry_date" value="{{ $setting->product_limit_expiry_date }}">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+              <label class="form-label fw-bold small text-muted text-uppercase mb-3"><i class="bi bi-person-gear me-1"></i> Service Quota</label>
+              <div class="mb-3">
+                <input type="number" class="form-control form-control-lg fw-bold" name="service_limit" value="{{ $setting->service_limit }}" min="0">
+              </div>
+              <div class="mt-auto">
+                <label class="small text-muted mb-1">Limit Expiry Date</label>
+                <input type="date" class="form-control form-control-sm" name="service_limit_expiry_date" value="{{ $setting->service_limit_expiry_date }}">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="card bg-primary text-white border-0 shadow-sm rounded-4 p-4">
+              <label class="form-label fw-bold small text-white-50 text-uppercase mb-3"><i class="bi bi-star me-1"></i> Global Subscription</label>
+              <div class="mb-3">
+                <h4 class="mb-0 fw-bold">Active Plan</h4>
+                <small class="text-white-50">Manage global access</small>
+              </div>
+              <div class="mt-auto">
+                <label class="small text-white-50 mb-1">Plan Expiry Date</label>
+                <input type="date" class="form-control form-control-sm bg-white bg-opacity-10 border-white border-opacity-25 text-white" name="subscription_expiry_date" value="{{ $setting->subscription_expiry_date }}">
               </div>
             </div>
           </div>
@@ -596,6 +822,39 @@
         $('.ecommerce_fields').slideDown();
       } else {
         $('.ecommerce_fields').slideUp();
+        // Reset sub settings
+        $('#admin_show_delivery_charges').prop('checked', false).trigger('change');
+        $('#admin_accept_online_payments').prop('checked', false).trigger('change');
+        $('#admin_accept_cash_on_delivery').prop('checked', false);
+      }
+    });
+
+    $('#admin_show_delivery_charges').on('change', function() {
+      if ($(this).is(':checked')) {
+        $('.admin_delivery_charges_fields').slideDown();
+      } else {
+        $('.admin_delivery_charges_fields').slideUp();
+      }
+    });
+
+    $('#admin_accept_online_payments').on('change', function() {
+      if ($(this).is(':checked')) {
+        $('.admin_online_payments_fields').slideDown();
+      } else {
+        $('.admin_online_payments_fields').slideUp();
+      }
+    });
+
+    $('#admin_online_payment_method').on('change', function() {
+      if ($(this).val() === 'manual_upi') {
+        $('.admin_upi_id_fields').slideDown();
+        $('.admin_razorpay_fields').slideUp();
+      } else if ($(this).val() === 'razorpay') {
+        $('.admin_upi_id_fields').slideUp();
+        $('.admin_razorpay_fields').slideDown();
+      } else {
+        $('.admin_upi_id_fields').slideUp();
+        $('.admin_razorpay_fields').slideUp();
       }
     });
 
@@ -607,27 +866,27 @@
       }
     });
 
-    $('#is_order_creadit_diduct_manual').on('change', function() {
+    $('#is_quotation_charge_manual').on('change', function() {
       if ($(this).is(':checked')) {
-        $('.order_credit_deduction_fields').slideDown();
+        $('.quotation_charge_field').slideDown();
       } else {
-        $('.order_credit_deduction_fields').slideUp();
+        $('.quotation_charge_field').slideUp();
       }
     });
 
-    $('#is_chat_creadit_diduct_manual').on('change', function() {
+    $('#is_order_charge_manual').on('change', function() {
       if ($(this).is(':checked')) {
-        $('.chat_credit_deduction_fields').slideDown();
+        $('.order_charge_fields').slideDown();
       } else {
-        $('.chat_credit_deduction_fields').slideUp();
+        $('.order_charge_fields').slideUp();
       }
     });
 
-    $('#is_quotation_creadit_diduct_manual').on('change', function() {
+    $('#is_draw_charge_manual').on('change', function() {
       if ($(this).is(':checked')) {
-        $('.quotation_credit_deduction_fields').slideDown();
+        $('.draw_charge_field').slideDown();
       } else {
-        $('.quotation_credit_deduction_fields').slideUp();
+        $('.draw_charge_field').slideUp();
       }
     });
   });

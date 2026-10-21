@@ -785,39 +785,18 @@ body {
 }
 
 footer {
-    background-color: #f8fafc; /* Light theme-consistent background */
-    color: var(--text-muted);
-    padding: 6rem 0 3rem;
-    border-top: 1px solid #eef2f6;
-}
-
-footer h6 {
-    color: var(--secondary-color) !important;
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 1px;
-    margin-bottom: 1.5rem !important;
+    background-color: var(--secondary-color);
+    color: #fff;
+    padding: 5rem 0 3rem;
 }
 
 footer a {
-    color: #64748b;
+    color: #bbb;
     text-decoration: none;
-    transition: all 0.3s ease;
-    display: inline-block;
 }
 
 footer a:hover {
     color: var(--primary-color);
-    transform: translateX(5px);
-}
-
-footer hr {
-    border-color: #e2e8f0 !important;
-}
-
-footer .text-white-50 {
-    color: #64748b !important;
 }
 
 .card {
@@ -838,12 +817,11 @@ footer .text-white-50 {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: #fff;
-    color: var(--text-color);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
     text-decoration: none;
     transition: all 0.3s ease;
-    border: 1px solid #e2e8f0;
-    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .social-icon-btn:hover {
@@ -1556,6 +1534,7 @@ footer .text-white-50 {
 .offcanvas.show {
     box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
 }
+
 /* --- Home Page Specific Styles --- */
 .hero-wrap {
     min-height: 80vh;

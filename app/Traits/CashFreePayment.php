@@ -74,7 +74,7 @@ trait CashFreePayment
     {
         $base_url = $this->mode == 'production' ? 'https://api.cashfree.com' : 'https://sandbox.cashfree.com';
 
-        $response = Http::withOptions(['verify' => false])->withHeaders([
+        $response = Http::withHeaders([
             'x-client-id' => $this->app_id,
             'x-client-secret' => $this->secret_key,
             'x-api-version' => '2022-09-01',
@@ -95,8 +95,12 @@ trait CashFreePayment
             $type = $parts[0];
             $id = $parts[1];
 
-            // FIX: Row Locking & Idempotency
-            $purchaseData = Purchase::where('id', $id)->lockForUpdate()->first();
+            // FIX: Row Locking, Business Scoping & Idempotency
+            $purchaseQuery = Purchase::where('id', $id);
+            if (function_exists('getBusinessId') && auth()->check()) {
+                $purchaseQuery->where('business_id', getBusinessId());
+            }
+            $purchaseData = $purchaseQuery->lockForUpdate()->first();
 
             if (!$purchaseData || $purchaseData->status !== 'pending') {
                 DB::rollBack();
@@ -123,7 +127,7 @@ trait CashFreePayment
             DB::rollBack();
             \Log::error("Payment process error: " . $e->getMessage());
             $success = false;
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
 
         return ['success' => $success, 'message' => $message];
@@ -149,7 +153,7 @@ trait CashFreePayment
             return false;
         }
 
-        $response = Http::withOptions(['verify' => false])->withHeaders([
+        $response = Http::withHeaders([
             'x-client-id' => $this->app_id,
             'x-client-secret' => $this->secret_key,
             'x-api-version' => '2022-09-01',

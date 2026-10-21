@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Business;
 use Illuminate\Http\Request;
 use App\Models\BusinessSetting;
+use App\Models\BusinessPaymentConfiguration;
 use Yajra\DataTables\DataTables;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
@@ -96,7 +97,7 @@ class BusinessController extends Controller
                 'pincode' => 'required',
                 'status' => 'required',
                 'rating' => 'nullable|numeric|min:0|max:5',
-                'user_referral_code' => 'nullable|exists:users,referral_code',
+                'is_private' => 'nullable|in:0,1',
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -128,8 +129,16 @@ class BusinessController extends Controller
                 $insert->pincode = $request->pincode;
                 $insert->status = $request->status;
                 $insert->rating = $request->rating ?? 0;
-                $insert->user_referral_code = $request->user_referral_code;
                 $insert->save();
+
+                $isPrivate = $request->has('is_private') ? ($request->input('is_private') == '1') : false;
+                BusinessSetting::create([
+                    'business_id' => $insert->id,
+                    'is_appointment_system' => $request->business_type == 'Appointment',
+                    'is_ecommerce_system' => $request->business_type == 'Product',
+                    'is_service_system' => $request->business_type == 'Service',
+                    'is_private' => $isPrivate,
+                ]);
 
                 //change user role to seller
                 $user = User::select('id', 'role', 'business_id')->find($request->owner_id);
@@ -145,7 +154,7 @@ class BusinessController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_name) && !empty($image_name)) {
                 fileRemoveStorage($image_name);
             }
@@ -175,8 +184,7 @@ class BusinessController extends Controller
             'city_id',
             'state_id',
             'pincode',
-            'rating',
-            'user_referral_code'
+            'rating'
         )->with([
             'owner' => function ($q) {
                 $q->select('id', 'first_name', 'last_name', 'contact');
@@ -191,7 +199,12 @@ class BusinessController extends Controller
                     'credit',
                     'is_appointment_system',
                     'is_ecommerce_system',
-                    'is_service_system'
+                    'is_label',
+                    'is_service_system',
+                    'is_private',
+                    'subscription_expiry_date',
+                    'product_limit',
+                    'service_limit'
                 );
             },
             'state' => function ($q) {
@@ -218,8 +231,9 @@ class BusinessController extends Controller
             }
         ])->find($id);
         $businessCat = getBusinessCategory();
-        $setting = getBusinessSettings($id);
-        return view('admin.business.edit', compact('business', 'businessCat', 'setting'));
+        $setting = getBusinessSettings($id, true);
+        $paymentConfig = BusinessPaymentConfiguration::where('business_id', $id)->first();
+        return view('admin.business.edit', compact('business', 'businessCat', 'setting', 'paymentConfig'));
     }
 
     public function update(Request $request, $id)
@@ -246,7 +260,6 @@ class BusinessController extends Controller
                 'pincode' => 'required',
                 'status' => 'required',
                 'rating' => 'nullable|numeric|min:0|max:5',
-                'user_referral_code' => 'nullable|exists:users,referral_code',
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -299,8 +312,14 @@ class BusinessController extends Controller
                 $update->pincode = $request->pincode;
                 $update->status = $request->status;
                 $update->rating = $request->rating ?? 0;
-                $update->user_referral_code = $request->user_referral_code;
                 $update->save();
+
+                // BusinessSetting::where('business_id', $id)->update([
+                //     'subscription_expiry_date' => $request->subscription_expiry_date,
+                //     'credit' => $request->credit,
+                // ]);
+
+                // Removed individual fileRemove calls as they are handled above within the existence checks
 
                 $success = true;
                 $message = 'Business update successfully.';
@@ -308,7 +327,7 @@ class BusinessController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_name) && !empty($image_name)) {
                 fileRemoveStorage($image_name);
             }
@@ -343,7 +362,7 @@ class BusinessController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -357,15 +376,28 @@ class BusinessController extends Controller
 
         try {
             DB::beginTransaction();
+            if ($request->has('is_ecommerce_system') && !$request->has('accept_cash_on_delivery') && !$request->has('accept_online_payments')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => [
+                        'accept_cash_on_delivery' => ['At least one payment method (Cash on Delivery or Online Payment) must be enabled when Ecommerce system is active.']
+                    ]
+                ]);
+            }
+
             $rules = [
-                // 'business_image' => 'nullable|mimes:jpg,jpeg,png,webp|',
+                'same_state_shipping_charge_per_kg' => $request->has('show_delivery_charges') ? 'required|numeric|min:0' : 'nullable',
+                'other_state_shipping_charge_per_kg' => $request->has('show_delivery_charges') ? 'required|numeric|min:0' : 'nullable',
+                'online_payment_method' => $request->has('accept_online_payments') ? 'required|in:manual_upi,razorpay' : 'nullable',
+                'upi_id' => ($request->has('accept_online_payments') && $request->online_payment_method == 'manual_upi') ? 'required|string|max:255' : 'nullable',
+                'razorpay_key_id' => ($request->has('accept_online_payments') && $request->online_payment_method == 'razorpay') ? 'required|string|max:255' : 'nullable',
+                'razorpay_key_secret' => 'nullable|string|max:500',
             ];
 
             $validator = Validator::make($request->all(), $rules);
 
             if ($validator->fails()) { // Validation fails
                 $message = $validator->errors();
-                // $message = $validator->errors()->first();
             } else {
 
                 $update = BusinessSetting::where('business_id', $id)->first();
@@ -376,35 +408,78 @@ class BusinessController extends Controller
                 $update->is_appointment_system = $request->has('is_appointment_system') ? 1 : 0;
                 $update->is_appointment_with_department = $request->has('is_appointment_with_department') ? 1 : 0;
                 $update->is_appointment_price_required = $request->has('is_appointment_price_required') ? 1 : 0;
+                $update->allow_appointment_product_selection = $request->has('allow_appointment_product_selection') ? 1 : 0;
                 $update->is_ecommerce_system = $request->has('is_ecommerce_system') ? 1 : 0;
+                $update->is_offer_with_customer_group = $request->has('is_offer_with_customer_group') ? 1 : 0;
+                $update->is_label = $request->has('is_label') ? 1 : 0;
                 $update->is_product_import_export = $request->has('is_product_import_export') ? 1 : 0;
-                $update->is_share_products_to_business = $request->has('is_share_products_to_business') ? 1 : 0;
+                $update->is_update_stock_and_price_using_exel = $request->has('is_update_stock_and_price_using_exel') ? 1 : 0;
                 $update->is_service_system = $request->has('is_service_system') ? 1 : 0;
                 $update->is_verified = $request->has('is_verified') ? 1 : 0;
                 $update->is_pos_access = $request->has('is_pos_access') ? 1 : 0;
+                $update->is_lucky_draw = $request->has('is_lucky_draw') ? 1 : 0;
+                $update->is_quotation_charge_manual = $request->has('is_quotation_charge_manual') ? 1 : 0;
+                $update->is_create_quotation_on_inquiry = $request->has('is_create_quotation_on_inquiry') ? 1 : 0;
+                $update->is_login_required = $request->has('is_login_required') ? 1 : 0;
+                $update->charge_per_quotation = $request->charge_per_quotation ?? 0.10;
+                $update->is_order_charge_manual = $request->has('is_order_charge_manual') ? 1 : 0;
+                $update->charge_place_order_on_website = $request->charge_place_order_on_website ?? 0.00;
+                $update->charge_place_order_on_pos = $request->charge_place_order_on_pos ?? 0.00;
+                $update->is_draw_charge_manual = $request->has('is_draw_charge_manual') ? 1 : 0;
+                $update->draw_credit_per_scratch = $request->draw_credit_per_scratch ?? 1.00;
                 $update->is_appointment_creadit_diduct_manual = $request->has('is_appointment_creadit_diduct_manual') ? 1 : 0;
-                $update->is_order_creadit_diduct_manual = $request->has('is_order_creadit_diduct_manual') ? 1 : 0;
-                $update->is_chat_creadit_diduct_manual = $request->has('is_chat_creadit_diduct_manual') ? 1 : 0;
-                $update->is_quotation_creadit_diduct_manual = $request->has('is_quotation_creadit_diduct_manual') ? 1 : 0;
+                $update->is_order_place_on_website = $request->has('is_order_place_on_website') ? 1 : 0;
+                $update->is_share_products_to_business = $request->has('is_share_products_to_business') ? 1 : 0;
+                $update->is_private = $request->has('is_private') ? 1 : 0;
+
+                // New fields
+                $update->show_delivery_charges = $request->has('show_delivery_charges') ? 1 : 0;
+                if ($update->show_delivery_charges) {
+                    $update->same_state_shipping_charge_per_kg = $request->same_state_shipping_charge_per_kg;
+                    $update->other_state_shipping_charge_per_kg = $request->other_state_shipping_charge_per_kg;
+                }
+                $update->accept_online_payments = $request->has('accept_online_payments') ? 1 : 0;
+                $update->accept_cash_on_delivery = $request->has('accept_cash_on_delivery') ? 1 : 0;
+
+                // Save BusinessPaymentConfiguration
+                if ($update->accept_online_payments) {
+                    $paymentConfig = BusinessPaymentConfiguration::firstOrNew(['business_id' => $id]);
+                    $paymentMethod = $request->online_payment_method ?? 'manual_upi';
+                    $paymentConfig->payment_method = $paymentMethod;
+                    if ($paymentMethod === 'manual_upi') {
+                        $paymentConfig->upi_id = $request->upi_id;
+                    } elseif ($paymentMethod === 'razorpay') {
+                        $paymentConfig->razorpay_key_id = $request->razorpay_key_id;
+                        if ($request->filled('razorpay_key_secret')) {
+                            $paymentConfig->razorpay_key_secret = $request->razorpay_key_secret;
+                        }
+                    }
+                    $paymentConfig->save();
+                }
 
                 $update->credit = $request->credit ?? 0;
                 $update->deduct_credit_per_customer_appointment = $request->deduct_credit_per_customer_appointment ?? 0;
                 $update->deduct_credit_per_self_appointment = $request->deduct_credit_per_self_appointment ?? 0;
-                $update->deduct_credit_per_customer_order = $request->deduct_credit_per_customer_order ?? 0;
-                $update->deduct_credit_per_self_order = $request->deduct_credit_per_self_order ?? 0;
-                $update->deduct_credit_per_chat = $request->deduct_credit_per_chat ?? 0;
-                $update->deduct_credit_per_quotation = $request->deduct_credit_per_quotation ?? 0;
 
-                $update->visibility = $request->visibility ?? 'public';
+                $update->product_limit = $request->product_limit ?? 0;
+                $update->service_limit = $request->service_limit ?? 0;
+
+                $update->subscription_expiry_date = $request->subscription_expiry_date;
+                $update->product_limit_expiry_date = $request->product_limit_expiry_date;
+                $update->service_limit_expiry_date = $request->service_limit_expiry_date;
                 $update->save();
 
                 $success = true;
                 $message = 'Setting update successfully.';
                 DB::commit();
+
+                // Clear session cache and force refresh for edited business
+                getBusinessSettings($id, true);
+                session()->forget('pos_business_settings');
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -470,13 +545,17 @@ class BusinessController extends Controller
                 $update->status = $request->status;
                 $update->save();
 
+                if ($request->status != 1) {
+                    app(\App\Services\SessionLogoutService::class)->logoutBusinessUsers($request->business_id, true);
+                }
+
                 $success = true;
                 $message = 'Business update successfully.';
                 DB::commit();
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }

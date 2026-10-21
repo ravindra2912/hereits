@@ -33,12 +33,8 @@
           <tr>
             <th>Image</th>
             <th>Name</th>
-            <th>Cust. Appt.</th>
-            <th>Self Appt.</th>
-            <th>Cust. Order</th>
-            <th>Self Order</th>
-            <th>Chat Credit</th>
-            <th>Quotation Credit</th>
+            <th>Cust. Credit</th>
+            <th>Self Credit</th>
             <th>Status</th>
             <th>Action</th>
           </tr>
@@ -81,15 +77,16 @@
       responsive: true,
       autoWidth: false,
       columns: [{
-          data: 'image',
-          name: 'image',
+          data: 'img',
+          name: 'img',
           orderable: false,
           searchable: false,
           className: 'text-center'
         },
         {
           data: 'name',
-          name: 'name'
+          name: 'name',
+          className: 'fw-bold'
         },
         {
           data: 'deduct_credit_per_customer_appointment',
@@ -99,26 +96,6 @@
         {
           data: 'deduct_credit_per_self_appointment',
           name: 'deduct_credit_per_self_appointment',
-          className: 'text-center'
-        },
-        {
-          data: 'deduct_credit_per_customer_order',
-          name: 'deduct_credit_per_customer_order',
-          className: 'text-center'
-        },
-        {
-          data: 'deduct_credit_per_self_order',
-          name: 'deduct_credit_per_self_order',
-          className: 'text-center'
-        },
-        {
-          data: 'deduct_credit_per_chat',
-          name: 'deduct_credit_per_chat',
-          className: 'text-center'
-        },
-        {
-          data: 'deduct_credit_per_quotation',
-          name: 'deduct_credit_per_quotation',
           className: 'text-center'
         },
         {

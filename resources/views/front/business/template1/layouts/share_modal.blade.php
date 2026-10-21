@@ -95,19 +95,38 @@
         const copyText = document.getElementById("shareLinkInput");
         copyText.select();
         copyText.setSelectionRange(0, 99999); // For mobile
-        navigator.clipboard.writeText(copyText.value).then(() => {
-            const copyBtn = document.getElementById('copyBtn');
-            const originalText = copyBtn.innerHTML;
+
+        const value = copyText.value;
+        const copyBtn = document.getElementById('copyBtn');
+        const originalText = copyBtn.innerHTML;
+
+        function showCopied() {
             copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied';
             copyBtn.classList.replace('btn-primary', 'btn-success');
-
             setTimeout(() => {
                 copyBtn.innerHTML = originalText;
                 copyBtn.classList.replace('btn-success', 'btn-primary');
             }, 2000);
-        }).catch(err => {
-            console.error('Failed to copy: ', err);
-        });
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(value).then(showCopied).catch(fallbackCopy);
+        } else {
+            fallbackCopy();
+        }
+
+        function fallbackCopy() {
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopied();
+                } else {
+                    console.error('execCommand copy failed');
+                }
+            } catch (err) {
+                console.error('Fallback copy failed: ', err);
+            }
+        }
     }
 </script>
 @endpush

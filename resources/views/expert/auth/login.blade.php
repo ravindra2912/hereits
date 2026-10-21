@@ -14,7 +14,7 @@
                 <label class="form-label">Email Address</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
-                    <input type="email" name="email" class="form-control border-start-0 ps-0" placeholder="expert@hereits.com" required>
+                    <input type="email" name="email" class="form-control border-start-0 ps-0" placeholder="expert@brandbatao.com" required>
                 </div>
             </div>
 
@@ -31,6 +31,8 @@
                 <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
             </button>
         </form>
+
+        <x-google-login-button text="Sign in with Google" class="py-2.5 rounded-3" />
 
         <div class="text-center mt-4 pt-2">
             <span class="text-muted small">Need assistance? <a href="#" class="text-decoration-none fw-semibold">Contact Admin</a></span>

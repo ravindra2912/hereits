@@ -19,8 +19,8 @@
                     <form id="login-form" action="{{ route('login') }}" method="POST" data-action="reload" class="formaction">
                         @csrf
                         <div class="form-floating mb-3">
-                            <input type="email" name="email" class="form-control rounded-3" id="loginEmail" placeholder="name@example.com" required>
-                            <label for="loginEmail">Email address</label>
+                            <input type="text" name="email" class="form-control rounded-3" id="loginEmail" placeholder="Mobile Number or Email" required>
+                            <label for="loginEmail">Mobile Number or Email</label>
                         </div>
                         <div class="form-floating mb-3">
                             <input type="password" name="password" class="form-control rounded-3" id="loginPassword" placeholder="Password" required>
@@ -33,21 +33,12 @@
                             </div>
                             <p class="small text-primary text-decoration-none fw-bold cursor-pointer switch-pane" data-target="forgot-pane">Forgot Password?</p>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm mb-4 btn_action">
+                        <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm mb-3 btn_action">
                             <span class="btn-text" id="buttonText">Login Now</span>
                             <span class="btn-loader d-none" id="loader"><i class="fas fa-spinner fa-spin me-2"></i> Processing...</span>
                         </button>
                     </form>
-
-                    <div class="position-relative mb-4">
-                        <hr class="text-muted opacity-25">
-                        <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 small text-muted">OR</span>
-                    </div>
-
-                    <a href="{{ route('auth.google') }}" class="btn btn-outline-dark w-100 py-3 rounded-pill fw-bold shadow-sm mb-4 d-flex align-items-center justify-content-center gap-3 hover-lift">
-                        <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" alt="Google" style="width: 20px;">
-                        <span>Continue with Google</span>
-                    </a>
+                    <x-google-login-button text="Continue with Google" class="py-2.5 rounded-pill mb-3" />
                     <div class="text-center">
                         <p class="small text-muted mb-0">Don't have an account? <span class="text-primary fw-bold text-decoration-none cursor-pointer switch-pane" data-target="register-pane">Register Here</span></p>
                     </div>
@@ -84,21 +75,12 @@
                             <input type="password" name="password" class="form-control rounded-3" id="regPassword" placeholder="Password" required>
                             <label for="regPassword">Password</label>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm mb-4 btn_action">
+                        <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm mb-3 btn_action">
                             <span class="btn-text" id="buttonText">Create Account</span>
                             <span class="btn-loader d-none" id="loader"><i class="fas fa-spinner fa-spin me-2"></i> Processing...</span>
                         </button>
                     </form>
-
-                    <div class="position-relative mb-4">
-                        <hr class="text-muted opacity-25">
-                        <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 small text-muted">OR</span>
-                    </div>
-
-                    <a href="{{ route('auth.google') }}" class="btn btn-outline-dark w-100 py-3 rounded-pill fw-bold shadow-sm mb-4 d-flex align-items-center justify-content-center gap-3 hover-lift">
-                        <img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" alt="Google" style="width: 20px;">
-                        <span>Continue with Google</span>
-                    </a>
+                    <x-google-login-button text="Sign up with Google" class="py-2.5 rounded-pill mb-3" />
                     <div class="text-center">
                         <p class="small text-muted mb-0">Already have an account? <span class="text-primary fw-bold text-decoration-none cursor-pointer switch-pane" data-target="login-pane">Login Now</span></p>
                     </div>
@@ -148,9 +130,11 @@
             }
         });
 
-
-
-
+        // Close cart drawer and overlay when login modal opens to prioritize login modal
+        $('#authModal').on('show.bs.modal', function() {
+            $('.cart-drawer').removeClass('open');
+            $('.cart-overlay').removeClass('show');
+        });
     });
 </script>
 @endpush

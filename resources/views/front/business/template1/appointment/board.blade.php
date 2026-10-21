@@ -1,8 +1,8 @@
 @extends('front.business.template1.layouts.main', ['seo' => [
-'title' => $expert->expert_name.' | Hereits',
-'description' => $expert->expert_name,
-'keywords' => $expert->expert_name ,
-'image' => getImage($expert->expert_image) ,
+'title' => ($expert->user?->name ?? 'Expert').' | brandbatao',
+'description' => $expert->user?->name ?? 'Expert',
+'keywords' => $expert->user?->name ?? 'Expert',
+'image' => getImage($expert->user?->profile) ,
 'city' => '',
 'state' => '',
 'position' => ''
@@ -21,7 +21,7 @@ $business = $expert->business;
     <!-- Breadcrumb / Back Link -->
     <div class="mb-4">
       <a href="{{ route('expert', [$business->slug, $expert->slug]) }}" class="text-decoration-none text-muted hover-primary">
-        <i class="fas fa-arrow-left me-2"></i> Back to {{ $expert->expert_name }}
+        <i class="fas fa-arrow-left me-2"></i> Back to {{ $expert->user?->name }}
       </a>
     </div>
 

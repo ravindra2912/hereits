@@ -13,6 +13,8 @@ use App\Models\Transactions;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\Admin\PendingPaymentMail;
 
 class PaymentController extends Controller
 {
@@ -31,8 +33,11 @@ class PaymentController extends Controller
         $success = false;
 
         // Fetch purchase data based on type
-        if ($type === 'credit') {
-            $purchaseData = Purchase::find($id);
+        $currentBusinessId = getBusinessId();
+        if ($type == 'subscription' || $type == 'product' || $type == 'service' || $type == 'credit') {
+            $purchaseData = Purchase::where('id', $id)
+                ->where('business_id', $currentBusinessId)
+                ->first();
             if ($purchaseData && $purchaseData->status == 'pending') {
 
                 if ($purchaseData->total_amount <= 0) {
@@ -42,7 +47,21 @@ class PaymentController extends Controller
 
                 $business_id = $purchaseData->business_id;
                 $data->total = $purchaseData->total_amount;
-                $data->redirectUrl = route('business.credits');
+
+                // Set redirection URL to purchase history detail
+                $data->redirectUrl = route('business.purchase.history.detail', $purchaseData->id);
+
+                // Set cancellation return URL
+                if ($type == 'subscription') {
+                    $data->cancelUrl = route('business.subscription');
+                } elseif ($type == 'product') {
+                    $data->cancelUrl = route('business.product.plans');
+                } elseif ($type == 'service') {
+                    $data->cancelUrl = route('business.service.plans');
+                } else {
+                    $data->cancelUrl = route('business.credits');
+                }
+
                 $success = true;
             } else {
                 exit('Invalid order or payment already processed!');
@@ -83,6 +102,27 @@ class PaymentController extends Controller
                 $payment_session_id = $this->createSessionId($data->orderid, $data->total, $data->email, $data->contact, $data->owner_id);
 
                 return view('business.payment.payment', compact('payment_session_id', 'data'));
+            } else if ($payment_gateway == 'razorpay') {
+                try {
+                    $razorpayService = \App\Services\Payment\RazorpayService::forPlatform();
+                    $razorpayOrder = $razorpayService->createOrder(
+                        (float) $data->total,
+                        $data->orderid,
+                        [
+                            'type' => (string) $type,
+                            'purchase_id' => (string) $id,
+                            'business_id' => (string) $business_id,
+                        ]
+                    );
+
+                    $data->razorpay_order_id = $razorpayOrder['order_id'];
+                    $data->razorpay_key_id = $razorpayService->getKeyId();
+
+                    return view('business.payment.razorpay', compact('data', 'purchaseData'));
+                } catch (\Exception $e) {
+                    Log::error("Razorpay platform order initiation failed: " . $e->getMessage());
+                    exit('Payment Gateway Error: ' . $e->getMessage());
+                }
             } else {
                 exit('Invalid payment gateway!');
             }
@@ -101,9 +141,24 @@ class PaymentController extends Controller
             'redirectUrl' => 'nullable'
         ]);
 
-        $success = false;
-        $message = 'Something Wrong!';
-        $redirect = $request->redirectUrl ?? route('business.dashboard');
+        $parts = explode("-", $request->order);
+        $purchaseId = $parts[1] ?? null;
+        $currentBusinessId = getBusinessId();
+
+        $purchase = Purchase::where('id', $purchaseId)
+            ->where('business_id', $currentBusinessId)
+            ->first();
+
+        if (!$purchase) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized or invalid purchase record.',
+                'data' => [],
+                'redirect' => route('business.dashboard')
+            ], 403);
+        }
+
+        $redirect = $purchaseId ? route('business.purchase.history.detail', $purchaseId) : $this->getSafeRedirectUrl($request->redirectUrl, route('business.dashboard'));
         $data = array();
 
         try {
@@ -112,7 +167,7 @@ class PaymentController extends Controller
             $message = $result['message'];
         } catch (\Exception $e) {
             Log::error("Payment response error: " . $e->getMessage());
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
 
         return response()->json([
@@ -122,6 +177,108 @@ class PaymentController extends Controller
             'redirect' => $redirect
         ]);
     }
+
+    /**
+     * Handle and verify Razorpay payment response for platform purchases
+     */
+    public function razorpayVerify(Request $request)
+    {
+        $request->validate([
+            'order' => 'required',
+            'razorpay_order_id' => 'required',
+            'razorpay_payment_id' => 'required',
+            'razorpay_signature' => 'required',
+            'redirectUrl' => 'nullable'
+        ]);
+
+        $redirect = $request->redirectUrl ?? route('business.dashboard');
+
+        try {
+            $parts = explode("-", $request->order);
+            $type = $parts[0] ?? '';
+            $id = $parts[1] ?? '';
+            $currentBusinessId = getBusinessId();
+            $redirect = $id ? route('business.purchase.history.detail', $id) : $this->getSafeRedirectUrl($request->redirectUrl, route('business.dashboard'));
+
+            // Strictly verify signature using Platform credentials
+            $razorpayService = \App\Services\Payment\RazorpayService::forPlatform();
+
+            $isValid = $razorpayService->verifySignature(
+                $request->razorpay_order_id,
+                $request->razorpay_payment_id,
+                $request->razorpay_signature
+            );
+
+            if (!$isValid) {
+                Log::warning("Razorpay platform payment signature verification failed for purchase #{$id}");
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid payment signature. Verification failed.',
+                    'redirect' => $redirect
+                ], 400);
+            }
+
+            DB::beginTransaction();
+
+            $purchaseData = Purchase::where('id', $id)
+                ->where('business_id', $currentBusinessId)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$purchaseData) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Purchase record not found.',
+                    'redirect' => $redirect
+                ], 404);
+            }
+
+            if ($purchaseData->status === 'paid') {
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment already processed.',
+                    'redirect' => route('business.purchase.history.detail', $purchaseData->id)
+                ]);
+            }
+
+            if ($purchaseData->status !== 'pending') {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid order state.',
+                    'redirect' => $redirect
+                ], 400);
+            }
+
+            $gatewayResponse = [
+                'order_id' => $request->razorpay_order_id,
+                'payment_id' => $request->razorpay_payment_id,
+                'signature' => $request->razorpay_signature,
+                'payment_gateway' => 'razorpay',
+            ];
+
+            $this->fulfillPurchase($purchaseData->id, $gatewayResponse);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment completed successfully!',
+                'redirect' => route('business.purchase.history.detail', $purchaseData->id)
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Razorpay platform payment verification error: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => checkResponse($e),
+                'redirect' => $redirect
+            ], 500);
+        }
+    }
+
     public function upiPaymentSubmit(Request $request)
     {
         $success = false;
@@ -154,7 +311,10 @@ class PaymentController extends Controller
 
                 DB::beginTransaction();
 
-                $purchaseData = Purchase::where('id', $id)->lockForUpdate()->first();
+                $purchaseData = Purchase::where('id', $id)
+                    ->where('business_id', getBusinessId())
+                    ->lockForUpdate()
+                    ->first();
 
                 if (!$purchaseData || $purchaseData->status !== 'pending') {
                     return response()->json(['success' => false, 'message' => 'Invalid order or already processed']);
@@ -178,13 +338,23 @@ class PaymentController extends Controller
 
                 $transaction->save();
 
-                $purchaseData->update([
-                    'transaction_id' => $transaction->id,
-                ]);
-
                 DB::commit();
+
+                // Send email notification to admin
+                try {
+                    $business = Business::find($purchaseData->business_id);
+                    $adminEmailStr = config('const.admin_emails');
+                    $adminEmails = array_filter(array_map('trim', explode(',', $adminEmailStr)));
+                    if (!empty($adminEmails)) {
+                        Mail::to($adminEmails)->send(new PendingPaymentMail($transaction, $business, $purchaseData));
+                    }
+                } catch (\Exception $mailEx) {
+                    Log::error("Failed to send pending payment email to admin: " . $mailEx->getMessage());
+                }
+
                 $success = true;
                 $message = 'Payment submitted successfully!';
+                $redirect = route('business.purchase.history.detail', $purchaseData->id);
             }
         } catch (\Exception $e) {
             DB::rollBack();
@@ -192,7 +362,7 @@ class PaymentController extends Controller
                 fileRemoveStorage($image_name);
             }
             Log::error("Payment submit error: " . $e->getMessage());
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
 
 
@@ -202,5 +372,22 @@ class PaymentController extends Controller
             'data' => $data,
             'redirect' => $redirect
         ]);
+    }
+
+    /**
+     * Validate and sanitize redirect URLs to prevent open redirect vulnerabilities.
+     */
+    private function getSafeRedirectUrl(?string $url, string $default): string
+    {
+        if (empty($url)) {
+            return $default;
+        }
+
+        $host = parse_url($url, PHP_URL_HOST);
+        if (empty($host) || $host === request()->getHost()) {
+            return $url;
+        }
+
+        return $default;
     }
 }

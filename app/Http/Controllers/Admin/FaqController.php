@@ -94,7 +94,7 @@ class FaqController extends Controller
                 $message = 'Faq add successfully.';
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -146,7 +146,7 @@ class FaqController extends Controller
                 $message = 'Faq updated successfully.';
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -169,7 +169,7 @@ class FaqController extends Controller
                 $message = 'Faq deleted successfully.';
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }

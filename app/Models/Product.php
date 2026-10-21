@@ -3,15 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'business_id',
         'parent_product_id',
         'parent_product_business_id',
-        'share_type',
         'category_id',
+        'label_id',
         'name',
         'sku',
         'slug',
@@ -22,27 +24,40 @@ class Product extends Model
         'min_price',
         'max_price',
         'quantity',
+        'length',
+        'width',
+        'height',
+        'weight',
         'status',
+        'share_type',
     ];
 
-    public function parentProduct()
-    {
-        return $this->belongsTo(Product::class, 'parent_product_id', 'id');
-    }
-
-    public function parentProductBusiness()
-    {
-        return $this->belongsTo(Business::class, 'parent_product_business_id', 'id');
-    }
-
-    public function sharedCopies()
-    {
-        return $this->hasMany(Product::class, 'parent_product_id', 'id');
-    }
+    protected $casts = [
+        'label_id' => 'array',
+    ];
 
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * Returns a Builder for labels matching the stored JSON IDs.
+     * Usage: $product->labels()->get()
+     */
+    public function labels()
+    {
+        $ids = $this->label_id ?? [];
+        return Label::select('id', 'name', 'slug')->whereIn('id', $ids);
+    }
+
+    /**
+     * Get labels as a collection (non-relation accessor).
+     */
+    public function getLabelsListAttribute()
+    {
+        $ids = $this->label_id ?? [];
+        return empty($ids) ? collect() : Label::select('id', 'name', 'slug')->whereIn('id', $ids)->get();
     }
 
     public function business()
@@ -60,13 +75,8 @@ class Product extends Model
         return $this->hasOne(ProductImage::class)->where('type', 'image')->orderBy('sort_order');
     }
 
-    public function firstTwoImages()
+    public function firstTwoImage()
     {
-        return $this->hasMany(ProductImage::class)->where('type', 'image')->orderBy('sort_order')->take(2);
-    }
-
-    public function favorites()
-    {
-        return $this->hasMany(Favorite::class, 'favorite_item_id', 'id')->where('favorite_type', 'product');
+        return $this->hasMany(ProductImage::class)->where('type', 'image')->orderBy('sort_order', 'asc')->take(2);
     }
 }

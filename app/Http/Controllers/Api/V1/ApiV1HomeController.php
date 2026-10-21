@@ -2,215 +2,93 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Http\Controllers\Controller;
-use App\Models\Banner;
-use App\Models\Business;
-use App\Models\BusinessCategory;
-use App\Models\Favorite;
+use App\Http\Controllers\Api\BaseApiController;
+use App\Http\Requests\Api\V1\Business\ApiV1BusinessFilterRequest;
+use App\Http\Resources\Api\V1\ApiV1BusinessResource;
+use App\Services\Api\V1\ApiV1HomeService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class ApiV1HomeController extends Controller
+class ApiV1HomeController extends BaseApiController
 {
-    public function index(Request $request)
+    /**
+     * @param ApiV1HomeService $homeService
+     */
+    public function __construct(
+        protected ApiV1HomeService $homeService
+    ) {}
+
+    /**
+     * Get aggregated home page data.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function index(Request $request): JsonResponse
     {
-        try {
-            $lat = $request->header('X-Latitude') ?? $request->get('latitude');
-            $lng = $request->header('X-Longitude') ?? $request->get('longitude');
-            $areaLatLong = $request->header('X-Area-Lat-Long') ?? $request->get('area_lat_long');
-            $radius = $request->header('X-Radius') ?? $request->get('radius');
+        $location = $this->homeService->resolveLocationFromRequest($request);
+        $data = $this->homeService->getHomeData($location);
 
-            $location = null;
-            if ($areaLatLong || ($lat && $lng)) {
-                $location = [
-                    'area_lat_long' => $areaLatLong,
-                    'latitude' => $lat,
-                    'longitude' => $lng,
-                    'radius' => !empty($radius) ? $radius : 100,
-                ];
-            }
-            $categories = BusinessCategory::where('status', 'active')
-            ->whereHas('businesses', function ($query) use ($location) {
-                    $query->where('status', 'active')
-                        ->when($location, function ($q) use ($location) {
-                            if (!empty($location['area_lat_long'])) {
-                                $coords = explode(',', $location['area_lat_long']);
-                                if (count($coords) === 4) {
-                                    return $q->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
-                                }
-                            }
-                            if (isset($location['latitude']) && isset($location['longitude'])) {
-                                return $q->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100);
-                            }
-                        });
-                })
-                ->withCount(['businesses' => function ($query) use ($location) {
-                    $query->where('status', 'active')
-                        ->when($location, function ($q) use ($location) {
-                            if (!empty($location['area_lat_long'])) {
-                                $coords = explode(',', $location['area_lat_long']);
-                                if (count($coords) === 4) {
-                                    return $q->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
-                                }
-                            }
-                            if (isset($location['latitude']) && isset($location['longitude'])) {
-                                return $q->nearby($location['latitude'], $location['longitude'], $location['radius'] ?? 100);
-                            }
-                        });
-                }])
-            ->take(12)->get(['id', 'name', 'slug', 'image'])->map(function($cat) {
-                $cat->image = getImage($cat->image, 'category');
-                return $cat;
-            });
-            
-            $query = Business::select('id', 'owner_id', 'name', 'slug', 'business_type', 'business_category_id', 'area', 'latitude', 'longitude', 'city_id', 'rating', 'business_image')
-                ->with(['businessCategory:id,name', 'city:id,name', 'businessSetting:id,business_id,is_verified'])
-                ->where('status', 'active');
-
-            if ($areaLatLong) {
-                $coords = explode(',', $areaLatLong);
-                if (count($coords) === 4) {
-                    $query->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
-                }
-            } elseif ($lat && $lng) {
-                $radius = !empty($radius) ? $radius : 100;
-                $query->nearby($lat, $lng, $radius);
-            }
-
-            $featuredBusinesses = $query->take(10)->get()->map(function($business) {
-                $business->business_image = getImage($business->business_image, 'business');
-                $business->is_verified = $business->businessSetting?->is_verified ? 1 : 0;
-                return $business;
-            });
-
-            return response()->json([
-                'status_code' => 200,
-                'success' => true,
-                'message' => 'Home data fetched successfully',
-                'data' => [
-                    'categories' => $categories,
-                    'featured_businesses' => $featuredBusinesses,
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status_code' => 500,
-                'success' => false,
-                'message' => $e->getMessage(),
-                'data' => []
-            ], 500);
-        }
+        return $this->sendResponse($data, 'Home data retrieved successfully.');
     }
 
-    public function categories()
+    /**
+     * Get all active business categories.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function categories(Request $request): JsonResponse
     {
-        try {
-            $categories = BusinessCategory::where('status', 'active')->get(['id', 'name', 'slug', 'image']);
-            return response()->json([
-                'status_code' => 200,
-                'success' => true,
-                'message' => 'Categories retrieved',
-                'data' => $categories
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['status_code' => 500, 'success' => false, 'message' => $e->getMessage()], 500);
-        }
+        $location = $this->homeService->resolveLocationFromRequest($request);
+        $categories = $this->homeService->getCategories($location);
+
+        return $this->sendResponse($categories, 'Categories retrieved successfully.');
     }
 
-    public function businesses(Request $request)
+    /**
+     * Get paginated businesses with filters.
+     *
+     * @param ApiV1BusinessFilterRequest $request
+     * @return JsonResponse
+     */
+    public function businesses(ApiV1BusinessFilterRequest $request): JsonResponse
     {
-        try {
-            $query = Business::select('id', 'owner_id', 'name', 'slug', 'business_type', 'business_category_id', 'area', 'latitude', 'longitude', 'city_id', 'rating', 'business_image')
-                ->with(['businessCategory:id,name', 'city:id,name', 'reviews', 'businessSetting:id,business_id,is_verified'])
-                ->where('status', 'active');
+        $location = $this->homeService->resolveLocationFromRequest($request);
+        $paginated = $this->homeService->getBusinesses($request->validated(), $location);
 
-            $lat = $request->header('X-Latitude') ?? $request->get('latitude');
-            $lng = $request->header('X-Longitude') ?? $request->get('longitude');
-            $areaLatLong = $request->header('X-Area-Lat-Long') ?? $request->get('area_lat_long');
-            $radius = $request->header('X-Radius') ?? $request->get('radius');
+        $businessCollection = ApiV1BusinessResource::collection($paginated->items());
 
-            if ($areaLatLong) {
-                $coords = explode(',', $areaLatLong);
-                if (count($coords) === 4) {
-                    $query->inBoundaries($coords[0], $coords[1], $coords[2], $coords[3]);
-                }
-            } elseif ($lat && $lng) {
-                $radius = !empty($radius) ? $radius : 100;
-                $query->nearby($lat, $lng, $radius);
-            }
-
-            if ($request->has('category_id') && $request->category_id != '') {
-                $query->where('business_category_id', $request->category_id);
-            }
-
-            if ($request->has('search') && $request->search != '') {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('address', 'like', "%{$search}%");
-                });
-            }
-
-            $businesses = $query->paginate(12);
-            $businesses->getCollection()->transform(function($business) {
-                $business->business_image = getImage($business->business_image, 'business');
-                $business->is_verified = $business->businessSetting?->is_verified ? 1 : 0;
-                return $business;
-            });
-
-            return response()->json([
-                'status_code' => 200,
-                'success' => true,
-                'message' => 'Businesses retrieved',
-                'data' => $businesses
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['status_code' => 500, 'success' => false, 'message' => $e->getMessage()], 500);
-        }
+        return $this->sendResponse([
+            'data' => $businessCollection,
+            'businesses' => $businessCollection,
+            'current_page' => $paginated->currentPage(),
+            'last_page' => $paginated->lastPage(),
+            'per_page' => $paginated->perPage(),
+            'total' => $paginated->total(),
+            'pagination' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+            ],
+        ], 'Businesses retrieved successfully.');
     }
 
-    public function toggleFavorite(Request $request)
+    /**
+     * Get business details by ID or slug.
+     *
+     * @param int|string $id
+     * @return JsonResponse
+     */
+    public function businessDetail(int|string $id): JsonResponse
     {
-        try {
-            $request->validate([
-                'business_id' => 'required|exists:businesses,id',
-                'type' => 'nullable|in:business,product,service,expert',
-                'item_id' => 'nullable|integer',
-            ]);
+        $data = $this->homeService->getBusinessDetail($id);
 
-            $user = $request->user();
-            $type = $request->input('type', 'business');
-            $itemId = $request->input('item_id', $request->business_id);
-            $businessId = $request->business_id;
-
-            $favorite = Favorite::where('user_id', $user->id)
-                ->where('business_id', $businessId)
-                ->where('favorite_type', $type)
-                ->where('favorite_item_id', $itemId)
-                ->first();
-
-            if ($favorite) {
-                $favorite->delete();
-                $isFavorite = false;
-                $msg = 'Removed from favorites';
-            } else {
-                Favorite::create([
-                    'user_id' => $user->id,
-                    'business_id' => $businessId,
-                    'favorite_type' => $type,
-                    'favorite_item_id' => $itemId,
-                ]);
-                $isFavorite = true;
-                $msg = 'Added to favorites';
-            }
-
-            return response()->json([
-                'status_code' => 200,
-                'success' => true,
-                'message' => $msg,
-                'data' => ['is_favorite' => $isFavorite]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['status_code' => 500, 'success' => false, 'message' => $e->getMessage()], 500);
+        if (!$data) {
+            return $this->sendNotFound('Business not found.');
         }
+
+        return $this->sendResponse($data, 'Business details retrieved successfully.');
     }
 }

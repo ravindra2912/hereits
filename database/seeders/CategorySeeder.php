@@ -63,13 +63,15 @@ class CategorySeeder extends Seeder
         ];
 
         $directory = 'category_images';
+        $business = \App\Models\Business::first();
+        $businessId = $business ? $business->id : 1;
 
         foreach ($productCategories as $name) {
             // $imageName = $this->downloadAndStoreImage($name, $directory);
             $imageName = null;
 
             DB::table('categories')->insert([
-                'business_id' => 1000,
+                'business_id' => $businessId,
                 'name' => $name,
                 'image_url' => $imageName,
                 'type' => 'Products',
@@ -84,7 +86,7 @@ class CategorySeeder extends Seeder
             $imageName = null;
 
             DB::table('categories')->insert([
-                'business_id' => 1000,
+                'business_id' => $businessId,
                 'name' => $name,
                 'image_url' => $imageName,
                 'type' => 'Services',

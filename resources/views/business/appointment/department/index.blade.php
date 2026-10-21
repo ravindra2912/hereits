@@ -17,7 +17,7 @@
 <div class="card shadow mb-4">
   <div class="card-header py-3 bg-white d-flex justify-content-between align-items-center">
     <h5 class="m-0 font-weight-bold text-primary">Departments</h5>
-    @if(checkBusinessPermission('appointments', 'department', 'add'))
+    @if(checkBusinessPermission('add_department'))
     <a href="{{ route('business.appointment.department.create') }}" class="btn btn-primary btn-sm shadow-sm">
       <i class="bi bi-plus-lg text-white-50"></i> Add Department
     </a>
@@ -124,7 +124,8 @@
               }
             },
             error: function(e) {
-              Swal.fire('Error', 'Something went wrong', 'error');
+              let msg = e.responseJSON?.message || (e.status === 403 ? 'Unauthorized. You do not have permission to delete departments.' : 'Something went wrong');
+              Swal.fire('Error', msg, 'error');
             }
           });
         }

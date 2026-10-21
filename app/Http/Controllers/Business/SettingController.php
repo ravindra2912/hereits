@@ -12,11 +12,13 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 use App\Models\BusinessSetting;
+use App\Models\BusinessPaymentConfiguration;
 use App\Models\BusinessTiming;
 use App\Models\SiteSetting;
 use App\Models\Purchase;
 use App\Models\Transactions;
 use Illuminate\Support\Facades\DB;
+use App\Models\Plan;
 
 class SettingController extends Controller
 {
@@ -32,6 +34,13 @@ class SettingController extends Controller
 
     public function profileUpdate(Request $request, $id)
     {
+        if ((int)$id !== (int)Auth::id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized action.'
+            ], 403);
+        }
+
         $success = false;
         $message = 'Something Wrong!';
         $redirect = Route('business.setting.profile');
@@ -56,7 +65,7 @@ class SettingController extends Controller
                 // $message = $validator->errors()->first();
             } else {
 
-                $update = User::find($id);
+                $update = Auth::user();
 
                 if ($request->hasFile('profile')) {
                     $oldimage = $update->profile;
@@ -75,6 +84,7 @@ class SettingController extends Controller
                 }
 
                 $update->save();
+                $update->syncBusinessSessionData();
 
                 // Remove old uploaded image if exist
                 if (isset($oldimage)) {
@@ -85,7 +95,7 @@ class SettingController extends Controller
                 $message = 'Profile updated successfully.';
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_name) && !empty($image_name)) {
                 fileRemoveStorage($image_name);
             }
@@ -95,7 +105,8 @@ class SettingController extends Controller
 
     public function businessProfile(Request $request)
     {
-        $business = Business::with(['businessCategory:id,name', 'businessSetting:id,business_id'])->find(Auth::user()->business_id);
+        $businessId = getBusinessId();
+        $business = Business::with(['businessCategory:id,name', 'businessSetting', 'state:id,name', 'city:id,name'])->findOrFail($businessId);
         return view('business.setting.business_profile', compact('business'));
     }
 
@@ -116,7 +127,8 @@ class SettingController extends Controller
     {
         $business = Business::find(Auth::user()->business_id);
         $setting = getBusinessSettings();
-        return view('business.setting.business_configuration', compact('business', 'setting'));
+        $paymentConfig = BusinessPaymentConfiguration::where('business_id', Auth::user()->business_id)->first();
+        return view('business.setting.business_configuration', compact('business', 'setting', 'paymentConfig'));
     }
 
     public function businessAboutUs(Request $request)
@@ -124,6 +136,151 @@ class SettingController extends Controller
         $business = Business::find(Auth::user()->business_id);
         $setting = getBusinessSettings();
         return view('business.setting.business_about_us', compact('business', 'setting'));
+    }
+
+    public function businessTheme(Request $request)
+    {
+        $businessId = getBusinessId();
+        $business = Business::findOrFail($businessId);
+        $setting = getBusinessSettings($businessId);
+
+        $themeSetting = $setting->theme_setting ?? [];
+        if (is_string($themeSetting)) {
+            $themeSetting = json_decode($themeSetting, true) ?? [];
+        }
+
+        $defaultTheme = config('theme.default_theme_setting', []);
+        $themeSetting = array_replace_recursive($defaultTheme, (array)$themeSetting);
+
+        return view('business.setting.business_theme', compact('business', 'setting', 'themeSetting'));
+    }
+
+    public function themeUpdate(Request $request)
+    {
+        $success = false;
+        $message = 'Something went wrong!';
+        $redirect = route('business.setting.business.theme');
+        $data = [];
+
+        try {
+            $businessId = getBusinessId();
+            $update = BusinessSetting::where('business_id', $businessId)->first();
+            if (!$update) {
+                $update = new BusinessSetting();
+                $update->business_id = $businessId;
+            }
+
+            $currentTheme = $update->theme_setting ?? config('theme.default_theme_setting', []);
+            if (is_string($currentTheme)) {
+                $currentTheme = json_decode($currentTheme, true) ?? [];
+            }
+
+            $inputTheme = $request->input('theme_setting', []);
+
+            // Sanitize / validate hex colors (supports #RGB, #RRGGBB, #RRGGBBAA)
+            $colorRegex = '/^#([a-fA-F0-9]{3}|[a-fA-F0-9]{6}|[a-fA-F0-9]{8})$/';
+
+            // Primary & Secondary theme colors (buttons, badges, highlights)
+            foreach (['primary_color', 'secondary_color'] as $colorKey) {
+                $val = $inputTheme[$colorKey] ?? $inputTheme['theme_colors'][$colorKey] ?? null;
+                if (!empty($val)) {
+                    $colorVal = trim($val);
+                    if (preg_match($colorRegex, $colorVal)) {
+                        $currentTheme[$colorKey] = $colorVal;
+                        $currentTheme['theme_colors'][$colorKey] = $colorVal;
+                    }
+                } elseif (array_key_exists($colorKey, $inputTheme) || (isset($inputTheme['theme_colors']) && array_key_exists($colorKey, $inputTheme['theme_colors']))) {
+                    $currentTheme[$colorKey] = null;
+                    if (isset($currentTheme['theme_colors'])) {
+                        $currentTheme['theme_colors'][$colorKey] = null;
+                    }
+                }
+            }
+
+            $allowedKeys = [
+                'header' => ['background_color', 'text_color', 'search_background_color', 'search_text_color'],
+                'body' => ['background_color', 'text_color'],
+                'footer' => ['background_color', 'text_color'],
+                'product_card' => ['background_color', 'text_color'],
+                'service_card' => ['background_color', 'text_color'],
+                'expert_card' => ['background_color', 'text_color'],
+            ];
+
+            foreach ($allowedKeys as $section => $keys) {
+                if (isset($inputTheme[$section]) && is_array($inputTheme[$section])) {
+                    if (!isset($currentTheme[$section]) || !is_array($currentTheme[$section])) {
+                        $currentTheme[$section] = [];
+                    }
+                    foreach ($keys as $key) {
+                        if (!empty($inputTheme[$section][$key])) {
+                            $colorVal = trim($inputTheme[$section][$key]);
+                            if (preg_match($colorRegex, $colorVal)) {
+                                $currentTheme[$section][$key] = $colorVal;
+                            }
+                        } else {
+                            if (array_key_exists($key, $inputTheme[$section])) {
+                                $currentTheme[$section][$key] = null;
+                            }
+                        }
+                    }
+                }
+            }
+
+            $update->theme_setting = $currentTheme;
+            $update->save();
+
+            session()->forget('business_settings');
+            getBusinessSettings($businessId, true);
+
+            if (Auth::check()) {
+                Auth::user()->syncBusinessSessionData($businessId);
+            }
+
+            $success = true;
+            $message = 'Theme settings updated successfully.';
+        } catch (\Exception $e) {
+            $message = checkResponse($e);
+        }
+
+        return response()->json([
+            'success' => $success,
+            'message' => $message,
+            'data' => $data,
+            'redirect' => $redirect,
+        ]);
+    }
+
+    public function themeReset(Request $request)
+    {
+        try {
+            $businessId = getBusinessId();
+            $update = BusinessSetting::where('business_id', $businessId)->first();
+            $defaultTheme = config('theme.default_theme_setting', []);
+
+            if ($update) {
+                $update->theme_setting = $defaultTheme;
+                $update->save();
+            }
+
+            session()->forget('business_settings');
+            getBusinessSettings($businessId, true);
+
+            if (Auth::check()) {
+                Auth::user()->syncBusinessSessionData($businessId);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Theme settings reset to defaults successfully.',
+                'redirect' => route('business.setting.business.theme'),
+                'data' => $defaultTheme,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => checkResponse($e),
+            ]);
+        }
     }
 
     public function businessUpdate(Request $request, $id)
@@ -135,8 +292,8 @@ class SettingController extends Controller
 
         try {
             $rules = [
-                'business_image' => 'nullable|mimes:jpg,jpeg,png,webp|',
-                'business_logo' => 'nullable|mimes:jpg,jpeg,png,webp|',
+                'business_image' => 'nullable|mimes:jpg,jpeg,png,webp',
+                'business_logo' => 'nullable|mimes:jpg,jpeg,png,webp',
                 'name' => 'required',
                 // 'business_category_id' => 'required',
                 // 'business_type' => 'required',
@@ -146,6 +303,8 @@ class SettingController extends Controller
                 'city_id' => 'required|exists:cities,id',
                 'area' => 'required',
                 'pincode' => 'required|numeric|digits:6',
+                'latitude' => 'nullable|numeric|between:-90,90',
+                'longitude' => 'nullable|numeric|between:-180,180',
                 'facebook' => 'nullable|url',
                 'twitter' => 'nullable|url',
                 'instagram' => 'nullable|url',
@@ -160,7 +319,8 @@ class SettingController extends Controller
                 // $message = $validator->errors()->first();
             } else {
 
-                $update = Business::find($id);
+                $businessId = getBusinessId();
+                $update = Business::where('id', $businessId)->findOrFail($id);
 
                 if ($request->hasFile('business_image')) {
                     $oldimage = $update->business_image;
@@ -188,6 +348,8 @@ class SettingController extends Controller
                 $update->city_id = $request->city_id;
                 $update->area = $request->area;
                 $update->pincode = $request->pincode;
+                $update->latitude = $request->filled('latitude') ? (float)$request->latitude : $update->latitude;
+                $update->longitude = $request->filled('longitude') ? (float)$request->longitude : $update->longitude;
                 $update->facebook = $request->facebook;
                 $update->twitter = $request->twitter;
                 $update->instagram = $request->instagram;
@@ -195,13 +357,28 @@ class SettingController extends Controller
                 $update->youtube = $request->youtube;
                 $update->save();
 
-                // Removed individual fileRemove calls as they are handled above within the existence checks
+                if (function_exists('updateBusinessSeo')) {
+                    updateBusinessSeo($update->id);
+                }
+
+                BusinessSetting::updateOrCreate(
+                    ['business_id' => $id],
+                    ['is_show_contact' => $request->has('is_show_contact') ? 1 : 0]
+                );
+
+                if (function_exists('getBusinessSettings')) {
+                    getBusinessSettings($id, true);
+                }
+
+                if (Auth::check()) {
+                    Auth::user()->syncBusinessSessionData($id);
+                }
 
                 $success = true;
                 $message = 'Business update successfully.';
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_name) && !empty($image_name)) {
                 fileRemoveStorage($image_name);
             }
@@ -238,7 +415,7 @@ class SettingController extends Controller
                 $message = 'SEO update successfully.';
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -273,61 +450,104 @@ class SettingController extends Controller
         try {
             DB::beginTransaction();
             $rules = [
-                'day' => 'required|string',
+                'day' => 'required',
                 'start_time' => 'required',
                 'end_time' => 'required|after:start_time',
-                'id' => 'nullable|exists:business_timings,id',
-                'apply_to_all' => 'nullable|boolean'
             ];
-            $validator = Validator::make($request->all(), $rules);
+            $validator = Validator::make($request->all(), $rules, [
+                'end_time.after' => 'End Time must be greater than Start Time.',
+            ]);
+
             if ($validator->fails()) {
-                return response()->json(['success' => false, 'message' => $validator->errors()]);
+                $message = $validator->errors()->first();
+                return response()->json(['success' => false, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
             }
 
-            $business_id = getBusinessId();
-            $days = $request->has('apply_to_all') && $request->apply_to_all ? config('const.week_day_name') : [$request->day];
-            
-            foreach ($days as $day) {
-                // Check for conflict
-                $conflictQuery = BusinessTiming::where('business_id', $business_id)
-                    ->where('day', $day)
-                    ->where('expert_id', null)
-                    ->where(function ($query) use ($request) {
-                        $query->where('start_time', '<', $request->end_time)
-                            ->where('end_time', '>', $request->start_time);
-                    });
+            $businessId = getBusinessId();
+            $isAllDays = ($request->day === 'all' || $request->boolean('all_days'));
+            $allWeekDays = config('const.week_day_name');
+            $targetDays = $isAllDays ? $allWeekDays : [$request->day];
 
-                if ($request->filled('id') && $day == $request->day) {
-                    $conflictQuery->where('id', '!=', $request->id);
-                }
+            $startTime = date('H:i:s', strtotime($request->start_time));
+            $endTime = date('H:i:s', strtotime($request->end_time));
+            $timeRangeText = get_time($startTime) . ' - ' . get_time($endTime);
 
-                if ($conflictQuery->exists()) {
-                    if ($request->has('apply_to_all') && $request->apply_to_all) {
-                        continue; // Skip days with conflicts when applying to all
-                    }
-                    return response()->json(['success' => false, 'message' => "The selected time overlaps with an existing schedule on {$day}."]);
-                }
+            // Fetch existing timings for target days to check conflicts
+            $existingTimings = BusinessTiming::where('business_id', $businessId)
+                ->whereIn('day', $targetDays)
+                ->whereNull('expert_id')
+                ->lockForUpdate()
+                ->get();
 
-                if ($request->filled('id') && $day == $request->day) {
-                    $timing = BusinessTiming::findOrFail($request->id);
+            $conflictingDays = [];
+            $availableDays = [];
+
+            foreach ($targetDays as $dayName) {
+                // An existing slot overlaps if (existing.start < new.end AND existing.end > new.start)
+                $hasConflict = $existingTimings->where('day', $dayName)->filter(function ($timing) use ($startTime, $endTime) {
+                    $existingStart = date('H:i:s', strtotime($timing->start_time));
+                    $existingEnd = date('H:i:s', strtotime($timing->end_time));
+                    return $existingStart < $endTime && $existingEnd > $startTime;
+                })->isNotEmpty();
+
+                if ($hasConflict) {
+                    $conflictingDays[] = $dayName;
                 } else {
-                    $timing = new BusinessTiming();
-                    $timing->business_id = $business_id;
+                    $availableDays[] = $dayName;
                 }
-
-                $timing->day = $day;
-                $timing->start_time = $request->start_time;
-                $timing->end_time = $request->end_time;
-                $timing->save();
             }
 
-            DB::commit();
-            $success = true;
-            $message = $request->filled('id') ? 'Time updated successfully.' : 'Time added successfully.';
-            
+            if (!$isAllDays) {
+                if (!empty($conflictingDays)) {
+                    $message = "The selected time ({$timeRangeText}) overlaps with an existing schedule on {$request->day}.";
+                    return response()->json(['success' => false, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
+                }
+
+                $insert = new BusinessTiming();
+                $insert->business_id = $businessId;
+                $insert->day = $request->day;
+                $insert->start_time = $startTime;
+                $insert->end_time = $endTime;
+                $insert->save();
+
+                DB::commit();
+                $success = true;
+                $message = "Time slot ({$timeRangeText}) added successfully for {$request->day}.";
+            } else {
+                // If every day has conflict
+                if (empty($availableDays)) {
+                    $message = "The selected time ({$timeRangeText}) overlaps with existing schedules on all days (" . implode(', ', $conflictingDays) . ").";
+                    return response()->json(['success' => false, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
+                }
+
+                // If some days have conflicts and skip_overlapping is NOT enabled
+                if (!empty($conflictingDays) && !$request->boolean('skip_overlapping')) {
+                    $message = "The selected time ({$timeRangeText}) overlaps with an existing schedule on: " . implode(', ', $conflictingDays) . ".";
+                    return response()->json(['success' => false, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
+                }
+
+                // Insert into available days
+                foreach ($availableDays as $dayName) {
+                    $insert = new BusinessTiming();
+                    $insert->business_id = $businessId;
+                    $insert->day = $dayName;
+                    $insert->start_time = $startTime;
+                    $insert->end_time = $endTime;
+                    $insert->save();
+                }
+
+                DB::commit();
+                $success = true;
+
+                if (!empty($conflictingDays)) {
+                    $message = "Time slot added for " . count($availableDays) . " day(s). Skipped (" . implode(', ', $conflictingDays) . ") due to overlapping schedule.";
+                } else {
+                    $message = "Time slot ({$timeRangeText}) added successfully for all days.";
+                }
+            }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -347,7 +567,7 @@ class SettingController extends Controller
             $success = true;
             $message = 'Time deleted successfully.';
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -360,15 +580,34 @@ class SettingController extends Controller
         $data = array();
 
         try {
-            $rules = [
-                // 'business_image' => 'nullable|mimes:jpg,jpeg,png,webp|',
-            ];
+            if ($request->form_type == 'system_setting') {
+                // Payment methods are only required if ecommerce system is enabled
+                if ($request->has('is_ecommerce_system') && !$request->has('accept_cash_on_delivery') && !$request->has('accept_online_payments')) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => [
+                            'accept_cash_on_delivery' => ['At least one payment method (Cash on Delivery or Online Payment) must be enabled.']
+                        ]
+                    ]);
+                }
+            }
+
+            $rules = [];
+            if ($request->form_type == 'system_setting') {
+                $rules = [
+                    'same_state_shipping_charge_per_kg' => $request->has('show_delivery_charges') ? 'required|numeric|min:0' : 'nullable',
+                    'other_state_shipping_charge_per_kg' => $request->has('show_delivery_charges') ? 'required|numeric|min:0' : 'nullable',
+                    'online_payment_method' => $request->has('accept_online_payments') ? 'required|in:manual_upi,razorpay' : 'nullable',
+                    'upi_id' => ($request->has('accept_online_payments') && $request->online_payment_method == 'manual_upi') ? 'required|string|max:255' : 'nullable',
+                    'razorpay_key_id' => ($request->has('accept_online_payments') && $request->online_payment_method == 'razorpay') ? 'required|string|max:255' : 'nullable',
+                    'razorpay_key_secret' => 'nullable|string|max:500',
+                ];
+            }
 
             $validator = Validator::make($request->all(), $rules);
 
             if ($validator->fails()) { // Validation fails
                 $message = $validator->errors();
-                // $message = $validator->errors()->first();
             } else {
 
                 $update = BusinessSetting::where('business_id', getBusinessId())->first();
@@ -386,38 +625,97 @@ class SettingController extends Controller
                             fileRemoveStorage($old_about_image);
                         }
                     }
-                    $update->about_us_text = $request->about_us_text;
+                    $update->about_us_text = cleanHtml($request->about_us_text);
                 } elseif ($request->form_type == 'system_setting') {
                     $update->is_appointment_with_department = $request->has('is_appointment_with_department') ? 1 : 0;
                     $update->is_appointment_price_required = $request->has('is_appointment_price_required') ? 1 : 0;
+                    $update->allow_appointment_product_selection = $request->has('allow_appointment_product_selection') ? 1 : 0;
                     $update->is_ecommerce_system = $request->has('is_ecommerce_system') ? 1 : 0;
+                    $update->is_offer_with_customer_group = $request->has('is_offer_with_customer_group') ? 1 : 0;
+                    $update->is_label = $request->has('is_label') ? 1 : 0;
                     $update->is_service_system = $request->has('is_service_system') ? 1 : 0;
                     $update->is_appointment_system = $request->has('is_appointment_system') ? 1 : 0;
                     $update->is_pos_access = $request->has('is_pos_access') ? 1 : 0;
-                    $update->visibility = $request->visibility ?? 'public';
+                    $update->is_lucky_draw = $request->has('is_lucky_draw') ? 1 : 0;
+                    $update->is_order_place_on_website = $request->has('is_order_place_on_website') ? 1 : 0;
+                    $update->is_create_quotation_on_inquiry = $request->has('is_create_quotation_on_inquiry') ? 1 : 0;
+                    $update->is_login_required = $request->has('is_login_required') ? 1 : 0;
+                    $update->is_private = $request->has('is_private') ? 1 : 0;
+
+                    // New fields
+                    $update->show_delivery_charges = $request->has('show_delivery_charges') ? 1 : 0;
+                    if ($update->show_delivery_charges) {
+                        $update->same_state_shipping_charge_per_kg = $request->same_state_shipping_charge_per_kg;
+                        $update->other_state_shipping_charge_per_kg = $request->other_state_shipping_charge_per_kg;
+                    }
+                    $update->accept_online_payments = $request->has('accept_online_payments') ? 1 : 0;
+                    $update->accept_cash_on_delivery = $request->has('accept_cash_on_delivery') ? 1 : 0;
+
+                    // Save BusinessPaymentConfiguration
+                    if ($update->accept_online_payments) {
+                        $paymentConfig = BusinessPaymentConfiguration::firstOrNew(['business_id' => getBusinessId()]);
+                        $paymentMethod = $request->online_payment_method ?? 'manual_upi';
+                        $paymentConfig->payment_method = $paymentMethod;
+                        if ($paymentMethod === 'manual_upi') {
+                            $paymentConfig->upi_id = $request->upi_id;
+                        } elseif ($paymentMethod === 'razorpay') {
+                            $paymentConfig->razorpay_key_id = $request->razorpay_key_id;
+                            if ($request->filled('razorpay_key_secret')) {
+                                $paymentConfig->razorpay_key_secret = $request->razorpay_key_secret;
+                            }
+                        }
+                        $paymentConfig->save();
+                    }
+                    session()->forget('business_settings');
                 }
 
                 $update->save();
+
+                if (Auth::check()) {
+                    Auth::user()->syncBusinessSessionData(getBusinessId());
+                }
 
                 $success = true;
                 $message = 'Setting update successfully.';
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
 
     public function switchBusiness(Request $request, $business_id)
     {
-        $user = User::find(Auth::user()->id);
-        if ($user) {
-            $user->business_id = $business_id;
-            $user->save();
-            $user->syncBusinessContextToSession();
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('business.login');
         }
-        Auth::logout();
-        Auth::login($user);
-        return redirect()->intended(route('business.dashboard', absolute: false));
+
+        $businessId = (int) $business_id;
+
+        // Verify that the user has access to this business (as owner or authorized staff)
+        $isOwner = Business::where('id', $businessId)->where('owner_id', $user->id)->exists();
+        $isStaff = \App\Models\BusinessUser::with('role')
+            ->where('business_id', $businessId)
+            ->where('user_id', $user->id)
+            ->get()
+            ->filter(function ($bu) {
+                return !empty($bu->role?->permissions['business_access']);
+            })
+            ->isNotEmpty();
+
+        if (!$isOwner && !$isStaff) {
+            return redirect()->back()->with('error', 'You do not have permission to access this business.');
+        }
+
+        // Update user's active business_id
+        $user->business_id = $businessId;
+        $user->save();
+
+        // Clear all previous business session data and re-sync
+        app(\App\Services\BusinessSynchronizationService::class)->clearBusinessSession();
+        $user->syncBusinessSessionData($businessId);
+
+        return redirect()->back()->with('success', 'Switched to ' . (session('business_name') ?? 'business') . ' successfully.');
     }
 }

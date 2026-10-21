@@ -17,6 +17,9 @@
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="{{ asset('assets/common/css/bootstrap-icons.min.css') }}">
 
+  <!-- Toastr -->
+  <link href="{{ asset('assets/common/css/toastr.min.css') }}?v={{ filemtime(public_path('assets/common/css/toastr.min.css')) }}" rel="stylesheet" />
+
   <style>
     :root {
       --primary-color: #FFC700;
@@ -241,6 +244,7 @@
       color: var(--accent-color);
       text-decoration: none;
       font-weight: 500;
+      cursor: pointer;
     }
 
     .forgot-password:hover {
@@ -273,6 +277,40 @@
 
     .btn-login:active {
       transform: translateY(0);
+    }
+
+    .btn-login:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-google-login {
+      width: 100%;
+      padding: 0.8rem;
+      background-color: #ffffff;
+      color: #1f2937;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.98rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+      text-decoration: none;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      margin-bottom: 1.5rem;
+    }
+
+    .btn-google-login:hover {
+      background-color: #f8fafc;
+      border-color: #cbd5e1;
+      color: #0f172a;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
     .divider {
@@ -323,6 +361,7 @@
       border-bottom: 2px solid var(--primary-color);
       padding-bottom: 2px;
       transition: all 0.3s ease;
+      cursor: pointer;
     }
 
     .register-link:hover {
@@ -344,6 +383,16 @@
       background-color: #fef2f2;
       color: #991b1b;
       border: 1px solid #fee2e2;
+    }
+
+    .alert-success {
+      background-color: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .d-none {
+      display: none !important;
     }
 
     @media (max-width: 992px) {
@@ -426,11 +475,6 @@
 
     <!-- Login Form Side -->
     <div class="login-form-side">
-      <div class="form-header fadeIn">
-        <h2>Welcome Back</h2>
-        <p>Login to your business manager dashboard</p>
-      </div>
-
       @if(session()->has('error'))
       <div class="alert alert-danger fadeIn">
         <i class="bi bi-exclamation-circle-fill"></i>
@@ -438,57 +482,119 @@
       </div>
       @endif
 
-      <form action="{{ route('business.login') }}" method="POST" class="fadeIn delay-1">
-        @csrf
+      @if(session()->has('success'))
+      <div class="alert alert-success fadeIn">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>{{ session()->get('success') }}</span>
+      </div>
+      @endif
 
-        <div class="form-group">
-          <label for="email">Email Address</label>
-          <div class="input-wrapper">
-            <input type="email" id="email" name="email" class="form-control required" placeholder="name@business.com" autofocus>
-            <i class="fas fa-envelope"></i>
-          </div>
+      @php
+      $showForgot = isset($section) && $section === 'forgot';
+      @endphp
+
+      <!-- Login Section -->
+      <div id="loginSection" class="{{ $showForgot ? 'd-none' : '' }}">
+        <div class="form-header fadeIn">
+          <h2>Welcome Back</h2>
+          <p>Login to your business manager dashboard</p>
         </div>
 
-        <div class="form-group">
-          <div class="label-wrapper">
-            <label for="password">Password</label>
-            <!-- <a href="#" class="forgot-password">Forgot password?</a> -->
+        <form action="{{ route('business.login') }}" method="POST" class="fadeIn delay-1">
+          @csrf
+
+          <div class="form-group">
+            <label for="email">Mobile Number or Email</label>
+            <div class="input-wrapper">
+              <input type="text" id="email" name="email" class="form-control required" placeholder="10-digit mobile number or email" autofocus>
+              <i class="fas fa-user"></i>
+            </div>
           </div>
-          <div class="input-wrapper">
-            <input type="password" id="password" name="password" class="form-control required" placeholder="••••••••">
-            <i class="fas fa-lock"></i>
+
+          <div class="form-group">
+            <div class="label-wrapper">
+              <label for="password">Password</label>
+              <a href="javascript:void(0)" class="forgot-password" id="btn-show-forgot">Forgot password?</a>
+            </div>
+            <div class="input-wrapper">
+              <input type="password" id="password" name="password" class="form-control required" placeholder="••••••••">
+              <i class="fas fa-lock"></i>
+            </div>
           </div>
+
+          <div class="options-wrapper">
+            <label class="remember-me">
+              <input type="checkbox" id="remember" name="remember">
+              <span>Remember for 30 days</span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn-login">
+            Sign In to Portal
+            <i class="bi bi-arrow-right"></i>
+          </button>
+        </form>
+
+        @if(isGoogleLoginEnabled())
+        <div class="divider fadeIn delay-1">
+          <span>or continue with</span>
         </div>
 
-        <div class="options-wrapper">
-          <label class="remember-me">
-            <input type="checkbox" id="remember" name="remember">
-            <span>Remember for 30 days</span>
-          </label>
+        <a href="{{ route('auth.google') }}" class="btn-google-login fadeIn delay-2">
+          <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+            <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+            <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+          </svg>
+          <span>Sign In with Google</span>
+        </a>
+        @endif
+
+        <div class="register-prompt fadeIn delay-2">
+          <p>Don't have a business account? <br><br>
+            <a href="{{ route('register.business') }}" class="register-link">Register Your Business</a>
+          </p>
         </div>
-
-        <button type="submit" class="btn-login">
-          Sign In to Portal
-          <i class="bi bi-arrow-right"></i>
-        </button>
-      </form>
-
-      <div class="divider fadeIn delay-2">
-        <span>or</span>
       </div>
 
-      <a href="{{ route('auth.google') }}" class="btn-login fadeIn delay-2" style="background-color: white; color: var(--secondary-color); border: 1.5px solid #e2e8f0; text-decoration: none;">
-        <img src="https://fonts.gstatic.com/s/i/productlogos/googleg/v6/24px.svg" alt="Google" style="width: 20px; height: 20px;">
-        Sign In with Google
-      </a>
+      <!-- Forgot Password Section -->
+      <div id="forgotSection" class="{{ $showForgot ? '' : 'd-none' }}">
+        <div class="form-header fadeIn">
+          <h2>Forgot Password?</h2>
+          <p>Enter your registered email address to receive a password reset link.</p>
+        </div>
 
-      <div class="register-prompt fadeIn delay-3">
-        <p>Don't have a business account? <br><br>
-          <a href="{{ route('register.business') }}" class="register-link">Register Your Business</a>
-        </p>
+        <form action="{{ route('forgot.password') }}" method="POST" class="fadeIn delay-1 formaction" data-action="reload" data-reset="true">
+          @csrf
+
+          <div class="form-group">
+            <label for="forgot_email">Email Address</label>
+            <div class="input-wrapper">
+              <input type="email" id="forgot_email" name="email" class="form-control required" placeholder="yourname@example.com" required>
+              <i class="fas fa-envelope"></i>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-login btn_action">
+            <span id="buttonText">
+              Send Reset Link <i class="bi bi-send ms-1"></i>
+            </span>
+            <span id="loader" class="d-none">
+              <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              Sending link...
+            </span>
+          </button>
+        </form>
+
+        <div class="text-center mt-3 fadeIn delay-2">
+          <a href="javascript:void(0)" id="btn-show-login" class="register-link">
+            <i class="bi bi-arrow-left me-1"></i> Back to Login
+          </a>
+        </div>
       </div>
 
-      <div style="margin-top: auto; text-align: center; color: var(--text-muted); font-size: 0.8rem;" class="fadeIn delay-3">
+      <div style="margin-top: auto; text-align: center; color: var(--text-muted); font-size: 0.8rem;" class="fadeIn delay-3 pt-4">
         &copy; {{ date('Y') }} {{ config('const.site_setting.name') }}. All rights reserved.
       </div>
     </div>
@@ -498,8 +604,34 @@
   <script src="{{ asset('assets/common/js/jquery.min.js') }}"></script>
   <!-- Bootstrap 5 -->
   <script src="{{ asset('assets/common/js/bootstrap.bundle.min.js') }}"></script>
+  <!-- Toastr -->
+  <script src="{{ asset('assets/common/js/toastr.min.js') }}?v={{ filemtime(public_path('assets/common/js/toastr.min.js')) }}"></script>
   <!-- ajax calling -->
   <script src="{{ asset('assets/common/js/ajax.js') }}"></script>
+
+  <script>
+    $(function() {
+      $('#btn-show-forgot').on('click', function(e) {
+        e.preventDefault();
+        $('#loginSection').addClass('d-none');
+        $('#forgotSection').removeClass('d-none');
+        $('#forgot_email').focus();
+      });
+
+      $('#btn-show-login').on('click', function(e) {
+        e.preventDefault();
+        $('#forgotSection').addClass('d-none');
+        $('#loginSection').removeClass('d-none');
+        $('#email').focus();
+      });
+
+      // Check URL hash
+      if (window.location.hash === '#forgot' || window.location.search.indexOf('section=forgot') !== -1) {
+        $('#loginSection').addClass('d-none');
+        $('#forgotSection').removeClass('d-none');
+      }
+    });
+  </script>
 </body>
 
 </html>

@@ -50,7 +50,7 @@
             <div class="col-12 text-center mb-4">
               <label class="form-label fw-bold text-muted small text-uppercase">Business Image <span class="text-danger">*</span></label>
               <div class="avtar mx-auto" style="width: 100%; aspect-ratio: 16/9; max-width: 300px;">
-                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage('') }}" id="banner_preview" class="avtar_img rounded border w-100 h-100 object-fit-cover shadow-sm" alt="Business Image" loading="lazy" />
+                <img src="{{ getImage('') }}" id="banner_preview" class="avtar_img rounded border w-100 h-100 object-fit-cover shadow-sm" alt="Business Image" loading="lazy" />
                 <label for="profile" title="Change Image"><i class="bi bi-camera-fill"></i></label>
                 <input type="file" name="business_image" class="avtar_input banner_input" id="profile" accept="image/png, image/webp, image/jpeg" required />
               </div>
@@ -58,7 +58,7 @@
             <div class="col-12 text-center mb-4">
               <label class="form-label fw-bold text-muted small text-uppercase">Business Logo <span class="text-danger">*</span></label>
               <div class="avtar mx-auto" style="width: 120px; height: 120px;">
-                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage('') }}" id="logo_preview" class="avtar_img rounded-circle border w-100 h-100 object-fit-cover shadow-sm" alt="Business Logo" loading="lazy" />
+                <img src="{{ getImage('') }}" id="logo_preview" class="avtar_img rounded-circle border w-100 h-100 object-fit-cover shadow-sm" alt="Business Logo" loading="lazy" />
                 <label for="business_logo" title="Change Logo"><i class="bi bi-camera-fill"></i></label>
                 <input type="file" name="business_logo" class="avtar_input logo_input" id="business_logo" accept="image/png, image/webp, image/jpeg" required />
               </div>
@@ -99,13 +99,6 @@
               <div class="mb-3">
                 <label class="form-label">Contact <span class="text-danger">*</span></label>
                 <input type="text" class="form-control required" name="contact" placeholder="Contact" />
-              </div>
-            </div>
-
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label class="form-label">Referral Code</label>
-                <input type="text" class="form-control" name="user_referral_code" placeholder="Referral Code (Optional)" />
               </div>
             </div>
           </div>
@@ -176,14 +169,14 @@
 
 
 
-        <div class="col-md-4">
+        <div class="col-md-3">
           <div class="mb-3">
             <label class="form-label">Pincode <span class="text-danger">*</span></label>
             <input type="text" class="form-control required" name="pincode" placeholder="Pincode" />
           </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-3">
           <div class="mb-3">
             <label class="form-label">Business Type <span class="text-danger">*</span></label>
             <select class="form-select required" name="business_type">
@@ -195,7 +188,7 @@
           </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-2">
           <div class="mb-3">
             <label class="form-label">Status <span class="text-danger">*</span></label>
             <select class="form-select required" name="status">
@@ -206,7 +199,18 @@
             </select>
           </div>
         </div>
-        <div class="col-md-1">
+
+        <div class="col-md-2">
+          <div class="mb-3">
+            <label class="form-label">Visibility <span class="text-danger">*</span></label>
+            <select class="form-select required" name="is_private">
+              <option value="0" selected>Public</option>
+              <option value="1">Private</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="col-md-2">
           <div class="mb-3">
             <label class="form-label">Rating</label>
             <input type="number" class="form-control" name="rating" value="0" min="0" max="5" step="0.1" />

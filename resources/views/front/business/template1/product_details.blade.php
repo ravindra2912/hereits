@@ -1,8 +1,8 @@
 @extends('front.business.template1.layouts.main', ['seo' => [
-'title' => $product->name . ' | ' . $business->name . ' | Hereits',
+'title' => $product->name . ' | ' . $business->name . ' | brandbatao',
 'description' => \Illuminate\Support\Str::limit($product->description, 160) ?? $business->seo_description,
 'keywords' => $product->name . ', ' . ($product->category->name ?? 'Product') . ', ' . ($business->seo_keyword ?? $business->name),
-'image' => getImage($product->images->first()?->image_url),
+'image' => getImage($product->images->where('type', 'image')->first()?->image_url),
 'city' => isset($business->city) && !empty($business->city->name) ? $business->city->name : '',
 'state' => isset($business->state) && !empty($business->state->name) ? $business->state->name : '',
 'position' => $business->latitude . ':' . $business->longitude
@@ -11,7 +11,6 @@
 @section('content')
 
 @push('style')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
 <style>
     .product-carousel-img {
         height: 450px;
@@ -88,47 +87,12 @@
         font-size: 0.7rem;
     }
 
+    .related-card {
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
     .related-card:hover {
         transform: translateY(-5px);
-    }
-
-    .related-card .product-card-img-container {
-        position: relative;
-        aspect-ratio: 1/1;
-        overflow: hidden;
-        width: 100%;
-    }
-
-    .related-card .product-card-img-container img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
-    }
-
-    .related-card .secondary-image {
-        position: absolute;
-        top: 0;
-        left: 0;
-        opacity: 0;
-        z-index: 1;
-    }
-
-    .related-card .primary-image {
-        position: relative;
-        z-index: 2;
-    }
-
-    .has-hover-image:hover .primary-image {
-        opacity: 0 !important;
-    }
-
-    .has-hover-image:hover .secondary-image {
-        opacity: 1 !important;
-    }
-
-    .related-card:hover .card-img-top {
-        transform: scale(1.05);
     }
 
     /* Mobile Responsive Adjustments */
@@ -165,6 +129,8 @@
         }
     }
 </style>
+<!-- CDN: https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css -->
+<link rel="stylesheet" href="{{ asset('assets/common/css/glightbox.min.css') }}?v={{ filemtime(public_path('assets/common/css/glightbox.min.css')) }}" />
 @endpush
 
 @push('schema')
@@ -173,37 +139,37 @@
 </script>
 @endpush
 
-<div class="container py-5 mt-lg-5 mt-3">
+<div class="container py-5 mt-5">
     <div class="row g-5">
         <!-- Gallery Section -->
-        <div class="col-lg-6 mt-0">
+        <div class="col-lg-6">
             <div class="bg-white rounded-4 shadow-sm p-2">
                 <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
                     <div class="carousel-inner rounded-4 overflow-hidden bg-light">
                         @forelse($product->images as $key => $image)
-                        @php
-                        $ytId = getYoutubeId($image->image_url);
-                        $isMediaVideo = ($image->type == 'video' || $ytId);
-                        @endphp
                         <div class="carousel-item {{ $key == 0 ? 'active' : '' }}">
-                            @if($isMediaVideo && $ytId)
-                            <div class="ratio ratio-16x9 d-flex align-items-center justify-content-center bg-dark product-carousel-img">
-                                <a href="{{ getGalleryVideoUrl($image->image_url) }}" class="glightbox w-100 h-100 d-flex align-items-center justify-content-center position-relative text-decoration-none" data-gallery="business-gallery" data-type="video">
-                                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($image->image_url) }}" class="w-100 h-100 object-fit-cover opacity-50" alt="{{ $product->name }}">
-                                    <i class="fas fa-play-circle fa-5x text-white position-absolute top-50 start-50 translate-middle opacity-75"></i>
-                                    <span class="badge bg-danger position-absolute top-0 start-0 m-3 shadow-sm" style="z-index: 11;"><i class="fas fa-video me-1"></i>Video</span>
+                            @if(($image->type ?? 'image') === 'youtube_url')
+                                @php
+                                    $ytId = getYoutubeId($image->image_url);
+                                    $videoHref = $ytId ? 'https://www.youtube.com/watch?v=' . $ytId : $image->image_url;
+                                @endphp
+                                <a href="{{ $videoHref }}" class="glightbox position-relative d-block text-decoration-none" data-gallery="product-gallery" data-type="video">
+                                    <img src="{{ getYoutubeThumbnail($image->image_url) }}" class="d-block w-100 product-carousel-img" alt="{{ $product->name }}">
+                                    <span class="position-absolute top-50 start-50 translate-middle badge bg-danger rounded-circle p-1 shadow" style="width: 70px; height: 70px; display: inline-flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-play-fill text-white" style="font-size: 40px; margin-left: 4px;"></i>
+                                    </span>
                                 </a>
-                            </div>
                             @else
-                            <a href="{{ getImage($image->image_url) }}" class="glightbox w-100 h-100 d-block position-relative" data-gallery="business-gallery" data-type="image">
-                                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($image->image_url) }}" class="d-block w-100 product-carousel-img" alt="{{ $product->name }}">
-                                <span class="badge bg-white text-dark position-absolute top-0 start-0 m-3 shadow-sm" style="z-index: 11;"><i class="fas fa-image me-1"></i>Image</span>
-                            </a>
+                                <a href="{{ getImage($image->image_url) }}" class="glightbox d-block" data-gallery="product-gallery">
+                                    <img src="{{ getImage($image->image_url) }}" class="d-block w-100 product-carousel-img" alt="{{ $product->name }}">
+                                </a>
                             @endif
                         </div>
                         @empty
                         <div class="carousel-item active">
-                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage(null) }}" class="d-block w-100 product-carousel-img" alt="Default Image">
+                            <a href="{{ getImage(null) }}" class="glightbox d-block" data-gallery="product-gallery">
+                                <img src="{{ getImage(null) }}" class="d-block w-100 product-carousel-img" alt="Default Image">
+                            </a>
                         </div>
                         @endforelse
                     </div>
@@ -220,15 +186,20 @@
                 @if($product->images->count() > 1)
                 <div class="d-flex gap-2 p-3 overflow-auto justify-content-center">
                     @foreach($product->images as $key => $image)
-                    @php $ytIdThumb = getYoutubeId($image->image_url); @endphp
-                    <div class="position-relative">
-                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($image->image_url) }}"
+                    @php
+                        $isYt = ($image->type ?? 'image') === 'youtube_url';
+                        $tSrc = $isYt ? (getYoutubeThumbnail($image->image_url) ?: getImage(null)) : getImage($image->image_url);
+                    @endphp
+                    <div class="position-relative d-inline-block">
+                        <img src="{{ $tSrc }}"
                             class="thumb-img rounded-3 {{ $key == 0 ? 'active' : '' }}"
                             data-bs-target="#productCarousel"
                             data-bs-slide-to="{{ $key }}"
                             loading="lazy">
-                        @if($image->type == 'video' || $ytIdThumb)
-                        <i class="fas fa-play-circle position-absolute top-50 start-50 translate-middle text-white shadow-sm pointer-none" style="pointer-events: none;"></i>
+                        @if($isYt)
+                            <span class="position-absolute top-50 start-50 translate-middle badge bg-danger rounded-circle p-1" style="font-size: 8px;">
+                                <i class="bi bi-play-fill text-white"></i>
+                            </span>
                         @endif
                     </div>
                     @endforeach
@@ -238,7 +209,7 @@
         </div>
 
         <!-- content Section -->
-        <div class="col-lg-6 mt-lg-0 mt-3 pt-2">
+        <div class="col-lg-6">
             <div class="ps-lg-4">
                 <nav aria-label="breadcrumb" class="mb-3">
                     <ol class="breadcrumb small">
@@ -252,6 +223,14 @@
                 <span class="badge bg-primary bg-opacity-10 text-white border border-primary border-opacity-25 px-3 py-2 rounded-pill mb-3">
                     {{ $product->category->name }}
                 </span>
+                @endif
+                @php $productLabels = $product->labelsList; @endphp
+                @if($productLabels->isNotEmpty())
+                @foreach($productLabels as $lbl)
+                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill mb-3 ms-1">
+                    {{ $lbl->name }}
+                </span>
+                @endforeach
                 @endif
 
                 <h1 class="fw-bold text-dark mb-3" style="font-size: 2.5rem;">{{ $product->name }}</h1>
@@ -276,57 +255,101 @@
 
 
                 <div class="quantity-section d-flex align-items-center gap-4 mb-4 pt-3 border-top">
-                    <div>
-                        <label class="form-label d-block small fw-bold text-muted text-uppercase mb-2 ls-1" style="font-size: 0.7rem;">Select Quantity</label>
-                        <div class="quantity-picker d-flex align-items-center bg-white border rounded-pill shadow-sm p-1" style="width: fit-content;">
-                            <button class="btn btn-primary detail-qty-minus d-flex align-items-center justify-content-center p-0" type="button" style="width: 32px; height: 32px; border-radius: 50%; text-decoration: none;">
-                                <i class="bi bi-dash-lg"></i>
-                            </button>
-                            <input type="number" class="form-control border-0 text-center fw-bold detail-quantity-input bg-transparent p-0"
-                                value="1" min="1" readonly style="width: 45px; box-shadow: none; font-size: 1.1rem;">
-                            <button class="btn btn-primary detail-qty-plus d-flex align-items-center justify-content-center p-0 shadow-sm" type="button" style="width: 32px; height: 32px; border-radius: 50%;">
-                                <i class="bi bi-plus-lg"></i>
-                            </button>
-                        </div>
-                    </div>
+                    @if($product->quantity === null || $product->quantity > 0)
+                        @if (isset($setting) && ($setting->is_order_place_on_website || ($setting->is_show_contact && !empty($business->contact))))
+                            <div>
+                                <label class="form-label d-block small fw-bold text-muted text-uppercase mb-2 ls-1" style="font-size: 0.7rem;">Select Quantity</label>
+                                <div class="quantity-picker d-flex align-items-center bg-white border rounded-pill shadow-sm p-1" style="width: fit-content;">
+                                    <button class="btn btn-primary detail-qty-minus d-flex align-items-center justify-content-center p-0" type="button" style="width: 32px; height: 32px; border-radius: 50%; text-decoration: none;">
+                                        <i class="bi bi-dash-lg"></i>
+                                    </button>
+                                    <input type="number" class="form-control border-0 text-center fw-bold detail-quantity-input bg-transparent p-0"
+                                        value="1" min="1" max="{{ $product->quantity ?? 0 }}" readonly style="width: 45px; box-shadow: none; font-size: 1.1rem;">
+                                    <button class="btn btn-primary detail-qty-plus d-flex align-items-center justify-content-center p-0 shadow-sm" type="button" style="width: 32px; height: 32px; border-radius: 50%;">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        @endif
+                    @endif
                     <div class="stock-status-box ps-2 border-start">
-                        <span class="text-success small fw-bold d-block"><i class="bi bi-check2-circle me-1"></i>In Stock</span>
-                        <span class="text-muted tiny">100% Genuine Product Quality</span>
+                        @if($product->quantity !== null && $product->quantity <= 0)
+                            <span class="text-danger small fw-bold d-block"><i class="bi bi-x-circle me-1"></i>Out of Stock</span>
+                            @else
+                            <span class="text-success small fw-bold d-block"><i class="bi bi-check2-circle me-1"></i>In Stock</span>
+                            @endif
+                            <span class="text-muted tiny">100% Genuine Product Quality</span>
                     </div>
                 </div>
 
                 <div class="mb-5">
                     <div class="d-flex gap-2 mb-3">
                         <div class="add-to-cart-container flex-grow-1">
-                            <button class="btn btn-primary btn-lg rounded-pill add-to-cart-btn add-to-cart w-100 text-nowrap"
-                                data-type="product"
-                                data-id="{{ $product->id }}"
-                                data-name="{{ $product->name }}"
-                                data-slug="{{ $product->slug }}"
-                                data-price="{{ $product->sell_price ?? 0 }}"
-                                data-price-type="{{ $product->price_type }}"
-                                data-min-price="{{ $product->min_price ?? 0 }}"
-                                data-max-price="{{ $product->max_price ?? 0 }}"
-                                data-image="{{ getImage($product->images->first()?->image_url) }}">
-                                <i class="bi bi-cart-plus-fill me-2"></i> Add to Cart
-                            </button>
+                            @if($product->quantity !== null && $product->quantity <= 0)
+                                <button class="btn btn-secondary btn-lg rounded-pill w-100" disabled>
+                                <i class="bi bi-x-circle me-2"></i> Out of Stock
+                                </button>
+                                @elseif(in_array($product->price_type, ['PriceInRange', 'WithoutPrice']))
+                                @if(isset($setting) && $setting->is_order_place_on_website && ($setting->is_show_contact && !empty($business->contact)))
+                                @php
+                                $whatsappMsg = "Hi, I am interested in this product: " . $product->name . " - " . route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $product->slug]);
+                                $whatsappUrl = "https://wa.me/91" . ($business->contact ?? '') . "?text=" . urlencode($whatsappMsg);
+                                @endphp
+                                <a href="{{ $whatsappUrl }}" target="_blank" class="btn btn-success btn-lg rounded-pill add-to-cart-btn w-100 text-nowrap text-decoration-none d-inline-block text-center text-white whatsapp-inquiry-link">
+                                    <i class="bi bi-whatsapp me-2"></i> Inquiry
+                                </a>
+                                @else
+                                    @if (isset($setting) && ($setting->is_order_place_on_website || ($setting->is_show_contact && !empty($business->contact))))
+                                        <button class="btn btn-primary btn-lg rounded-pill add-to-cart-btn add-to-cart w-100 text-nowrap"
+                                            data-type="product"
+                                            data-id="{{ $product->id }}"
+                                            data-name="{{ $product->name }}"
+                                            data-price="{{ $product->sell_price ?? 0 }}"
+                                            data-price-type="{{ $product->price_type }}"
+                                            data-min-price="{{ $product->min_price ?? 0 }}"
+                                            data-max-price="{{ $product->max_price ?? 0 }}"
+                                            data-max-qty="{{ $product->quantity }}"
+                                            data-image="{{ getImage($product->images->first()?->image_url) }}">
+                                            <i class="bi bi-cart-plus-fill me-2"></i> Add to Cart
+                                        </button>
+                                    @endif
+                                @endif
+                                @else
+                                    @if (isset($setting) && ($setting->is_order_place_on_website || ($setting->is_show_contact && !empty($business->contact))))
+                                        <button class="btn btn-primary btn-lg rounded-pill add-to-cart-btn add-to-cart w-100 text-nowrap"
+                                            data-type="product"
+                                            data-id="{{ $product->id }}"
+                                            data-name="{{ $product->name }}"
+                                            data-price="{{ $product->sell_price ?? 0 }}"
+                                            data-price-type="{{ $product->price_type }}"
+                                            data-min-price="{{ $product->min_price ?? 0 }}"
+                                            data-max-price="{{ $product->max_price ?? 0 }}"
+                                            data-max-qty="{{ $product->quantity }}"
+                                            data-image="{{ getImage($product->images->where('type', 'image')->first()?->image_url) }}">
+                                            <i class="bi bi-cart-plus-fill me-2"></i> Add to Cart
+                                        </button>
+                                    @endif
+                                @endif
                         </div>
                         <div class="go-to-cart-container flex-grow-1 d-none">
                             <button class="btn btn-success btn-lg rounded-pill go-to-cart w-100 text-nowrap">
                                 <i class="bi bi-bag-check-fill me-2"></i> Go to Cart
                             </button>
                         </div>
+                        
                     </div>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-outline-dark btn-lg rounded-pill flex-grow-1" onclick="openShareModal('{{ url()->current() }}', 'Product', '{{ $product->name }}')">
-                            <i class="bi bi-share me-2"></i> Share Product
-                        </button>
-                        <button type="button" class="btn btn-outline-danger btn-lg rounded-pill px-4 toggle-favorite-btn"
-                            data-item-id="{{ $product->id }}"
-                            data-business-id="{{ $business->id }}"
+                    <button class="btn btn-outline-dark btn-lg rounded-pill flex-grow-1" onclick="openShareModal('{{ url()->current() }}', 'Product', '{{ e(addslashes($product->name)) }}')">
+                        <i class="bi bi-share me-2"></i> Share Product
+                    </button>
+                    @php $isFavProduct = isFavorite('product', $product->id); @endphp
+                        <button type="button" class="btn btn-outline-danger btn-lg rounded-pill btn-toggle-favorite flex-shrink-0 d-flex align-items-center justify-content-center {{ $isFavProduct ? 'active' : '' }}"
                             data-type="product"
-                            title="{{ $product->is_favorited ? 'Remove from Favorites' : 'Add to Favorites' }}">
-                            <i class="{{ $product->is_favorited ? 'fas fa-heart' : 'far fa-heart' }}"></i>
+                            data-id="{{ $product->id }}"
+                            data-business-id="{{ $product->business_id ?? $business->id }}"
+                            title="{{ $isFavProduct ? 'Remove from favorites' : 'Add to favorites' }}"
+                            style="width: 52px; height: 52px;">
+                            <i class="{{ $isFavProduct ? 'fas fa-heart fs-4 text-danger' : 'far fa-heart fs-4 text-muted' }}"></i>
                         </button>
                     </div>
                 </div>
@@ -339,7 +362,7 @@
                 <!-- Seller Info -->
                 <div class="trust-card rounded-4 p-4 d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-3">
-                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image) }}" class="rounded-circle border border-white shadow-sm" style="width: 60px; height: 60px; object-fit: cover;" loading="lazy">
+                        <img src="{{ getImage($business->business_image) }}" class="rounded-circle border border-white shadow-sm" style="width: 60px; height: 60px; object-fit: cover;" loading="lazy">
                         <div>
                             <span class="text-muted small d-block">Store Information</span>
                             <h6 class="fw-bold mb-0">{{ $business->name }}</h6>
@@ -358,31 +381,18 @@
         <div class="row g-4">
             @foreach($relatedProducts as $related)
             <div class="col-6 col-md-3">
-                <div class="card border-0 shadow-sm h-100 rounded-4 overflow-hidden related-card {{ $related->firstTwoImages->count() > 1 ? 'has-hover-image' : '' }}">
-                    <a href="{{ route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $related->slug]) }}" class="position-relative d-block">
-                        <div class="product-card-img-container">
-                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($related->firstTwoImages->first()?->image_url) }}"
-                                class="card-img-top primary-image"
-                                alt="{{ $related->name }}"
-                                loading="lazy">
-                            @if($related->firstTwoImages->count() > 1)
-                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($related->firstTwoImages[1]->image_url) }}"
-                                class="card-img-top secondary-image"
-                                alt="{{ $related->name }}"
-                                loading="lazy">
+                <div class="card border-0 shadow-sm h-100 rounded-4 overflow-hidden related-card">
+                    <a href="{{ route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $related->slug]) }}">
+                        <div class="position-relative overflow-hidden product-image-container" style="height: 200px;">
+                            <img src="{{ getImage($related->firstTwoImage->first()?->image_url) }}" class="w-100 h-100 object-fit-cover main-image" alt="{{ $related->name }}" loading="lazy">
+                            @if($related->firstTwoImage->count() > 1)
+                            <img src="{{ getImage($related->firstTwoImage->skip(1)->first()?->image_url) }}" class="w-100 h-100 object-fit-cover hover-image position-absolute top-0 start-0" alt="{{ $related->name }}" loading="lazy">
                             @endif
                         </div>
-                        <button type="button" class="favorite-btn position-absolute top-0 end-0 m-2 rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
-                            data-item-id="{{ $related->id }}"
-                            data-business-id="{{ $business->id }}"
-                            data-type="product"
-                            style="width: 28px; height: 28px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
-                            <i class="{{ $related->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }}" style="font-size: 0.75rem;"></i>
-                        </button>
                     </a>
                     <div class="card-body p-3">
-                        <h6 class="fw-bold mb-1 text-dark" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.5em; line-height: 1.25em;">{{ $related->name }}</h6>
-                        <div class="text-primary fw-bold text-truncate" style="font-size: 0.85rem;">
+                        <h6 class="fw-bold mb-1 text-truncate text-dark">{{ $related->name }}</h6>
+                        <div class="text-primary fw-bold">
                             @if($related->price_type == 'FixPrice')
                             ₹{{ $related->sell_price }}
                             @elseif($related->price_type == 'PriceInRange')
@@ -401,27 +411,15 @@
 </div>
 
 @push('js')
-<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+<!-- CDN: https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js -->
+<script src="{{ asset('assets/common/js/glightbox.min.js') }}?v={{ filemtime(public_path('assets/common/js/glightbox.min.js')) }}"></script>
 <script>
     $(document).ready(function() {
         const lightbox = GLightbox({
             selector: '.glightbox',
             touchNavigation: true,
             loop: true,
-            autoplayVideos: true
-        });
-
-        // Quantity Buttons
-        $('.detail-qty-plus').on('click', function() {
-            let input = $('.detail-quantity-input');
-            input.val(parseInt(input.val()) + 1);
-        });
-
-        $('.detail-qty-minus').on('click', function() {
-            let input = $('.detail-quantity-input');
-            if (parseInt(input.val()) > 1) {
-                input.val(parseInt(input.val()) - 1);
-            }
+            autoplayVideos: false
         });
 
         // Sync Carousel with Thumbnails
@@ -429,6 +427,26 @@
             let index = $(this).find('.active').index();
             $('.thumb-img').removeClass('active');
             $('.thumb-img').eq(index).addClass('active');
+        });
+
+        // Quantity Buttons
+        $('.detail-qty-plus').on('click', function() {
+            let input = $('.detail-quantity-input');
+            let maxVal = parseInt(input.attr('max')) || 999;
+            let currentVal = parseInt(input.val()) || 1;
+            if (currentVal < maxVal) {
+                input.val(currentVal + 1);
+            } else {
+                toastr.warning(`Only ${maxVal} items available in stock`);
+            }
+        });
+
+        $('.detail-qty-minus').on('click', function() {
+            let input = $('.detail-quantity-input');
+            let currentVal = parseInt(input.val()) || 1;
+            if (currentVal > 1) {
+                input.val(currentVal - 1);
+            }
         });
     });
 </script>

@@ -9,7 +9,6 @@
 @section('content')
 <div class="categories-page-wrap bg-light pb-5">
     <div class="container pt-5">
-        
         <!-- Header Section -->
         <div class="row mb-5 align-items-center">
             <div class="col-12 text-center text-md-start">

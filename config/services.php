@@ -38,6 +38,17 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT'),
-    ]
+        'is_login_with_google' => env('IS_LOGIN_WITH_GOOGLE', env('is_login_with_google', true)),
+        'map_key' => env('GOOGLE_MAP_KEY'),
+    ],
+
+    'proxy' => [
+        'hash_key' => env('PROXY_HASH_KEY'),
+    ],
+
+    'razorpay' => [
+        'key' => env('RAZORPAY_KEY_ID'),
+        'secret' => env('RAZORPAY_KEY_SECRET'),
+    ],
 
 ];

@@ -29,6 +29,7 @@
     <title>{{ isset($seo['title']) ? $seo['title'] : trim($__env->yieldContent('meta_title', config('app.name'))) }}</title>
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="user-logged-in" content="{{ Auth::check() ? '1' : '0' }}">
 
     <meta name="description" content="{{ isset($seo['description']) ? $seo['description'] : trim($__env->yieldContent('meta_description')) }}">
     <meta name="keywords" content="{{ isset($seo['keywords']) ? $seo['keywords'] : trim($__env->yieldContent('meta_keywords')) }}">
@@ -41,7 +42,7 @@
     @if(isset($seo['image']) && !empty($seo['image']))
     <meta property="og:image" content="{{ $seo['image'] }}">
     @endif
-    <meta property="og:site_name" content="Hereits">
+    <meta property="og:site_name" content="BrandBatao">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
@@ -64,14 +65,22 @@
     <meta name="geo.region" content="{{ $seo['state'] }}">
     @endif
 
-    <meta name="author" content="Hereits">
-    <meta name="copyright" content="Hereits">
+    <meta name="author" content="BrandBatao">
+    <meta name="copyright" content="BrandBatao">
     <meta name="language" content="en-IN">
     <meta name="distribution" content="global">
     <meta name="rating" content="general">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ config('const.site_setting.fevicon') }}">
+    @php
+        $businessFavicon = !empty($business->business_logo)
+            ? getImage($business->business_logo)
+            : (!empty($business->business_image)
+                ? getImage($business->business_image)
+                : config('const.site_setting.fevicon'));
+    @endphp
+    <link rel="icon" href="{{ $businessFavicon }}">
+    <link rel="apple-touch-icon" href="{{ $businessFavicon }}">
 
     <meta name="robots" content="index, follow">
 
@@ -91,103 +100,13 @@
     <!-- Template Specific CSS -->
     <link rel="stylesheet" href="{{ asset('assets/front/template1/template1.css') }}?v={{ filemtime(public_path('assets/front/template1/template1.css')) }}">
 
-    <style>
-        /* Premium Live Token UI */
-        .live-token-container {
-            background: rgba(99, 102, 241, 0.05);
-            border: 1.5px dashed #6366f1;
-            border-radius: 14px;
-            padding: 6px 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-width: 80px;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .live-token-container:hover {
-            background: #6366f1;
-            border-style: solid;
-            border-color: #6366f1;
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
-        }
-
-        .live-token-container:hover .live-token-label,
-        .live-token-container:hover .live-token-number {
-            color: white !important;
-        }
-
-        .live-token-label {
-            font-size: 0.55rem;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: #6366f1;
-            font-weight: 800;
-            margin-bottom: 0px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: color 0.3s ease;
-        }
-
-        .live-token-number {
-            font-size: 1.6rem;
-            font-weight: 900;
-            color: #4f46e5;
-            line-height: 1;
-            transition: color 0.3s ease;
-        }
-
-        .live-dot-pulsing {
-            width: 7px;
-            height: 7px;
-            background-color: #4ade80;
-            border-radius: 50%;
-            display: inline-block;
-            position: relative;
-        }
-
-        .live-dot-pulsing::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #4ade80;
-            border-radius: 50%;
-            animation: pulse-dot 1.5s infinite;
-        }
-
-        @keyframes pulse-dot {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(3.5); opacity: 0; }
-        }
-
-        /* Large version for hero/details */
-        .live-token-container-lg {
-            padding: 10px 20px;
-            min-width: 120px;
-            background: white;
-            border-style: solid;
-            border-width: 2px;
-        }
-        .live-token-container-lg .live-token-number {
-            font-size: 2.5rem;
-        }
-    </style>
-
     <meta name="business-id" content="{{ $business->id }}">
     <meta name="business-name" content="{{ $business->name }}">
     <meta name="business-slug" content="{{ $business->slug }}">
     <meta name="business-contact" content="{{ $business->contact }}">
-
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    @routes
-    @vite('resources/js/app.js')
+    <meta name="business-url" content="{{ route('business-details', $business->slug) }}">
+    <meta name="is-create-quotation-on-inquiry" content="{{ !empty($setting->is_create_quotation_on_inquiry) ? 1 : 0 }}">
+    <meta name="is-login-required" content="{{ !empty($setting->is_login_required) ? 1 : 0 }}">
 
     @stack('style')
     @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
@@ -196,7 +115,7 @@
 
     @stack('schema')
 
-
+    @include('front.business.template1.layouts.theme_styles')
 </head>
 
 <body class="business-details-layout">
@@ -218,7 +137,7 @@
     @include('front.business.template1.layouts.footer')
 
     <!-- Cart Elements -->
-    @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
+    @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system && !request()->routeIs('checkout'))
     <div class="floating-cart-btn" style="display: none;">
         <div class="cart-icon-wrapper">
             <i class="bi bi-cart-fill"></i>
@@ -245,9 +164,15 @@
                 <span>Total:</span>
                 <span class="total-amount">₹0.00</span>
             </div>
+            @if(isset($setting->is_order_place_on_website) && $setting->is_order_place_on_website)
+            <a href="{{ route('checkout', $business->slug) }}" class="btn btn-primary w-100 rounded-pill mb-2 fw-bold text-white shadow-sm website-checkout-btn">
+                <i class="fas fa-shopping-bag me-1"></i> Checkout on Website
+            </a>
+            @elseif(!isset($setting->is_show_contact) || $setting->is_show_contact)
             <button class="whatsapp-btn">
                 <i class="fab fa-whatsapp"></i> Checkout via WhatsApp
             </button>
+            @endif
         </div>
     </div>
     @endif
@@ -270,8 +195,22 @@
     <!-- Auth Modals -->
     @include('front.business.template1.layouts.auth_modals')
 
+    @if(request()->has('login_required') && !Auth::check())
+    @push('js')
+    <script>
+        $(document).ready(function() {
+            toastr.info('Please login to continue.');
+            $('#authModal').modal('show');
+        });
+    </script>
+    @endpush
+    @endif
+
     <!-- Share Modal -->
     @include('front.business.template1.layouts.share_modal')
+
+    <!-- Popups -->
+    @include('front.business.template1.elements.popups')
 
     @stack('js')
 </body>

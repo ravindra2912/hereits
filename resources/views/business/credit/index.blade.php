@@ -1,11 +1,55 @@
 @extends('business.layouts.main')
-@section('title', 'Credits')
+@section('title', 'Credits & History')
+
+@push('style')
+<link rel="stylesheet" href="{{ asset('assets/business/css/datatables-combined.min.css') }}?v={{ filemtime(public_path('assets/business/css/datatables-combined.min.css')) }}" />
+<style>
+    .letter-spacing-1 {
+        letter-spacing: 1px;
+    }
+
+    .plan-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .border-primary-hover {
+        border: 1px solid transparent;
+        transition: border-color 0.3s ease;
+    }
+
+    .border-primary-hover:hover {
+        border-color: rgba(13, 110, 253, 0.3);
+    }
+
+    .hover-scale {
+        transition: transform 0.2s;
+    }
+
+    .hover-scale:hover {
+        transform: scale(1.02);
+    }
+
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .form-control:focus {
+        box-shadow: none;
+        border-color: #dee2e6;
+    }
+</style>
+@endpush
 
 @section('content')
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-4 border-bottom">
     <h1 class="h2">Credits</h1>
     <div class="d-flex align-items-center gap-3">
+        <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#creditHistoryModal">
+            <i class="bi bi-clock-history me-1"></i> Credit History
+        </button>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('business.dashboard') }}" class="text-decoration-none">Home</a></li>
@@ -19,41 +63,36 @@
 <div id="price-data" data-price="{{ $price }}" style="display: none;"></div>
 
 <!-- Header Section -->
-<!-- <div class="row mb-5 text-center">
+<div class="row mb-5 text-center">
     <div class="col-lg-8 mx-auto">
         <h2 class="fw-bold text-dark mb-3">Manage Your Credits</h2>
-        <p class="text-muted fs-5">Purchase credits to accept more appointments and grow your business.</p>
+        <p class="text-muted fs-5">Purchase credits to process orders, appointments, quotations, and lucky draw cards.</p>
     </div>
-</div> -->
+</div>
 
 <div class="row g-4 mb-5">
     <!-- Current Status Card -->
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden bg-primary bg-gradient text-white">
             <div class="card-body p-4 d-flex flex-column justify-content-center">
-                <div class="d-flex align-items-center justify-content-between mb-4">
-                    <div class="d-flex align-items-center">
-                        <div class="bg-white bg-opacity-20 rounded-4 p-3 me-3">
-                            <i class="bi bi-credit-card-fill credit-balance-icon"></i>
-                        </div>
-                        <div>
-                            <small class="opacity-75 d-block fw-bold text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">Current Balance</small>
-                            <h3 class="mb-0 fw-bold">Credits</h3>
-                        </div>
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-white rounded-4 p-3 me-3">
+                        <i class="bi bi-wallet2 fs-2 text-primary"></i>
                     </div>
-                    <button type="button" class="btn btn-light rounded-pill px-3 py-2 text-primary fw-bold btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#creditHistoryModal">
-                        <i class="bi bi-clock-history me-1"></i> View History
-                    </button>
+                    <div>
+                        <small class="opacity-75 d-block fw-bold text-uppercase mb-1" style="font-size: 0.75rem; letter-spacing: 0.5px;">Current Balance</small>
+                        <h3 class="mb-0 fw-bold">Wallet Balance</h3>
+                    </div>
                 </div>
                 <div class="row align-items-end mt-2">
                     <div class="col-auto">
-                        <div class="display-3 fw-bold mb-0 text-white">{{ $businessSettings->credit }}</div>
+                        <div class="display-3 fw-bold mb-0 text-white">{{ number_format($businessSettings->credit, 2) }}</div>
                     </div>
                     <div class="col">
                         <div class="small opacity-75 text-uppercase fw-bold mb-2 pb-1">Credits Available</div>
                     </div>
                 </div>
-                <p class="mb-0 mt-3 opacity-75 small"><i class="bi bi-info-circle me-1"></i> Credits allow you to accept and manage more orders, appointments, chats and quotations with your customers.</p>
+                <p class="mb-0 mt-3 opacity-75 small"><i class="bi bi-info-circle me-1"></i> Credits are automatically deducted when orders, appointments, quotations, or lucky draw cards are generated.</p>
             </div>
         </div>
     </div>
@@ -95,62 +134,44 @@
     </div>
 </div>
 
-<!-- Credit History Modal -->
+<!-- Modal: Credit History -->
 <div class="modal fade" id="creditHistoryModal" tabindex="-1" aria-labelledby="creditHistoryModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header border-0 pb-0 pt-4 px-4">
-                <div class="d-flex align-items-center">
-                    <div class="bg-primary bg-opacity-10 p-2 rounded-3 text-primary me-2">
-                        <i class="bi bi-clock-history fs-5"></i>
-                    </div>
-                    <div>
-                        <h5 class="modal-title fw-bold" id="creditHistoryModalLabel">Credit Transaction History</h5>
-                        <small class="text-muted">Track all credit additions, deductions, orders, appointments, and chat sessions</small>
-                    </div>
-                </div>
+            <div class="modal-header border-0 pt-4 px-4 pb-0">
+                <h5 class="modal-title fw-bold text-dark" id="creditHistoryModalLabel">
+                    <i class="bi bi-clock-history me-2 text-primary"></i>Credit Transaction Log
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <!-- Filters Bar -->
-                <div class="row g-3 mb-4 align-items-center bg-light p-3 rounded-4">
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold text-secondary mb-1">Transaction Type</label>
-                        <select id="filter_history_type" class="form-select form-select-sm rounded-pill">
-                            <option value="">All Transactions</option>
-                            <option value="credit">Credits Added (+)</option>
-                            <option value="debit">Credits Deducted (-)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold text-secondary mb-1">Start Date</label>
-                        <input type="date" id="filter_history_start_date" class="form-control form-control-sm rounded-pill">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small fw-bold text-secondary mb-1">End Date</label>
-                        <input type="date" id="filter_history_end_date" class="form-control form-control-sm rounded-pill">
-                    </div>
-                    <div class="col-md-3 d-flex align-items-end gap-2 pt-3 pt-md-0">
-                        <button type="button" id="apply_history_filter" class="btn btn-sm btn-primary rounded-pill flex-grow-1 fw-bold">
-                            <i class="bi bi-funnel me-1"></i> Filter
-                        </button>
-                        <button type="button" id="reset_history_filter" class="btn btn-sm btn-light border rounded-pill fw-bold">
-                            Reset
-                        </button>
-                    </div>
+                <div class="d-flex justify-content-end align-items-center gap-2 mb-3">
+                    <select class="form-select form-select-sm border-0 bg-light rounded-pill px-3" id="modal_type_filter" style="width: 150px;">
+                        <option value="">All Categories</option>
+                        <option value="registration">Registration</option>
+                        <option value="order">Order</option>
+                        <option value="appointment">Appointment</option>
+                        <option value="quotation">Quotation</option>
+                        <option value="lucky_draw">Lucky Draw</option>
+                        <option value="recharge">Recharge</option>
+                    </select>
+                    <select class="form-select form-select-sm border-0 bg-light rounded-pill px-3" id="modal_tx_filter" style="width: 150px;">
+                        <option value="">All Transactions</option>
+                        <option value="credit">Credit (Added)</option>
+                        <option value="debit">Debit (Deducted)</option>
+                    </select>
                 </div>
-
-                <!-- DataTables Table -->
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0 w-100" id="businessCreditHistoryTable">
-                        <thead class="table-light">
+                    <table class="table table-hover align-middle mb-0" id="credit-history-modal-table" width="100%">
+                        <thead class="bg-light">
                             <tr>
-                                <th class="py-3 text-secondary text-uppercase small fw-bold">#</th>
-                                <th class="py-3 text-secondary text-uppercase small fw-bold">Date & Time</th>
-                                <th class="py-3 text-secondary text-uppercase small fw-bold">Type</th>
-                                <th class="py-3 text-secondary text-uppercase small fw-bold">Amount</th>
-                                <th class="py-3 text-secondary text-uppercase small fw-bold">Reference</th>
-                                <th class="py-3 text-secondary text-uppercase small fw-bold">Description</th>
+                                <th class="ps-3 py-3 text-secondary text-uppercase small fw-bold border-0" width="50">#</th>
+                                <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Date & Time</th>
+                                <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Transaction</th>
+                                <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Category</th>
+                                <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Amount</th>
+                                <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Balance After</th>
+                                <th class="pe-3 py-3 text-secondary text-uppercase small fw-bold border-0">Description</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -158,57 +179,20 @@
                     </table>
                 </div>
             </div>
+            <div class="modal-footer border-0 p-4 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
 
 @endsection
 
-@push('style')
-<link rel="stylesheet" href="{{ asset('assets/admin/css/datatables-combined.min.css') }}">
-<style>
-    .letter-spacing-1 {
-        letter-spacing: 1px;
-    }
-
-    .plan-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .border-primary-hover {
-        border: 1px solid transparent;
-        transition: border-color 0.3s ease;
-    }
-
-    .border-primary-hover:hover {
-        border-color: rgba(13, 110, 253, 0.3);
-    }
-
-    .hover-scale {
-        transition: transform 0.2s;
-    }
-
-    .hover-scale:hover {
-        transform: scale(1.02);
-    }
-
-    input[type=number]::-webkit-inner-spin-button,
-    input[type=number]::-webkit-outer-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    .form-control:focus {
-        box-shadow: none;
-        border-color: #dee2e6;
-    }
-</style>
-@endpush
-
 @push('js')
-<!-- DataTables & SweetAlert -->
-<script src="{{ asset('assets/admin/js/datatables-combined.min.js') }}?v={{ filemtime(public_path('assets/admin/js/datatables-combined.min.js')) }}"></script>
+<!-- Sweet Alert -->
 <script src="{{ asset('assets/common/js/sweetalert2.min.js') }}"></script>
+<script src="{{ asset('assets/business/js/datatables-combined.min.js') }}?v={{ filemtime(public_path('assets/business/js/datatables-combined.min.js')) }}"></script>
+
 <script>
     $(function() {
         const perCreditPrice = parseFloat($('#price-data').data('price')) || 0;
@@ -223,7 +207,7 @@
         }
 
         $('#credit_quantity').on('input', updatePrice);
-        updatePrice(); // Initial calculation
+        updatePrice();
 
         $('#buy_btn').click(function() {
             const qty = parseInt($('#credit_quantity').val());
@@ -237,69 +221,55 @@
             window.location.href = url;
         });
 
-        // Credit History DataTable Initialization
-        let historyTable = null;
-
-        function initHistoryTable() {
-            if (historyTable !== null) {
-                historyTable.ajax.reload();
-                return;
-            }
-
-            historyTable = $('#businessCreditHistoryTable').DataTable({
+        // DataTable initialization helper
+        function initHistoryTable(selector, typeFilterId, txFilterId) {
+            return $(selector).DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: "{{ route('business.credits.history.data') }}",
+                    url: "{{ route('business.credits.history') }}",
                     data: function(d) {
-                        d.type = $('#filter_history_type').val();
-                        d.start_date = $('#filter_history_start_date').val();
-                        d.end_date = $('#filter_history_end_date').val();
+                        d.type = $(typeFilterId).val();
+                        d.transaction_type = $(txFilterId).val();
                     }
                 },
+                lengthChange: false,
                 pageLength: 10,
-                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                 language: {
-                    search: "_INPUT_",
-                    searchPlaceholder: "Search history...",
-                    lengthMenu: "Show _MENU_ entries",
-                    info: "Showing _START_ to _END_ of _TOTAL_ transactions",
-                    infoEmpty: "Showing 0 to 0 of 0 transactions",
-                    zeroRecords: "No transactions found",
-                    emptyTable: "No credit history records found"
+                    search: "",
+                    searchPlaceholder: "🔍 Search history...",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                    infoEmpty: "Showing 0 to 0 of 0 entries",
+                    zeroRecords: "No credit transactions found",
+                    emptyTable: "No credit transactions logged yet"
                 },
-                columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                    { data: 'date', name: 'created_at' },
-                    { data: 'type_badge', name: 'type', className: 'text-center' },
-                    { data: 'amount_col', name: 'amount', className: 'text-center' },
-                    { data: 'reference_badge', name: 'reference_type', className: 'text-center' },
-                    { data: 'desc', name: 'description' }
+                responsive: true,
+                autoWidth: false,
+                order: [
+                    [1, 'desc']
                 ],
-                order: [[1, 'desc']],
-                responsive: true
+                columns: [
+                    { data: 'DT_RowIndex', name: 'id', className: "ps-3 py-3 fw-bold text-dark", width: "40px" },
+                    { data: 'created_at', name: 'created_at', className: "py-3" },
+                    { data: 'transaction_type', name: 'transaction_type', className: "py-3" },
+                    { data: 'type', name: 'type', className: "py-3" },
+                    { data: 'amount', name: 'amount', className: "py-3" },
+                    { data: 'balance_after', name: 'balance_after', className: "py-3 fw-bold" },
+                    { data: 'description', name: 'description', className: "py-3 text-muted small pe-3" }
+                ]
             });
         }
 
-        // Initialize DataTable when modal opens
+        var modalTable = null;
+
         $('#creditHistoryModal').on('shown.bs.modal', function() {
-            initHistoryTable();
-        });
-
-        // Apply filters
-        $('#apply_history_filter').click(function() {
-            if (historyTable) {
-                historyTable.ajax.reload();
-            }
-        });
-
-        // Reset filters
-        $('#reset_history_filter').click(function() {
-            $('#filter_history_type').val('');
-            $('#filter_history_start_date').val('');
-            $('#filter_history_end_date').val('');
-            if (historyTable) {
-                historyTable.ajax.reload();
+            if (!modalTable) {
+                modalTable = initHistoryTable('#credit-history-modal-table', '#modal_type_filter', '#modal_tx_filter');
+                $('#modal_type_filter, #modal_tx_filter').on('change', function() {
+                    modalTable.draw();
+                });
+            } else {
+                modalTable.draw();
             }
         });
     });

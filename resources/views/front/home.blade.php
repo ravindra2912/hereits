@@ -27,7 +27,7 @@
                     <a href="{{ route('why-join-with-us') }}" class="btn btn-outline-light btn-lg rounded-pill px-5 py-3 fw-bold">
                         <i class="fas fa-plus-circle me-2"></i>
                         @if(Auth::user() && Auth::user()->role == 'Business')
-                        List you another business
+                        List your another business
                         @else
                         List Your Business
                         @endif
@@ -55,6 +55,7 @@
 
 @if(count($featured_businesses) > 0)
 <!-- 2. Business Category Section -->
+@if(count($categories) > 0)
 <section class="py-5 bg-light">
     <div class="container py-lg-4">
         <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap">
@@ -70,17 +71,17 @@
             <div class="col-lg-2 col-md-4 col-6">
                 <a href="{{ route('business-list', ['category' => $cat['slug']]) }}" class="category-card text-center d-block text-decoration-none group p-4 rounded-4 bg-white shadow-sm hover-lift transition-all">
                     <div class="icon-circle mb-3 mx-auto d-flex align-items-center justify-content-center rounded-circle transition-all" style="width: 70px; height: 70px; background-color: {{ $cat['color'] }}15; color: {{ $cat['color'] }}; overflow: hidden;">
-                        <img src="{{ $cat['image'] }}" class="w-100 h-100 object-fit-cover p-2" alt="{{ $cat['name'] }}" loading="lazy">
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ $cat['image'] }}" class="w-100 h-100 object-fit-cover p-2" alt="{{ $cat['name'] }}" loading="lazy">
                     </div>
                     <h6 class="fw-bold text-dark mb-1">{{ $cat['name'] }}</h6>
                     <small class="text-muted">{{ $cat['count'] }} Businesses</small>
                 </a>
             </div>
             @endforeach
-
         </div>
     </div>
 </section>
+@endif
 
 <!-- 3. Store List (Featured Businesses) -->
 <section class="py-5">
@@ -98,7 +99,7 @@
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="card border-0 shadow-sm rounded-4 overflow-hidden hover-lift h-100 transition-all">
                     <a href="{{ route('business-details', $business->slug) }}" class="position-relative overflow-hidden d-block business-card-img" style="height: 200px;">
-                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}" loading="lazy">
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image ?? $business->business_logo) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}" loading="lazy">
                         <span class="badge bg-success position-absolute top-0 end-0 m-3 rounded-pill px-3">Open</span>
 
                         @guest
@@ -113,7 +114,7 @@
                             data-business-id="{{ $business->id }}"
                             data-type="business"
                             style="width: 35px; height: 35px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
-                            <i class="{{ $business->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-5"></i>
+                            <i class="{{ !empty($business->is_favorited) ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-5"></i>
                         </button>
                         @endguest
                     </a>
@@ -201,7 +202,7 @@
 </section>
 @endif
 
-<!-- 4. User Favorites (Only if login and has favorites) -->
+<!-- 4. User Favorites (Only if logged in and has favorites) -->
 @if(auth()->check() && count($favorite_businesses) > 0)
 <section class="py-5 bg-light">
     <div class="container py-lg-4">
@@ -218,7 +219,7 @@
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="card border-0 shadow-sm rounded-4 overflow-hidden hover-lift h-100 transition-all bg-white">
                     <a href="{{ route('business-details', $business->slug) }}" class="position-relative overflow-hidden d-block business-card-img" style="height: 200px;">
-                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}" loading="lazy">
+                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image ?? $business->business_logo) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}" loading="lazy">
                         <span class="badge bg-success position-absolute top-0 end-0 m-3 rounded-pill px-3">Open</span>
 
                         <div class="position-absolute top-0 start-0 m-3">
@@ -266,7 +267,7 @@
 </section>
 @endif
 
-<!-- 4. List Your Business Section -->
+<!-- 5. List Your Business Section -->
 <section class="py-5 bg-dark position-relative overflow-hidden mt-5">
     <!-- Decorative Blobs -->
     <div class="blob position-absolute top-0 end-0 bg-primary opacity-20" style="width: 300px; height: 300px; filter: blur(100px); margin-right: -100px; margin-top: -100px;"></div>
@@ -364,7 +365,4 @@
         }
     }
 </style>
-@endpush
-
-@push('js')
 @endpush

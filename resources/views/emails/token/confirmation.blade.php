@@ -7,7 +7,7 @@
       <!-- Header -->
       <tr>
         <td class="header">
-          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="Hereits"></a>
+          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="brandbatao"></a>
         </td>
       </tr>
 
@@ -20,14 +20,14 @@
           <ul>
             <li>Token Number : {{ $apoinment_details->token_number }}</li>
             <li>Appointment for : {{ $apoinment_details->user_name }}</li>
-            <li>Service: {{ $apoinment_details->expert->expert_name }}</li>
+            <li>Service: {{ $apoinment_details->expert?->user?->name }}</li>
             <li>Date: {{ get_date($apoinment_details->booking_date) }}</li>
             <li>Estimated Time: [Estimated Time or Position in Queue]</li>
             <li>Location: {{$apoinment_details->business->address}}</li>
           </ul>
 
           <p style="margin-top:20px;">You’ll be notified as your turn approaches. Please keep your phone handy and arrive a few minutes early.</p>
-          <p>– The Hereits Team</p>
+          <p>– The brandbatao Team</p>
         </td>
       </tr>
 

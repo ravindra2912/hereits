@@ -29,7 +29,8 @@ class AppointmentBookingObserver
         $appointment_details = AppointmentBooking::query()
             ->select('id', 'token_number', 'business_id', 'expert_id', 'user_id', 'user_name', 'user_contact', 'slot_start_time', 'slot_end_time', 'booking_date', 'note', 'status')
             ->with([
-                'expert:id,expert_name,slug,is_appointment_book_with_time_slot',
+                'expert:id,user_id,slug,is_appointment_book_with_time_slot',
+                'expert.user:id,first_name,last_name',
                 'business:id,name,slug,address',
                 'user:id,first_name,email'
             ])
@@ -67,7 +68,8 @@ class AppointmentBookingObserver
                 $appointment_details = AppointmentBooking::query()
                     ->select('id', 'token_number', 'business_id', 'expert_id', 'user_id', 'user_name', 'user_contact', 'slot_start_time', 'slot_end_time', 'booking_date', 'note', 'status')
                     ->with([
-                        'expert:id,expert_name,slug,is_appointment_book_with_time_slot',
+                        'expert:id,user_id,slug,is_appointment_book_with_time_slot',
+                        'expert.user:id,first_name,last_name',
                         'business:id,name,slug,address',
                         'user:id,first_name,email,notification_token'
                     ])
@@ -82,7 +84,7 @@ class AppointmentBookingObserver
                                 $notification = [
                                     'include_player_ids' => [$appointment_details->user->notification_token],
                                     'title' => 'Hello ' . $appointment_details->user->first_name,
-                                    'message' => 'Your appointment with ' . $appointment_details->expert->expert_name . ' has been confirmed.',
+                                    'message' => 'Your appointment with ' . ($appointment_details->expert->user?->name ?? 'our specialist') . ' has been confirmed.',
                                     // 'data' => [],
                                     'url' =>  route('account.booking.details',  $appointment_details->id),
                                     // 'schedule' => now()->addMinutes(1)
@@ -93,7 +95,7 @@ class AppointmentBookingObserver
                                 $notification = [
                                     'include_player_ids' => [$appointment_details->user->notification_token],
                                     'title' => 'Hello ' . $appointment_details->user->first_name,
-                                    'message' => 'Your turn is now! Please proceed to meet ' . $appointment_details->expert->expert_name . ' immediately.',
+                                    'message' => 'Your turn is now! Please proceed to meet ' . ($appointment_details->expert->user?->name ?? 'our specialist') . ' immediately.',
                                     // 'data' => [],
                                     'url' =>  route('account.booking.details',  $appointment_details->id),
                                     // 'schedule' => now()->addMinutes(1)
@@ -104,7 +106,7 @@ class AppointmentBookingObserver
                                 $notification = [
                                     'include_player_ids' => [$appointment_details->user->notification_token],
                                     'title' => 'Hello ' . $appointment_details->user->first_name,
-                                    'message' => 'Your appointment with ' . $appointment_details->expert->expert_name . ' has been completed.',
+                                    'message' => 'Your appointment with ' . ($appointment_details->expert->user?->name ?? 'our specialist') . ' has been completed.',
                                     // 'data' => [],
                                     'url' =>  route('account.booking.details',  $appointment_details->id),
                                     // 'schedule' => now()->addMinutes(1)
@@ -115,7 +117,7 @@ class AppointmentBookingObserver
                             $notification = [
                                 'include_player_ids' => [$appointment_details->user->notification_token],
                                 'title' => 'Hello ' . $appointment_details->user->first_name,
-                                'message' => 'Your appointment with ' . $appointment_details->expert->expert_name . ' has been cancelled.',
+                                'message' => 'Your appointment with ' . ($appointment_details->expert->user?->name ?? 'our specialist') . ' has been cancelled.',
                                 // 'data' => [],
                                 'url' =>  route('account.booking.details',  $appointment_details->id),
                                 // 'schedule' => now()->addMinutes(1)
@@ -127,7 +129,7 @@ class AppointmentBookingObserver
                             $notification = [
                                 'include_player_ids' => [$appointment_details->user->notification_token],
                                 'title' => 'Hello ' . $appointment_details->user->first_name,
-                                'message' => 'Your appointment with ' . $appointment_details->expert->expert_name . ' has been confirmed.',
+                                'message' => 'Your appointment with ' . ($appointment_details->expert->user?->name ?? 'our specialist') . ' has been confirmed.',
                                 // 'data' => [],
                                 'url' =>  route('account.booking.details',  $appointment_details->id),
                                 // 'schedule' => now()->addMinutes(1)
@@ -138,7 +140,7 @@ class AppointmentBookingObserver
                                 $notification = [
                                     'include_player_ids' => [$appointment_details->user->notification_token],
                                     'title' => 'Hello ' . $appointment_details->user->first_name,
-                                    'message' => 'Your turn is now! Please proceed to meet ' . $appointment_details->expert->expert_name . ' immediately.',
+                                    'message' => 'Your turn is now! Please proceed to meet ' . ($appointment_details->expert->user?->name ?? 'our specialist') . ' immediately.',
                                     // 'data' => [],
                                     'url' =>  route('account.booking.details',  $appointment_details->id),
                                     // 'schedule' => now()->addMinutes(1)
@@ -150,7 +152,7 @@ class AppointmentBookingObserver
                                 $notification = [
                                     'include_player_ids' => [$appointment_details->user->notification_token],
                                     'title' => 'Hello ' . $appointment_details->user->first_name,
-                                    'message' => 'Your appointment with ' . $appointment_details->expert->expert_name . ' has been completed.',
+                                    'message' => 'Your appointment with ' . ($appointment_details->expert->user?->name ?? 'our specialist') . ' has been completed.',
                                     // 'data' => [],
                                     'url' =>  route('account.booking.details',  $appointment_details->id),
                                     // 'schedule' => now()->addMinutes(1)
@@ -163,7 +165,7 @@ class AppointmentBookingObserver
                             $notification = [
                                 'include_player_ids' => [$appointment_details->user->notification_token],
                                 'title' => 'Hello ' . $appointment_details->user->first_name,
-                                'message' => 'Your appointment with ' . $appointment_details->expert->expert_name . ' has been cancelled.',
+                                'message' => 'Your appointment with ' . ($appointment_details->expert->user?->name ?? 'our specialist') . ' has been cancelled.',
                                 // 'data' => [],
                                 'url' =>  route('account.booking.details',  $appointment_details->id),
                                 // 'schedule' => now()->addMinutes(1)
@@ -194,7 +196,8 @@ class AppointmentBookingObserver
                             'status'
                         )
                             ->with([
-                                'expert:id,expert_name,slug,is_appointment_book_with_time_slot',
+                                'expert:id,user_id,slug,is_appointment_book_with_time_slot',
+                                'expert.user:id,first_name,last_name',
                                 'business:id,name,slug,address',
                                 'user:id,first_name,email,notification_token',
                             ])
@@ -213,7 +216,7 @@ class AppointmentBookingObserver
                             $notification2 = [
                                 'include_player_ids' => [$nextBooking->user->notification_token],
                                 'title' => 'Hello ' . $nextBooking->user->first_name,
-                                'message' => 'Just a heads-up! You’re next for your appointment with  ' . $nextBooking->expert->expert_name,
+                                'message' => 'Just a heads-up! You’re next for your appointment with ' . ($nextBooking->expert->user?->name ?? 'our specialist'),
                                 // 'data' => [],
                                 'url' =>  route('account.booking.details',  $nextBooking->id),
                                 // 'schedule' => now()->addMinutes(1)

@@ -27,7 +27,8 @@ class UsersController extends Controller
     {
         if ($request->ajax()) {
 
-            $data = User::select('id', 'first_name', 'last_name', 'email', 'contact', 'role', 'status', 'profile');
+            $data = User::select('id', 'first_name', 'last_name', 'email', 'contact', 'role', 'status', 'profile', 'business_id')
+                ->withExists('businessUsers');
 
             return Datatables::of($data)
                 ->addIndexColumn()
@@ -38,8 +39,15 @@ class UsersController extends Controller
                 ->addColumn('action', function ($row) {
                     $url = route('admin.user.destroy', $row->id);
                     $url = "'" . $url . "'";
+
+                    $loginBtn = '';
+                    if ($row->role == 'Business' || $row->business_users_exists) {
+                        $loginBtn = '<a href="' . route('admin.user.login-as', $row->id) . '" class="btn btn-outline-success btn-sm me-1" title="Login As User" target="_blank"><i class="bi bi-box-arrow-in-right"></i></a>';
+                    }
+
                     return ' <div class="text-center">
-                    <a href="' . route('admin.user.edit', $row->id) . '" class="btn btn-outline-primary btn-sm" title="Edit"><i class="bi bi-pencil-square"></i></a>
+                    ' . $loginBtn . '
+                    <a href="' . route('admin.user.edit', $row->id) . '" class="btn btn-outline-primary btn-sm me-1" title="Edit"><i class="bi bi-pencil-square"></i></a>
                     <button onclick="destroy(' . $url . ', ' . $row->id . ')" class="btn btn-outline-danger btn-sm btn_delete-' . $row->id . '" title="Delete">
                         <i id="buttonText" class="bi bi-trash"></i>
                         <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
@@ -118,7 +126,7 @@ class UsersController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_name) && !empty($image_name)) {
                 fileRemoveStorage($image_name);
             }
@@ -159,7 +167,6 @@ class UsersController extends Controller
                 'gender' => 'nullable',
                 'role' => 'required',
                 'status' => 'required',
-                'referral_code' => 'nullable|string|max:20|unique:users,referral_code,' . $id,
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -185,12 +192,6 @@ class UsersController extends Controller
                 $update->gender = $request->gender;
                 $update->role = $request->role;
                 $update->status = $request->status;
-
-                // Only set referral_code when it was blank and admin provided one
-                if (empty($update->referral_code) && $request->filled('referral_code')) {
-                    $update->referral_code = strtoupper($request->referral_code);
-                }
-
                 $update->save();
 
                 // Remove old uploaded image if exist
@@ -204,7 +205,7 @@ class UsersController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_name) && !empty($image_name)) {
                 fileRemoveStorage($image_name);
             }
@@ -235,7 +236,7 @@ class UsersController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -266,7 +267,7 @@ class UsersController extends Controller
                 } else {
                     $message = 'User not found.';
                 }
-                
+
                 if ($success) {
                     DB::commit();
                 } else {
@@ -275,8 +276,52 @@ class UsersController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
+    }
+
+    public function loginAs(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->role === 'Admin') {
+            abort(403, 'Impersonation of administrator accounts is not permitted.');
+        }
+
+        // Logout web guard if any user is logged in
+        if (Auth::guard('web')->check()) {
+            Auth::guard('web')->logout();
+        }
+
+        // Remove all business and user session data before login
+        session()->forget([
+            'user_details',
+            'user_businesses_list',
+            'current_business_details',
+            'business_settings',
+            'business_settings_id',
+            'business_permissions',
+            'business_role_name',
+            'business_name',
+            'business_status',
+            'business_front_url',
+            'business_permissions_last_synced',
+            'pos_business_settings',
+            'pos_permissions',
+            'pos_role_name',
+            'pos_business_name',
+            'cart',
+        ]);
+
+        // Login as the target user
+        Auth::guard('web')->login($user);
+        $request->session()->regenerate();
+
+        // Sync all business session data (user details, business list, active business details, settings, permissions)
+        $user->syncBusinessSessionData();
+
+        // Redirect to business panel dashboard
+        return redirect()->route('business.dashboard');
     }
 }

@@ -8,12 +8,11 @@ use App\Models\ReviewAndRating;
 use App\Models\User;
 use App\Observers\AppointmentBookingObserver;
 use App\Observers\BusinessObserver;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 use App\Observers\ReviewAndRatingObserver;
 use App\Observers\UserObserver;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\ServiceProvider;
+use Laravel\Passport\Passport;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,78 +29,63 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Relation::morphMap([
-            'user' => User::class,
-            'business' => Business::class,
-            'admin' => \App\Models\Admin::class,
-        ]);
+        if ($forwardedHost = request()->header('X-Forwarded-Host')) {
+
+            $incomingHash = (string) request()->header('X-Proxy-Hash-Key');
+            $expectedHash = (string) config('services.proxy.hash_key');
+
+            if (!empty($expectedHash) && hash_equals($expectedHash, $incomingHash)) {
+                URL::forceScheme('https');
+                URL::forceRootUrl('https://' . $forwardedHost);
+
+                URL::defaults(['tenant' => '']);
+                config(['session.domain' => null]);
+            } else {
+                // Abort with proper 403 HTTP status code
+                abort(403, 'Unauthorized proxy access.');
+            }
+        }
 
         ReviewAndRating::observe(ReviewAndRatingObserver::class);
         User::observe(UserObserver::class);
         //AppointmentBooking::observe(AppointmentBookingObserver::class);
         Business::observe(BusinessObserver::class);
 
-        Auth::viaRequest('ai-agent', function (\Illuminate\Http\Request $request) {
-            $userInfoStr = $request->header('X-User-Info') ?: $request->input('user_info');
-            if ($userInfoStr) {
-                try {
-                    $decryptedJson = \Illuminate\Support\Facades\Crypt::decryptString($userInfoStr);
-                    $decryptedInfo = json_decode($decryptedJson, true);
+        Passport::tokensExpireIn(now()->addDays(15));
+        Passport::refreshTokensExpireIn(now()->addDays(30));
+        Passport::personalAccessTokensExpireIn(now()->addMonths(6));
 
-                    if (is_array($decryptedInfo) && isset($decryptedInfo['id'])) {
-                        $role = $decryptedInfo['role'] ?? 'Admin';
-                        if ($role === 'Admin') {
-                            $user = \App\Models\Admin::find($decryptedInfo['id']);
-                            if ($user) return $user;
-                        } else {
-                            $user = \App\Models\User::find($decryptedInfo['id']);
-                            if ($user) return $user;
-                        }
-                    }
-                } catch (\Exception $e) {
-                    // Gracefully ignore decryption errors
-                }
-            }
-
-            return \App\Models\Admin::first();
+        \Illuminate\Support\Facades\Gate::define('viewPulse', function ($user = null) {
+            return \Illuminate\Support\Facades\Auth::guard('admin')->check() ||
+                (\Illuminate\Support\Facades\Auth::check() && \Illuminate\Support\Facades\Auth::user()->role === 'Admin');
         });
 
-        View::composer('business.layouts.*', function ($view) {
-            if (!Auth::check()) {
-                $view->with([
-                    'currentBusiness' => null,
-                    'businesses' => collect(),
-                ]);
-
-                return;
+        \Illuminate\Support\Facades\View::composer('front.business.template1.layouts.main', function ($view) {
+            $viewData = $view->getData();
+            $business = $viewData['business'] ?? null;
+            if ($business && !isset($viewData['homePopups'])) {
+                $homePopups = cache()->remember("business_{$business->id}_home_popups", 600, function () use ($business) {
+                    return \App\Models\BusinessHomePopup::where('business_id', $business->id)
+                        ->where('status', 'active')
+                        ->get();
+                });
+                $view->with('homePopups', $homePopups);
             }
+        });
 
-            $user = Auth::user();
-
-            if (!session()->has('businesses') || !session()->has('currentBusiness')) {
-                $user->syncBusinessContextToSession();
+        \Illuminate\Support\Facades\View::composer([
+            'front.business.template1.layouts.main'
+        ], function ($view) {
+            $viewData = $view->getData();
+            $business = $viewData['business'] ?? null;
+            if ($business && !isset($viewData['activeLegalPages'])) {
+                $activeLegalPages = cache()->remember("business_{$business->id}_active_legal_pages", 600, function () use ($business) {
+                    return \App\Models\BusinessLeaglePage::where('business_id', $business->id)
+                        ->where('status', 'active')
+                        ->get();
+                });
+                $view->with('activeLegalPages', $activeLegalPages);
             }
-
-            $currentBusiness = session('currentBusiness');
-            $businesses = collect(session('businesses', []));
-
-            if (
-                !filled(data_get($currentBusiness, 'full_address'))
-                || $businesses->contains(function ($business) {
-                    return !filled(data_get($business, 'full_address'));
-                })
-            ) {
-                $user->syncBusinessContextToSession();
-                $currentBusiness = session('currentBusiness');
-                $businesses = collect(session('businesses', []));
-            }
-
-            $view->with([
-                'currentBusiness' => $currentBusiness ? (object) $currentBusiness : null,
-                'businesses' => $businesses->map(function ($business) {
-                    return (object) $business;
-                }),
-            ]);
         });
     }
 }

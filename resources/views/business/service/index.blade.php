@@ -18,13 +18,24 @@
     <div class="card-header py-3 bg-white border-0 ps-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
         <h5 class="m-0 fw-bold text-dark"><i class="bi bi-tools me-2 text-primary"></i>Service Management</h5>
         <div class="d-flex flex-wrap align-items-center justify-content-md-end gap-2 pe-3">
+            <div class="me-auto me-md-0">
+                <span class="badge bg-light text-dark border py-2 rounded-pill">
+                    <i class="bi bi-bar-chart-fill me-1 text-primary"></i> {{ $totalServices }} / {{ $limit }} <span class="d-none d-sm-inline">Limit</span>
+                </span>
+            </div>
+            @if(checkBusinessPermission('add_services'))
             <div class="d-flex gap-2 flex-grow-1 flex-md-grow-0">
-                @if(checkBusinessPermission('service', 'service_list', 'add'))
+                @if($totalServices >= $limit)
+                <a href="{{ route('business.service.plans') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm flex-fill">
+                    <i class="bi bi-cart-plus me-1"></i> <span class="d-none d-sm-inline">Buy More</span>
+                </a>
+                @else
                 <a href="{{ route('business.service.create') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm flex-fill">
                     <i class="bi bi-plus-lg me-1"></i> <span class="d-none d-sm-inline">Add Service</span>
                 </a>
                 @endif
             </div>
+            @endif
         </div>
     </div>
     <div class="card-body p-0">
@@ -169,11 +180,43 @@
                             }
                         },
                         error: function(e) {
-                            Swal.fire('Error', 'Something went wrong', 'error');
+                            let msg = (e.responseJSON && e.responseJSON.message) ? e.responseJSON.message : (e.status === 403 ? 'You do not have permission to delete services.' : 'Something went wrong');
+                            Swal.fire('Error', msg, 'error');
                         }
                     });
                 }
             })
     }
+
+    // Handle Status Toggle
+    $(document).on('change', '.status-toggle', function() {
+        let toggleSwitch = $(this);
+        let id = toggleSwitch.data('id');
+        let isChecked = toggleSwitch.prop('checked');
+        let status = isChecked ? 'active' : 'in-active';
+
+        $.ajax({
+            url: "{{ route('business.service.status-toggle') }}",
+            type: "POST",
+            data: {
+                _token: "{{ csrf_token() }}",
+                id: id,
+                status: status
+            },
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                } else {
+                    toastr.error(response.message);
+                    toggleSwitch.prop('checked', !isChecked); // Revert switch if failed
+                }
+            },
+            error: function(xhr) {
+                let msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : (xhr.status === 403 ? 'You do not have permission to edit services.' : 'An error occurred while updating the status.');
+                toastr.error(msg);
+                toggleSwitch.prop('checked', !isChecked); // Revert switch if failed
+            }
+        });
+    });
 </script>
 @endpush

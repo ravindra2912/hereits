@@ -37,7 +37,7 @@
                         <div class="bg-light rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                             <i class="fas fa-user-tie text-primary small"></i>
                         </div>
-                        <span class="text-dark small fw-500">{{ $booking->expert->expert_name }}</span>
+                        <span class="text-dark small fw-500">{{ $booking->expert?->user?->name }}</span>
                     </div>
                 </div>
                 <div class="col-md-6 d-flex align-items-end justify-content-md-end text-muted small mt-2 mt-md-0">

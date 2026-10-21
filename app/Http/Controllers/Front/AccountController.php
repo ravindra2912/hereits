@@ -14,12 +14,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\ProfileUpdateRequest;
-use App\Models\Expert;
-use App\Models\Product;
-use App\Models\Service;
-use App\Models\Favorite;
 use App\Models\AppointmentBooking;
 use App\Models\ReviewAndRating;
+use App\Models\Favorite;
+use App\Models\Product;
+use App\Models\Service;
+use App\Models\Expert;
+use App\Models\Order;
+use App\Models\Quotation;
 use Illuminate\Support\Facades\DB;
 
 class AccountController extends Controller
@@ -39,6 +41,13 @@ class AccountController extends Controller
 
     public function userProfileUpdate(Request $request, $id)
     {
+        if ((int)$id !== (int)Auth::id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized action.'
+            ], 403);
+        }
+
         $success = false;
         $message = 'Something Wrong!';
         $redirect = Route('account.userprofile');
@@ -63,7 +72,7 @@ class AccountController extends Controller
                 // $message = $validator->errors()->first();
             } else {
 
-                $update = User::find($id);
+                $update = Auth::user();
 
                 if ($request->hasFile('profile')) {
                     $oldimage = $update->profile;
@@ -90,7 +99,7 @@ class AccountController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_name) && !empty($image_name)) {
                 fileRemoveStorage($image_name);
             }
@@ -139,7 +148,7 @@ class AccountController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -152,7 +161,7 @@ class AccountController extends Controller
     public function getBookings(Request $request)
     {
         $bookings = AppointmentBooking::query()
-            ->with(['business:id,name', 'expert:id,expert_name'])
+            ->with(['business:id,name', 'expert:id,user_id', 'expert.user:id,first_name,last_name'])
             ->orderBy('id', 'desc')
             ->where('user_id', Auth::user()->id)
             ->limit($request->limit)
@@ -166,7 +175,13 @@ class AccountController extends Controller
 
     public function bookingDetails(Request $request, $id): View
     {
-        $booking = AppointmentBooking::with(['business:id,name', 'expert:id,expert_name', 'review:id,rating,review'])
+        $booking = AppointmentBooking::with([
+            'business:id,name',
+            'expert:id,user_id',
+            'expert.user:id,first_name,last_name',
+            'review:id,rating,review',
+            'appointmentProducts'
+        ])
             ->where('id', $id)
             ->where('user_id', Auth::user()->id)
             ->first();
@@ -233,7 +248,7 @@ class AccountController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             // $message = $e;
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -293,68 +308,228 @@ class AccountController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             DB::rollBack();
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
 
-    public function favorites(): View
+    public function orders(): View
     {
-        $user = Auth::user();
-        $favorites = Favorite::where('user_id', $user->id)->get();
+        $orders = \App\Models\Order::where('customer_id', Auth::user()->id)
+            ->with(['business:id,name'])
+            ->orderBy('id', 'desc')
+            ->paginate(10);
+        return view('front.account.order.orders', compact('orders'));
+    }
 
-        // Group by type for better presentation
-        $groupedIds = [
-            'business' => [],
-            'expert' => [],
-            'product' => [],
-            'service' => []
-        ];
+    public function orderDetails($id): View
+    {
+        $order = Order::where('id', $id)
+            ->where('customer_id', Auth::user()->id)
+            ->with(['business:id,name', 'items', 'transactions'])
+            ->firstOrFail();
+        return view('front.account.order.order_details', compact('order'));
+    }
 
-        foreach ($favorites as $favorite) {
-            if (isset($groupedIds[$favorite->favorite_type])) {
-                $groupedIds[$favorite->favorite_type][] = $favorite->favorite_item_id;
-            }
+    public function quotations(Request $request): View
+    {
+        $quotations = Quotation::whereHas('customer', function ($q) {
+                $q->where('customer_id', Auth::user()->id);
+            })
+            ->with(['business:id,name,slug,business_image,contact', 'items'])
+            ->orderBy('id', 'desc')
+            ->paginate(10);
+        return view('front.account.quotation.quotations', compact('quotations'));
+    }
+
+    public function quotationDetails($id): View
+    {
+        $quotation = Quotation::where('id', $id)
+            ->whereHas('customer', function ($q) {
+                $q->where('customer_id', Auth::user()->id);
+            })
+            ->with([
+                'business:id,name,slug,business_image,business_logo,contact,address',
+                'items.product:id,name,sku,sell_price',
+                'order:id,invoice_number'
+            ])
+            ->firstOrFail();
+        return view('front.account.quotation.quotation_details', compact('quotation'));
+    }
+
+    /**
+     * Display the user's favorite products, services, and experts.
+     */
+    public function favorites(Request $request): View
+    {
+        $userId = Auth::id();
+        $type = $request->query('type', 'all');
+
+        $query = Favorite::where('user_id', $userId)
+            ->with([
+                'business:id,name,slug,business_image,business_logo',
+                'product' => function ($q) {
+                    $q->select('id', 'name', 'slug', 'description', 'price', 'sell_price', 'price_type', 'min_price', 'max_price', 'business_id', 'category_id', 'status')
+                        ->with([
+                            'firstTwoImage:id,product_id,image_url',
+                            'category:id,name,slug'
+                        ]);
+                },
+                'service' => function ($q) {
+                    $q->select('id', 'name', 'slug', 'description', 'price', 'price_type', 'min_price', 'max_price', 'image_url', 'business_id', 'category_id', 'status')
+                        ->with([
+                            'category:id,name,slug'
+                        ]);
+                },
+                'expert' => function ($q) {
+                    $q->select('id', 'user_id', 'slug', 'title', 'rating', 'business_id', 'department_id', 'status')
+                        ->with([
+                            'department:id,department_name',
+                            'user:id,first_name,last_name,profile',
+                        ]);
+                }
+            ]);
+
+        if (in_array($type, ['product', 'service', 'expert'])) {
+            $query->where('favorite_type', $type);
         }
 
-        $businesses = Business::whereIn('id', $groupedIds['business'])
-            ->with(['businessCategory', 'city', 'businessSetting'])
-            ->get();
+        $favorites = $query->orderBy('id', 'desc')->paginate(12)->withQueryString();
 
-        $experts = Expert::whereIn('id', $groupedIds['expert'])
-            ->with(['business', 'department'])
-            ->get();
+        $counts = [
+            'all' => Favorite::where('user_id', $userId)->count(),
+            'product' => Favorite::where('user_id', $userId)->where('favorite_type', 'product')->count(),
+            'service' => Favorite::where('user_id', $userId)->where('favorite_type', 'service')->count(),
+            'expert' => Favorite::where('user_id', $userId)->where('favorite_type', 'expert')->count(),
+        ];
 
-        $products = Product::whereIn('id', $groupedIds['product'])
-            ->with(['business', 'firstImage'])
-            ->get();
-
-        $services = Service::whereIn('id', $groupedIds['service'])
-            ->with(['business'])
-            ->get();
-
-        return view('front.account.favorites', compact('businesses', 'experts', 'products', 'services'));
+        return view('front.account.favorites.index', compact('favorites', 'counts', 'type'));
     }
 
-    public function referral(): View
+    /**
+     * Toggle favorite status for product, service, expert, or business.
+     */
+    public function toggleFavorite(Request $request, ?string $business_slug = null)
     {
-        $referredBusinesses = Business::select('id', 'name', 'created_at')
-            ->whereNotNull('user_referral_code')
-            ->where('user_referral_code', Auth::user()->referral_code)
-            ->get();
-        return view('front.account.referral', compact('referredBusinesses'));
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'requires_login' => true,
+                'message' => 'Please login to save your favorites.',
+                'redirect' => route('login'),
+            ], 401);
+        }
+
+        $request->validate([
+            'favorite_type' => 'required|string|in:product,service,expert,business',
+            'favorite_item_id' => 'required|integer',
+            'business_id' => 'nullable|integer',
+        ]);
+
+        $userId = Auth::id();
+        $type = $request->favorite_type;
+        $itemId = (int)$request->favorite_item_id;
+        $businessId = $request->business_id;
+
+        try {
+            if (empty($businessId)) {
+                if ($type === 'product') {
+                    $item = Product::select('id', 'business_id')->find($itemId);
+                    $businessId = $item?->business_id;
+                } elseif ($type === 'service') {
+                    $item = Service::select('id', 'business_id')->find($itemId);
+                    $businessId = $item?->business_id;
+                } elseif ($type === 'expert') {
+                    $item = Expert::select('id', 'business_id')->find($itemId);
+                    $businessId = $item?->business_id;
+                } elseif ($type === 'business') {
+                    $businessId = $itemId;
+                }
+            }
+
+            if (empty($businessId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Item or business not found.',
+                ], 404);
+            }
+
+            $existing = Favorite::where('user_id', $userId)
+                ->where('favorite_type', $type)
+                ->where('favorite_item_id', $itemId)
+                ->first();
+
+            if ($existing) {
+                $existing->delete();
+                return response()->json([
+                    'success' => true,
+                    'is_favorite' => false,
+                    'action' => 'removed',
+                    'message' => ucfirst($type) . ' removed from favorites.',
+                ]);
+            }
+
+            Favorite::create([
+                'user_id' => $userId,
+                'business_id' => $businessId,
+                'favorite_type' => $type,
+                'favorite_item_id' => $itemId,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'is_favorite' => true,
+                'action' => 'added',
+                'message' => ucfirst($type) . ' added to favorites.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => checkResponse($e),
+            ], 500);
+        }
     }
 
-    public function credits(): View
+    /**
+     * Remove favorite by favorite ID.
+     */
+    public function removeFavorite(Request $request)
     {
-        $transactions = \App\Models\UserCreditTransaction::with(['business' => function ($q) {
-            $q->select('id', 'name', 'slug');
-        }])
-            ->select('id', 'type', 'amount', 'reference_type', 'reference_id', 'created_at')
-            ->where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
-        return view('front.account.credits', compact('transactions'));
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'requires_login' => true,
+                'message' => 'Please login to manage favorites.',
+            ], 401);
+        }
+
+        $request->validate([
+            'id' => 'required|integer',
+        ]);
+
+        try {
+            $favorite = Favorite::where('user_id', Auth::id())
+                ->where('id', $request->id)
+                ->first();
+
+            if ($favorite) {
+                $favorite->delete();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Removed from favorites.',
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Favorite not found.',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => checkResponse($e),
+            ], 500);
+        }
     }
 }

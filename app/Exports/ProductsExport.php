@@ -30,6 +30,10 @@ class ProductsExport implements FromQuery, WithHeadings, WithMapping
             'Sell Price',
             'Min Price',
             'Max Price',
+            'Length',
+            'Width',
+            'Height',
+            'Weight',
             'Image 1',
             'Image 2',
             'Image 3',
@@ -49,7 +53,11 @@ class ProductsExport implements FromQuery, WithHeadings, WithMapping
             $row->price,
             $row->sell_price,
             $row->min_price,
-            $row->max_price
+            $row->max_price,
+            $row->length,
+            $row->width,
+            $row->height,
+            $row->weight
         ];
 
         // Add up to 5 image URLs

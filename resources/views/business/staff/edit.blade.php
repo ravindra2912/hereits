@@ -59,10 +59,17 @@
                 @enderror
             </div>
 
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" placeholder="Leave blank to keep current password" autocomplete="new-password">
+                <div class="form-text">Leave blank if you do not want to change the password (minimum 8 characters if provided).</div>
+                @error('password')
+                <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
             <div class="mt-4">
-                @if(checkBusinessPermission('store_management', 'staff', 'update'))
                 <button type="submit" class="btn btn-primary">Update Staff</button>
-                @endif
                 <a href="{{ route('business.staff.index') }}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>

@@ -19,7 +19,6 @@ use App\Models\Business;
 use App\Models\Category;
 use App\Models\Coupon;
 use App\Models\Purchase;
-use App\Services\ImageService;
 use App\Traits\GoogleDrive;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -38,44 +37,121 @@ function apiResponce($statuscode, $status, $message, $data = [])
     return response()->json(["code" => $statuscode, "success" => $status, "message" => $message, "data" => $data]);
 }
 
+/**
+ * Sanitize and format exception/error messages for safe user response.
+ * In production or when debug mode is disabled, logs the full exception
+ * and returns a safe generic message to prevent exposing database/system internals.
+ *
+ * @param \Throwable|string|mixed $exception
+ * @param string $customMessage
+ * @return string
+ */
+function checkResponce($exception, string $customMessage = 'Something went wrong, please try again later.'): string
+{
+    if ($exception instanceof \Throwable) {
+        Log::error('Exception caught in checkResponce: ' . $exception->getMessage(), [
+            'exception' => $exception,
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+        ]);
+
+        if (app()->environment('production') || !config('app.debug')) {
+            return $customMessage;
+        }
+
+        return $exception->getMessage();
+    }
+
+    if (is_string($exception)) {
+        if (app()->environment('production') || !config('app.debug')) {
+            $sensitivePatterns = ['SQLSTATE', 'QueryException', 'PDOException', 'syntax error', 'Column not found', 'Table '];
+            foreach ($sensitivePatterns as $pattern) {
+                if (stripos($exception, $pattern) !== false) {
+                    Log::error('Sensitive error message sanitized in checkResponce: ' . $exception);
+                    return $customMessage;
+                }
+            }
+        }
+
+        return $exception;
+    }
+
+    return $customMessage;
+}
+
+if (!function_exists('checkResponse')) {
+    /**
+     * Alias for checkResponce.
+     */
+    function checkResponse($exception, string $customMessage = 'Something went wrong, please try again later.'): string
+    {
+        return checkResponce($exception, $customMessage);
+    }
+}
+
+/**
+ * Check if an item (product, service, expert, business) is in user's favorites.
+ * Uses request-level static memory cache to prevent N+1 queries during blade rendering.
+ *
+ * @param string $type
+ * @param int|string $itemId
+ * @param int|null $userId
+ * @return bool
+ */
+function isFavorite(string $type, $itemId, ?int $userId = null): bool
+{
+    $uid = $userId ?? (auth('api')->id() ?? (Auth::check() ? Auth::id() : null));
+    if (!$uid || empty($itemId)) {
+        return false;
+    }
+
+    static $userFavoritesCache = [];
+
+    if (!isset($userFavoritesCache[$uid])) {
+        $userFavoritesCache[$uid] = \App\Models\Favorite::where('user_id', $uid)
+            ->select('favorite_type', 'favorite_item_id')
+            ->get()
+            ->groupBy('favorite_type')
+            ->map(function ($items) {
+                return $items->pluck('favorite_item_id')->map(fn($id) => (int)$id)->flip()->all();
+            })
+            ->all();
+    }
+
+    return isset($userFavoritesCache[$uid][$type][(int)$itemId]);
+}
+
+
 // ************ image function start ***************
+
+function imageService(): \App\Services\ImageService
+{
+    return app(\App\Services\ImageService::class);
+}
+
+function storeImage($imageObject, string $directory = "", $width = "", $height = "", string $convertTo = "webp"): string
+{
+    return imageService()->storeImage($imageObject, $directory, $width, $height, $convertTo);
+}
+
+function removeImage(?string $imagePath): bool
+{
+    return imageService()->removeImage($imagePath);
+}
 
 function fileRemoveStorage($imageObject)
 {
-    if ($imageObject != null) {
-        return (new ImageService)->removeImage($imageObject);
-    }
+    return imageService()->removeImage($imageObject);
 }
 
 function fileUploadStorage($imageObject, $directory = "", $width = "", $hieght = "", $converto = "webp")
 {
-    return (new ImageService)->storeImage($imageObject, $directory, $width, $hieght, $converto);
+    return imageService()->storeImage($imageObject, $directory, $width, $hieght, $converto);
 }
 
 function getImage($url = "", $type = '')
 {
-    return (new ImageService)->getImage($url, $type);
-}
-
-function getYoutubeId($url)
-{
-    preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|shorts/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', $url, $match);
-    return $match[1] ?? null;
-}
-
-function getGalleryVideoUrl($url)
-{
-    $id = getYoutubeId($url);
-    if ($id) {
-        return "https://www.youtube.com/watch?v=$id";
-    }
-    return $url;
-}
-
-function getYoutubeThumbnail($url)
-{
-    $id = getYoutubeId($url);
-    return $id ? "https://img.youtube.com/vi/$id/hqdefault.jpg" : null;
+    return imageService()->getImage($url, $type);
 }
 
 // ************ image function end ***************
@@ -151,9 +227,7 @@ function getCities($state_id = 12)
     if (empty($state_id)) {
         $state_id = 12;
     }
-    return Cache::remember('getCities_' . $state_id, 1440, function () use ($state_id) {
-        return City::where('state_id', $state_id)->get();
-    });
+    return City::where('state_id', $state_id)->get();
 }
 
 function generateUniqueSlug($model, $name, $field = 'slug', $business_id = null)
@@ -172,33 +246,6 @@ function generateUniqueSlug($model, $name, $field = 'slug', $business_id = null)
     }
 
     return $slug;
-}
-
-function renderStatusControl(string $actionUrl, string $currentStatus, $recordId, bool $canUpdate = true, array $labels = []): string
-{
-    $activeValue = $labels['active_value'] ?? 'active';
-    $inactiveValue = $labels['inactive_value'] ?? 'in-active';
-    $activeLabel = $labels['active_label'] ?? 'Active';
-    $inactiveLabel = $labels['inactive_label'] ?? 'Inactive';
-
-    $isActive = $currentStatus === $activeValue;
-
-    if (! $canUpdate) {
-        $badgeClass = $isActive ? 'bg-success' : 'bg-danger';
-        $badgeLabel = $isActive ? $activeLabel : $inactiveLabel;
-
-        return '<span class="badge rounded-pill ' . $badgeClass . ' px-3 py-1 small">' . e($badgeLabel) . '</span>';
-    }
-
-    $switchId = 'status-switch-' . $recordId;
-
-    return '<form action="' . e($actionUrl) . '" method="POST" class="d-inline-flex justify-content-center formaction status-switch-form" data-action="">' .
-        csrf_field() .
-        '<input type="hidden" name="status" value="' . e($currentStatus) . '">' .
-        '<div class="form-check form-switch text-switch mb-0">' .
-        '<input type="checkbox" class="form-check-input status-switch-input" id="' . e($switchId) . '" data-on="' . e($activeLabel) . '" data-off="' . e($inactiveLabel) . '" data-active-value="' . e($activeValue) . '" data-inactive-value="' . e($inactiveValue) . '" ' . ($isActive ? 'checked' : '') . '>' .
-        '</div>' .
-        '</form>';
 }
 
 // function generateUniqueSlug($model, $name, $field = 'slug', $business_id = null)
@@ -227,11 +274,50 @@ function getBusinessId()
     return Auth::user()->business_id;
 }
 
-function getBusinessSettings($business_id = null)
+function getBusinessSettings($business_id = null, $forceRefresh = false)
 {
     if ($business_id == null) {
         $business_id = getBusinessId();
     }
+
+    if (!$forceRefresh && session()->has('business_settings') && session('business_settings_id') == $business_id) {
+        $sessSettings = session('business_settings');
+        if (!property_exists($sessSettings, 'is_lucky_draw')) {
+            $sessSettings->is_lucky_draw = false;
+        }
+        if (!property_exists($sessSettings, 'is_quotation_charge_manual')) {
+            $sessSettings->is_quotation_charge_manual = false;
+        }
+        if (!property_exists($sessSettings, 'is_create_quotation_on_inquiry')) {
+            $sessSettings->is_create_quotation_on_inquiry = false;
+        }
+        if (!property_exists($sessSettings, 'is_login_required')) {
+            $sessSettings->is_login_required = false;
+        }
+        if (!property_exists($sessSettings, 'charge_per_quotation')) {
+            $sessSettings->charge_per_quotation = 0.10;
+        }
+        if (!property_exists($sessSettings, 'is_order_charge_manual')) {
+            $sessSettings->is_order_charge_manual = false;
+        }
+        if (!property_exists($sessSettings, 'charge_place_order_on_website')) {
+            $sessSettings->charge_place_order_on_website = 0.00;
+        }
+        if (!property_exists($sessSettings, 'charge_place_order_on_pos')) {
+            $sessSettings->charge_place_order_on_pos = 0.00;
+        }
+        if (!property_exists($sessSettings, 'is_show_contact')) {
+            $sessSettings->is_show_contact = true;
+        }
+        if (!property_exists($sessSettings, 'is_private')) {
+            $sessSettings->is_private = true;
+        }
+        if (!property_exists($sessSettings, 'theme_setting')) {
+            $sessSettings->theme_setting = config('theme.default_theme_setting', []);
+        }
+        return $sessSettings;
+    }
+
     $setting = BusinessSetting::where('business_id', $business_id)->first();
     if ($setting) {
         $data = $setting->getBusinessSettingObject();
@@ -240,24 +326,44 @@ function getBusinessSettings($business_id = null)
             'is_appointment_system' => false,
             'is_appointment_with_department' => false,
             'is_appointment_price_required' => false,
+            'allow_appointment_product_selection' => false,
             'is_appointment_creadit_diduct_manual' => false,
             'deduct_credit_per_customer_appointment' => 1,
             'deduct_credit_per_self_appointment' => 1,
-            'is_order_creadit_diduct_manual' => false,
-            'deduct_credit_per_customer_order' => 1,
-            'deduct_credit_per_self_order' => 1,
-            'is_chat_creadit_diduct_manual' => false,
-            'deduct_credit_per_chat' => 1,
             'is_ecommerce_system' => false,
-            'is_product_import_export' => false,
+            'is_label' => false,
             'is_share_products_to_business' => false,
+            'is_product_import_export' => false,
             'is_service_system' => false,
+            'is_show_contact' => true,
+            'is_lucky_draw' => false,
+            'is_quotation_charge_manual' => false,
+            'is_create_quotation_on_inquiry' => false,
+            'is_login_required' => false,
+            'charge_per_quotation' => 0.10,
+            'is_order_charge_manual' => false,
+            'charge_place_order_on_website' => 0.00,
+            'charge_place_order_on_pos' => 0.00,
+            'subscription_expiry_date' => null,
             'credit' => 0,
+            'product_limit' => 0,
+            'product_limit_expiry_date' => null,
+            'service_limit' => 0,
+            'service_limit_expiry_date' => null,
             'is_verified' => false,
-            'visibility' => 'public'
+            'is_private' => true,
+            'accept_online_payments' => false,
+            'payment_method' => 'manual_upi',
+            'online_payment_method' => 'manual_upi',
+            'upi_id' => null,
+            'razorpay_key_id' => null,
+            'razorpay_key_secret' => null,
+            'theme_setting' => config('theme.default_theme_setting', []),
         ];
     }
-    return (object)$data;
+    $settingObj = (object)$data;
+    session(['business_settings' => $settingObj, 'business_settings_id' => $business_id]);
+    return $settingObj;
 }
 
 function getBusinessCategory()
@@ -267,18 +373,26 @@ function getBusinessCategory()
     });
 }
 
-function getProductCategory($business_id = null)
+function getProductCategory($business_id = null, $onlyParent = false)
 {
     if ($business_id == null && Auth::check()) {
         $business_id = getBusinessId();
     }
 
     if ($business_id) {
-        return Category::where('status', 'active')
-            ->where('type', 'Products')
-            ->where('business_id', $business_id)
-            ->orderBy('sort_order', 'asc')
-            ->get();
+        $cacheKey = "business_{$business_id}_product_categories" . ($onlyParent ? '_parent' : '');
+        return Cache::remember($cacheKey, 600, function () use ($business_id, $onlyParent) {
+            $query = Category::with('parent:id,name')
+                ->where('status', 'active')
+                ->where('type', 'Products')
+                ->where('business_id', $business_id);
+
+            if ($onlyParent) {
+                $query->whereNull('parent_id');
+            }
+
+            return $query->orderBy('sort_order', 'asc')->get();
+        });
     }
     return collect();
 }
@@ -290,11 +404,14 @@ function getServiceCategory($business_id = null)
     }
 
     if ($business_id) {
-        return Category::where('status', 'active')
-            ->where('type', 'Services')
-            ->where('business_id', $business_id)
-            ->orderBy('sort_order', 'asc')
-            ->get();
+        return Cache::remember("business_{$business_id}_service_categories", 600, function () use ($business_id) {
+            return Category::with('parent:id,name')
+                ->where('status', 'active')
+                ->where('type', 'Services')
+                ->where('business_id', $business_id)
+                ->orderBy('sort_order', 'asc')
+                ->get();
+        });
     }
     return collect();
 }
@@ -315,49 +432,10 @@ function isBusinessOpen($business_id = null)
 
 function isExpertAvailable($expert_id = null, $business_id = null)
 {
-    $res['status'] = 'close';
-    $res['data'] = null;
-
-    if ($expert_id != null) {
-        $expert = Expert::select('id', 'is_appointment_book_with_time_slot')->where('id', $expert_id)->first();
-        $currentBooking = AppointmentBooking::select('id', 'token_number', 'user_id', 'expert_id', 'user_name', 'user_contact', 'slot_start_time', 'slot_end_time', 'booking_date', 'status')
-            ->where('booking_date', Carbon::now()->format('Y-m-d'))
-            ->where('expert_id', $expert_id)
-            ->where('status', 'in_progress');
-        if ($expert->is_appointment_book_with_time_slot) {
-            $currentBooking = $currentBooking->orderBy('slot_start_time', 'asc');
-        } else {
-            $currentBooking = $currentBooking->orderBy('token_number', 'asc');
-        }
-        $currentBooking = $currentBooking->first();
-
-        if ($currentBooking) {
-            $res['status'] = 'open';
-            $res['data'] = $currentBooking;
-        } else {
-            $day = Carbon::now()->format('l');
-            $time = Carbon::now()->format('H:i:s');
-            $businessTiming = BusinessTiming::where('day', $day)
-                ->where('expert_id', $expert_id)
-                ->where('start_time', '<=', $time)
-                ->where('end_time', '>=', $time)
-                ->first();
-            if ($businessTiming) {
-                $res['status'] = 'open';
-            } else {
-                $businessTiming = BusinessTiming::select('id', 'start_time')
-                    ->where('day', $day)
-                    ->where('expert_id', $expert_id)
-                    ->where('start_time', '>=', $time)
-                    ->first();
-                if ($businessTiming) {
-                    $res['status'] = 'break';
-                    $res['data'] = $businessTiming;
-                }
-            }
-        }
-    }
-    return $res;
+    return app(\App\Services\ExpertService::class)->isExpertAvailable(
+        $expert_id ? (int) $expert_id : null,
+        $business_id ? (int) $business_id : null
+    );
 }
 
 function updateBusinessSeo($bussinessId)
@@ -407,6 +485,32 @@ function updateBusinessSeo($bussinessId)
 
 // =============== Business functions end ================
 
+// =============== Appoinmenter functions start ================
+
+
+function generateTimeSlots($startTime, $endTime, $date, $interval, $bookedArray)
+{
+    return app(\App\Services\ExpertService::class)->generateTimeSlots(
+        (string) $startTime,
+        (string) $endTime,
+        $date,
+        (int) $interval,
+        (array) $bookedArray
+    );
+}
+
+function getExpertTiming($id, $date, $appoinment_id = null, $getBusinessId = null)
+{
+    return app(\App\Services\ExpertService::class)->getExpertTiming(
+        (int) $id,
+        $date,
+        $appoinment_id ? (int) $appoinment_id : null,
+        $getBusinessId ? (int) $getBusinessId : null
+    );
+}
+
+
+// =============== Appoinmenter functions end ================
 
 // =============== geo location info functions start ================
 
@@ -595,7 +699,8 @@ function validateCoupon($couponCode, $planType, $orderAmount)
         // 2. Check Applicability
         $applicableFor = is_array($coupon->applicable_for) ? $coupon->applicable_for : ['all'];
         if (!in_array('all', $applicableFor) && !in_array($planType, $applicableFor)) {
-            return ['success' => false, 'message' => 'This coupon is not applicable for ' . $planType . ' plans.'];
+            $typeLabel = $planType === 'credit' ? 'credit recharge' : $planType . ' plans';
+            return ['success' => false, 'message' => 'This coupon is not applicable for ' . $typeLabel . '.'];
         }
 
         // 3. Check Specific Business
@@ -677,7 +782,27 @@ function currencySymbol()
 
 function getPosBusinessId()
 {
-    return Auth::guard('pos')->user()->business_id;
+    return app(\App\Services\PosSessionService::class)->getPosBusinessId();
+}
+
+function getPosBusinessDetails()
+{
+    return app(\App\Services\PosSessionService::class)->getPosBusinessDetails();
+}
+
+function getPosUserBusinesses()
+{
+    return app(\App\Services\PosSessionService::class)->getPosUserBusinesses();
+}
+
+function syncPosSessionData($user, $businessId = null)
+{
+    app(\App\Services\PosSessionService::class)->syncAll($user, $businessId);
+}
+
+function clearPosSessionData()
+{
+    app(\App\Services\PosSessionService::class)->clearPosSession();
 }
 
 /**
@@ -686,83 +811,77 @@ function getPosBusinessId()
  */
 function checkPosPermission($permission)
 {
-    $permissions = session('permissions', []);
-    if (isset($permissions['all_access']) && $permissions['all_access']) {
-        return true;
-    }
-
-    // Check if permission exists and is truthy
-    // Flattened structure check (the keys in pos_permission are the permission codes)
-    $posPermissions = $permissions['pos_permission'] ?? [];
-    return !empty($posPermissions[$permission]);
+    return app(\App\Services\PosSessionService::class)->checkPosPermission($permission);
 }
 
 /**
- * Check if the authenticated user has a specific Business panel permission.
- * 
- * @param string $module The main module/setting (e.g. 'customers', 'appointments', 'store_management')
- * @param string|null $submodule The sub-feature (e.g. 'department', 'role')
- * @param string|null $action The action to check ('view', 'add', 'update', 'delete')
+ * Get allowed POS order statuses for the authenticated user.
+ *
+ * @return array
+ */
+function getPosAllowedOrderStatuses(): array
+{
+    return app(\App\Services\PosSessionService::class)->getPosAllowedOrderStatuses();
+}
+
+/**
+ * Check if the authenticated POS user has access to a specific order status.
+ *
+ * @param string $status
  * @return bool
  */
-function checkBusinessPermission($module, $submodule = null, $action = null)
+function checkPosOrderStatusAccess(string $status): bool
+{
+    return app(\App\Services\PosSessionService::class)->checkPosOrderStatusAccess($status);
+}
+
+/**
+ * Get allowed order status variants for SQL whereIn queries.
+ * Handles capitalization and spacing variations gracefully.
+ *
+ * @param array|null $statuses
+ * @return array
+ */
+function getPosAllowedOrderStatusQueryVariants(?array $statuses = null): array
+{
+    $statuses = $statuses ?? getPosAllowedOrderStatuses();
+    $variants = [];
+    foreach ($statuses as $st) {
+        $stLow = strtolower($st);
+        $variants[] = $stLow;
+        $variants[] = ucfirst($stLow);
+        $variants[] = ucwords(str_replace('_', ' ', $stLow));
+    }
+    return array_values(array_unique(array_filter($variants)));
+}
+
+/**
+ * Check if the authenticated user has a specific business permission.
+ * Uses session-cached permissions for efficiency.
+ */
+function checkBusinessPermission($permission)
 {
     $user = Auth::user();
     if (!$user) {
         return false;
     }
 
-    // Owner has full access to everything in the business panel
     if ($user->role === 'Business') {
         return true;
     }
 
-    // Ensure session permissions are populated
-    if (!session()->has('permissions')) {
-        $user->syncPermissionsToSession();
+    $permissions = session('business_permissions');
+    if ($permissions === null) {
+        $user->syncBusinessPermissionsToSession();
+        $permissions = session('business_permissions', []);
     }
 
-    $permissions = session('permissions', []);
     if (isset($permissions['all_access']) && $permissions['all_access']) {
         return true;
     }
 
-    // Check if business access is globally allowed
-    $businessAccess = $permissions['business_access'] ?? false;
-    if (!$businessAccess) {
-        return false;
-    }
-
-    $businessPermissions = $permissions['business_permissions'] ?? [];
-    if (empty($businessPermissions)) {
-        return false;
-    }
-
-    // 1. If only module is checked (e.g. general module like 'customers' or 'analytics')
-    if ($submodule === null && $action === null) {
-        if (isset($businessPermissions[$module])) {
-            return $businessPermissions[$module] === 'yes';
-        }
-        return false;
-    }
-
-    // 2. If it's a module with sub-features
-    if (isset($businessPermissions[$module])) {
-        $moduleData = $businessPermissions[$module];
-
-        // Ensure module has general access allowed
-        if (!isset($moduleData['access']) || $moduleData['access'] !== 'yes') {
-            return false;
-        }
-
-        // If checking sub-module with specific action
-        if ($submodule !== null && $action !== null) {
-            $actions = $moduleData[$submodule] ?? [];
-            return is_array($actions) && in_array($action, $actions);
-        }
-    }
-
-    return false;
+    $businessPermissions = $permissions['business_permission'] ?? [];
+    return !empty($businessPermissions[$permission]);
 }
 
 function getSiteSetting()
@@ -771,3 +890,143 @@ function getSiteSetting()
         return \App\Models\SiteSetting::first();
     });
 }
+
+function encryptId($id)
+{
+    return str_replace(['+', '/', '='], ['-', '_', ''], encrypt($id));
+}
+
+function decryptId($value)
+{
+    try {
+        $base64 = str_replace(['-', '_'], ['+', '/'], $value);
+        return decrypt($base64);
+    } catch (\Exception $e) {
+        abort(404);
+    }
+}
+
+if (!function_exists('numberToIndianWords')) {
+    function numberToIndianWords($amount)
+    {
+        $number = (float)$amount;
+        $no = floor($number);
+        $point = round(($number - $no) * 100);
+        $digits_length = strlen($no);
+        $i = 0;
+        $str = array();
+        $words = array(
+            0 => '',
+            1 => 'One',
+            2 => 'Two',
+            3 => 'Three',
+            4 => 'Four',
+            5 => 'Five',
+            6 => 'Six',
+            7 => 'Seven',
+            8 => 'Eight',
+            9 => 'Nine',
+            10 => 'Ten',
+            11 => 'Eleven',
+            12 => 'Twelve',
+            13 => 'Thirteen',
+            14 => 'Fourteen',
+            15 => 'Fifteen',
+            16 => 'Sixteen',
+            17 => 'Seventeen',
+            18 => 'Eighteen',
+            19 => 'Nineteen',
+            20 => 'Twenty',
+            30 => 'Thirty',
+            40 => 'Forty',
+            50 => 'Fifty',
+            60 => 'Sixty',
+            70 => 'Seventy',
+            80 => 'Eighty',
+            90 => 'Ninety'
+        );
+        $digits = array('', 'Hundred', 'Thousand', 'Lakh', 'Crore');
+        while ($i < $digits_length) {
+            $divider = ($i == 2) ? 10 : 100;
+            $curr_no = floor($no % $divider);
+            $no = floor($no / $divider);
+            $i += ($divider == 10) ? 1 : 2;
+            if ($curr_no) {
+                $counter = count($str);
+                $hundred = ($counter == 1 && isset($str[0]) && $str[0]) ? ' and ' : '';
+                $str[] = ($curr_no < 21) ? $words[$curr_no] . ' ' . $digits[$counter] . ' ' . $hundred
+                    : $words[floor($curr_no / 10) * 10] . ' ' . $words[$curr_no % 10] . ' ' . $digits[$counter] . ' ' . $hundred;
+            } else {
+                $str[] = '';
+            }
+        }
+        $Rupees = implode('', array_reverse($str));
+        $paise = ($point > 0 && isset($words[$point])) ? $words[$point] . ' Paise' : (($point > 0) ? ($words[floor($point / 10) * 10] . ' ' . $words[$point % 10]) . ' Paise' : '');
+        $result = ($Rupees ? trim($Rupees) . ' Rupees ' : '') . ($paise ? 'And ' . trim($paise) . ' ' : '') . 'only';
+        return preg_replace('/\s+/', ' ', trim($result));
+    }
+}
+
+if (!function_exists('getYoutubeId')) {
+    function getYoutubeId($url)
+    {
+        if (empty($url)) {
+            return null;
+        }
+        preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|win/|user/[^/]+/|embed/|shorts/|watch\?v?=)|youtu\.be/)([^"&?/\s]{11})%i', $url, $match);
+        return $match[1] ?? null;
+    }
+}
+
+if (!function_exists('getYoutubeThumbnail')) {
+    function getYoutubeThumbnail($url)
+    {
+        $id = getYoutubeId($url);
+        return $id ? "https://img.youtube.com/vi/$id/hqdefault.jpg" : null;
+    }
+}
+
+if (!function_exists('cleanHtml')) {
+    /**
+     * Sanitize HTML input by stripping malicious script tags, event handlers, and javascript protocols.
+     *
+     * @param string|null $html
+     * @return string|null
+     */
+    function cleanHtml(?string $html): ?string
+    {
+        if (empty($html)) {
+            return $html;
+        }
+
+        // Remove dangerous executable tags and their inner content
+        $clean = preg_replace('/<(script|iframe|object|embed|applet|form)\b[^>]*>(.*?)<\/\1>/is', '', $html);
+        $clean = preg_replace('/<(script|iframe|object|embed|applet|form)\b[^>]*\/?>/is', '', $clean);
+
+        // Strip inline JavaScript event handlers (e.g. onload=, onclick=, onerror=)
+        $clean = preg_replace('/\bon[a-z]+\s*=\s*(["\']).*?\1/is', '', $clean);
+        $clean = preg_replace('/\bon[a-z]+\s*=\s*[^>\s]+/is', '', $clean);
+
+        // Strip javascript: and vbscript: URI schemes in attributes
+        $clean = preg_replace('/\b(href|src|action)\s*=\s*(["\'])\s*(javascript|vbscript):[^"\']*\2/is', '', $clean);
+
+        return $clean;
+    }
+}
+
+if (!function_exists('isGoogleLoginEnabled')) {
+    /**
+     * Check if Google login is enabled via configuration or environment variable.
+     *
+     * @return bool
+     */
+    function isGoogleLoginEnabled(): bool
+    {
+        $enabled = config('services.google.is_login_with_google');
+        if ($enabled === null) {
+            $enabled = env('IS_LOGIN_WITH_GOOGLE', env('is_login_with_google', true));
+        }
+        return filter_var($enabled, FILTER_VALIDATE_BOOLEAN);
+    }
+}
+

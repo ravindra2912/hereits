@@ -31,12 +31,7 @@
                 <option value="{{ $type }}">{{ ucfirst(str_replace('_', ' ', $type)) }}</option>
                 @endforeach
             </select>
-            <select class="form-select form-select-sm border-0 bg-light rounded-pill px-3" id="payment_method_filter" style="width: 140px;">
-                <option value="">Payment Method</option>
-                @foreach($payment_methods as $method)
-                <option value="{{ $method }}">{{ ucfirst($method) }}</option>
-                @endforeach
-            </select>
+
             <select class="form-select form-select-sm border-0 bg-light rounded-pill px-3" id="payment_status_filter" style="width: 130px;">
                 <option value="">Pay Status</option>
                 @foreach($payment_statuses as $status)
@@ -169,7 +164,6 @@
                 data: function(d) {
                     d.order_status = $('#order_status_filter').val();
                     d.payment_status = $('#payment_status_filter').val();
-                    d.payment_method = $('#payment_method_filter').val();
                     d.order_source = $('#order_source_filter').val();
                     d.order_type = $('#order_type_filter').val();
                     d.start_date = $('#date_range_filter').data('start_date');
@@ -231,7 +225,7 @@
             ]
         });
 
-        $('#order_status_filter, #payment_status_filter, #payment_method_filter, #order_source_filter, #order_type_filter').change(function() {
+        $('#order_status_filter, #payment_status_filter, #order_source_filter, #order_type_filter').change(function() {
             table.draw();
         });
 
@@ -267,7 +261,7 @@
         });
 
         $('#reset_filters').click(function() {
-            $('#order_status_filter, #payment_status_filter, #payment_method_filter, #order_source_filter, #order_type_filter').val('');
+            $('#order_status_filter, #payment_status_filter, #order_source_filter, #order_type_filter').val('');
             $('#date_range_filter').val('');
             $('#date_range_filter').data('start_date', '');
             $('#date_range_filter').data('end_date', '');

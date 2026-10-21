@@ -30,11 +30,8 @@
                     <hr class="flex-grow-1 opacity-25">
                 </div>
 
-
-
                 <!-- Manual Selection -->
                 <div class="mb-3">
-
                     <!-- Auto Detect Button -->
                     <button class="btn btn-primary w-100 rounded-pill py-3 mb-3 d-flex align-items-center justify-content-center gap-2 shadow-sm transition-all" onclick="detectUserLocation()">
                         <i class="fas fa-crosshairs"></i>
@@ -60,13 +57,13 @@
                     @php
                     $locationHistory = json_decode(request()->cookie('location_history', '[]'), true);
                     @endphp
-                    @if(count($locationHistory) > 0)
+                    @if(is_array($locationHistory) && count($locationHistory) > 0)
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted text-uppercase mb-2">Recent Locations</label>
                         <div class="list-group list-group-flush rounded-3 border overflow-hidden">
                             @foreach($locationHistory as $item)
                             <button type="button" class="list-group-item list-group-item-action py-3 d-flex align-items-center gap-3 border-0"
-                                onclick="saveLocation('{{ $item['type'] }}', '{{ $item['location_name'] }}', {{ $item['latitude'] }}, {{ $item['longitude'] }}, { full_address: '{{ $item['full_address'] ?? '' }}', area_lat_long: '{{ $item['area_lat_long'] ?? '' }}' })">
+                                onclick="saveLocation('{{ $item['type'] }}', '{{ addslashes($item['location_name']) }}', {{ $item['latitude'] }}, {{ $item['longitude'] }}, { full_address: '{{ addslashes($item['full_address'] ?? '') }}', area_lat_long: '{{ addslashes($item['area_lat_long'] ?? '') }}' })">
                                 <i class="fas fa-history text-muted"></i>
                                 <div class="text-start">
                                     <div class="fw-bold small">{{ $item['location_name'] }}</div>
@@ -79,30 +76,6 @@
                         </div>
                     </div>
                     @endif
-
-
-
-                    <!-- <label class="form-label small fw-bold text-muted text-uppercase mb-3">Popular Cities</label>
-                    <div class="row g-2">
-                        @php
-                            $popularCities = [
-                                ['name' => 'Mumbai', 'lat' => 19.0760, 'lng' => 72.8777],
-                                ['name' => 'Bangalore', 'lat' => 12.9716, 'lng' => 77.5946],
-                                ['name' => 'Delhi', 'lat' => 28.6139, 'lng' => 77.2090],
-                                ['name' => 'Hyderabad', 'lat' => 17.3850, 'lng' => 78.4867],
-                                ['name' => 'Ahmedabad', 'lat' => 23.0225, 'lng' => 72.5714],
-                                ['name' => 'Surat', 'lat' => 21.1702, 'lng' => 72.8311],
-                            ];
-                        @endphp
-                        @foreach($popularCities as $city)
-                        <div class="col-4">
-                            <button class="btn btn-outline-light text-dark border w-100 py-2 small hover-bg-primary" 
-                                    onclick="saveLocation('search', '{{ $city['name'] }}', {{ $city['lat'] }}, {{ $city['lng'] }})">
-                                {{ $city['name'] }}
-                            </button>
-                        </div>
-                        @endforeach
-                    </div> -->
                 </div>
             </div>
         </div>
@@ -158,7 +131,6 @@
     }
 </style>
 
-
 <script>
     (g => {
         var h, a, k, p = "The Google Maps JavaScript API",
@@ -184,7 +156,7 @@
             }));
         d[l] ? console.warn(p + " only loads once. Re-referencing library %s.", r) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))
     })({
-        key: "{{ env('GOOGLE_MAP_KEY') }}",
+        key: "{{ config('services.google.map_key', env('GOOGLE_MAP_KEY')) }}",
         v: "weekly",
     });
 </script>
@@ -198,13 +170,15 @@
         const hasCookieLocation = @json($userLocation ? true : false);
 
         if (!savedLocationName && !hasCookieLocation) {
-            const locationModal = new bootstrap.Modal(document.getElementById('locationModal'));
-            locationModal.show();
+            const modalEl = document.getElementById('locationModal');
+            if (modalEl) {
+                const locationModal = new bootstrap.Modal(modalEl);
+                locationModal.show();
+            }
         } else if (savedLocationName) {
             updateLocationUI(savedLocationName);
         }
     });
-
 
     async function initAutocomplete() {
         const input = document.getElementById('location-search-input');
@@ -219,54 +193,51 @@
 
             autocomplete.addListener('place_changed', function() {
                 const place = autocomplete.getPlace();
-                if (!place.geometry) return;
+                if (!place || !place.geometry) return;
 
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
 
-            const lat = place.geometry.location.lat();
-            const lng = place.geometry.location.lng();
+                // Extract viewport boundaries for area filtering
+                let areaLatLong = null;
+                if (place.geometry.viewport) {
+                    const sw = place.geometry.viewport.getSouthWest();
+                    const ne = place.geometry.viewport.getNorthEast();
+                    areaLatLong = `${sw.lat()},${sw.lng()},${ne.lat()},${ne.lng()}`;
+                }
 
-            // Extract viewport boundaries for area filtering
-            let areaLatLong = null;
-            if (place.geometry.viewport) {
-                const sw = place.geometry.viewport.getSouthWest();
-                const ne = place.geometry.viewport.getNorthEast();
-                areaLatLong = `${sw.lat()},${sw.lng()},${ne.lat()},${ne.lng()}`;
-            }
+                // Extract Area and City from address components
+                let area = '';
+                let city = '';
 
-            // Extract Area and City from address components
-            let area = '';
-            let city = '';
-
-            if (place.address_components) {
-                for (const component of place.address_components) {
-                    if (component.types.includes('sublocality_level_1')) {
-                        area = component.long_name;
-                    }
-                    if (component.types.includes('locality')) {
-                        city = component.long_name;
-                    }
-                    if (!area && component.types.includes('sublocality')) {
-                        area = component.long_name;
+                if (place.address_components) {
+                    for (const component of place.address_components) {
+                        if (component.types.includes('sublocality_level_1')) {
+                            area = component.long_name;
+                        }
+                        if (component.types.includes('locality')) {
+                            city = component.long_name;
+                        }
+                        if (!area && component.types.includes('sublocality')) {
+                            area = component.long_name;
+                        }
                     }
                 }
-            }
 
-            const locationName = area && city ? `${area}, ${city}` : (city || area || place.name || 'Unknown Location');
-            const fullAddress = place.formatted_address;
+                const locationName = area && city ? `${area}, ${city}` : (city || area || place.name || 'Unknown Location');
+                const fullAddress = place.formatted_address;
 
-            saveLocation('search', locationName, lat, lng, {
-                full_address: fullAddress,
-                area_lat_long: areaLatLong
-            });
+                saveLocation('search', locationName, lat, lng, {
+                    full_address: fullAddress,
+                    area_lat_long: areaLatLong
+                });
             });
         } catch (e) {
             console.error("Autocomplete failed to load:", e);
         }
     }
 
-
     function saveLocation(type, name, lat, lng, extra = {}) {
-
         const data = {
             type: type,
             location_name: name,
@@ -276,38 +247,39 @@
         };
 
         fetch('{{ route("set-location") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(res => {
-                if (res.status === 'success') {
-                    localStorage.setItem('user_location_name', name);
-                    updateLocationUI(name);
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(res => {
+            if (res.status === 'success') {
+                localStorage.setItem('user_location_name', name);
+                updateLocationUI(name);
 
-                    const modalElement = document.getElementById('locationModal');
+                const modalElement = document.getElementById('locationModal');
+                if (modalElement) {
                     const modalInstance = bootstrap.Modal.getInstance(modalElement);
                     if (modalInstance) modalInstance.hide();
-
-                    toastr.success(`Location set to ${name}`);
-
-                    // Refresh page to apply filters
-                    setTimeout(() => location.reload(), 500);
-                } else {
-                    toastr.error('Failed to save location');
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                toastr.error('Something went wrong');
-            });
-    }
 
+                toastr.success(`Location set to ${name}`);
+
+                // Refresh page to apply filters
+                setTimeout(() => location.reload(), 500);
+            } else {
+                toastr.error('Failed to save location');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            toastr.error('Something went wrong');
+        });
+    }
 
     function updateLocationUI(locationName) {
         const textElements = document.querySelectorAll('.selected-location-text');
@@ -336,12 +308,9 @@
                         const geocoder = new Geocoder();
 
                         geocoder.geocode({
-                            location: {
-                                lat,
-                                lng
-                            }
+                            location: { lat, lng }
                         }, (results, status) => {
-                            if (status === "OK" && results[0]) {
+                            if (status === "OK" && results && results[0]) {
                                 let area = '';
                                 let city = '';
 
@@ -397,11 +366,5 @@
         } else {
             toastr.info(`Radius set to ${radius}km. Click "Use Current Location" to apply.`);
         }
-    }
-
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
     }
 </script>

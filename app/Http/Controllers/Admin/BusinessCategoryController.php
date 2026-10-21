@@ -64,10 +64,6 @@ class BusinessCategoryController extends Controller
                 'name' => 'required',
                 'deduct_credit_per_customer_appointment' => 'required|numeric|min:0',
                 'deduct_credit_per_self_appointment' => 'required|numeric|min:0',
-                'deduct_credit_per_customer_order' => 'required|numeric|min:0',
-                'deduct_credit_per_self_order' => 'required|numeric|min:0',
-                'deduct_credit_per_chat' => 'required|numeric|min:0',
-                'deduct_credit_per_quotation' => 'required|numeric|min:0',
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -88,10 +84,6 @@ class BusinessCategoryController extends Controller
                 $insert->slug = generateUniqueSlug(BusinessCategory::class, $request->name);
                 $insert->deduct_credit_per_customer_appointment = $request->deduct_credit_per_customer_appointment;
                 $insert->deduct_credit_per_self_appointment = $request->deduct_credit_per_self_appointment;
-                $insert->deduct_credit_per_customer_order = $request->deduct_credit_per_customer_order;
-                $insert->deduct_credit_per_self_order = $request->deduct_credit_per_self_order;
-                $insert->deduct_credit_per_chat = $request->deduct_credit_per_chat;
-                $insert->deduct_credit_per_quotation = $request->deduct_credit_per_quotation;
                 $insert->save();
 
                 Cache::forget('BusinessCategory');
@@ -100,7 +92,7 @@ class BusinessCategoryController extends Controller
                 $message = 'Business category add successfully.';
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_name) && !empty($image_name)) {
                 fileRemoveStorage($image_name);
             }
@@ -135,10 +127,6 @@ class BusinessCategoryController extends Controller
                 'name' => 'required',
                 'deduct_credit_per_customer_appointment' => 'required|numeric|min:0',
                 'deduct_credit_per_self_appointment' => 'required|numeric|min:0',
-                'deduct_credit_per_customer_order' => 'required|numeric|min:0',
-                'deduct_credit_per_self_order' => 'required|numeric|min:0',
-                'deduct_credit_per_chat' => 'required|numeric|min:0',
-                'deduct_credit_per_quotation' => 'required|numeric|min:0',
                 'status' => 'required'
             ];
 
@@ -160,10 +148,6 @@ class BusinessCategoryController extends Controller
                 $update->name = $request->name;
                 $update->deduct_credit_per_customer_appointment = $request->deduct_credit_per_customer_appointment;
                 $update->deduct_credit_per_self_appointment = $request->deduct_credit_per_self_appointment;
-                $update->deduct_credit_per_customer_order = $request->deduct_credit_per_customer_order;
-                $update->deduct_credit_per_self_order = $request->deduct_credit_per_self_order;
-                $update->deduct_credit_per_chat = $request->deduct_credit_per_chat;
-                $update->deduct_credit_per_quotation = $request->deduct_credit_per_quotation;
                 $update->status = $request->status;
                 $update->save();
 
@@ -178,7 +162,7 @@ class BusinessCategoryController extends Controller
                 $message = 'Business category updated successfully.';
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_name) && !empty($image_name)) {
                 fileRemoveStorage($image_name);
             }
@@ -199,25 +183,13 @@ class BusinessCategoryController extends Controller
         try {
             $delete = BusinessCategory::find($id);
             if ($delete) {
-                if ($delete->businesses()->exists()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'This category cannot be deleted because there are businesses listed under it.',
-                        'data' => $data,
-                        'redirect' => $redirect
-                    ]);
-                }
-
                 fileRemoveStorage($delete->image);
                 $delete->delete();
-
-                Cache::forget('BusinessCategory');
-
                 $success = true;
                 $message = 'Business category deleted successfully.';
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }

@@ -6,7 +6,10 @@
 
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">Manage Product Sharing</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
+    <div class="btn-toolbar mb-2 mb-md-0 gap-2">
+        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" id="btn-sync-categories">
+            <i class="bi bi-arrow-repeat me-1"></i> Sync Categories
+        </button>
         <a href="{{ route('business.product.share.index') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
             <i class="bi bi-arrow-left"></i> Back to Shares
         </a>
@@ -65,6 +68,10 @@
                                 <p class="mb-0">All available products have been shared.</p>
                             </div>
                             @endforelse
+                            <div class="p-4 text-center text-muted d-none" id="no-search-available">
+                                <i class="bi bi-search display-6 mb-2 opacity-50"></i>
+                                <p class="mb-0">No matching available products found.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -115,6 +122,10 @@
                                 <p class="mb-0">No products have been shared yet.</p>
                             </div>
                             @endforelse
+                            <div class="p-4 text-center text-muted d-none" id="no-search-shared">
+                                <i class="bi bi-search display-6 mb-2 opacity-50"></i>
+                                <p class="mb-0">No matching shared products found.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -181,19 +192,34 @@
             $(this).toggleClass('active');
         });
 
-        // Search filtering
-        $('#search-available').on('keyup', function() {
-            let val = $(this).val().toLowerCase();
-            $('#available-list .list-group-item').each(function() {
-                $(this).toggle($(this).text().toLowerCase().indexOf(val) > -1);
+        // Search filtering for available products
+        $('#search-available').on('input keyup', function() {
+            let val = $(this).val().toLowerCase().trim();
+            let visibleCount = 0;
+            let $items = $('#available-list .list-group-item');
+            $items.each(function() {
+                let matches = val === '' || $(this).text().toLowerCase().indexOf(val) > -1;
+                $(this).toggleClass('d-none', !matches);
+                if (matches) visibleCount++;
             });
+            if ($items.length > 0) {
+                $('#no-search-available').toggleClass('d-none', visibleCount > 0);
+            }
         });
 
-        $('#search-shared').on('keyup', function() {
-            let val = $(this).val().toLowerCase();
-            $('#shared-list .list-group-item').each(function() {
-                $(this).toggle($(this).text().toLowerCase().indexOf(val) > -1);
+        // Search filtering for shared products
+        $('#search-shared').on('input keyup', function() {
+            let val = $(this).val().toLowerCase().trim();
+            let visibleCount = 0;
+            let $items = $('#shared-list .list-group-item');
+            $items.each(function() {
+                let matches = val === '' || $(this).text().toLowerCase().indexOf(val) > -1;
+                $(this).toggleClass('d-none', !matches);
+                if (matches) visibleCount++;
             });
+            if ($items.length > 0) {
+                $('#no-search-shared').toggleClass('d-none', visibleCount > 0);
+            }
         });
 
         function performAction(action_type, items = []) {
@@ -298,7 +324,7 @@
         }
 
         $('#btn-add').click(function() {
-            performAction('add', $('#available-list .list-group-item.active:visible'));
+            performAction('add', $('#available-list .list-group-item.active:not(.d-none)'));
         });
 
         $('#btn-add-all').click(function() {
@@ -306,11 +332,58 @@
         });
 
         $('#btn-remove').click(function() {
-            performAction('remove', $('#shared-list .list-group-item.active:visible'));
+            performAction('remove', $('#shared-list .list-group-item.active:not(.d-none)'));
         });
 
         $('#btn-remove-all').click(function() {
             performAction('remove_all');
+        });
+
+        $('#btn-sync-categories').click(function() {
+            Swal.fire({
+                title: 'Synchronize Categories?',
+                text: 'This will sync category hierarchy from your business to the target business. Soft-deleted categories with matching slugs will be restored and updated.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0d6efd',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, Sync Categories'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Synchronizing...',
+                        text: 'Please wait while category hierarchy is being synchronized.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    $.ajax({
+                        url: "{{ route('business.product.share.manage.sync_categories', $share->id) }}",
+                        type: 'POST',
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    title: 'Success',
+                                    text: response.message,
+                                    icon: 'success'
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire('Error', response.message, 'error');
+                            }
+                        },
+                        error: function(err) {
+                            Swal.fire('Error', 'An error occurred while synchronizing categories.', 'error');
+                        }
+                    });
+                }
+            });
         });
     });
 </script>

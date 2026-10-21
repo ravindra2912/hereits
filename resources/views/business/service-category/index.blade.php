@@ -21,14 +21,26 @@
 
 <div class="card border-0 shadow-sm rounded-4 mb-4">
     <div class="card-header py-3 ps-4 d-flex justify-content-between align-items-center bg-white border-bottom-0">
-        <h5 class="m-0 font-weight-bold text-dark">Category Management</h5>
         <div>
-            @if(checkBusinessPermission('service', 'categories', 'update'))
+            <h5 class="m-0 font-weight-bold text-dark">
+                Category Management
+                @if(isset($currentCategory) && $currentCategory)
+                <span class="text-muted fs-6 fw-normal ms-1">&rsaquo; Sub-categories of <span class="badge bg-primary text-white ms-1">{{ $currentCategory->name }}</span></span>
+                @endif
+            </h5>
+        </div>
+        <div>
+            @if(isset($currentCategory) && $currentCategory)
+            <a href="{{ route('business.service-category.index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3 me-2">
+                <i class="bi bi-arrow-left me-1"></i> All Categories
+            </a>
+            @endif
+            @if(checkBusinessPermission('edit_service_category'))
             <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 me-2" onclick="openReorderModal()">
                 <i class="bi bi-arrow-down-up me-1"></i> Reorder
             </button>
             @endif
-            @if(checkBusinessPermission('service', 'categories', 'add'))
+            @if(checkBusinessPermission('add_service_category'))
             <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" onclick="openCreateModal()">
                 <i class="bi bi-plus-circle me-1"></i> Add Category
             </button>
@@ -43,6 +55,7 @@
                         <th class="ps-4 py-3 text-secondary text-uppercase small fw-bold border-0" width="80">S.No</th>
                         <th class="py-3 text-secondary text-uppercase small fw-bold border-0" width="80">Image</th>
                         <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Category Name</th>
+                        <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Parent Category</th>
                         <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Status</th>
                         <th class="pe-4 py-3 text-secondary text-uppercase small fw-bold border-0 text-end">Action</th>
                     </tr>
@@ -74,7 +87,7 @@
                                 <label for="categoryImage"><i class="bi bi-camera-fill"></i></label>
                             </div>
                             <div class="avtar-preview">
-                                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage('') }}" id="previewImg" alt="Category Image" />
+                                <img src="{{ getImage('') }}" id="previewImg" alt="Category Image" />
                             </div>
                         </div>
                         <div class="small text-muted mt-2">Recommended: 200x200px (Optional)</div>
@@ -82,6 +95,17 @@
                     <div class="mb-4">
                         <label class="form-label fw-bold">Category Name <span class="text-danger">*</span></label>
                         <input type="text" class="form-control rounded-3 required" name="name" id="categoryName" placeholder="Enter category name" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Parent Category</label>
+                        <select class="form-select rounded-3" name="parent_id" id="categoryParentId">
+                            <option value="">None (Main Category)</option>
+                            @if(isset($parentCategories))
+                            @foreach ($parentCategories as $parent)
+                            <option value="{{ $parent->id }}">{{ $parent->name }}</option>
+                            @endforeach
+                            @endif
+                        </select>
                     </div>
                     <div class="mb-0">
                         <label class="form-label fw-bold">Status <span class="text-danger">*</span></label>
@@ -95,7 +119,7 @@
                 </div>
                 <div class="modal-footer border-top-0 pb-4 px-4">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" id="submit-category-btn" class="btn btn-primary rounded-pill px-4 fw-bold btn_action">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold btn_action">
                         <span id="loader" class="spinner-border spinner-border-sm d-none me-1" role="status" aria-hidden="true"></span>
                         <span id="buttonText">Save Changes</span>
                     </button>
@@ -144,7 +168,7 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: "{{ route('business.service-category.index') }}",
+                url: "{{ route('business.service-category.index') }}" + window.location.search,
             },
             lengthChange: false,
             pageLength: 15,
@@ -170,6 +194,13 @@
                     data: 'name',
                     name: 'name',
                     className: 'py-3 fw-bold text-dark'
+                },
+                {
+                    data: 'parent_name',
+                    name: 'parent_name',
+                    orderable: false,
+                    searchable: false,
+                    className: 'py-3'
                 },
                 {
                     data: 'status',
@@ -200,15 +231,11 @@
     });
 
     function openCreateModal() {
-        @if(checkBusinessPermission('service', 'categories', 'add'))
-        $('#submit-category-btn').show();
-        @else
-        $('#submit-category-btn').hide();
-        @endif
         $('#categoryModalLabel').text('Add Service Category');
         $('#categoryForm').attr('action', "{{ route('business.service-category.store') }}");
         $('#formMethod').val('POST');
         $('#categoryName').val('');
+        $('#categoryParentId').val("{{ isset($currentCategory) && $currentCategory ? $currentCategory->id : '' }}").find('option').show();
         $('#categoryStatus').val('active');
         $('#categoryImage').val('');
         $('#previewImg').attr('src', "{{ getImage('') }}");
@@ -216,11 +243,6 @@
     }
 
     function editCategory(id) {
-        @if(checkBusinessPermission('service', 'categories', 'update'))
-        $('#submit-category-btn').show();
-        @else
-        $('#submit-category-btn').hide();
-        @endif
         let url = "{{ route('business.service-category.edit', ':id') }}".replace(':id', id);
         $.get(url, function(response) {
             if (response.success) {
@@ -228,6 +250,9 @@
                 $('#categoryForm').attr('action', "{{ route('business.service-category.update', ':id') }}".replace(':id', id));
                 $('#formMethod').val('PATCH');
                 $('#categoryName').val(response.data.name);
+                $('#categoryParentId option').show();
+                $('#categoryParentId option[value="' + id + '"]').hide();
+                $('#categoryParentId').val(response.data.parent_id || '');
                 $('#categoryStatus').val(response.data.status);
                 $('#categoryImage').val('');
                 $('#previewImg').attr('src', response.image_url);
@@ -258,14 +283,15 @@
                     },
                     success: function(result) {
                         if (result.success) {
-                            table.ajax.reload();
+                            table.ajax.reload(null, false);
                             Swal.fire('Deleted!', result.message, 'success');
                         } else {
                             Swal.fire('Error', result.message, 'error');
                         }
                     },
                     error: function(e) {
-                        Swal.fire('Error', 'Something went wrong', 'error');
+                        let msg = e.responseJSON?.message || (e.status === 403 ? 'Unauthorized. You do not have permission to delete service categories.' : 'Something went wrong');
+                        Swal.fire('Error', msg, 'error');
                     }
                 });
             }
@@ -328,15 +354,16 @@
                 $('#reorder-loader').addClass('d-none');
                 if (response.success) {
                     $('#reorderModal').modal('hide');
-                    table.ajax.reload();
+                    table.ajax.reload(null, false);
                     Swal.fire('Success', response.message, 'success');
                 } else {
                     Swal.fire('Error', response.message, 'error');
                 }
             },
-            error: function() {
+            error: function(e) {
                 $('#reorder-loader').addClass('d-none');
-                Swal.fire('Error', 'Something went wrong', 'error');
+                let msg = e.responseJSON?.message || (e.status === 403 ? 'Unauthorized. You do not have permission to reorder service categories.' : 'Something went wrong');
+                Swal.fire('Error', msg, 'error');
             }
         });
     }
@@ -345,9 +372,40 @@
     function responce(result) {
         if (result.success) {
             $('#categoryModal').modal('hide');
-            table.ajax.reload();
+            table.ajax.reload(null, false);
             // Toastr is handled by ajax.js
         }
     }
+
+    // Handle Status Toggle
+    $(document).on('change', '.status-toggle', function() {
+        let toggleSwitch = $(this);
+        let id = toggleSwitch.data('id');
+        let isChecked = toggleSwitch.prop('checked');
+        let status = isChecked ? 'active' : 'in-active';
+
+        $.ajax({
+            url: "{{ route('business.service-category.status-toggle') }}",
+            type: "POST",
+            data: {
+                _token: "{{ csrf_token() }}",
+                id: id,
+                status: status
+            },
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                } else {
+                    toastr.error(response.message);
+                    toggleSwitch.prop('checked', !isChecked); // Revert switch if failed
+                }
+            },
+            error: function(xhr) {
+                let msg = xhr.responseJSON?.message || (xhr.status === 403 ? 'Unauthorized. You do not have permission to edit service categories.' : 'An error occurred while updating the status.');
+                toastr.error(msg);
+                toggleSwitch.prop('checked', !isChecked); // Revert switch if failed
+            }
+        });
+    });
 </script>
 @endpush

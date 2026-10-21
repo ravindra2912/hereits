@@ -16,12 +16,17 @@ class PosDashboardController extends Controller
         $user = Auth::guard('pos')->user();
         $business_id = getPosBusinessId();
         $today = Carbon::today();
+        $statusVariants = getPosAllowedOrderStatusQueryVariants();
 
-        $query = Order::where('business_id', $business_id);
+        $query = Order::where('business_id', $business_id)
+            ->whereIn('order_status', $statusVariants);
         
-        // If they can't view all orders, restrict to their own
+        // If they can't view all orders, restrict to their own or assigned orders
         if (!checkPosPermission('view_all_orders')) {
-            $query->where('created_user_id', $user->id);
+            $query->where(function ($q) use ($user) {
+                $q->where('created_user_id', $user->id)
+                  ->orWhere('assign_to', $user->id);
+            });
         }
 
         $today_sales = (clone $query)->whereDate('created_at', $today)->sum('total');

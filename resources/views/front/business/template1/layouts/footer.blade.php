@@ -7,7 +7,7 @@
                 <div class="footer-brand-section mb-4">
                     <a href="{{ route('business-details', $business->slug) }}" class="d-inline-block mb-3">
                         @if ($business->business_logo)
-                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_logo) }}"
+                        <img src="{{ getImage($business->business_logo) }}"
                             alt="{{ $business->name ?? config('app.name') }}"
                             class="footer-logo rounded footer-logo-sm" loading="lazy">
                         @else
@@ -72,9 +72,29 @@
                         <li class="pb-1"><a href="{{ route('business-details', $business->slug) }}#gallery">Media Gallery</a></li>
                         @endif
 
+                        @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
                         <li class="pb-1"><a href="{{ route('business-details', $business->slug) }}#contact-us">Support Hub</a></li>
+                        @endif
                         @if(isset($setting->is_appointment_system) && $setting->is_appointment_system)
                         <li class="pb-1"><a href="{{ route('expert.login') }}">Expert Login</a></li>
+                        @endif
+
+                        @php
+                            $legalPageNames = [
+                                'privacy_policy' => 'Privacy Policy',
+                                'term_and_condition' => 'Terms & Conditions',
+                                'refuncd_policy' => 'Refund Policy',
+                                'quotation_policy' => 'Quotation Policy'
+                            ];
+                        @endphp
+                        @if(isset($activeLegalPages) && count($activeLegalPages) > 0)
+                            @foreach($activeLegalPages as $lp)
+                                <li class="pb-1">
+                                    <a href="{{ route('business-legal-page', ['business_slug' => $business->slug, 'type' => $lp->type]) }}">
+                                        {{ $legalPageNames[$lp->type] ?? ucwords(str_replace('_', ' ', $lp->type)) }}
+                                    </a>
+                                </li>
+                            @endforeach
                         @endif
                     </ul>
                 </div>
@@ -95,15 +115,17 @@
                             </div>
                         </div>
 
+                        @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
                         <div class="d-flex mb-4">
                             <div class="hub-icon me-3">
                                 <i class="fas fa-headset text-primary"></i>
                             </div>
                             <div class="hub-text">
                                 <span class="d-block text-white-50 small text-uppercase fw-bold ls-1 mb-1">Direct Contact</span>
-                                <a href="tel:{{ $business->contact ?? '' }}" class="text-white text-decoration-none fw-bold small">{{ $business->contact ?? 'N/A' }}</a>
+                                <a href="tel:{{ $business->contact }}" class="text-white text-decoration-none fw-bold small">{{ $business->contact }}</a>
                             </div>
                         </div>
+                        @endif
 
                         <!-- Advanced Social Bar -->
                         <div class="social-bar-premium d-flex gap-2 flex-wrap">
@@ -127,7 +149,7 @@
                             $contact = preg_replace('/\D/', '', $contact);
                             if(strlen($contact) == 10){ $contact = '91' . $contact; }
                             @endphp
-                            @if(!empty($contact))
+                            @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($contact))
                             <a href="https://wa.me/{{ $contact }}" target="_blank" class="social-btn whatsapp" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
                             @endif
                         </div>
@@ -136,17 +158,25 @@
             </div>
         </div>
 
+        @php
+            $currentHost = request()->header('X-Forwarded-Host') ?: request()->getHost();
+            $primaryHost = parse_url(config('app.url'), PHP_URL_HOST) ?? 'brandbatao.com';
+            $isPrimaryDomain = in_array(strtolower($currentHost), ['brandbatao.com', 'www.brandbatao.com', strtolower($primaryHost)]);
+        @endphp
+
         <div class="footer-bottom">
             <div class="row align-items-center">
-                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                <div class="{{ $isPrimaryDomain ? 'col-md-6 text-center text-md-start mb-3 mb-md-0' : 'col-12 text-center' }}">
                     <p class="copyright-text mb-0">&copy; {{ date('Y') }} <span class="text-white fw-bold">{{ $business->name ?? 'Business' }}</span>. All rights reserved.</p>
                 </div>
+                @if($isPrimaryDomain)
                 <div class="col-md-6 text-center text-md-end">
                     <div class="platform-branding d-inline-flex align-items-center py-2 px-3 rounded-pill">
                         <span class="text-white-50 small me-2">Crafted with precision by</span>
                         <a href="{{ route('home') }}" class="brand-link fw-bold text-decoration-none">{{ config('app.name') }}</a>
                     </div>
                 </div>
+                @endif
             </div>
         </div>
     </div>

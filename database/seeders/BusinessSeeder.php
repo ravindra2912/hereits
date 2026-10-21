@@ -133,8 +133,10 @@ class BusinessSeeder extends Seeder
             ]);
         }
 
+        $user = User::where('role', 'Business')->first() ?? User::first();
+
         $insert = new Business();
-        $insert->owner_id = 1000;
+        $insert->owner_id = $user->id;
         $insert->name = 'clinic';
         $insert->slug = 'clinic';
         $insert->contact = '9876543210';
@@ -151,7 +153,7 @@ class BusinessSeeder extends Seeder
         $insert->save();
 
         BusinessSetting::create([
-            'business_id' => 1000,
+            'business_id' => $insert->id,
             'is_appointment_system' => 1,
             'is_appointment_with_department' => 1,
             'is_appointment_price_required' => 1,

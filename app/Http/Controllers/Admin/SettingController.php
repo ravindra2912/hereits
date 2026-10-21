@@ -82,7 +82,7 @@ class SettingController extends Controller
                 $message = 'Admin updated successfully.';
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_name) && !empty($image_name)) {
                 fileRemoveStorage($image_name);
             }

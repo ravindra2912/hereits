@@ -1,5 +1,5 @@
 @extends('front.business.template1.layouts.main', ['seo' => [
-'title' => $service->name . ' | ' . $business->name . ' | Hereits',
+'title' => $service->name . ' | ' . $business->name . ' | brandbatao',
 'description' => \Illuminate\Support\Str::limit($service->description, 160) ?? $business->seo_description,
 'keywords' => $service->name . ', ' . ($service->category->name ?? 'Service') . ', ' . ($business->seo_keyword ?? $business->name),
 'image' => getImage($service->image_url)
@@ -22,7 +22,7 @@
         <div class="row g-5">
             <div class="col-lg-7">
                 <div class="card border-0 shadow-lg overflow-hidden rounded-4">
-                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($service->image_url) }}" class="img-fluid w-100" alt="{{ $service->name }}" style="max-height: 500px; object-fit: cover;" loading="lazy">
+                    <img src="{{ getImage($service->image_url) }}" class="img-fluid w-100" alt="{{ $service->name }}" style="max-height: 500px; object-fit: cover;" loading="lazy">
                 </div>
             </div>
 
@@ -43,7 +43,18 @@
                         <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill mb-2 small border border-primary-subtle">{{ $service->category->name }}</span>
                         @endif
                     </div> -->
-                    <h1 class="display-5 fw-bold mb-3">{{ $service->name }}</h1>
+                    <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                        <h1 class="display-5 fw-bold mb-0">{{ $service->name }}</h1>
+                        @php $isFavService = isFavorite('service', $service->id); @endphp
+                        <button type="button" class="btn btn-outline-danger btn-lg rounded-circle btn-toggle-favorite flex-shrink-0 d-flex align-items-center justify-content-center {{ $isFavService ? 'active' : '' }}"
+                            data-type="service"
+                            data-id="{{ $service->id }}"
+                            data-business-id="{{ $service->business_id ?? $business->id }}"
+                            title="{{ $isFavService ? 'Remove from favorites' : 'Add to favorites' }}"
+                            style="width: 50px; height: 50px;">
+                            <i class="{{ $isFavService ? 'fas fa-heart fs-4 text-danger' : 'far fa-heart fs-4 text-muted' }}"></i>
+                        </button>
+                    </div>
 
                     <div class="mb-4">
                         @if($service->price_type == 'FixPrice')
@@ -65,24 +76,17 @@
                     <div class="card border-0 bg-light rounded-4 p-4 mb-4">
 
                         <div class="d-grid gap-2">
+                            @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
                             <a href="tel:{{ $business->contact }}" class="btn btn-primary btn-lg rounded-pill shadow-sm">
                                 <i class="fas fa-phone-alt me-2"></i> Call to Inquire
                             </a>
-                            <a href="https://wa.me/91{{ $business->contact }}?text=Hi, I'm interested in '{{ urlencode($service->name) }}' service. Could you please provide more details?" target="_blank" class="btn btn-success btn-lg rounded-pill shadow-sm">
+                            <a href="https://wa.me/91{{ $business->contact }}?text=Hi, I'm interested in '{{ urlencode($service->name) }}' service. Could you please provide more details?" target="_blank" class="btn btn-success btn-lg rounded-pill shadow-sm whatsapp-inquiry-link">
                                 <i class="fab fa-whatsapp me-2"></i> WhatsApp Inquiry
                             </a>
-                        <div class="d-flex gap-2 mt-2">
-                            <button class="btn btn-outline-dark btn-lg rounded-pill shadow-sm flex-grow-1" onclick="openShareModal('{{ url()->current() }}', 'Service', '{{ $service->name }}')">
+                            @endif
+                            <button class="btn btn-outline-dark btn-lg rounded-pill shadow-sm mt-2" onclick="openShareModal('{{ url()->current() }}', 'Service', '{{ e(addslashes($service->name)) }}')">
                                 <i class="fas fa-share-alt me-2"></i> Share Service
                             </button>
-                            <button type="button" class="btn btn-outline-danger btn-lg rounded-pill px-4 shadow-sm toggle-favorite-btn"
-                                data-item-id="{{ $service->id }}"
-                                data-business-id="{{ $business->id }}"
-                                data-type="service"
-                                title="{{ $service->is_favorited ? 'Remove from Favorites' : 'Add to Favorites' }}">
-                                <i class="{{ $service->is_favorited ? 'fas fa-heart' : 'far fa-heart' }}"></i>
-                            </button>
-                        </div>
                         </div>
                     </div>
 
@@ -107,19 +111,22 @@
             <div class="row g-4 mt-2">
                 @foreach($recommendedServices as $recommendedService)
                 <div class="col-md-6 col-lg-3">
-                    <div class="card service-card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="card service-card border-0 shadow-sm rounded-4 overflow-hidden position-relative">
                         <div class="position-relative overflow-hidden" style="height: 200px;">
-                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($recommendedService->image_url) }}"
+                            <img src="{{ getImage($recommendedService->image_url) }}"
                                 class="w-100 h-100 object-fit-cover"
                                 alt="{{ $recommendedService->name }}" loading="lazy">
-                            <div class="position-absolute top-0 end-0 m-3 d-flex flex-column gap-2 align-items-end">
-                                <button type="button" class="favorite-btn rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
-                                    data-item-id="{{ $recommendedService->id }}"
-                                    data-business-id="{{ $business->id }}"
-                                    data-type="service"
-                                    style="width: 32px; height: 32px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
-                                    <i class="{{ $recommendedService->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-6"></i>
-                                </button>
+                            
+                            @php $isFavRec = isFavorite('service', $recommendedService->id); @endphp
+                            <button type="button" class="btn-toggle-favorite card-fav-btn {{ $isFavRec ? 'active' : '' }}"
+                                data-type="service"
+                                data-id="{{ $recommendedService->id }}"
+                                data-business-id="{{ $recommendedService->business_id ?? $business->id }}"
+                                title="{{ $isFavRec ? 'Remove from favorites' : 'Add to favorites' }}">
+                                <i class="{{ $isFavRec ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }}"></i>
+                            </button>
+
+                            <div class="position-absolute bottom-0 start-0 m-3">
                                 @if($recommendedService->price_type == 'FixPrice')
                                 <span class="badge bg-dark bg-opacity-75 px-3 py-2">₹{{ number_format($recommendedService->price, 0) }}</span>
                                 @elseif($recommendedService->price_type == 'PriceInRange')

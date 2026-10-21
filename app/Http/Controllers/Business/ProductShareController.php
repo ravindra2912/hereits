@@ -3,38 +3,44 @@
 namespace App\Http\Controllers\Business;
 
 use App\Http\Controllers\Controller;
-use App\Models\Business;
-use App\Models\BusinessProductShareSetting;
-use App\Models\Category;
-use App\Models\Product;
-use App\Models\ProductImage;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class ProductShareController extends Controller
 {
-    public function index(Request $request)
+    use \App\Traits\CacheManagement;
+
+    private function refreshTargetBusinessCache($targetBusinessId)
+    {
+        if (!$targetBusinessId) {
+            return;
+        }
+
+        $this->clearBusinessProductCache($targetBusinessId);
+        $this->clearBusinessCategoryCache($targetBusinessId);
+
+        if (function_exists('getBusinessSettings')) {
+            getBusinessSettings($targetBusinessId, true);
+        }
+    }
+
+    public function index(\Illuminate\Http\Request $request)
     {
         $business_id = getBusinessId();
 
         if ($request->ajax()) {
-            $data = BusinessProductShareSetting::query()
-                ->select(['id', 'source_business_id', 'target_business_id', 'status', 'created_at'])
-                ->with(['targetBusiness:id,name,business_image,contact,address'])
+            $data = \App\Models\BusinessProductShareSetting::with('targetBusiness')
                 ->where('source_business_id', $business_id);
 
             return datatables()->of($data)
                 ->addIndexColumn()
                 ->addColumn('target_business', function ($row) {
                     if (!$row->targetBusiness) {
-                        return '<span class="text-muted">Business Not Found</span>';
+                        return 'N/A';
                     }
                     $img = getImage($row->targetBusiness->business_image);
-                    $name = e($row->targetBusiness->name);
-                    $contact = e($row->targetBusiness->contact ?? 'N/A');
-                    $address = e($row->targetBusiness->address ?: 'No address provided');
+                    $name = $row->targetBusiness->name;
+                    $contact = $row->targetBusiness->contact;
+                    $address = $row->targetBusiness->address ? $row->targetBusiness->address : 'No address provided';
 
                     return '
                     <div class="d-flex align-items-center">
@@ -48,23 +54,25 @@ class ProductShareController extends Controller
                     </div>';
                 })
                 ->addColumn('status_info', function ($row) {
-                    $checked = $row->status === 'active' ? 'checked' : '';
+                    $canEdit = checkBusinessPermission('edit_product_sharing');
+                    $checked = $row->status == 'active' ? 'checked' : '';
+                    $disabled = $canEdit ? '' : 'disabled title="You do not have permission to edit product sharing"';
                     return '<div class="d-flex justify-content-center m-0">
                                 <div class="form-check form-switch text-switch m-0 p-0">
-                                    <input class="form-check-input status-toggle m-0" type="checkbox" role="switch" data-id="' . $row->id . '" data-on="Active" data-off="In-Active" ' . $checked . '>
+                                    <input class="form-check-input status-toggle m-0" type="checkbox" role="switch" data-id="' . $row->id . '" data-on="Active" data-off="In-Active" ' . $checked . ' ' . $disabled . '>
                                 </div>
                             </div>';
                 })
                 ->addColumn('action', function ($row) {
-                    $manageUrl = route('business.product.share.manage', $row->id);
-                    return '<div class="btn-group">
-                                <a href="' . $manageUrl . '" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2" title="Manage Products">
-                                    <i class="bi bi-sliders me-1"></i> Manage Products
-                                </a>
-                                <button type="button" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm" onclick="deleteShare(' . $row->id . ')" title="Remove Share">
-                                    <i class="bi bi-trash text-danger"></i>
-                                </button>
-                            </div>';
+                    $btn = '<div class="btn-group">';
+                    if (checkBusinessPermission('edit_product_sharing')) {
+                        $btn .= '<a href="' . route('business.product.share.manage', $row->id) . '" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2" title="Manage Products">Manage Products</a>';
+                    }
+                    if (checkBusinessPermission('delete_product_sharing')) {
+                        $btn .= '<button type="button" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm" onclick="deleteShare(' . $row->id . ')" title="Remove Share"><i class="bi bi-trash text-danger"></i></button>';
+                    }
+                    $btn .= '</div>';
+                    return $btn;
                 })
                 ->rawColumns(['target_business', 'status_info', 'action'])
                 ->make(true);
@@ -73,20 +81,13 @@ class ProductShareController extends Controller
         return view('business.product_share.index');
     }
 
-    public function searchBusinesses(Request $request): JsonResponse
+    public function searchBusinesses(\Illuminate\Http\Request $request)
     {
-        $search = trim($request->get('q', ''));
+        $search = $request->get('q');
         $business_id = getBusinessId();
 
-        // Get target businesses already configured
-        $existingTargetIds = BusinessProductShareSetting::where('source_business_id', $business_id)
-            ->pluck('target_business_id')
-            ->toArray();
-
-        $businesses = Business::query()
-            ->where('id', '!=', $business_id)
-            ->where('status', 'active')
-            ->whereNotIn('id', $existingTargetIds);
+        $businesses = \App\Models\Business::where('id', '!=', $business_id)
+            ->where('status', 'active');
 
         if (!empty($search)) {
             $businesses->where(function ($query) use ($search) {
@@ -95,24 +96,29 @@ class ProductShareController extends Controller
             });
         }
 
-        $results = $businesses->limit(15)->get(['id', 'name', 'contact', 'business_image', 'address']);
+        $results = $businesses->limit(10)->get(['id', 'name', 'contact', 'business_image', 'address']);
 
-        $formatted = $results->map(function ($business) {
-            return [
+        $formatted = [];
+        foreach ($results as $business) {
+            $formatted[] = [
                 'id' => $business->id,
-                'text' => $business->name,
+                'text' => $business->name, // For the selected value
                 'name' => $business->name,
                 'contact' => $business->contact,
                 'address' => $business->address,
                 'image' => getImage($business->business_image)
             ];
-        });
+        }
 
         return response()->json($formatted);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(\Illuminate\Http\Request $request)
     {
+        if (!checkBusinessPermission('add_product_sharing')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to add product sharing.'], 403);
+        }
+
         $request->validate([
             'target_business_id' => 'required|exists:businesses,id',
             'status' => 'required|in:active,inactive'
@@ -120,77 +126,97 @@ class ProductShareController extends Controller
 
         $source_id = getBusinessId();
 
-        if ((int) $request->target_business_id === (int) $source_id) {
-            return response()->json(['success' => false, 'message' => 'You cannot share products with your own business.']);
-        }
-
-        $exists = BusinessProductShareSetting::where('source_business_id', $source_id)
+        $exists = \App\Models\BusinessProductShareSetting::where('source_business_id', $source_id)
             ->where('target_business_id', $request->target_business_id)
-            ->exists();
+            ->first();
 
         if ($exists) {
-            return response()->json(['success' => false, 'message' => 'Product share setting already exists for this business.']);
+            return response()->json(['success' => false, 'message' => 'Product share already exists for this business.']);
         }
 
-        BusinessProductShareSetting::create([
+        \App\Models\BusinessProductShareSetting::create([
             'source_business_id' => $source_id,
             'target_business_id' => $request->target_business_id,
             'status' => $request->status,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Product share setting added successfully.',
-            'redirect' => route('business.product.share.index')
-        ]);
+        $this->refreshTargetBusinessCache($request->target_business_id);
+
+        return response()->json(['success' => true, 'message' => 'Product share setting added successfully.', 'redirect' => route('business.product.share.index')]);
     }
 
-    public function destroy($id): JsonResponse
+    public function statusToggle(Request $request)
     {
+        if (!checkBusinessPermission('edit_product_sharing')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to edit product sharing.'], 403);
+        }
+
         try {
             $source_id = getBusinessId();
-            $share = BusinessProductShareSetting::where('id', $id)
+            $share = \App\Models\BusinessProductShareSetting::where('id', $request->id)
                 ->where('source_business_id', $source_id)
                 ->firstOrFail();
 
+            $share->status = $request->status;
+            $share->save();
+
+            $this->refreshTargetBusinessCache($share->target_business_id);
+
+            return response()->json(['success' => true, 'message' => 'Status updated successfully.', 'status' => $share->status]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to update status.']);
+        }
+    }
+
+    public function destroy($id)
+    {
+        if (!checkBusinessPermission('delete_product_sharing')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to delete product sharing.'], 403);
+        }
+
+        try {
+            $source_id = getBusinessId();
+            $share = \App\Models\BusinessProductShareSetting::where('id', $id)->where('source_business_id', $source_id)->firstOrFail();
+            $target_business_id = $share->target_business_id;
             $share->delete();
+
+            $this->refreshTargetBusinessCache($target_business_id);
 
             return response()->json(['success' => true, 'message' => 'Product share setting removed successfully.']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to remove share setting.'], 500);
+            return response()->json(['success' => false, 'message' => checkResponse($e)], 500);
         }
     }
 
     public function manage($id)
     {
-        $business_id = getBusinessId();
-        $share = BusinessProductShareSetting::with('targetBusiness')
-            ->where('id', $id)
-            ->where('source_business_id', $business_id)
-            ->firstOrFail();
+        if (!checkBusinessPermission('edit_product_sharing')) {
+            abort(403, 'Unauthorized. You do not have permission to manage product sharing.');
+        }
 
+        $business_id = getBusinessId();
+        $share = \App\Models\BusinessProductShareSetting::with('targetBusiness')->where('id', $id)->where('source_business_id', $business_id)->firstOrFail();
         $target_business_id = $share->target_business_id;
 
-        // Fetch shared products in target business mapped to source business
-        $target_products = Product::query()
-            ->select(['id', 'parent_product_id', 'share_type'])
-            ->where('business_id', $target_business_id)
+        // Shared and Copied products (in target business, with parent_product_business_id = current business)
+        $target_products = \App\Models\Product::where('business_id', $target_business_id)
             ->where('parent_product_business_id', $business_id)
             ->whereNotNull('parent_product_id')
-            ->get()
+            ->get(['parent_product_id', 'share_type'])
             ->keyBy('parent_product_id');
 
         $shared_product_ids = $target_products->keys()->toArray();
 
-        // Left list: Available original products (not yet shared/copied to this target)
-        $unshared_products_list = Product::with('firstImage')
+        // Left list: Unshared products
+        $unshared_products_list = \App\Models\Product::with('firstImage')
             ->where('business_id', $business_id)
-            ->whereNull('parent_product_id')
+            ->where('parent_product_id', null)
+            ->where('parent_product_business_id', null)
             ->whereNotIn('id', $shared_product_ids)
             ->get();
 
-        // Right list: Currently shared/copied products from source
-        $shared_products_list = Product::with('firstImage')
+        // Right list: Shared products (get from source to show their original names)
+        $shared_products_list = \App\Models\Product::with('firstImage')
             ->where('business_id', $business_id)
             ->whereIn('id', $shared_product_ids)
             ->get();
@@ -203,190 +229,316 @@ class ProductShareController extends Controller
         return view('business.product_share.manage', compact('share', 'unshared_products_list', 'shared_products_list'));
     }
 
-    public function action(Request $request, $id): JsonResponse
+    public function action(\Illuminate\Http\Request $request, $id)
     {
-        $request->validate([
-            'action_type' => 'required|in:add,add_all,remove,remove_all',
-            'product_ids' => 'nullable|array',
-            'product_ids.*' => 'integer',
-            'share_mode' => 'nullable|in:share,copy',
-        ]);
+        if (!checkBusinessPermission('edit_product_sharing')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to edit product sharing.'], 403);
+        }
 
         $business_id = getBusinessId();
-        $share = BusinessProductShareSetting::where('id', $id)
-            ->where('source_business_id', $business_id)
-            ->firstOrFail();
-
+        $share = \App\Models\BusinessProductShareSetting::where('id', $id)->where('source_business_id', $business_id)->firstOrFail();
         $target_business_id = $share->target_business_id;
-        $action = $request->input('action_type');
-        $product_ids = $request->input('product_ids', []);
-        $share_mode = $request->input('share_mode', 'share');
 
-        DB::beginTransaction();
+        $action = $request->input('action_type'); // 'add', 'remove', 'add_all', 'remove_all'
+        $product_ids = $request->input('product_ids', []); // Array of source product IDs
+        $share_mode = $request->input('share_mode', 'share'); // 'share' or 'copy'
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
         try {
-            if ($action === 'add' || $action === 'add_all') {
-                if ($action === 'add_all') {
-                    $alreadySharedIds = Product::where('business_id', $target_business_id)
+            if ($action == 'add' || $action == 'add_all') {
+                if ($action == 'add_all') {
+                    $shared_products = \App\Models\Product::where('business_id', $target_business_id)
                         ->where('parent_product_business_id', $business_id)
                         ->whereNotNull('parent_product_id')
                         ->pluck('parent_product_id')
                         ->toArray();
 
-                    $productsToShare = Product::with(['images', 'category'])
-                        ->where('business_id', $business_id)
-                        ->whereNull('parent_product_id')
-                        ->whereNotIn('id', $alreadySharedIds)
+                    $productsToShare = \App\Models\Product::where('business_id', $business_id)
+                        ->whereNotIn('id', $shared_products)
                         ->get();
                 } else {
-                    $productsToShare = Product::with(['images', 'category'])
-                        ->where('business_id', $business_id)
-                        ->whereIn('id', $product_ids)
-                        ->get();
+                    $productsToShare = \App\Models\Product::where('business_id', $business_id)->whereIn('id', $product_ids)->get();
                 }
 
+                $skipped = [];
                 foreach ($productsToShare as $product) {
-                    // 1. Resolve Category for target business
+                    // 1. Resolve Category for target business (only attach if category already exists in target business)
                     $targetCategoryId = null;
-                    if ($product->category_id && $product->category) {
-                        $sourceCategory = $product->category;
-                        $targetCategory = Category::where('business_id', $target_business_id)
-                            ->where('name', $sourceCategory->name)
-                            ->where('type', $sourceCategory->type)
-                            ->first();
+                    if ($product->category_id) {
+                        $sourceCategory = \App\Models\Category::find($product->category_id);
+                        if ($sourceCategory) {
+                            $targetCategory = \App\Models\Category::where('business_id', $target_business_id)
+                                ->where(function ($query) use ($sourceCategory) {
+                                    if (!empty($sourceCategory->slug)) {
+                                        $query->where('slug', $sourceCategory->slug);
+                                    } else {
+                                        $query->where('name', $sourceCategory->name);
+                                    }
+                                })
+                                ->first();
 
-                        if (!$targetCategory) {
-                            $targetCategory = Category::create([
-                                'business_id' => $target_business_id,
-                                'name' => $sourceCategory->name,
-                                'image_url' => $sourceCategory->image_url,
-                                'type' => $sourceCategory->type,
-                                'status' => $sourceCategory->status ?? 'active',
-                                'sort_order' => $sourceCategory->sort_order ?? 0,
-                            ]);
+                            if ($targetCategory) {
+                                $targetCategoryId = $targetCategory->id;
+                            }
                         }
-                        $targetCategoryId = $targetCategory->id;
                     }
 
-                    // 2. Check if already exists in target business
-                    $targetProduct = Product::where('business_id', $target_business_id)
-                        ->where('parent_product_id', $product->id)
-                        ->where('parent_product_business_id', $business_id)
+                    // 2. Resolve Labels for target business
+                    $targetLabelIds = [];
+                    $sourceLabelIds = collect($product->label_id ?? [])
+                        ->filter(fn($labelId) => !empty($labelId))
+                        ->map(fn($labelId) => (int) $labelId)
+                        ->unique()
+                        ->values();
+
+                    if ($sourceLabelIds->isNotEmpty()) {
+                        $sourceLabels = \App\Models\Label::whereIn('id', $sourceLabelIds)->get()->keyBy('id');
+
+                        foreach ($sourceLabelIds as $sourceLabelId) {
+                            $sourceLabel = $sourceLabels->get($sourceLabelId);
+                            if (!$sourceLabel) {
+                                continue;
+                            }
+
+                            $targetLabel = \App\Models\Label::where('business_id', $target_business_id)
+                                ->where('name', $sourceLabel->name)
+                                ->where('slug', $sourceLabel->slug)
+                                ->first();
+
+                            if (!$targetLabel) {
+                                $targetLabel = $sourceLabel->replicate();
+                                $targetLabel->business_id = $target_business_id;
+                                $targetLabel->save();
+                            }
+
+                            $targetLabelIds[] = $targetLabel->id;
+                        }
+                    }
+
+                    // 3. Check for existing soft-deleted product in target business
+                    $deletedProduct = \App\Models\Product::onlyTrashed()
+                        ->where('business_id', $target_business_id)
+                        ->where(function ($q) use ($product) {
+                            $q->where('slug', $product->slug)
+                                ->orWhere('parent_product_id', $product->id);
+                        })
                         ->first();
 
-                    $shareTypeVal = ($share_mode === 'copy') ? 'copied' : 'shared';
+                    if ($deletedProduct) {
+                        // Restore soft-deleted product and update details
+                        $deletedProduct->restore();
 
-                    if ($targetProduct) {
-                        // Update existing shared product
-                        $targetProduct->update([
-                            'category_id' => $targetCategoryId,
-                            'name' => $product->name,
-                            'sku' => $product->sku,
-                            'description' => $product->description,
-                            'price_type' => $product->price_type,
-                            'price' => $product->price,
-                            'sell_price' => $product->sell_price,
-                            'min_price' => $product->min_price,
-                            'max_price' => $product->max_price,
-                            'quantity' => $product->quantity,
-                            'status' => $product->status,
-                            'share_type' => $shareTypeVal,
-                        ]);
+                        $deletedProduct->business_id = $target_business_id;
+                        $deletedProduct->parent_product_id = $product->id;
+                        $deletedProduct->parent_product_business_id = $business_id;
+                        $deletedProduct->name = $product->name;
+                        $deletedProduct->sku = $product->sku;
+                        $deletedProduct->description = $product->description;
+                        $deletedProduct->price_type = $product->price_type;
+                        $deletedProduct->price = $product->price;
+                        $deletedProduct->sell_price = $product->sell_price;
+                        $deletedProduct->min_price = $product->min_price;
+                        $deletedProduct->max_price = $product->max_price;
+                        $deletedProduct->quantity = $product->quantity;
+                        $deletedProduct->length = $product->length;
+                        $deletedProduct->width = $product->width;
+                        $deletedProduct->height = $product->height;
+                        $deletedProduct->weight = $product->weight;
+                        $deletedProduct->status = $product->status;
+                        $deletedProduct->category_id = $targetCategoryId;
+                        $deletedProduct->label_id = !empty($targetLabelIds) ? array_values(array_unique($targetLabelIds)) : null;
+
+                        if ($share_mode === 'copy') {
+                            $deletedProduct->share_type = 'copied';
+                            $deletedProduct->slug = $product->slug;
+                        } else {
+                            $deletedProduct->share_type = 'shared';
+                            $deletedProduct->slug = generateUniqueSlug(\App\Models\Product::class, $product->name, 'slug', $target_business_id);
+                        }
+
+                        $deletedProduct->save();
+                        $targetProduct = $deletedProduct;
+
+                        // Delete existing images to refresh from source
+                        \App\Models\ProductImage::where('product_id', $targetProduct->id)->delete();
                     } else {
-                        $uniqueSlug = generateUniqueSlug(Product::class, $product->name, 'slug', $target_business_id);
+                        if ($share_mode === 'copy') {
+                            // Check if an active product with the same slug exists in the target business
+                            $existsSlug = \App\Models\Product::where('business_id', $target_business_id)
+                                ->where('slug', $product->slug)
+                                ->exists();
+                            if ($existsSlug) {
+                                $skipped[] = $product->name;
+                                continue;
+                            }
+                        }
 
-                        $targetProduct = Product::create([
-                            'business_id' => $target_business_id,
-                            'parent_product_id' => $product->id,
-                            'parent_product_business_id' => $business_id,
-                            'share_type' => $shareTypeVal,
-                            'category_id' => $targetCategoryId,
-                            'name' => $product->name,
-                            'sku' => $product->sku,
-                            'slug' => $uniqueSlug,
-                            'description' => $product->description,
-                            'price_type' => $product->price_type,
-                            'price' => $product->price,
-                            'sell_price' => $product->sell_price,
-                            'min_price' => $product->min_price,
-                            'max_price' => $product->max_price,
-                            'quantity' => $product->quantity,
-                            'status' => $product->status,
-                        ]);
+                        // Create copy of the product for the target business
+                        $newProduct = $product->replicate();
+                        $newProduct->business_id = $target_business_id;
+                        $newProduct->parent_product_id = $product->id;
+                        $newProduct->parent_product_business_id = $business_id;
+
+                        if ($share_mode === 'copy') {
+                            $newProduct->share_type = 'copied';
+                            $newProduct->slug = $product->slug;
+                        } else {
+                            $newProduct->share_type = 'shared';
+                            $newProduct->slug = generateUniqueSlug(\App\Models\Product::class, $product->name, 'slug', $target_business_id);
+                        }
+
+                        $newProduct->category_id = $targetCategoryId;
+                        $newProduct->label_id = !empty($targetLabelIds) ? array_values(array_unique($targetLabelIds)) : null;
+                        $newProduct->save();
+                        $targetProduct = $newProduct;
                     }
 
-                    // 3. Copy image database records
-                    ProductImage::where('product_id', $targetProduct->id)->delete();
+                    // Copy the image database records
                     foreach ($product->images as $image) {
-                        ProductImage::create([
+                        \App\Models\ProductImage::create([
                             'product_id' => $targetProduct->id,
                             'type' => $image->type ?? 'image',
                             'image_url' => $image->image_url,
-                            'sort_order' => $image->sort_order ?? 0,
+                            'sort_order' => $image->sort_order,
                         ]);
                     }
                 }
 
-                $message = ($share_mode === 'copy')
-                    ? 'Products copied successfully.'
-                    : 'Products shared successfully.';
-            } elseif ($action === 'remove' || $action === 'remove_all') {
-                $query = Product::where('business_id', $target_business_id)
+                if ($share_mode === 'copy') {
+                    if (count($skipped) > 0) {
+                        $message = 'Products copied. Note: ' . implode(', ', $skipped) . ' could not be copied because their slugs already exist in the target business.';
+                    } else {
+                        $message = 'Products copied successfully.';
+                    }
+                } else {
+                    $message = 'Products shared successfully.';
+                }
+            } elseif ($action == 'remove' || $action == 'remove_all') {
+                $query = \App\Models\Product::where('business_id', $target_business_id)
                     ->where('parent_product_business_id', $business_id)
                     ->whereNotNull('parent_product_id');
 
-                if ($action === 'remove' && !empty($product_ids)) {
+                if ($action == 'remove' && !empty($product_ids)) {
                     $query->whereIn('parent_product_id', $product_ids);
                 }
 
                 $targetProducts = $query->get();
                 foreach ($targetProducts as $tp) {
                     if ($tp->share_type === 'copied') {
-                        // For copied products, detach parent link and keep independent product
-                        $tp->update([
-                            'parent_product_id' => null,
-                            'parent_product_business_id' => null,
-                            'share_type' => null,
-                        ]);
+                        // For copied products, do not delete them. Only detach the parent link.
+                        $tp->parent_product_id = null;
+                        $tp->parent_product_business_id = null;
+                        $tp->share_type = null;
+                        $tp->save();
                     } else {
-                        // For shared products, delete images and remove product
-                        $tp->images()->delete();
-                        $tp->delete();
+                        // For shared products, delete the product and its images.
+                        $tp->images()->forceDelete();
+                        $tp->Delete();
                     }
                 }
-
                 $message = 'Products removed from share successfully.';
             }
 
-            DB::commit();
+            \Illuminate\Support\Facades\DB::commit();
+
+            $this->refreshTargetBusinessCache($target_business_id);
+
             return response()->json(['success' => true, 'message' => $message]);
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Product Share Action Error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['success' => false, 'message' => checkResponse($e)], 500);
         }
     }
 
-    public function statusToggle(Request $request): JsonResponse
+
+    public function syncCategories(\Illuminate\Http\Request $request, $id)
     {
-        $request->validate([
-            'id' => 'required|integer',
-        ]);
+        if (!checkBusinessPermission('edit_product_sharing')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to edit product sharing.'], 403);
+        }
 
+        $business_id = getBusinessId();
+        $share = \App\Models\BusinessProductShareSetting::where('id', $id)
+            ->where('source_business_id', $business_id)
+            ->firstOrFail();
+        $target_business_id = $share->target_business_id;
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
         try {
-            $share = BusinessProductShareSetting::where('id', $request->id)
-                ->where('source_business_id', getBusinessId())
-                ->firstOrFail();
+            $sourceCategories = \App\Models\Category::where('business_id', $business_id)->get();
 
-            $share->status = ($share->status === 'active') ? 'inactive' : 'active';
-            $share->save();
+            $categoryMap = [];
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Status updated successfully.',
-                'status' => $share->status
-            ]);
+            // STEP 1: Add missing categories to target business or restore soft-deleted ones matching slug or name
+            foreach ($sourceCategories as $sourceCat) {
+                if (empty($sourceCat->slug)) {
+                    $sourceCat->slug = \Illuminate\Support\Str::slug($sourceCat->name);
+                    $sourceCat->save();
+                }
+
+                $catSlug = $sourceCat->slug;
+                $catName = $sourceCat->name;
+
+                $targetCat = \App\Models\Category::withTrashed()
+                    ->where('business_id', $target_business_id)
+                    ->where(function ($q) use ($catSlug, $catName) {
+                        $q->where('slug', $catSlug);
+                        if (!empty($catName)) {
+                            $q->orWhere('name', $catName);
+                        }
+                    })
+                    ->first();
+
+                if ($targetCat) {
+                    if ($targetCat->trashed()) {
+                        $targetCat->restore();
+                    }
+                    $targetCat->name = $sourceCat->name;
+                    $targetCat->slug = $catSlug;
+                    $targetCat->image_url = $sourceCat->image_url;
+                    $targetCat->type = $sourceCat->type;
+                    $targetCat->sort_order = $sourceCat->sort_order;
+                    $targetCat->show_in_home = $sourceCat->show_in_home;
+                    $targetCat->show_in_home_with_items = $sourceCat->show_in_home_with_items;
+                    $targetCat->status = 'active';
+                    $targetCat->save();
+                } else {
+                    $targetCat = $sourceCat->replicate();
+                    $targetCat->business_id = $target_business_id;
+                    $targetCat->slug = $catSlug;
+                    $targetCat->parent_id = null;
+                    $targetCat->status = 'active';
+                    $targetCat->save();
+                }
+
+                $categoryMap[$sourceCat->id] = $targetCat;
+            }
+
+            // STEP 2: Arrange parent and child category hierarchy in target business
+            foreach ($sourceCategories as $sourceCat) {
+                $targetCat = $categoryMap[$sourceCat->id] ?? null;
+                if (!$targetCat) {
+                    continue;
+                }
+
+                if ($sourceCat->parent_id) {
+                    $targetParentCat = $categoryMap[$sourceCat->parent_id] ?? null;
+                    $targetCat->parent_id = $targetParentCat ? $targetParentCat->id : null;
+                } else {
+                    $targetCat->parent_id = null;
+                }
+
+                $targetCat->save();
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            $this->refreshTargetBusinessCache($target_business_id);
+
+            return response()->json(['success' => true, 'message' => 'Categories synchronized successfully. All categories updated in target business.']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to update status.'], 500);
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['success' => false, 'message' => checkResponse($e)], 500);
         }
     }
 }

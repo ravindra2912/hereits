@@ -1,11 +1,10 @@
 @extends('admin.layouts.main')
+@section('content')
 @section('title', 'Pending Business')
 
 @push('style')
 <link rel="stylesheet" href="{{ asset('assets/admin/css/datatables-combined.min.css') }}?v={{ filemtime(public_path('assets/admin/css/datatables-combined.min.css')) }}" />
 @endpush
-
-@section('content')
 
 
 <!-- Content Header (Page header) -->
@@ -174,6 +173,10 @@
                   <small class="text-muted d-block">Service System</small>
                   <span id="view_is_service" class="badge"></span>
                 </div>
+                <div class="col-md-6 mb-2">
+                  <small class="text-muted d-block">Subscription Expiry</small>
+                  <span id="view_expiry_date" class="fw-bold text-danger"></span>
+                </div>
               </div>
             </div>
           </div>
@@ -304,8 +307,10 @@
               $('#view_is_appointment').text(setting.is_appointment_system ? 'Yes' : 'No').removeClass('bg-success bg-danger').addClass(setting.is_appointment_system ? 'bg-success' : 'bg-danger');
               $('#view_is_ecommerce').text(setting.is_ecommerce_system ? 'Yes' : 'No').removeClass('bg-success bg-danger').addClass(setting.is_ecommerce_system ? 'bg-success' : 'bg-danger');
               $('#view_is_service').text(setting.is_service_system ? 'Yes' : 'No').removeClass('bg-success bg-danger').addClass(setting.is_service_system ? 'bg-success' : 'bg-danger');
+              $('#view_expiry_date').text(setting.subscription_expiry_date || 'N/A');
             } else {
               $('#view_is_appointment, #view_is_ecommerce, #view_is_service').text('No').removeClass('bg-success bg-danger').addClass('bg-danger');
+              $('#view_expiry_date').text('N/A');
             }
 
             $('#view_edit_link').attr('href', "{{ route('admin.business.index') }}/" + id + "/edit");
@@ -376,3 +381,4 @@
   }
 </script>
 @endpush
+@endsection

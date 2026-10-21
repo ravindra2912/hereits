@@ -32,7 +32,7 @@ class BusinessApprovedMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Your Business Has Been Approved – Welcome to Hereits!',
+            subject: 'Your Business Has Been Approved – Welcome to brandbatao!',
         );
     }
 

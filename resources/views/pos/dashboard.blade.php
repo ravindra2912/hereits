@@ -8,8 +8,26 @@
     <!-- Welcome Card -->
     <div class="col-12">
         <div class="card border-0 shadow-sm rounded-4 p-4" style="background: linear-gradient(to right, #ffffff, #f0fdf4);">
-            <h2 class="fw-bold text-dark">Welcome back, {{ Auth::guard('pos')->user()->first_name }}! 👋</h2>
-            <p class="text-muted mb-0">Your POS terminal is ready for operations. What would you like to do today?</p>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1">Welcome back, {{ Auth::guard('pos')->user()->first_name }}! 👋</h2>
+                    <p class="text-muted mb-0">Your POS terminal is ready for operations. What would you like to do today?</p>
+                </div>
+                @if(isset($posBusiness) && $posBusiness)
+                <div class="bg-white border rounded-4 p-3 shadow-sm d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-success-subtle text-success p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                        <i class="bi bi-shop fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0">{{ $posBusiness->name }}</h6>
+                        <div class="small text-muted">
+                            @if(!empty($posBusiness->contact)) <i class="bi bi-telephone me-1"></i>{{ $posBusiness->contact }} @endif
+                            @if(!empty($posBusiness->city_name)) <span class="ms-2"><i class="bi bi-geo-alt me-1"></i>{{ $posBusiness->city_name }}</span> @endif
+                        </div>
+                    </div>
+                </div>
+                @endif
+            </div>
         </div>
     </div>
 
@@ -47,7 +65,9 @@
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
             <div class="card-header bg-white border-0 py-4 px-4 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 fw-bold">Recent Operations</h5>
+                @if(checkPosPermission('view_orders'))
                 <a href="{{ route('pos.order.index') }}" class="btn btn-light btn-sm rounded-pill px-3 fw-bold small">View All History</a>
+                @endif
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -99,10 +119,11 @@
                 <i class="bi bi-pc-display fs-1"></i>
             </div>
             <h4 class="fw-bold mb-2">Ready to Serve?</h4>
-            <p class="small opacity-75 mb-4 px-3">Process sales quickly with our streamlined POS interface.</p>
+            @if(checkPosPermission('create_order'))
             <a href="{{ route('pos.sale.index') }}" class="btn btn-white bg-white text-primary rounded-pill fw-bold py-2 shadow-sm mx-auto px-4">
                 Open POS Terminal <i class="bi bi-chevron-right ms-1"></i>
             </a>
+            @endif
         </div>
     </div>
 </div>

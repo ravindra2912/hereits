@@ -41,6 +41,9 @@ return [
 
     'debug' => (bool) env('APP_DEBUG', false),
 
+    'is_near_by_home_page' => (bool) env('IS_NEAR_BY_HOME_PAGE', env('is_near_by_home_page', false)),
+
+
     /*
     |--------------------------------------------------------------------------
     | Application URL

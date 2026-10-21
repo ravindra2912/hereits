@@ -41,7 +41,23 @@
                         </div>
                     </div>
 
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Free Product Limit</label>
+                        <input type="number" name="free_product_limit" class="form-control rounded-pill px-3" value="{{ $setting->free_product_limit ?? 20 }}" required>
+                        <small class="text-muted mt-2 d-block px-2">Default product limit for new businesses.</small>
+                    </div>
 
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Free Service Limit</label>
+                        <input type="number" name="free_service_limit" class="form-control rounded-pill px-3" value="{{ $setting->free_service_limit ?? 10 }}" required>
+                        <small class="text-muted mt-2 d-block px-2">Default service limit for new businesses.</small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Free Initial Credit</label>
+                        <input type="number" name="free_credit" class="form-control rounded-pill px-3" value="{{ $setting->free_credit ?? 30 }}" required>
+                        <small class="text-muted mt-2 d-block px-2">Default free wallet credits granted to new businesses upon registration.</small>
+                    </div>
 
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Website Order Charge (Credits/Order)</label>
@@ -62,12 +78,21 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-bold">Free Registration Credits</label>
+                        <label class="form-label fw-bold">Lucky Draw Credit per Scratch (Credits/Link)</label>
                         <div class="input-group">
-                            <span class="input-group-text bg-light rounded-start-pill border-end-0 px-3"><i class="bi bi-gift"></i></span>
-                            <input type="number" name="free_credit" class="form-control border-start-0 rounded-end-pill px-3" value="{{ $setting->free_credit ?? 30 }}" required min="0">
+                            <span class="input-group-text bg-light rounded-start-pill border-end-0 px-3"><i class="bi bi-ticket-perforated"></i></span>
+                            <input type="number" step="1" min="0" name="draw_credit_per_scratch" class="form-control border-start-0 rounded-end-pill px-3" value="{{ $setting->draw_credit_per_scratch ?? 1 }}" required>
                         </div>
-                        <small class="text-muted mt-2 d-block px-2">Free credits automatically assigned to newly registered businesses.</small>
+                        <small class="text-muted mt-2 d-block px-2">Credits deducted from business wallet per generated customer scratch card URL.</small>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Charge per Quotation (Credits/Quotation)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light rounded-start-pill border-end-0 px-3"><i class="bi bi-file-earmark-text"></i></span>
+                            <input type="number" step="0.01" min="0" name="charge_per_quotation" class="form-control border-start-0 rounded-end-pill px-3" value="{{ $setting->charge_per_quotation ?? 0.10 }}" required>
+                        </div>
+                        <small class="text-muted mt-2 d-block px-2">Default credits deducted from business wallet for each created quotation.</small>
                     </div>
                 </div>
 

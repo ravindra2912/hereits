@@ -2,214 +2,213 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Http\Controllers\Controller;
-use App\Models\AppointmentBooking;
-use App\Models\Expert;
-use App\Models\Favorite;
-use Carbon\Carbon;
+use App\Http\Controllers\Api\BaseApiController;
+use App\Http\Resources\Api\V1\ApiV1AppointmentResource;
+use App\Services\Api\V1\ApiV1AppointmentService;
+use App\Services\CreditService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Repositories\AppointmentRepository;
-use App\Services\BusinessAnalyticsService;
+use Illuminate\Support\Facades\Validator;
 
-class ApiV1AppointmentController extends Controller
+class ApiV1AppointmentController extends BaseApiController
 {
-    public function __construct(protected AppointmentRepository $appointmentRepository) {}
+    public function __construct(
+        protected ApiV1AppointmentService $appointmentService
+    ) {}
 
-    public function experts($businessId)
+    /**
+     * Get paginated appointments for the authenticated user.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function myAppointments(Request $request): JsonResponse
     {
-        try {
-            $experts = Expert::with(['department'])
-                ->where('business_id', $businessId)
-                ->where('status', 'active')
-                ->paginate(12, ['id', 'business_id', 'department_id', 'expert_name', 'slug', 'expert_image', 'title', 'description', 'rating']);
+        $userId = auth('api')->id() ?? auth()->id();
 
-            $experts->getCollection()->transform(function ($exp) {
-                $exp->expert_image = getImage($exp->expert_image, 'expert');
-                return $exp;
-            });
-
-            return response()->json([
-                'status_code' => 200,
-                'success' => true,
-                'message' => 'Experts fetched',
-                'data' => $experts
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['status_code' => 500, 'success' => false, 'message' => $e->getMessage()], 500);
+        if (!$userId) {
+            return $this->sendUnauthorized('Please login to view appointments.');
         }
+
+        $perPage = (int)$request->query('per_page', 10);
+        $paginated = $this->appointmentService->getUserAppointments($userId, $perPage);
+        $collection = ApiV1AppointmentResource::collection($paginated->items());
+
+        return response()->json([
+            'success' => true,
+            'status_code' => 200,
+            'message' => 'Appointments retrieved successfully.',
+            'data' => $collection,
+            'pagination' => [
+                'current_page' => $paginated->currentPage(),
+                'last_page' => $paginated->lastPage(),
+                'per_page' => $paginated->perPage(),
+                'total' => $paginated->total(),
+                'has_more' => $paginated->hasMorePages(),
+            ],
+            'current_page' => $paginated->currentPage(),
+            'last_page' => $paginated->lastPage(),
+            'per_page' => $paginated->perPage(),
+            'total' => $paginated->total(),
+        ]);
     }
 
-    public function getExpertTiming(Request $request)
+    /**
+     * Get active experts for a business.
+     *
+     * @param Request $request
+     * @param int|string $business_id
+     * @return JsonResponse
+     */
+    public function getExperts(Request $request, int|string $business_id): JsonResponse
     {
-        try {
-            $request->validate([
-                'expert_id' => 'required|exists:experts,id',
-                'booking_date' => 'required|date',
-            ]);
+        $filters = $request->only(['page', 'per_page', 'search', 'department_id']);
+        $experts = $this->appointmentService->getBusinessExperts((int)$business_id, $filters);
 
-            $expert = Expert::select('id', 'expert_name', 'business_id')
-                ->find($request->expert_id);
-
-            $bookingDate = Carbon::parse($request->booking_date)->format('Y-m-d');
-
-            // Use the global helper that reads BusinessTiming from DB with correct expert interval
-            $rawSlots = $this->appointmentRepository->resolveExpertTimeSlots($expert->id, $bookingDate, null, $expert->business_id);
-
-            // Transform to API-friendly format expected by the mobile frontend
-            $allSlots = array_map(function ($slot) {
-                // $slot['time'] is like "09:00 am - 09:15 am"
-                $parts = explode(' - ', $slot['time']);
-                $startRaw = trim($parts[0] ?? '');
-                $endRaw = trim($parts[1] ?? '');
-
-                $startTime = $startRaw ? Carbon::parse($startRaw)->format('H:i:s') : null;
-                $endTime   = $endRaw   ? Carbon::parse($endRaw)->format('H:i:s')   : null;
-
-                return [
-                    'start_time'   => $startTime,
-                    'end_time'     => $endTime,
-                    'display_time' => $slot['time'],
-                    'is_available' => (bool)($slot['is_available'] ?? true),
-                    'is_booked'    => (bool)($slot['is_booked'] ?? false),
-                ];
-            }, $rawSlots);
-
-            // Only return slots that are available and not already booked
-            $slots = array_values(array_filter($allSlots, function ($slot) {
-                return $slot['is_available'] && !$slot['is_booked'];
-            }));
-
-            return response()->json([
-                'status_code' => 200,
-                'success' => true,
-                'message' => 'Time slots fetched',
-                'data' => [
-                    'expert' => $expert->only(['id', 'expert_name']),
-                    'date'   => $bookingDate,
-                    'slots'  => $slots,
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['status_code' => 500, 'success' => false, 'message' => $e->getMessage()], 500);
-        }
+        return $this->sendResponse($experts, 'Experts retrieved successfully.');
     }
 
-
-
-    public function bookAppointment(Request $request)
+    /**
+     * Get available time slots for an expert on a date.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getTiming(Request $request): JsonResponse
     {
-        return $this->appointmentRepository->bookAppointment($request);
+        $validator = Validator::make($request->all(), [
+            'expert_id' => 'required|integer',
+            'booking_date' => 'nullable|string',
+            'date' => 'nullable|string',
+            'business_id' => 'nullable|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendValidationError($validator->errors()->first());
+        }
+
+        $expertId = (int)$request->input('expert_id');
+        $date = $request->input('booking_date') ?: $request->input('date') ?: date('Y-m-d');
+        $businessId = $request->input('business_id') ? (int)$request->input('business_id') : null;
+
+        $slots = $this->appointmentService->getExpertTiming($expertId, $date, $businessId);
+
+        return $this->sendResponse([
+            'slots' => $slots,
+        ], 'Time slots retrieved successfully.');
     }
 
-
-    public function myAppointments(Request $request)
+    /**
+     * Book an appointment.
+     *
+     * @param Request $request
+     * @param CreditService $creditService
+     * @return JsonResponse
+     */
+    public function bookAppointment(Request $request, CreditService $creditService): JsonResponse
     {
-        try {
-            $user = Auth::guard('api')->user() ?? Auth::guard('web')->user() ?? $request->user();
-            if (!$user) {
-                return response()->json(['status_code' => 401, 'success' => false, 'message' => 'Unauthenticated'], 401);
-            }
+        $userId = auth('api')->id() ?? auth()->id();
 
-            $perPage = (int) $request->get('per_page', 10);
-
-            $appointments = AppointmentBooking::select(
-                'id', 'token_number', 'business_id', 'expert_id', 'department_id', 'user_id',
-                'user_name', 'user_contact', 'appointment_for', 'booking_date',
-                'slot_start_time', 'slot_end_time', 'status', 'note', 'created_at'
-            )
-            ->with([
-                'business:id,name,address,contact,business_logo',
-                'expert:id,expert_name,expert_image,title',
-                'department:id,name'
-            ])
-            ->where('user_id', $user->id)
-            ->latest()
-            ->paginate($perPage);
-
-            $appointments->getCollection()->transform(function ($item) {
-                if ($item->expert && $item->expert->expert_image) {
-                    $item->expert->expert_image = getImage($item->expert->expert_image, 'expert');
-                }
-                if ($item->business && $item->business->business_logo) {
-                    $item->business->business_logo = getImage($item->business->business_logo, 'business');
-                }
-                return $item;
-            });
-
-            return response()->json([
-                'status_code' => 200,
-                'success' => true,
-                'message' => 'Appointments retrieved',
-                'data' => $appointments->items(),
-                'pagination' => [
-                    'total' => $appointments->total(),
-                    'per_page' => $appointments->perPage(),
-                    'current_page' => $appointments->currentPage(),
-                    'last_page' => $appointments->lastPage(),
-                    'has_more' => $appointments->hasMorePages(),
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['status_code' => 500, 'success' => false, 'message' => $e->getMessage()], 500);
+        if (!$userId) {
+            return $this->sendUnauthorized('Please login to book an appointment.');
         }
+
+        $validator = Validator::make($request->all(), [
+            'business_id' => 'required|integer',
+            'expert_id' => 'required|integer',
+            'booking_date' => 'required|date',
+            'slot_start_time' => 'nullable|string',
+            'slot_end_time' => 'nullable|string',
+            'timeslote' => 'nullable|string',
+            'user_name' => 'nullable|string|max:100',
+            'user_contact' => 'nullable|string|max:20',
+            'appointment_for' => 'nullable|string|in:self,other',
+            'note' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendValidationError($validator->errors()->first());
+        }
+
+        $result = $this->appointmentService->bookAppointment($userId, $validator->validated(), $creditService);
+
+        if (!$result['success']) {
+            return $this->sendError($result['message'], [], $result['code'] ?? 400);
+        }
+
+        return $this->sendResponse($result['data'], $result['message']);
     }
 
-    public function expertDetails(Request $request, $id)
+    /**
+     * Get detailed expert information.
+     *
+     * @param Request $request
+     * @param int|string $id
+     * @return JsonResponse
+     */
+    public function show(Request $request, int|string $id): JsonResponse
     {
-        try {
-            $expert = Expert::select('id', 'department_id', 'business_id', 'expert_image', 'expert_name', 'slug', 'title', 'description', 'rating', 'is_appointment_book_with_time_slot')
-                ->with([
-                    'business:id,name,slug,address,contact,rating,business_logo',
-                    'reviews' => function ($q) {
-                        $q->select('id', 'business_id', 'user_id', 'review_on_id', 'rating', 'review', 'created_at')
-                            ->with([
-                                'user:id,first_name,last_name,profile'
-                            ])
-                            ->limit(6);
-                    },
-                    'timings' => function ($q) {
-                        $q->select('id', 'business_id', 'expert_id', 'day', 'start_time', 'end_time')
-                            ->orderByRaw("FIELD(day, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')");
-                    }
-                ])
-                ->where('status', 'active')
-                ->find($id);
+        $userId = auth('api')->id() ?? auth()->id();
+        $expert = $this->appointmentService->getExpertDetail($id, $userId);
 
-            if (!$expert) {
-                return response()->json(['status_code' => 404, 'success' => false, 'message' => 'Specialist not found'], 404);
-            }
-
-            app(BusinessAnalyticsService::class)->trackExpertView($expert, $request);
-
-            // Check if user has favorited this expert (uses Auth::guard('api') to parse Bearer token on public routes)
-            $user = Auth::guard('api')->user();
-            $isFavorited = false;
-
-            if ($user) {
-                $isFavorited = Favorite::where('user_id', $user->id)
-                    ->where('business_id', $expert->business_id)
-                    ->where('favorite_type', 'expert')
-                    ->where('favorite_item_id', $expert->id)
-                    ->exists();
-            }
-
-            $expert->is_favorited = $isFavorited;
-            $expert->user = $user;
-            $expert->expert_image = getImage($expert->expert_image, 'expert');
-            if ($expert->business) {
-                $expert->business->business_logo = getImage($expert->business->business_logo, 'business');
-            }
-
-
-            return response()->json([
-                'status_code' => 200,
-                'success' => true,
-                'message' => 'Specialist details retrieved',
-                'data' => $expert
-            ]);
-        } catch (\Exception $e) {
-            return response()->json(['status_code' => 500, 'success' => false, 'message' => $e->getMessage()], 500);
+        if (!$expert) {
+            return $this->sendNotFound('Specialist not found.');
         }
+
+        return $this->sendResponse($expert, 'Specialist details retrieved successfully.');
+    }
+
+    /**
+     * Get single appointment details.
+     *
+     * @param int|string $id
+     * @return JsonResponse
+     */
+    public function appointmentDetail(int|string $id): JsonResponse
+    {
+        $userId = auth('api')->id() ?? auth()->id();
+
+        if (!$userId) {
+            return $this->sendUnauthorized('Please login to view appointment details.');
+        }
+
+        $appointment = $this->appointmentService->getAppointmentDetail((int)$id, $userId);
+
+        if (!$appointment) {
+            return $this->sendNotFound('Appointment not found.');
+        }
+
+        return $this->sendResponse(new ApiV1AppointmentResource($appointment), 'Appointment details retrieved successfully.');
+    }
+
+    /**
+     * Cancel an appointment.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function cancelAppointment(Request $request): JsonResponse
+    {
+        $userId = auth('api')->id() ?? auth()->id();
+
+        if (!$userId) {
+            return $this->sendUnauthorized('Please login to cancel appointment.');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'booking_id' => 'required|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendValidationError($validator->errors()->first());
+        }
+
+        $result = $this->appointmentService->cancelAppointment((int)$request->input('booking_id'), $userId);
+
+        if (!$result['success']) {
+            return $this->sendError($result['message'], [], $result['code'] ?? 400);
+        }
+
+        return $this->sendResponse([], $result['message']);
     }
 }

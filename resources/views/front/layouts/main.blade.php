@@ -29,7 +29,7 @@
 	<title>{{ isset($seo['title']) ? $seo['title'] : trim($__env->yieldContent('meta_title', config('app.name'))) }}</title>
 
 	<meta name="csrf-token" content="{{ csrf_token() }}">
-	<meta name="user-id" content="{{ auth()->check() ? auth()->id() : '' }}">
+	<meta name="user-logged-in" content="{{ Auth::check() ? '1' : '0' }}">
 
 	<meta name="description" content="{{ isset($seo['description']) ? $seo['description'] : trim($__env->yieldContent('meta_description')) }}">
 	<meta name="keywords" content="{{ isset($seo['keywords']) ? $seo['keywords'] : trim($__env->yieldContent('meta_keywords')) }}">
@@ -42,7 +42,7 @@
 	@if(isset($seo['image']) && !empty($seo['image']))
 	<meta property="og:image" content="{{ $seo['image'] }}">
 	@endif
-	<meta property="og:site_name" content="Hereits">
+	<meta property="og:site_name" content="BrandBatao">
 
 	<!-- Twitter -->
 	<meta property="twitter:card" content="summary_large_image">
@@ -53,7 +53,7 @@
 	<meta property="twitter:image" content="{{ $seo['image'] }}">
 	@endif
 
-	<meta name="author" content="Hereits">
+	<meta name="author" content="BrandBatao">
 	<meta name="language" content="en-IN">
 
 	<!-- Favicon -->
@@ -78,7 +78,10 @@
 
 	<!-- Custom CSS -->
 	<link rel="stylesheet" href="{{ asset('assets/front/css/style.css') }}?v={{ filemtime(public_path('assets/front/css/style.css')) }}">
+
+	@if(config('app.is_near_by_home_page') && file_exists(public_path('assets/front/css/global-search.css')))
 	<link rel="stylesheet" href="{{ asset('assets/front/css/global-search.css') }}?v={{ filemtime(public_path('assets/front/css/global-search.css')) }}">
+	@endif
 
 
 
@@ -183,20 +186,6 @@
 				transform: translateY(-20px);
 			}
 		}
-
-		.location-picker-header {
-			transition: all 0.3s ease;
-			padding: 5px 10px;
-			border-radius: 12px;
-		}
-
-		.location-picker-header:hover {
-			background: rgba(99, 102, 241, 0.05);
-		}
-
-		.cursor-pointer {
-			cursor: pointer;
-		}
 	</style>
 
 
@@ -218,7 +207,9 @@
 
 	<!-- Footer -->
 	@include('front.layouts.footer')
+	@if(config('app.is_near_by_home_page'))
 	@include('front.layouts.location_modal')
+	@endif
 	@include('front.layouts.auth_modals')
 
 	<!-- Bootstrap 5 JS -->
@@ -229,7 +220,10 @@
 	<script src="{{ asset('assets/common/js/toastr.min.js') }}?v={{ filemtime(public_path('assets/common/js/toastr.min.js')) }}"></script>
 
 	<script src="{{ asset('assets/common/js/ajax.js') }}?v={{ filemtime(public_path('assets/common/js/ajax.js')) }}"></script>
+
+	@if(config('app.is_near_by_home_page') && file_exists(public_path('assets/front/js/global-search.js')))
 	<script src="{{ asset('assets/front/js/global-search.js') }}?v={{ filemtime(public_path('assets/front/js/global-search.js')) }}"></script>
+	@endif
 
 	<script>
 		$(document).on('click', '.toggle-favorite-btn', function(e) {
@@ -241,8 +235,6 @@
 			const itemId = btn.data('item-id') || btn.data('business-id');
 			const businessId = btn.data('business-id');
 			const type = btn.data('type') || 'business';
-
-			console.log(itemId, businessId, type);
 
 			$.ajax({
 				url: "{{ route('toggle-favorite') }}",
@@ -275,6 +267,8 @@
 			});
 		});
 	</script>
+
+
 
 	@stack('js')
 </body>

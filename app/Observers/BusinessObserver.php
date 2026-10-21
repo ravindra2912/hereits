@@ -6,6 +6,8 @@ use App\Mail\Business\BusinessWelcomeMail;
 use App\Models\Business;
 use App\Mail\Business\BusinessBannedMail;
 use App\Mail\Business\BusinessApprovedMail;
+use App\Models\BusinessLeaglePage;
+use App\Models\HomeSection;
 use Illuminate\Support\Facades\Mail;
 
 class BusinessObserver
@@ -15,12 +17,58 @@ class BusinessObserver
      */
     public function created(Business $business): void
     {
-        $business = Business::select('id', 'name', 'owner_id')
+        $business = Business::select('id', 'name', 'owner_id', 'business_type')
             ->with(['owner:id,first_name,email'])
             ->find($business->id);
 
         if (isset($business->owner) && !empty($business->owner->email)) {
-            Mail::to($business->owner->email)->queue(new BusinessWelcomeMail($business->owner, $business));
+            Mail::to($business->owner->email)->send(new BusinessWelcomeMail($business->owner, $business));
+        }
+
+        //add custome home management layer
+        if ($business->business_type == 'Service') {
+            HomeSection::create([
+                'business_id' => $business->id,
+                'section_type' => 'service_categories',
+                'ui_style' => null,
+                'item_selection_type' => 'random',
+                'sort_order' => 1,
+                'status' => 'active',
+            ]);
+            HomeSection::create([
+                'business_id' => $business->id,
+                'section_type' => 'services',
+                'ui_style' => null,
+                'item_selection_type' => 'random',
+                'sort_order' => 2,
+                'status' => 'active',
+            ]);
+        } else if ($business->business_type == 'Product') {
+            HomeSection::create([
+                'business_id' => $business->id,
+                'section_type' => 'product_categories',
+                'ui_style' => null,
+                'item_selection_type' => 'random',
+                'sort_order' => 1,
+                'status' => 'active',
+            ]);
+            HomeSection::create([
+                'business_id' => $business->id,
+                'section_type' => 'products',
+                'ui_style' => null,
+                'item_selection_type' => 'random',
+                'sort_order' => 2,
+                'status' => 'active',
+            ]);
+        } else if ($business->business_type == 'Appointment') {
+            HomeSection::create([
+                'business_id' => $business->id,
+                'section_type' => 'experts',
+                'ui_style' => null,
+                'item_selection_type' => 'random',
+                'sort_order' => 1,
+                'status' => 'active',
+            ]);
         }
     }
 

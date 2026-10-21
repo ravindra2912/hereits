@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use App\Models\Expert;
 use App\Models\BusinessTiming;
 use App\Models\BusinessSetting;
+use App\Services\CreditService;
 use App\Mail\ResetPasswordEmail;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
@@ -35,7 +36,7 @@ class AuthController extends Controller
     public $forgotPasswordTimeLimite = 110; // in minutes
     function __construct() {}
 
-    public function store(LoginRequest $request)
+    public function store(LoginRequest $request, ?string $business_slug = null)
     {
         $success = false;
         $message = 'Something Wrong!';
@@ -43,7 +44,17 @@ class AuthController extends Controller
         $data = array();
 
         try {
-            $user = User::with('getBusinessDetails:id,owner_id,name,business_image')->where('email', $request->email)->whereIn('role', ['Business', 'User'])->first();
+            $loginInput = $request->email;
+            $user = User::with('getBusinessDetails:id,owner_id,name,business_image')
+                ->where(function ($q) use ($loginInput) {
+                    $q->where('email', $loginInput);
+                    if (is_numeric($loginInput)) {
+                        $q->orWhere('contact', $loginInput);
+                    }
+                })
+                ->whereIn('role', ['Business', 'User'])
+                ->first();
+
             if ($user && Hash::check($request['password'], $user->password)) {
                 if (isset($request->notification_token)) {
                     $user->notification_token = $request->notification_token;
@@ -51,7 +62,7 @@ class AuthController extends Controller
                 }
                 if ($user->role == 'Business' && $user->business_id == null) {
                     $business = Business::select('id', 'owner_id', 'name', 'business_image')
-                        ->with(['businessSetting:id,business_id'])
+                        ->with(['businessSetting:id,business_id,subscription_expiry_date'])
                         ->where('owner_id', $user->id)
                         ->first();
                     $user->business_id = $business->id;
@@ -62,18 +73,22 @@ class AuthController extends Controller
 
                 $request->authenticate();
                 $request->session()->regenerate();
+
+                // Enforce single device/browser login per user
+                app(\App\Services\SessionLogoutService::class)->logoutOtherDevices($user->id);
+
                 $success = true;
                 $message = 'Login Successfully!';
             } else {
                 $message = 'Invalid Credentials!';
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
 
-    public function register(Request $request)
+    public function register(Request $request, ?string $business_slug = null)
     {
         $success = false;
         $message = 'Something Wrong!';
@@ -101,11 +116,24 @@ class AuthController extends Controller
                 $insert->first_name = $request->first_name;
                 $insert->last_name = $request->last_name;
                 $insert->email = $request->email;
-                $insert->email = $request->email;
                 $insert->contact = $request->contact;
-                $insert->referrer_business_id = isset($request->referrer_business_id) ? $request->referrer_business_id : null;
+                $referrerId = $request->referrer_business_id ?? null;
+                if (empty($referrerId) && !empty($business_slug)) {
+                    $referrerBusiness = Business::select('id')->where('slug', $business_slug)->first();
+                    if ($referrerBusiness) {
+                        $referrerId = $referrerBusiness->id;
+                    }
+                }
+                $insert->referrer_business_id = $referrerId;
                 $insert->password = Hash::make($request->password);
                 $insert->save();
+
+                if ($insert->referrer_business_id) {
+                    \App\Models\BusinessCustomer::firstOrCreate([
+                        'business_id' => $insert->referrer_business_id,
+                        'customer_id' => $insert->id
+                    ]);
+                }
 
                 Auth::logout();
                 Auth::login($insert);
@@ -116,12 +144,12 @@ class AuthController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
 
-    public function forgotPassword(Request $request)
+    public function forgotPassword(Request $request, ?string $business_slug = null)
     {
         $success = false;
         $message = 'Something Wrong!';
@@ -141,15 +169,14 @@ class AuthController extends Controller
             try {
                 $User = User::select('id', 'email', 'first_name')->where('email', $request->email)->first();
                 if ($User) {
+                    // Check if token exists then delete first
+                    DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
-                    //Check  if token exist then delete first
-                    if ($request->email) {
-                        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
-                    }
                     $token = Str::random(64);
+                    $hashedToken = hash('sha256', $token);
                     DB::table('password_reset_tokens')->insert([
                         'email' => $request->email,
-                        'token' => $token,
+                        'token' => $hashedToken,
                         'created_at' => Carbon::now()
                     ]);
                     $maildata = [
@@ -159,21 +186,36 @@ class AuthController extends Controller
                     ];
 
                     Mail::to($request->email)->send(new ResetPasswordEmail($maildata));
-                    $success = true;
-                    $message =  'Successfully varification code send from you email address, please check your email';
-                } else {
-                    $message =  'Please enter registered email address';
                 }
+
+                $success = true;
+                $message = 'If that email address is in our database, we will send you a password reset link shortly.';
             } catch (\Exception $e) {
-                $message = $e->getMessage();
+                $message = checkResponse($e);
             }
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
 
-    function ResetPasswordForm($token, $email)
+    public function ResetPasswordForm(Request $request, $arg1, $arg2 = null, $arg3 = null)
     {
-        $data = DB::table('password_reset_tokens')->where('email', $email)->where('token', $token)->first();
+        if ($arg3 !== null) {
+            $token = $arg2;
+            $email = $arg3;
+        } else {
+            $token = $arg1;
+            $email = $arg2;
+        }
+
+        $hashedToken = hash('sha256', $token);
+        $data = DB::table('password_reset_tokens')
+            ->where('email', $email)
+            ->where(function ($q) use ($token, $hashedToken) {
+                $q->where('token', $hashedToken)
+                  ->orWhere('token', $token);
+            })
+            ->first();
+
         if ($data) {
             $to = Carbon::parse($data->created_at);
             $from = Carbon::now();
@@ -185,7 +227,7 @@ class AuthController extends Controller
         exit('Invalid Token');
     }
 
-    public function ResetPassword(Request $request)
+    public function ResetPassword(Request $request, ?string $business_slug = null)
     {
         $success = false;
         $message = 'Something Wrong!';
@@ -205,7 +247,16 @@ class AuthController extends Controller
         } else {
             try {
                 DB::beginTransaction();
-                $data = DB::table('password_reset_tokens')->where('email', $request->email)->where('token', $request->token)->lockForUpdate()->first();
+                $hashedToken = hash('sha256', $request->token);
+                $data = DB::table('password_reset_tokens')
+                    ->where('email', $request->email)
+                    ->where(function ($q) use ($request, $hashedToken) {
+                        $q->where('token', $hashedToken)
+                          ->orWhere('token', $request->token);
+                    })
+                    ->lockForUpdate()
+                    ->first();
+
                 if ($data) {
                     $User = User::where('email', $request->email)->first();
                     $to = Carbon::parse($data->created_at);
@@ -217,8 +268,8 @@ class AuthController extends Controller
                             $User->password = Hash::make($request->password);
                             $User->save();
 
-                            // Invalidate the token after use could be good practice
-                            DB::table('password_reset_tokens')->where('email', $request->email)->where('token', $request->token)->delete();
+                            // Invalidate the token after use
+                            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
                             $success = true;
                             $message =  'Password reset successfully.';
@@ -237,22 +288,20 @@ class AuthController extends Controller
                 }
             } catch (\Exception $e) {
                 DB::rollBack();
-                $message = $e->getMessage();
+                $message = checkResponse($e);
             }
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
 
-    /**
-     * Delete the user's account.
-     */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request, ?string $business_slug = null): RedirectResponse
     {
-        User::where('id', Auth::user()->id)->update(['notification_token' => null]);
+        if (Auth::check()) {
+            User::where('id', Auth::user()->id)->update(['notification_token' => null]);
+        }
 
         Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $request->session()->regenerate();
         return redirect()->route('home');
     }
 
@@ -266,7 +315,7 @@ class AuthController extends Controller
     }
 
 
-    public function registerBusiness(Request $request)
+    public function registerBusiness(Request $request, CreditService $creditService)
     {
         $success = false;
         $message = 'Something Wrong!';
@@ -288,7 +337,7 @@ class AuthController extends Controller
                 'city_id' => 'required|exists:cities,id',
                 'area' => 'required',
                 'pincode' => 'required',
-                'user_referral_code' => 'nullable|exists:users,referral_code',
+                'is_private' => 'nullable|in:0,1',
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -301,10 +350,13 @@ class AuthController extends Controller
             } else {
 
                 if (!Auth::check()) {
-                    $message = 'Session expired, please login again.';
-                } else {
-                    $user_id = Auth::user()->id;
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Please login first to register a business.',
+                        'redirect' => route('login')
+                    ], 401);
                 }
+                $user_id = Auth::id();
 
                 $city = City::where('id', $request->city_id)->first('name');
 
@@ -331,23 +383,14 @@ class AuthController extends Controller
 
                 $insert->pincode = $request->pincode;
                 $insert->status = 'active';
-                $insert->user_referral_code = $request->user_referral_code;
 
                 $insert->save();
 
                 updateBusinessSeo($insert->id);
 
-                $business_category = BusinessCategory::select(
-                    'deduct_credit_per_self_appointment',
-                    'deduct_credit_per_customer_appointment',
-                    'deduct_credit_per_self_order',
-                    'deduct_credit_per_customer_order',
-                    'deduct_credit_per_chat',
-                    'deduct_credit_per_quotation'
-                )->find($request->business_category_id);
-
-                $site_setting = getSiteSetting();
-                $free_credit = $site_setting->free_credit ?? 30;
+                $business_category = BusinessCategory::select('deduct_credit_per_self_appointment', 'deduct_credit_per_customer_appointment')->first($request->business_category_id);
+                $siteSetting = \App\Models\SiteSetting::first();
+                $freeCredit = (float)($siteSetting->free_credit ?? 30);
 
                 // assign appoinment system to business
                 BusinessSetting::create([
@@ -355,18 +398,26 @@ class AuthController extends Controller
                     'is_appointment_system' => $request->business_type == 'Appointment' ? true : false,
                     'is_ecommerce_system' => $request->business_type == 'Product' ? true : false,
                     'is_service_system' => $request->business_type == 'Service' ? true : false,
-                    'credit' => $free_credit,
+                    'is_private' => $request->input('is_private', 0) == '1' ? true : false,
+                    'credit' => 0,
                     'deduct_credit_per_self_appointment' => $business_category->deduct_credit_per_self_appointment ?? 1,
                     'deduct_credit_per_customer_appointment' => $business_category->deduct_credit_per_customer_appointment ?? 1,
-                    'deduct_credit_per_self_order' => $business_category->deduct_credit_per_self_order ?? 1,
-                    'deduct_credit_per_customer_order' => $business_category->deduct_credit_per_customer_order ?? 1,
-                    'deduct_credit_per_chat' => $business_category->deduct_credit_per_chat ?? 1,
-                    'deduct_credit_per_quotation' => $business_category->deduct_credit_per_quotation ?? 1,
+                    'subscription_expiry_date' => Carbon::now()->addDays(7),
                 ]);
 
+                if ($freeCredit > 0) {
+                    $creditService->addCredit(
+                        $insert->id,
+                        $freeCredit,
+                        'registration',
+                        'Welcome registration free credits',
+                        $insert->id
+                    );
+                }
+
                 // add business and expert timing
-                $start = '09:00'; // 9 AM
-                $end = '21:00';   // 9 PM
+                $start = '08:00'; // 8 AM
+                $end = '20:00';   // 8 PM
                 foreach (config('const.week_day_name') as $day) {
                     // Add for business
                     $businessTime = new BusinessTiming();
@@ -390,15 +441,19 @@ class AuthController extends Controller
                 }
                 Auth::logout();
                 Auth::login($user);
-                $user->syncBusinessContextToSession();
+                $user->syncBusinessSessionData($insert->id);
 
                 $success = true;
                 $message = 'Business register successfully.';
 
                 DB::commit();
+
+                if (isset($request->plan_id) && !empty($request->plan_id)) {
+                    $redirect = route('business.subscription.details', $request->plan_id);
+                }
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_name) && !empty($image_name)) {
                 fileRemoveStorage($image_name);
             }
@@ -412,6 +467,10 @@ class AuthController extends Controller
 
     public function redirectToGoogle(Request $request)
     {
+        if (!isGoogleLoginEnabled()) {
+            return redirect()->back()->with('error', 'Google login is currently disabled.');
+        }
+
         $token = '';
         if (isset($request->notificationtoken) && !empty($request->notificationtoken)) {
             $token = $request->notificationtoken;
@@ -427,6 +486,10 @@ class AuthController extends Controller
     public function handleGoogleCallback()
     {
         try {
+            if (!isGoogleLoginEnabled()) {
+                return redirect('/')->with('error', 'Google login is currently disabled.');
+            }
+
             $notificationtoken = '';
             $session = session('googleAuth');
             if ($session && (isset($session['data']) != null || $session['redirectUrl'] != null)) {
@@ -491,17 +554,46 @@ class AuthController extends Controller
             // Log the user in
             $user->load('getBusinessDetails:id,owner_id,name,business_image');
             Auth::login($user);
+            request()->session()->regenerate();
+
+            // Enforce single device/browser login per user
+            app(\App\Services\SessionLogoutService::class)->logoutOtherDevices($user->id);
 
             if (isset($redirectUrl) && !empty($redirectUrl)) {
-                return redirect($redirectUrl);
-            } else {
-                return redirect()->intended('/');
+                $targetHost = parse_url($redirectUrl, PHP_URL_HOST);
+                if (empty($targetHost) || $targetHost === request()->getHost()) {
+                    // Check if logging in from Expert portal
+                    if (str_contains($redirectUrl, 'expert-manager') || str_contains($redirectUrl, 'expert/login')) {
+                        $expert = \App\Models\Expert::where('user_id', $user->id)->where('status', 'active')->first();
+                        if ($expert) {
+                            Auth::guard('expert')->login($expert);
+                            return redirect()->route('expert.dashboard');
+                        }
+                    }
+
+                    // Check if logging in from POS portal
+                    if (str_contains($redirectUrl, 'pos/login') || str_contains($redirectUrl, 'pos')) {
+                        if (in_array($user->role, ['Business', 'User']) && $user->status === 'active') {
+                            Auth::guard('pos')->login($user);
+                            app(\App\Services\PosSessionService::class)->syncAll($user);
+                            return redirect()->route('pos.dashboard');
+                        }
+                    }
+
+                    // Check if logging in from Business manager portal
+                    if (str_contains($redirectUrl, 'business/login') || str_contains($redirectUrl, 'business-login')) {
+                        if ($user->role == "Business" || $user->role == 2) {
+                            return redirect()->route('business.dashboard');
+                        }
+                    }
+
+                    return redirect($redirectUrl);
+                }
             }
+            return redirect()->intended('/');
         } catch (\Exception $e) {
             DB::rollBack();
-            // dd($e->getMessage());
-            // Handle exceptions
-            return redirect('/')->with('error', 'Failed to login with Google.');
+            return redirect('/')->with('error', checkResponse($e, 'Failed to login with Google.'));
         }
     }
 }

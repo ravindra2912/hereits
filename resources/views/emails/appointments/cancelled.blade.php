@@ -7,7 +7,7 @@
       <!-- Header -->
       <tr>
         <td class="header">
-          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="Hereits"></a>
+          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="brandbatao"></a>
         </td>
       </tr>
 
@@ -15,11 +15,11 @@
       <tr>
         <td class="content">
           <h5>Hi {{ $user_name }},</h5>
-          <p>Your appointment with {{ $apoinment_details->expert->expert_name }} on {{ get_date($apoinment_details->booking_date) }} at {{ get_time($apoinment_details->slot_start_time) }} has been cancelled.</p>
+          <p>Your appointment with {{ $apoinment_details->expert?->user?->name }} on {{ get_date($apoinment_details->booking_date) }} at {{ get_time($apoinment_details->slot_start_time) }} has been cancelled.</p>
           <p>If this was a mistake, you can reschedule or contact the provider directly.</p>
           <p><a href="{{ route('business-details', $apoinment_details->business->slug) }}">Reschedule Appointment</a></p>
           <p style="margin-top:20px;">We're sorry for the inconvenience.</p>
-          <p>– The Hereits Team</p>
+          <p>– The brandbatao Team</p>
         </td>
       </tr>
 

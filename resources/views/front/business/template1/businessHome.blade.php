@@ -1,5 +1,5 @@
 @extends('front.business.template1.layouts.main', ['seo' => [
-'title' => $business->name . ' in '.$business->area. ' | Hereits',
+'title' => $business->name . ' in '.$business->area. ' | brandbatao',
 'description' => $business->seo_description ?? \Illuminate\Support\Str::limit($business->description, 160),
 'keywords' => $business->seo_keyword ?? $business->name,
 'image' => getImage($business->business_image) ,
@@ -12,24 +12,28 @@
 @section('title', $business->name)
 
 @push('style')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
 <style>
-  .gallery-item:hover img {
-    transform: scale(1.05);
-  }
-
-  .transition-all {
-    transition: all 0.5s ease;
-  }
-
-  .has-hover-image:hover .primary-image {
-    opacity: 0 !important;
-  }
-
-  .has-hover-image:hover .secondary-image {
-    opacity: 1 !important;
-  }
+    .category-scroll::-webkit-scrollbar {
+        display: none;
+    }
+    .category-scroll {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        cursor: grab;
+        user-select: none;
+        scroll-behavior: smooth;
+    }
+    .category-scroll:active {
+        cursor: grabbing;
+    }
+    .category-scroll img {
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
 </style>
+<!-- CDN: https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css -->
+<link rel="stylesheet" href="{{ asset('assets/common/css/glightbox.min.css') }}?v={{ filemtime(public_path('assets/common/css/glightbox.min.css')) }}" />
 @endpush
 
 @push('schema')
@@ -165,35 +169,20 @@
             <a href="#experts-list" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
               Book Appointment
             </a>
-            @else
+            @elseif((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
             <a href="#contact-us" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
               Contact Us
             </a>
             @endif
 
+            @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
             <a href="tel:{{ $business->contact }}" class="btn btn-outline-light btn-lg rounded-pill fw-bold px-4 hover-lift">
               <i class="fas fa-phone-alt me-2"></i> Call Now
             </a>
+            @endif
             <a href="http://maps.google.com/maps?q={{ $business->latitude.','.$business->longitude }}&ll={{ $business->latitude.','.$business->longitude }}&z=17" target="_blank" class="btn btn-white bg-white text-dark btn-lg rounded-pill fw-bold px-3 hover-lift" data-bs-toggle="tooltip" title="Get Directions">
               <i class="fas fa-directions"></i>
             </a>
-
-            @guest
-            <button type="button" class="btn btn-outline-light btn-lg rounded-pill fw-bold px-4 hover-lift"
-              data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')">
-              <i class="far fa-heart"></i>
-            </button>
-            @else
-            <button type="button" class="btn btn-outline-light btn-lg rounded-pill fw-bold px-4 hover-lift toggle-favorite-btn"
-              data-business-id="{{ $business->id }}">
-              <i class="{{ $business->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart' }}"></i>
-            </button>
-            @endguest
-          </div>
-        </div>
-        <div class="col-lg-4 d-none d-lg-block text-center">
-          <div class="d-inline-block position-relative rounded-4 overflow-hidden shadow-lg border border-3 border-white border-opacity-25 hover-lift" style="width: 320px; height: 320px;">
-            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image) }}" alt="{{ $business->name }}" class="w-100 h-100 object-fit-cover">
           </div>
         </div>
       </div>
@@ -201,217 +190,8 @@
     @endif
   </div>
 
-  <!-- About Section -->
-  <div id="about" class="container py-5 position-relative z-10">
-
-    <!-- Products Section (E-commerce) -->
-    @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
-
-    <!-- Product Categories (Scrollable) -->
-    @if(isset($details['productCategories']) && $details['productCategories']->count() > 0)
-    <div id="product-categories" class="mb-5 section-scroll">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="h4 fw-bold mb-0">Shop by Category</h3>
-      </div>
-      <div class="d-flex overflow-auto pb-3 category-scroll">
-        @foreach($details['productCategories'] as $category)
-        <a href="{{ route('business-products', ['business_slug' => $business->slug, 'category_id' => $category->id]) }}" class="text-decoration-none text-center d-flex flex-column align-items-center flex-shrink-0 hover-lift category-item category-item-link">
-          <div class="rounded-circle mb-2 d-flex align-items-center justify-content-center bg-white overflow-hidden category-image-wrapper">
-            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($category->image_url) }}" alt="{{ $category->name }}" class="w-100 h-100 object-fit-cover" draggable="false" loading="lazy">
-          </div>
-          <span class="text-dark small fw-medium text-truncate w-100" title="{{ $category->name }}">{{ $category->name }}</span>
-        </a>
-        @endforeach
-      </div>
-    </div>
-    @endif
-
-    @if(isset($details['categoriesWithProducts']) && $details['categoriesWithProducts']->count() > 0)
-
-    @foreach ($details['categoriesWithProducts'] as $category)
-    <div id="products" class="mb-5 section-scroll">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="h4 fw-bold mb-0">{{ $category->name }}</h3>
-        <a href="{{ route('business-products', ['business_slug' => $business->slug, 'category_id' => $category->id]) }}" class="btn btn-outline-primary rounded-pill btn-sm d-inline-flex align-items-center text-nowrap">View All <i class="fas fa-arrow-right ms-2"></i></a>
-      </div>
-      @include('front.business.template1.elements.productList', ['products' => $category->products, 'business' => $business])
-    </div>
-    @endforeach
-
-    @elseif(isset($details['products']) && $details['products']->count() > 0)
-    <div id="products" class="mb-5 section-scroll">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="h4 fw-bold mb-0">Our Products</h3>
-        <a href="{{ route('business-products', ['business_slug' => $business->slug]) }}" class="btn btn-outline-primary rounded-pill btn-sm d-inline-flex align-items-center text-nowrap">View All <i class="fas fa-arrow-right ms-2"></i></a>
-      </div>
-      @include('front.business.template1.elements.productList', ['products' => $details['products'], 'business' => $business])
-    </div>
-    @endif
-    @endif
-
-    <!-- Services Section -->
-    @if(isset($setting->is_service_system) && $setting->is_service_system)
-
-    <!-- Service Categories (Scrollable) -->
-    @if(isset($details['serviceCategories']) && $details['serviceCategories']->count() > 0)
-    <div id="service-categories" class="mb-5 section-scroll">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="h4 fw-bold mb-0">Explore Services</h3>
-      </div>
-      <div class="d-flex overflow-auto pb-3 category-scroll">
-        @foreach($details['serviceCategories'] as $category)
-        <a href="{{ route('business-services', ['business_slug' => $business->slug, 'category_id' => $category->id]) }}" class="text-decoration-none text-center d-flex flex-column align-items-center flex-shrink-0 hover-lift category-item category-item-link">
-          <div class="rounded-circle mb-2 d-flex align-items-center justify-content-center bg-white overflow-hidden category-image-wrapper">
-            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($category->image_url) }}" alt="{{ $category->name }}" class="w-100 h-100 object-fit-cover" draggable="false" loading="lazy">
-          </div>
-          <span class="text-dark small fw-medium text-truncate w-100" title="{{ $category->name }}">{{ $category->name }}</span>
-        </a>
-        @endforeach
-      </div>
-    </div>
-    @endif
-
-    @if(isset($details['categoriesWithServices']) && $details['categoriesWithServices']->count() > 0)
-
-    @foreach ($details['categoriesWithServices'] as $category)
-    <div id="services" class="mb-5 section-scroll">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="h4 fw-bold mb-0">{{ $category->name }}</h3>
-        <a href="{{ route('business-services', ['business_slug' => $business->slug, 'category_id' => $category->id]) }}" class="btn btn-outline-primary rounded-pill btn-sm d-inline-flex align-items-center text-nowrap">View All <i class="fas fa-arrow-right ms-2"></i></a>
-      </div>
-      @include('front.business.template1.elements.serviceList', ['services' => $category->services, 'business' => $business])
-    </div>
-    @endforeach
-
-    @elseif (isset($details['services']) && $details['services']->count() > 0)
-    <div id="services" class="mb-5 section-scroll">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="h4 fw-bold mb-0">Our Services</h3>
-        <a href="{{ route('business-services', ['business_slug' => $business->slug]) }}" class="btn btn-outline-primary rounded-pill btn-sm d-inline-flex align-items-center text-nowrap">View All <i class="fas fa-arrow-right ms-2"></i></a>
-      </div>
-      @include('front.business.template1.elements.serviceList', ['services' => $details['services'], 'business' => $business])
-    </div>
-    @endif
-
-    @endif
-  </div>
-
-
-
-  @if(isset($setting->is_appointment_system) && $setting->is_appointment_system && isset($experts) && $experts->count() > 0)
-  <!-- Appointment/Experts Section -->
-  <div id="experts-list" class="mb-5 section-scroll container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      @if(isset($totalExperts) && $totalExperts > 1)
-      <h3 class="h4 fw-bold mb-0">Our Experts</h3>
-      @endif
-      @if(isset($totalExperts) && $totalExperts > 3)
-      <a href="{{ route('expert.list', $business->slug) }}" class="btn btn-outline-primary rounded-pill btn-sm d-inline-flex align-items-center text-nowrap">View All <i class="fas fa-arrow-right ms-2"></i></a>
-      @endif
-    </div>
-
-    @if(isset($totalExperts) && $totalExperts == 1 && count($experts) > 0)
-    <!-- Single Expert Hero Design -->
-    <!-- Single Expert Hero Design -->
-    <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white">
-      <div class="row g-0">
-        <!-- Image Section -->
-        <div class="col-md-5 col-lg-4 position-relative expert-hero-image-container">
-          <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($experts[0]->expert_image, 'expert') }}" class="img-fluid w-100 h-100 object-fit-cover" alt="{{ $experts[0]->expert_name }}" loading="lazy">
-
-          <!-- Status Badge overlay -->
-          @php
-          $expertAvailability = isExpertAvailable($experts[0]->id, $business->id);
-          @endphp
-          <div class="position-absolute top-0 start-0 m-3 d-flex flex-column gap-2 align-items-start">
-            @if($expertAvailability['status'] == 'open')
-            <span class="badge bg-white text-success shadow-sm rounded-pill fw-bold px-3 py-2 border">
-              <i class="fas fa-circle small me-1"></i> Available Now
-            </span>
-            @if(isset($expertAvailability['data']))
-            <div class="live-token-container live-token-container-lg shadow-sm mt-2" title="Current Token being served">
-              <div class="live-token-label">
-                <span class="live-dot-pulsing"></span> LIVE TOKEN
-              </div>
-              <div class="live-token-number">{{ $expertAvailability['data']->token_number }}</div>
-            </div>
-            @endif
-            @elseif($expertAvailability['status'] == 'break')
-            <span class="badge bg-white text-warning shadow-sm rounded-pill fw-bold px-3 py-2 border">
-              <i class="fas fa-coffee small me-1"></i> On Break
-            </span>
-            @else
-            <span class="badge bg-white text-danger shadow-sm rounded-pill fw-bold px-3 py-2 border">
-              <i class="fas fa-times-circle small me-1"></i> Closed Now
-            </span>
-            @endif
-          </div>
-
-          <!-- Gradient Overlay (Mobile) -->
-          <div class="d-md-none position-absolute bottom-0 start-0 w-100 p-4 expert-hero-overlay">
-            <h3 class="text-white fw-bold mb-0">{{ $experts[0]->expert_name }}</h3>
-            <p class="text-white-50 mb-0">{{ $experts[0]->title }}</p>
-          </div>
-
-          <!-- Favorite Button -->
-          <button type="button" class="favorite-btn position-absolute top-0 end-0 m-3 rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
-            data-item-id="{{ $experts[0]->id }}"
-            data-business-id="{{ $business->id }}"
-            data-type="expert"
-            style="width: 40px; height: 40px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-            <i class="{{ $experts[0]->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-5"></i>
-          </button>
-        </div>
-
-        <!-- Content Section -->
-        <div class="col-md-7 col-lg-8">
-          <div class="card-body p-4 p-lg-5 d-flex flex-column h-100 justify-content-center position-relative">
-            <!-- Decorative Element -->
-            <div class="position-absolute top-0 end-0 p-4 opacity-10 d-none d-lg-block">
-              <i class="fas fa-quote-right fa-6x text-primary"></i>
-            </div>
-
-            <div class="mb-4 position-relative z-1">
-              <span class="text-uppercase text-primary fw-bold letter-spacing-2 small">Meet Our Expert</span>
-              <h2 class="display-6 fw-bold text-dark mt-2 mb-1">{{ $experts[0]->expert_name }}</h2>
-              <p class="text-muted fw-medium fs-5 mb-0">{{ $experts[0]->title }}</p>
-            </div>
-
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-4 position-relative z-1">
-              @if(isset($experts[0]->department) && !empty($experts[0]->department->department_name))
-              <span class="badge bg-light text-primary border border-primary-subtle rounded-pill px-3 py-2">
-                <i class="fas fa-layer-group me-1"></i> {{ $experts[0]->department->department_name }}
-              </span>
-              @endif
-              <div class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle rounded-pill px-3 py-2">
-                <i class="fas fa-star me-1"></i> {{ $experts[0]->rating }} <span class="text-muted fw-normal text-warning">Rating</span>
-              </div>
-            </div>
-
-            <p class="text-muted lead fs-6 mb-4 position-relative z-1 expert-description">
-              {{ \Illuminate\Support\Str::limit($experts[0]->description ?? 'We are dedicated to providing the best service to our customers. Book an appointment today.', 200) }}
-            </p>
-
-            <div class="d-flex flex-wrap gap-3 mt-auto position-relative z-1">
-              <a href="{{ route('expert', [$business->slug, $experts[0]->slug]) }}" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm hover-lift hover-scale">
-                Book Appointment <i class="fas fa-arrow-right ms-2"></i>
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    @else
-    @include('front.business.template1.elements.expertList', ['experts' => $experts])
-
-    @if(isset($totalExperts) && $totalExperts > 4)
-    <div class="text-center mt-4">
-      <a href="{{ route('expert.list', $business->slug) }}" class="btn btn-light text-primary fw-bold rounded-pill px-4 hover-lift d-inline-flex align-items-center text-nowrap">View All {{ $totalExperts }} Experts <i class="fas fa-arrow-right ms-2"></i></a>
-    </div>
-    @endif
-    @endif
-  </div>
-  @endif
+  <!-- Custom Layout Sections -->
+  @include('front.business.template1.elements.custom_sections')
 
   <!-- About Us Section -->
   @if(!empty($setting->about_us_text) || !empty($setting->about_us_image))
@@ -421,7 +201,7 @@
       <div class="col-lg-5">
         <div class="position-relative">
           <div class="rounded-4 overflow-hidden shadow-lg hover-lift">
-            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($setting->about_us_image) }}" class="img-fluid w-100" alt="About {{ $business->name }}" loading="lazy">
+            <img src="{{ getImage($setting->about_us_image) }}" class="img-fluid w-100" alt="About {{ $business->name }}" loading="lazy">
           </div>
           <div class="position-absolute top-0 start-0 translate-middle mt-n3 ms-n3 p-4 bg-primary rounded-4 d-none d-lg-block about-decoration"></div>
         </div>
@@ -446,55 +226,67 @@
   <div id="gallery" class="container py-5 section-scroll">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h3 class="h4 fw-bold mb-0">Gallery</h3>
-      <a href="{{ route('business-galleries', ['business_slug' => $business->slug]) }}" class="btn btn-outline-primary rounded-pill btn-sm d-inline-flex align-items-center text-nowrap">View All <i class="fas fa-arrow-right ms-2"></i></a>
+      <a href="{{ route('business-galleries', ['business_slug' => $business->slug]) }}" class="btn btn-outline-primary rounded-pill btn-sm">View All</a>
     </div>
     <div class="row g-3">
       @foreach($galleries as $gallery)
+      @php
+        $isYt = ($gallery->type ?? 'image') === 'youtube_url';
+        if ($isYt) {
+            $ytId = getYoutubeId($gallery->image_url);
+            $mediaHref = $ytId ? 'https://www.youtube.com/watch?v=' . $ytId : $gallery->image_url;
+            $mediaThumb = getYoutubeThumbnail($gallery->image_url) ?: getImage(null);
+        } else {
+            $mediaHref = getImage($gallery->image_url);
+            $mediaThumb = getImage($gallery->image_url);
+        }
+      @endphp
       <div class="col-6 col-md-4 col-lg-3">
-        @if($gallery->type == 'image')
-        <a href="{{ getImage($gallery->image_url) }}" class="glightbox" data-gallery="business-home-gallery" data-title="{{ $gallery->title }}">
+        <a href="{{ $mediaHref }}" class="glightbox-home d-block text-decoration-none" data-gallery="home-gallery" data-title="{{ $gallery->title }}" @if($isYt) data-type="video" @endif>
           <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0">
-            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($gallery->image_url) }}" class="img-fluid w-100 h-100 object-fit-cover transition-all" alt="{{ $gallery->title }}" loading="lazy" style="min-height: 200px;">
-            <div class="gallery-overlay gallery-item-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end">
-              <p class="mb-0 small fw-bold">{{ $gallery->title }}</p>
-            </div>
-            <span class="badge bg-white text-dark position-absolute top-0 start-0 m-2 shadow-sm small px-2 py-1" style="font-size: 10px;"><i class="fas fa-image me-1"></i>Image</span>
-          </div>
-        </a>
-        @elseif($gallery->type == 'video')
-        @php $ytThumb = getYoutubeThumbnail($gallery->image_url); @endphp
-        <a href="{{ getGalleryVideoUrl($gallery->image_url) }}" class="glightbox" data-gallery="business-home-gallery" data-title="{{ $gallery->title }}">
-          <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0 bg-dark d-flex align-items-center justify-content-center" style="min-height: 200px;">
-            @if($ytThumb)
-            <img src="{{ $ytThumb }}" class="img-fluid w-100 h-100 object-fit-cover opacity-50" alt="{{ $gallery->title }}" style="min-height: 200px;" loading="lazy">
-            <i class="fas fa-play-circle fa-3x text-white position-absolute top-50 start-50 translate-middle opacity-75"></i>
-            @else
-            <i class="fas fa-play-circle fa-3x text-white opacity-75"></i>
+            <img src="{{ $mediaThumb }}" class="img-fluid w-100 h-100 object-fit-cover gallery-img-container" alt="{{ $gallery->title }}" loading="lazy">
+            @if($isYt)
+            <span class="position-absolute top-50 start-50 translate-middle badge bg-danger rounded-circle p-2 shadow" style="width: 50px; height: 50px; display: inline-flex; align-items: center; justify-content: center; z-index: 2;">
+                <i class="bi bi-play-fill text-white fs-4" style="margin-left: 2px;"></i>
+            </span>
             @endif
-            <div class="gallery-overlay gallery-item-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end">
-              <p class="mb-0 small fw-bold">{{ $gallery->title }}</p>
+            <div class="gallery-overlay gallery-item-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end" style="z-index: 3;">
+              <p class="mb-0 small fw-bold text-truncate">{{ $gallery->title }}</p>
             </div>
-            <span class="badge bg-danger position-absolute top-0 start-0 m-2 shadow-sm small px-2 py-1" style="font-size: 10px;"><i class="fas fa-video me-1"></i>Video</span>
           </div>
         </a>
-        @else
-        @php
-        $ext = strtolower(pathinfo($gallery->image_url, PATHINFO_EXTENSION));
-        $docIcon = 'fa-file-alt';
-        if ($ext == 'pdf') $docIcon = 'fa-file-pdf';
-        elseif (in_array($ext, ['doc', 'docx'])) $docIcon = 'fa-file-word';
-        elseif (in_array($ext, ['xls', 'xlsx', 'csv'])) $docIcon = 'fa-file-excel';
-        elseif (in_array($ext, ['ppt', 'pptx'])) $docIcon = 'fa-file-powerpoint';
-        elseif (in_array($ext, ['zip', 'rar'])) $docIcon = 'fa-file-archive';
-        @endphp
-        <a href="{{ $gallery->image_url }}" target="_blank">
-          <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0 bg-light d-flex flex-column align-items-center justify-content-center p-3 text-center" style="min-height: 200px;">
-            <i class="fas {{ $docIcon }} fa-3x text-primary mb-2"></i>
-            <p class="mb-0 fw-bold text-dark small">{{ $gallery->title }}</p>
-            <span class="badge bg-primary position-absolute top-0 start-0 m-2 shadow-sm small px-2 py-1" style="font-size: 10px;"><i class="fas fa-file-contract me-1"></i>Doc</span>
+      </div>
+      @endforeach
+    </div>
+  </div>
+  @endif
+
+  @if(isset($blogs) && count($blogs) > 0)
+  <div id="blogs" class="container py-5 section-scroll">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="h4 fw-bold mb-0">Latest Blogs</h3>
+      <a href="{{ route('business-blogs', ['business_slug' => $business->slug]) }}" class="btn btn-outline-primary rounded-pill btn-sm">View More</a>
+    </div>
+    <div class="row g-4">
+      @foreach($blogs as $blog)
+      <div class="col-md-6 col-lg-3">
+        <div class="card-modern rounded-4 overflow-hidden h-100 shadow-sm border-0 d-flex flex-column hover-lift">
+          <div class="position-relative" style="height: 180px;">
+            <img src="{{ getImage($blog->image) }}" class="w-100 h-100 object-fit-cover" alt="{{ $blog->title }}" loading="lazy">
           </div>
-        </a>
-        @endif
+          <div class="card-body p-3 d-flex flex-column flex-grow-1">
+            <span class="text-muted small mb-2 d-block">
+              <i class="far fa-calendar-alt me-1"></i> {{ $blog->published_at ? $blog->published_at->format('M d, Y') : '' }}
+            </span>
+            <h5 class="h6 fw-bold mb-2 text-dark line-clamp-2">{{ $blog->title }}</h5>
+            <p class="text-muted small mb-3 flex-grow-1 line-clamp-3">
+              {{ $blog->short_description }}
+            </p>
+            <a href="{{ route('business-blog-details', ['business_slug' => $business->slug, 'blog_slug' => $blog->slug]) }}" class="btn btn-link text-primary p-0 fs-7 fw-bold text-decoration-none d-inline-flex align-items-center">
+              Read More <i class="fas fa-arrow-right ms-1" style="font-size: 0.75rem;"></i>
+            </a>
+          </div>
+        </div>
       </div>
       @endforeach
     </div>
@@ -502,6 +294,7 @@
   @endif
 
   <!-- Contact Us Section -->
+  @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
   <div id="contact-us" class="container py-5 section-scroll">
     <div class="card-modern border-0 shadow-lg rounded-4 p-4 p-md-5 overflow-hidden position-relative">
 
@@ -556,38 +349,85 @@
       </div>
     </div>
   </div>
+  @endif
 
 </section>
 
-
 @push('js')
-<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const lightbox = GLightbox({
-      selector: '.glightbox',
-      touchNavigation: true,
-      loop: true,
-      autoplayVideos: true
+    document.addEventListener("DOMContentLoaded", function() {
+        const containers = document.querySelectorAll('.category-scroll');
+        
+        containers.forEach(function(container) {
+            if (!container) return;
+
+            // Prevent browser image/text ghost dragging
+            container.addEventListener('dragstart', (e) => {
+                e.preventDefault();
+            });
+
+            // Mouse Drag-to-Scroll implementation
+            let isDown = false;
+            let startX;
+            let scrollLeftStart;
+            let moved = false;
+
+            container.addEventListener('mousedown', (e) => {
+                isDown = true;
+                startX = e.pageX - container.offsetLeft;
+                scrollLeftStart = container.scrollLeft;
+                moved = false;
+                
+                // Temporarily disable smooth scroll behavior during drag for instant response
+                container.style.scrollBehavior = 'auto';
+            });
+
+            container.addEventListener('mouseleave', () => {
+                isDown = false;
+                container.style.scrollBehavior = 'smooth';
+            });
+
+            container.addEventListener('mouseup', () => {
+                isDown = false;
+                container.style.scrollBehavior = 'smooth';
+            });
+
+            container.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - container.offsetLeft;
+                const walk = (x - startX) * 2; // Drag speed multiplier
+                if (Math.abs(walk) > 5) {
+                    moved = true;
+                }
+                container.scrollLeft = scrollLeftStart - walk;
+            });
+
+            // Prevent link clicks if the user dragged/scrolled the mouse
+            const links = container.querySelectorAll('a');
+            links.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    if (moved) {
+                        e.preventDefault();
+                    }
+                });
+            });
+        });
     });
-  });
 </script>
-@endpush
-
-</section>
-
-
-@push('js')
-<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+<!-- CDN: https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js -->
+<script src="{{ asset('assets/common/js/glightbox.min.js') }}?v={{ filemtime(public_path('assets/common/js/glightbox.min.js')) }}"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const lightbox = GLightbox({
-      selector: '.glightbox',
-      touchNavigation: true,
-      loop: true,
-      autoplayVideos: true
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof GLightbox !== 'undefined') {
+            GLightbox({
+                selector: '.glightbox-home',
+                touchNavigation: true,
+                loop: true,
+                autoplayVideos: false
+            });
+        }
     });
-  });
 </script>
 @endpush
 

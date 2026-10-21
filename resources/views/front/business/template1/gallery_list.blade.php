@@ -1,12 +1,13 @@
 @extends('front.business.template1.layouts.main', ['seo' => [
-'title' => 'Gallery | ' . $business->name . ' | Hereits',
+'title' => 'Gallery | ' . $business->name . ' | brandbatao',
 'description' => $business->seo_description ?? 'View gallery of ' . $business->name,
 'keywords' => 'gallery, photos, ' . ($business->seo_keyword ?? $business->name),
 'image' => getImage($business->business_image)
 ]])
 
 @push('style')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
+<!-- CDN: https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css -->
+<link rel="stylesheet" href="{{ asset('assets/common/css/glightbox.min.css') }}?v={{ filemtime(public_path('assets/common/css/glightbox.min.css')) }}" />
 @endpush
 
 @section('content')
@@ -27,52 +28,31 @@
         @if(isset($galleries) && count($galleries) > 0)
         <div class="row g-4">
             @foreach($galleries as $gallery)
+            @php
+                $isYt = ($gallery->type ?? 'image') === 'youtube_url';
+                if ($isYt) {
+                    $ytId = getYoutubeId($gallery->image_url);
+                    $mediaHref = $ytId ? 'https://www.youtube.com/watch?v=' . $ytId : $gallery->image_url;
+                    $mediaThumb = getYoutubeThumbnail($gallery->image_url) ?: getImage(null);
+                } else {
+                    $mediaHref = getImage($gallery->image_url);
+                    $mediaThumb = getImage($gallery->image_url);
+                }
+            @endphp
             <div class="col-6 col-md-4 col-lg-3">
-                @if($gallery->type == 'image')
-                    <a href="{{ getImage($gallery->image_url) }}" class="glightbox" data-gallery="business-gallery" data-title="{{ $gallery->title }}">
-                        <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0">
-                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($gallery->image_url) }}" class="img-fluid w-100 h-100 object-fit-cover transition-all" alt="{{ $gallery->title }}" style="min-height: 250px;" loading="lazy">
-                            <div class="gallery-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end" style="background: linear-gradient(transparent, rgba(0,0,0,0.8)); transition: 0.3s;">
-                                <p class="mb-0 small fw-bold">{{ $gallery->title }}</p>
-                            </div>
-                            <span class="badge bg-white text-dark position-absolute top-0 start-0 m-3 shadow-sm"><i class="fas fa-image me-1"></i>Image</span>
+                <a href="{{ $mediaHref }}" class="glightbox d-block text-decoration-none" data-gallery="business-gallery" data-title="{{ $gallery->title }}" @if($isYt) data-type="video" @endif>
+                    <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0">
+                        <img src="{{ $mediaThumb }}" class="img-fluid w-100 h-100 object-fit-cover" alt="{{ $gallery->title }}" style="min-height: 250px;" loading="lazy">
+                        @if($isYt)
+                        <span class="position-absolute top-50 start-50 translate-middle badge bg-danger rounded-circle p-2 shadow" style="width: 54px; height: 54px; display: inline-flex; align-items: center; justify-content: center; z-index: 2;">
+                            <i class="bi bi-play-fill text-white fs-3" style="margin-left: 2px;"></i>
+                        </span>
+                        @endif
+                        <div class="gallery-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end" style="background: linear-gradient(transparent, rgba(0,0,0,0.8)); opacity: 0; transition: 0.3s; z-index: 3;">
+                            <p class="mb-0 small fw-bold text-truncate">{{ $gallery->title }}</p>
                         </div>
-                    </a>
-                @elseif($gallery->type == 'video')
-                    @php $ytThumb = getYoutubeThumbnail($gallery->image_url); @endphp
-                    <a href="{{ getGalleryVideoUrl($gallery->image_url) }}" class="glightbox" data-gallery="business-gallery" data-title="{{ $gallery->title }}" data-type="video">
-                        <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0 bg-dark d-flex align-items-center justify-content-center" style="min-height: 250px;">
-                            @if($ytThumb)
-                                <img src="{{ $ytThumb }}" class="img-fluid w-100 h-100 object-fit-cover opacity-50" alt="{{ $gallery->title }}" style="min-height: 250px;">
-                                <i class="fas fa-play-circle fa-4x text-white position-absolute top-50 start-50 translate-middle opacity-75"></i>
-                            @else
-                                <i class="fas fa-play-circle fa-4x text-white opacity-75"></i>
-                            @endif
-                            <div class="gallery-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end" style="background: linear-gradient(transparent, rgba(0,0,0,0.8)); opacity: 1;">
-                                <p class="mb-0 small fw-bold">{{ $gallery->title }}</p>
-                            </div>
-                            <span class="badge bg-danger position-absolute top-0 start-0 m-3 shadow-sm"><i class="fas fa-video me-1"></i>Video</span>
-                        </div>
-                    </a>
-                @else
-                    @php
-                        $ext = strtolower(pathinfo($gallery->image_url, PATHINFO_EXTENSION));
-                        $docIcon = 'fa-file-alt';
-                        if ($ext == 'pdf') $docIcon = 'fa-file-pdf';
-                        elseif (in_array($ext, ['doc', 'docx'])) $docIcon = 'fa-file-word';
-                        elseif (in_array($ext, ['xls', 'xlsx', 'csv'])) $docIcon = 'fa-file-excel';
-                        elseif (in_array($ext, ['ppt', 'pptx'])) $docIcon = 'fa-file-powerpoint';
-                        elseif (in_array($ext, ['zip', 'rar'])) $docIcon = 'fa-file-archive';
-                    @endphp
-                    <a href="{{ $gallery->image_url }}" target="_blank">
-                        <div class="card-modern rounded-4 overflow-hidden position-relative gallery-item h-100 shadow-sm border-0 bg-light d-flex flex-column align-items-center justify-content-center p-4 text-center" style="min-height: 250px;">
-                            <i class="fas {{ $docIcon }} fa-4x text-primary mb-3"></i>
-                            <p class="mb-0 fw-bold text-dark">{{ $gallery->title }}</p>
-                            <small class="text-muted mt-2">Click to View</small>
-                            <span class="badge bg-primary position-absolute top-0 start-0 m-3 shadow-sm"><i class="fas fa-file-contract me-1"></i>Doc</span>
-                        </div>
-                    </a>
-                @endif
+                    </div>
+                </a>
             </div>
             @endforeach
         </div>
@@ -94,14 +74,15 @@
 @endsection
 
 @push('js')
-<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+<!-- CDN: https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js -->
+<script src="{{ asset('assets/common/js/glightbox.min.js') }}?v={{ filemtime(public_path('assets/common/js/glightbox.min.js')) }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const lightbox = GLightbox({
             selector: '.glightbox',
             touchNavigation: true,
             loop: true,
-            autoplayVideos: true
+            autoplayVideos: false
         });
     });
 </script>

@@ -23,7 +23,7 @@ class BookingsExport implements FromQuery, WithHeadings, WithMapping
         $query = AppointmentBooking::with(['department' => function ($q) {
             $q->select('id', 'department_name');
         }, 'expert' => function ($q) {
-            $q->select('id', 'expert_name');
+            $q->select('id', 'user_id')->with('user:id,first_name,last_name');
         }])
             ->where('appointment_bookings.business_id', getBusinessId());
 
@@ -74,7 +74,7 @@ class BookingsExport implements FromQuery, WithHeadings, WithMapping
         return [
             $row->token_number,
             $row->department ? $row->department->department_name : '',
-            $row->expert ? $row->expert->expert_name : '',
+            $row->expert?->user?->name ?? '',
             $row->user_name,
             $row->user_contact,
             $row->booking_date,

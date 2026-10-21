@@ -1,4 +1,10 @@
-@extends('front.layouts.main')
+@extends('front.layouts.main', [
+    'seo' => [
+        'title' => 'Explore Local Businesses - ' . config('app.name'),
+        'description' => 'Find verified local businesses, salons, stores, and services near you.',
+        'keywords' => 'local businesses, verified directory, salons, stores, services',
+    ]
+])
 
 @section('content')
 <div class="listing-page-wrap bg-light pb-5">
@@ -7,13 +13,11 @@
             <!-- Full Width Business List -->
             <div class="col-12">
                 <div class="row g-4">
-
-
                     @foreach($businesses as $business)
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="card border-0 shadow-sm rounded-4 overflow-hidden hover-lift h-100 transition-all">
                             <a href="{{ route('business-details', $business->slug) }}" class="position-relative overflow-hidden d-block business-card-img" style="height: 200px;">
-                                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}">
+                                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image ?? $business->business_logo) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}">
                                 <span class="badge bg-success position-absolute top-0 end-0 m-3 rounded-pill px-3">Open</span>
                                 
                                 <div class="position-absolute top-0 start-0 m-3">
@@ -29,7 +33,7 @@
                                         data-business-id="{{ $business->id }}"
                                         data-type="business"
                                         style="width: 35px; height: 35px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
-                                        <i class="{{ $business->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-6"></i>
+                                        <i class="{{ !empty($business->is_favorited) ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-6"></i>
                                     </button>
                                     @endguest
                                 </div>
@@ -184,9 +188,4 @@
         }
     }
 </style>
-
-
-@push('js')
-@endpush
-
 @endsection

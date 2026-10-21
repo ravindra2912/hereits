@@ -9,14 +9,17 @@ use App\Models\AppointmentBooking;
 use App\Models\AppointmentDepartment;
 use App\Models\BusinessCategory;
 use App\Models\BusinessSetting;
+use App\Services\CreditService;
+use App\Services\ExpertService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use App\Repositories\AppointmentRepository;
 
 class AppointmentController extends Controller
 {
-    public function __construct(protected AppointmentRepository $appointmentRepository) {}
+    public function __construct(protected ExpertService $expertService)
+    {
+    }
 
     private function getExpert()
     {
@@ -28,11 +31,10 @@ class AppointmentController extends Controller
         try {
             $expert = $this->getExpert();
             $settings = BusinessSetting::where('business_id', $expert->business_id)->first(['is_appointment_price_required', 'credit']);
-            $creditDeductionAmount = app(\App\Services\CreditService::class)->getAppointmentCreditDeductionAmount($expert->business_id, 'self');
 
-            return view('expert.appointment.create', compact('expert', 'settings', 'creditDeductionAmount'));
+            return view('expert.appointment.create', compact('expert', 'settings'));
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', checkResponse($e));
         }
     }
 
@@ -40,14 +42,14 @@ class AppointmentController extends Controller
     {
         try {
             $expert = $this->getExpert();
-            $slots = $this->appointmentRepository->resolveExpertTimeSlots($expert->id, $request->booking_date, null, $expert->business_id);
+            $slots = $this->expertService->getExpertTiming((int) $expert->id, (string) $request->booking_date, null, (int) $expert->business_id);
             return response()->json($slots);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => checkResponse($e)]);
         }
     }
 
-    public function store(Request $request)
+    public function store(Request $request, CreditService $creditService)
     {
         try {
             $expert = $this->getExpert();
@@ -64,21 +66,21 @@ class AppointmentController extends Controller
 
             $settings = BusinessSetting::where('business_id', $expert->business_id)->first(['id', 'is_appointment_price_required', 'credit', 'is_appointment_creadit_diduct_manual', 'deduct_credit_per_self_appointment']);
 
-            if ($settings->is_appointment_price_required && $request->status == 'completed') {
+            if ($settings && $settings->is_appointment_price_required && $request->status == 'completed') {
                 $rules['amount'] = 'required|numeric|min:0';
                 $rules['payment_type'] = 'required|in:Cash,Online';
             }
 
             $validator = Validator::make($request->all(), $rules);
 
-            $creditService = app(\App\Services\CreditService::class);
-            $requiredCredit = $creditService->getAppointmentCreditDeductionAmount($expert->business_id, 'self');
-            $availableCredit = $creditService->getAvailableCredits($expert->business_id);
-
             if ($validator->fails()) {
                 return response()->json(['success' => false, 'message' => $validator->errors()]);
-            } else if ($availableCredit < $requiredCredit) {
-                return response()->json(['success' => false, 'message' => 'Credit is not available, please contact admin']);
+            }
+
+            try {
+                $creditService->checkSelfAppointmentCredit($expert->business_id);
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'message' => checkResponse($e)]);
             }
 
             DB::beginTransaction();
@@ -105,7 +107,7 @@ class AppointmentController extends Controller
             $booking->status = $request->status;
             $booking->note = $request->note;
 
-            if ($settings->is_appointment_price_required && $request->status == 'completed') {
+            if ($settings && $settings->is_appointment_price_required && $request->status == 'completed') {
                 $booking->amount = $request->amount;
                 $booking->payment_type = $request->payment_type;
                 $booking->expert_note = $request->expert_note;
@@ -122,7 +124,7 @@ class AppointmentController extends Controller
             $booking->save();
 
             // Deduct credit
-            $creditService->deductAppointmentCredit($expert->business_id, 'self', $booking->id, 'Expert Self Appointment Booking');
+            $creditService->deductSelfAppointmentCharge($expert->business_id);
 
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Appointment created successfully', 'redirect' => route('expert.dashboard')]);
@@ -130,7 +132,7 @@ class AppointmentController extends Controller
             if (DB::transactionLevel() > 0) {
                 DB::rollBack();
             }
-            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => checkResponse($e)]);
         }
     }
 }

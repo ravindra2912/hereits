@@ -19,8 +19,9 @@ class PosInventoryController extends Controller
         $business_id = getPosBusinessId();
 
         if ($request->ajax()) {
-            $data = Product::with('category')
-                ->where('business_id', $business_id);
+            $data = Product::select('products.*')
+                ->with('category:id,name')
+                ->where('products.business_id', $business_id);
 
             return Datatables::of($data)
                 ->addIndexColumn()
@@ -68,7 +69,7 @@ class PosInventoryController extends Controller
     public function updateStock(Request $request)
     {
         if (!checkPosPermission('edit_inventory')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized Access'], 403);
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to edit inventory.'], 403);
         }
 
         $request->validate([

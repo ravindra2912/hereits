@@ -12,13 +12,11 @@ use App\Http\Middleware\Expert;
 use App\Http\Middleware\CheckBusinessModule;
 use App\Http\Middleware\MinifyHtml;
 use App\Http\Middleware\POS;
-use App\Http\Middleware\CheckBusinessPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        channels: __DIR__.'/../routes/channels.php',
         api: __DIR__ . '/../routes/api.php',
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
@@ -27,10 +25,13 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::prefix('business-manager')->group(base_path('routes/business.php'));
             Route::prefix('expert-manager')->group(base_path('routes/expert.php'));
             Route::prefix('pos-manager')->group(base_path('routes/pos.php'));
+            Route::middleware('web')->group(base_path('routes/documents.php'));
             Route::middleware('web')->group(base_path('routes/web.php'));
         }
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'admin' => Admin::class,
             'business' => Business::class,
@@ -38,11 +39,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'front' => Front::class,
             'pos' => POS::class,
             'checkModule' => CheckBusinessModule::class,
-            'checkBusinessPerm' => CheckBusinessPermission::class,
         ]);
 
         $middleware->redirectTo(
             guests: function (Request $request) {
+                if ($request->is('api/*') || $request->expectsJson()) {
+                    return null;
+                }
                 if ($request->is('expert-manager/*') || $request->is('expert-manager')) {
                     return route('expert.login');
                 }
@@ -80,5 +83,34 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'status_code' => 401,
+                    'message' => 'Unauthenticated or invalid API token.',
+                ], 401);
+            }
+        });
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'status_code' => 404,
+                    'message' => 'Requested API route or resource not found.',
+                ], 404);
+            }
+        });
+
+        $exceptions->render(function (\Illuminate\Validation\ValidationException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'status_code' => 422,
+                    'message' => $e->validator->errors()->first() ?? 'Validation failed.',
+                    'errors' => $e->validator->errors(),
+                ], 422);
+            }
+        });
     })->create();

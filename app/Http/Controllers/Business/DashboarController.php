@@ -18,7 +18,7 @@ class DashboarController extends Controller
      */
     public function index(Request $request): View
     {
-        $businessDetails = Business::select('id', 'status', 'name', 'slug')
+        $businessDetails = Business::select('id', 'status', 'name')
             ->with([
                 'businessSetting' => function ($q) {
                     $q->select('business_id', 'is_ecommerce_system', 'is_service_system', 'is_appointment_system', 'is_appointment_with_department');
@@ -38,7 +38,7 @@ class DashboarController extends Controller
         $businessDetails = Business::select('id', 'status')
             ->with([
                 'businessSetting' => function ($q) {
-                    $q->select('business_id', 'is_ecommerce_system', 'is_service_system', 'is_appointment_system', 'is_appointment_with_department', 'credit');
+                    $q->select('business_id', 'is_ecommerce_system', 'is_service_system', 'is_appointment_system', 'is_appointment_with_department', 'subscription_expiry_date', 'credit');
                 }
             ])
             ->withCount([
@@ -105,7 +105,7 @@ class DashboarController extends Controller
             $success = true;
             $message = 'Success';
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
 
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data]);

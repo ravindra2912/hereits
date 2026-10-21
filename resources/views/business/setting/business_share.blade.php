@@ -32,46 +32,12 @@
                 <p class="text-muted mb-4">Share this link directly with your customers to redirect them to your business page. You can also print the QR code and display it at your store.</p>
 
                 <label class="form-label small fw-bold text-uppercase text-muted">Public URL</label>
-                <div class="mb-4">
-                    <input type="text" id="qrText" class="form-control form-control-lg bg-light" value="{{ route('business-details', $business->slug) }}" readonly>
-                </div>
-
-                <div class="d-flex flex-nowrap gap-2 gap-md-3">
-                    <button type="button" class="btn btn-outline-success rounded-pill px-3 px-md-4 fw-bold" data-bs-toggle="modal" data-bs-target="#whatsappModal" title="Share on WhatsApp">
-                        <i class="bi bi-whatsapp"></i><span class="d-none d-md-inline ms-2">WhatsApp</span>
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary rounded-pill px-3 px-md-4 fw-bold social-copylink" data-url="{{ route('business-details', $business->slug) }}" title="Copy Link">
-                        <i class="bi bi-link-45deg"></i><span class="d-none d-md-inline ms-2">Copy</span>
+                <div class="input-group input-group-lg mb-2">
+                    <input type="text" id="qrText" class="form-control bg-light" value="{{ route('business-details', $business->slug) }}" readonly>
+                    <button class="btn btn-primary fw-bold" type="button" id="copylink" data-url="{{ route('business-details', $business->slug) }}">
+                        <i class="bi bi-clipboard me-2"></i>Copy Link
                     </button>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- WhatsApp Share Modal -->
-<div class="modal fade" id="whatsappModal" tabindex="-1" aria-labelledby="whatsappModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow rounded-4">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold" id="whatsappModalLabel">Share via WhatsApp</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <p class="text-muted mb-4">Enter the contact number (with country code) you want to share your business link with.</p>
-                <div class="mb-3">
-                    <label for="whatsappNumber" class="form-label small fw-bold text-uppercase text-muted">Contact Number</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-telephone"></i></span>
-                        <input type="number" class="form-control bg-light border-start-0" id="whatsappNumber" placeholder="Enter contact number here">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer border-top-0 pt-0">
-                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success rounded-pill px-4 fw-bold" id="shareToWhatsapp">
-                    <i class="bi bi-share me-2"></i>Share
-                </button>
             </div>
         </div>
     </div>
@@ -81,33 +47,13 @@
 
 @push('js')
 <script>
-    $('.social-copylink').click(function() {
+    $('#copylink').click(function() {
         var $temp = $("<input>");
         $("body").append($temp);
         $temp.val($(this).data('url')).select();
         document.execCommand("copy");
         $temp.remove();
         toastr.success("Link copied to clipboard");
-    });
-
-    $('#shareToWhatsapp').click(function() {
-        var number = $('#whatsappNumber').val();
-        var url = $('#qrText').val();
-
-        if (!number) {
-            toastr.error("Please enter a contact number");
-            return;
-        }
-
-        // Remove any non-numeric characters just in case
-        number = number.replace(/\D/g, '');
-
-        var whatsappUrl = "https://wa.me/91" + number + "?text=" + encodeURIComponent("Check out my business: " + url);
-        window.open(whatsappUrl, '_blank');
-
-        // Close modal
-        var modal = bootstrap.Modal.getInstance(document.getElementById('whatsappModal'));
-        modal.hide();
     });
 </script>
 @endpush

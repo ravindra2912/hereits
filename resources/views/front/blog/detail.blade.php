@@ -1,7 +1,7 @@
 @extends('front.layouts.main', ['seo' => [
-'title' => $blog->meta_title ?? ($blog->title . ' | Hereits Blog'),
+'title' => $blog->meta_title ?? ($blog->title . ' | BrandBatao Blog'),
 'description' => $blog->meta_description ?? Str::limit(strip_tags($blog->short_description ?? $blog->content), 160),
-'keywords' => $blog->meta_keywords ?? 'business blog, Hereits, ' . $blog->title,
+'keywords' => $blog->meta_keywords ?? 'business blog, BrandBatao, ' . $blog->title,
 'image' => getImage($blog->image)
 ]])
 
@@ -48,7 +48,7 @@
             <div class="col-lg-8">
                 @if($blog->image)
                 <div class="mb-5 rounded-5 overflow-hidden shadow-sm">
-                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($blog->image) }}" class="w-100 img-fluid object-fit-cover" style="height: 500px;" alt="{{ $blog->title }}">
+                    <img src="{{ getImage($blog->image) }}" class="w-100 img-fluid object-fit-cover" style="height: 500px;" alt="{{ $blog->title }}">
                 </div>
                 @endif
 
@@ -81,9 +81,9 @@
                 <div class="sticky-top" style="top: 100px;">
                     <!-- About Section -->
                     <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-primary text-white">
-                        <h5 class="fw-bold mb-3">Join Hereits</h5>
+                        <h5 class="fw-bold mb-3">Join BrandBatao</h5>
                         <p class="small opacity-90 mb-4">Start your business journey today. List your services and reach thousands of customers.</p>
-                        <a href="{{ route('register.business') }}" class="btn btn-light rounded-pill fw-bold w-100">Get Started for Free</a>
+                        <a href="{{ route('register.business') }}" class="btn btn-light rounded-pill fw-bold w-100">Start Free Trial</a>
                     </div>
 
                     <!-- Related Blogs -->
@@ -94,7 +94,7 @@
                             @foreach($relatedBlogs as $rBlog)
                             <a href="{{ route('blog.detail', $rBlog->slug) }}" class="text-decoration-none d-flex gap-3 group">
                                 <div class="rounded-3 overflow-hidden flex-shrink-0" style="width: 80px; height: 80px;">
-                                    <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($rBlog->image) }}" class="w-100 h-100 object-fit-cover transition-all group-hover-scale" alt="{{ $rBlog->title }}">
+                                    <img src="{{ getImage($rBlog->image) }}" class="w-100 h-100 object-fit-cover transition-all group-hover-scale" alt="{{ $rBlog->title }}">
                                 </div>
                                 <div>
                                     <h6 class="text-dark fw-bold mb-1 lh-sm group-hover-primary transition-all">{{ Str::limit($rBlog->title, 50) }}</h6>

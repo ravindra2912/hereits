@@ -21,7 +21,7 @@ class LocationController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'radius' => 'nullable|numeric|min:5',
-            'area_lat_long' => 'nullable|string', // Format: "lat,long" or similar
+            'area_lat_long' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -42,14 +42,13 @@ class LocationController extends Controller
             $locationData['area_lat_long'] = $request->area_lat_long;
         }
 
-
         // Manage location history (last 5 unique locations)
-        $history = json_decode(Cookie::get('location_history', '[]'), true);
-        
+        $history = json_decode(Cookie::get('location_history', '[]'), true) ?: [];
+
         // Remove existing occurrence of this location to move it to top
-        $history = array_filter($history, function($item) use ($request) {
-            return $item['location_name'] !== $request->location_name;
-        });
+        $history = array_values(array_filter($history, function ($item) use ($request) {
+            return ($item['location_name'] ?? '') !== $request->location_name;
+        }));
 
         // Add new location to the beginning
         array_unshift($history, $locationData);
@@ -64,7 +63,6 @@ class LocationController extends Controller
         return response()->json(['status' => 'success', 'message' => 'Location updated successfully'])
             ->withCookie($locationCookie)
             ->withCookie($historyCookie);
-
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Business;
 
 use App\Models\User;
+use App\Models\Business;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -10,22 +11,32 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\RedirectResponse;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Models\Business;
 use Illuminate\Support\Facades\Redirect;
-
 
 class AuthController extends Controller
 {
-
     /**
-     * Display the admin login form.
+     * Display the business login form.
      */
     public function index(Request $request): View|\Illuminate\Http\RedirectResponse
     {
         if (Auth::check()) {
-            if (Auth::user()->role == "Business") {
+            $user = Auth::user();
+            if ($user->role == "Business") {
                 return redirect()->route('business.dashboard');
             } else {
+                $hasAccess = \App\Models\BusinessUser::with('role')
+                    ->where('user_id', $user->id)
+                    ->get()
+                    ->filter(function ($bu) {
+                        return !empty($bu->role?->permissions['business_access']);
+                    })
+                    ->isNotEmpty();
+
+                if ($hasAccess) {
+                    return redirect()->route('business.dashboard');
+                }
+
                 return redirect()->route('home');
             }
         }
@@ -50,45 +61,65 @@ class AuthController extends Controller
 
     public function store(LoginRequest $request): RedirectResponse
     {
-        $user = User::where('email', $request->email)->first();
-        if ($user && Hash::check($request['password'], $user->password)) {
-            $isBusinessOwner = ($user->role === 'Business');
-            $isStaff = \App\Models\BusinessUser::where('user_id', $user->id)->exists();
-
-            if (!$isBusinessOwner && !$isStaff) {
-                return redirect()->back()->with('error', 'You do not have access to the business panel.');
+        $loginInput = $request->email;
+        $user = User::where(function ($q) use ($loginInput) {
+            $q->where('email', $loginInput);
+            if (is_numeric($loginInput)) {
+                $q->orWhere('contact', $loginInput);
             }
+        })->first();
 
-            if ($isBusinessOwner) {
-                if ($user->business_id == null) {
-                    $business = Business::select('id', 'owner_id', 'name', 'business_image')
-                        ->with(['businessSetting:id,business_id'])
-                        ->where('owner_id', $user->id)->first();
+        if ($user && Hash::check($request['password'], $user->password)) {
+            $hasAccess = false;
+            $targetBusinessId = null;
+
+            if ($user->role === 'Business') {
+                $hasAccess = true;
+                $targetBusinessId = $user->business_id;
+                if (!$targetBusinessId) {
+                    $business = Business::where('owner_id', $user->id)->first();
                     if ($business) {
-                        $user->business_id = $business->id;
+                        $targetBusinessId = $business->id;
+                        $user->business_id = $targetBusinessId;
                         $user->save();
-                        $user->getBusinessDetails = $business;
-                    } else {
-                        return redirect()->back()->with('error', 'Business not found!');
                     }
                 }
             } else {
-                // For staff, get and sync their associated business ID context
-                $businessUser = \App\Models\BusinessUser::where('user_id', $user->id)->first();
-                if ($businessUser) {
-                    $user->business_id = $businessUser->business_id;
-                    $user->save();
-                } else {
-                    return redirect()->back()->with('error', 'No associated business found for staff!');
+                // Check all business permissions for this staff user
+                $accessibleBusinessUsers = \App\Models\BusinessUser::with('role')
+                    ->where('user_id', $user->id)
+                    ->get()
+                    ->filter(function ($bu) {
+                        return !empty($bu->role?->permissions['business_access']);
+                    });
+
+                if ($accessibleBusinessUsers->isNotEmpty()) {
+                    $hasAccess = true;
+
+                    // If user's current business_id is valid for this user, keep it; otherwise set to the first valid one
+                    if ($user->business_id && $accessibleBusinessUsers->contains('business_id', $user->business_id)) {
+                        $targetBusinessId = $user->business_id;
+                    } else {
+                        $targetBusinessId = $accessibleBusinessUsers->first()->business_id;
+                        $user->business_id = $targetBusinessId;
+                        $user->save();
+                    }
                 }
+            }
+
+            if (!$hasAccess) {
+                return redirect()->back()->with('error', 'You do not have permission to access the business panel.');
             }
 
             $request->authenticate();
             $request->session()->regenerate();
 
-            $user->syncBusinessContextToSession();
-            // Synchronize permissions to session immediately upon successful login
-            $user->syncPermissionsToSession($user->business_id);
+            // Enforce single device/browser login per user
+            app(\App\Services\SessionLogoutService::class)->logoutOtherDevices($user->id);
+
+            // Clear old session and sync fresh business session data & permissions
+            app(\App\Services\BusinessSynchronizationService::class)->clearBusinessSession();
+            $user->syncBusinessSessionData($targetBusinessId);
 
             return redirect()->intended(route('business.dashboard', absolute: false));
         } else {
@@ -102,8 +133,7 @@ class AuthController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $request->session()->regenerate();
 
         return redirect()->route('business.login');
     }

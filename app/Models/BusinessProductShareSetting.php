@@ -2,16 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BusinessProductShareSetting extends Model
 {
-    use HasFactory, SoftDeletes;
-
-    protected $table = 'business_product_share_settings';
+    use SoftDeletes;
 
     protected $fillable = [
         'source_business_id',
@@ -19,19 +15,13 @@ class BusinessProductShareSetting extends Model
         'status',
     ];
 
-    /**
-     * Source Business that shares products
-     */
-    public function sourceBusiness(): BelongsTo
+    public function sourceBusiness()
     {
-        return $this->belongsTo(Business::class, 'source_business_id', 'id');
+        return $this->belongsTo(Business::class, 'source_business_id');
     }
 
-    /**
-     * Target Business that receives/displays shared products
-     */
-    public function targetBusiness(): BelongsTo
+    public function targetBusiness()
     {
-        return $this->belongsTo(Business::class, 'target_business_id', 'id');
+        return $this->belongsTo(Business::class, 'target_business_id');
     }
 }

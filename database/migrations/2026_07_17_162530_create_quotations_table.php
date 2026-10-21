@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('business_id')->index();
             $table->string('quotation_no')->index();
-            $table->unsignedBigInteger('created_by_id')->index();
+            $table->unsignedBigInteger('created_by_id')->nullable()->index();
             $table->unsignedBigInteger('customer_id')->nullable()->index();
             $table->string('customer_name')->nullable();
             $table->string('customer_contact')->nullable();
@@ -37,22 +37,23 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->foreign('business_id')->references('id')->on('businesses')->onDelete('cascade');
-            $table->foreign('created_by_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('customer_id')->references('id')->on('users')->nullOnDelete();
-            $table->foreign('order_id')->references('id')->on('orders')->onDelete('set null');
+            $table->foreign('created_by_id')->references('id')->on('users')->noActionOnDelete();
+            $table->foreign('customer_id')->references('id')->on('users')->noActionOnDelete();
+            $table->foreign('order_id')->references('id')->on('orders')->noActionOnDelete();
         });
 
         Schema::create('quotation_items', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('quotation_id')->index();
-            $table->unsignedBigInteger('item_id')->index();
+            $table->unsignedBigInteger('item_id')->nullable()->index();
             $table->string('item_name');
             $table->decimal('price', 10, 2)->default(0);
             $table->integer('qty')->default(1);
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('quotation_id')->references('id')->on('quotations')->onDelete('cascade');
-            $table->foreign('item_id')->references('id')->on('products')->onDelete('cascade');
+            $table->foreign('item_id')->references('id')->on('products')->nullOnDelete();
         });
     }
 

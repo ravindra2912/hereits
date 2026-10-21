@@ -60,11 +60,6 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
-
-        'ai-agent' => [
-            'driver' => 'ai-agent',
-            'provider' => 'users',
-        ],
     ],
 
     /*

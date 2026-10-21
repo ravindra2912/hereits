@@ -38,7 +38,7 @@ class DashboardController extends Controller
 
             return view('expert.dashboard', compact('expert', 'current', 'queue', 'completedCount', 'settings'));
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', checkResponse($e));
         }
     }
 
@@ -107,7 +107,7 @@ class DashboardController extends Controller
             if (DB::transactionLevel() > 0) {
                 DB::rollBack();
             }
-            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => checkResponse($e)]);
         }
     }
 
@@ -186,7 +186,7 @@ class DashboardController extends Controller
 
             return view('expert.history', compact('history', 'metrics', 'settings'));
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', checkResponse($e));
         }
     }
 }

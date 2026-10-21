@@ -33,7 +33,7 @@
         <div class="col-md-4">
           <div class="text-center mb-4">
             <div class="avtar">
-              <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($cat->image) }}" class="avtar_img rounded-rect" alt="Category Image" loading="lazy" />
+              <img src="{{ getImage($cat->image) }}" class="avtar_img rounded-rect" alt="Category Image" loading="lazy" />
               <label for="profile" title="Change Image"><i class="bi bi-pencil-fill"></i></label>
               <input type="file" name="image" class="avtar_input" id="profile" accept="image/png, image/webp, image/jpeg" />
             </div>
@@ -73,34 +73,6 @@
               <div class="mb-3">
                 <label class="form-label">Deduct Credit (Self Appointment) <span class="text-danger">*</span></label>
                 <input type="number" class="form-control required" name="deduct_credit_per_self_appointment" value="{{ $cat->deduct_credit_per_self_appointment }}" min="0" step="0.01" placeholder="e.g. 1.00" />
-              </div>
-            </div>
-
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label class="form-label">Deduct Credit (Customer Order) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control required" name="deduct_credit_per_customer_order" value="{{ $cat->deduct_credit_per_customer_order ?? 1 }}" min="0" step="0.01" placeholder="e.g. 1.00" />
-              </div>
-            </div>
-
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label class="form-label">Deduct Credit (Self / POS Order) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control required" name="deduct_credit_per_self_order" value="{{ $cat->deduct_credit_per_self_order ?? 1 }}" min="0" step="0.01" placeholder="e.g. 1.00" />
-              </div>
-            </div>
-
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label class="form-label">Deduct Credit (Chat Session / 24h) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control required" name="deduct_credit_per_chat" value="{{ $cat->deduct_credit_per_chat ?? 1 }}" min="0" step="0.01" placeholder="e.g. 1.00" />
-              </div>
-            </div>
-
-            <div class="col-md-6">
-              <div class="mb-3">
-                <label class="form-label">Deduct Credit (Quotation Creation) <span class="text-danger">*</span></label>
-                <input type="number" class="form-control required" name="deduct_credit_per_quotation" value="{{ $cat->deduct_credit_per_quotation ?? 1 }}" min="0" step="0.01" placeholder="e.g. 1.00" />
               </div>
             </div>
           </div>

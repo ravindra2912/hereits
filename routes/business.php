@@ -8,191 +8,293 @@ use App\Http\Controllers\Business\SettingController;
 use App\Http\Controllers\Business\DashboarController;
 use App\Http\Controllers\Business\ExpertController;
 use App\Http\Controllers\Business\CustomerController;
+use App\Http\Controllers\Business\CustomerRoleController;
+use App\Http\Controllers\Business\OfferController;
 use App\Http\Controllers\Business\AppointmentBookingController;
 use App\Http\Controllers\Business\AppointmentDepartmentController;
 use App\Http\Controllers\Business\ProductController;
+use App\Http\Controllers\Business\ProductPlanController;
 use App\Http\Controllers\Business\BannerController;
 use App\Http\Controllers\Business\ServiceController;
+use App\Http\Controllers\Business\ServicePlanController;
+use App\Http\Controllers\Business\SubscriptionPlanController;
 use App\Http\Controllers\Business\CreditController;
 use App\Http\Controllers\Business\PurchaseHistoryController;
 use App\Http\Controllers\Business\GalleryController;
-use App\Http\Controllers\Business\VisitorAnalyticsController;
-use App\Http\Controllers\ChatController;
+use App\Http\Controllers\Business\StateDeliveryChargeController;
 
 Route::name('business.')->group(function () {
     Route::middleware('web', 'guest')->group(function () {
 
         Route::controller(AuthController::class)->group(function () {
             Route::get('login', 'index')->name('login');
-            Route::post('login', 'store')->name('login');
+            Route::post('login', 'store')->name('login.store')->middleware('throttle:6,1');
         });
     });
 
     Route::middleware(['web', 'business'])->group(function () {
-        Route::prefix('chat')->controller(ChatController::class)->name('chat.')->group(function () {
-            Route::get('/', 'index')->name('index');
-            Route::get('start/{participantType}/{participantId}', 'startConversation')->name('start');
-            Route::get('conversations', 'conversations')->name('conversations.index');
-            Route::post('conversations', 'storeConversation')->name('conversations.store');
-            Route::get('conversations/{conversation}', 'show')->name('conversations.show');
-            Route::post('conversations/{conversation}/messages', 'storeMessage')->name('conversations.messages.store');
-            Route::post('conversations/{conversation}/read', 'read')->name('conversations.read');
-            Route::post('conversations/{conversation}/clear', 'clear')->name('conversations.clear');
-            Route::delete('conversations/{conversation}', 'destroy')->name('conversations.destroy');
-            Route::post('conversations/{conversation}/leave', 'leave')->name('conversations.leave');
-            Route::post('conversations/{conversation}/block', 'block')->name('conversations.block');
-            Route::post('conversations/{conversation}/update', 'updateGroup')->name('conversations.update');
-            Route::post('conversations/{conversation}/add-member', 'addGroupMember')->name('conversations.add_member');
-            Route::post('conversations/{conversation}/remove-member', 'removeGroupMember')->name('conversations.remove_member');
-            Route::post('conversations/{conversation}/unlock', 'unlock')->name('conversations.unlock');
-            Route::get('participants/search', 'searchParticipants')->name('participants.search');
-        });
-
         Route::controller(DashboarController::class)->group(function () {
             Route::get('dashboard', 'index')->name('dashboard');
-            Route::get('analytics', 'analyticsPageView')->name('analytics')->middleware('checkBusinessPerm:analytics');
+            Route::get('analytics', 'analyticsPageView')->name('analytics');
+            Route::get('visitors', [\App\Http\Controllers\Business\VisitorController::class, 'index'])->name('visitors');
+            Route::prefix('offers')->name('offer.')->group(function () {
+                Route::get('/', [OfferController::class, 'index'])->name('index');
+                Route::get('/search-items', [OfferController::class, 'searchItems'])->name('search-items');
+                Route::post('/', [OfferController::class, 'store'])->name('store');
+                Route::get('/{id}', [OfferController::class, 'show'])->name('show');
+                Route::post('/{id}/update', [OfferController::class, 'update'])->name('update');
+                Route::post('/{id}/status-toggle', [OfferController::class, 'toggleStatus'])->name('status-toggle');
+                Route::delete('/{id}', [OfferController::class, 'destroy'])->name('destroy');
+            });
             Route::get('influencer', 'influencer')->name('influencer');
-            Route::post('dashboard-analytics', 'analytics')->name('dashboard.analytics')->middleware('checkBusinessPerm:analytics');
-        });
-
-        Route::controller(VisitorAnalyticsController::class)->group(function () {
-            Route::get('visitors', 'index')->name('visitors')->middleware('checkBusinessPerm:analytics');
-            Route::get('visitors/data', 'chartData')->name('visitors.data')->middleware('checkBusinessPerm:analytics');
+            Route::post('dashboard-analytics', 'analytics')->name('dashboard.analytics');
         });
 
         Route::middleware(['checkModule:product'])->group(function () {
-            Route::post('product/image-store', [ProductController::class, 'storeImage'])->name('product.image.store')->middleware('checkBusinessPerm:product,products,update');
-            Route::post('product/image-reorder', [ProductController::class, 'reorderImages'])->name('product.image.reorder')->middleware('checkBusinessPerm:product,products,update');
-            Route::delete('product/image-delete/{id}', [ProductController::class, 'deleteImage'])->name('product.image.delete')->middleware('checkBusinessPerm:product,products,update');
-            Route::get('product/inventory', [ProductController::class, 'inventory'])->name('product.inventory')->middleware('checkBusinessPerm:product,products');
-            Route::post('product/update-quantity', [ProductController::class, 'updateQuantity'])->name('product.update-quantity')->middleware('checkBusinessPerm:product,products');
-            Route::get('product/export', [ProductController::class, 'export'])->name('product.export')->middleware('checkBusinessPerm:product,products');
-            Route::post('product/import', [ProductController::class, 'import'])->name('product.import')->middleware('checkBusinessPerm:product,products');
-            Route::resource('product', ProductController::class)->middleware('checkBusinessPerm:product,products');
-            Route::post('product/status/{id}', [ProductController::class, 'updateStatus'])->name('product.status.update')->middleware('checkBusinessPerm:product,products');
-            Route::post('product-category/reorder', [\App\Http\Controllers\Business\ProductCategoryController::class, 'reorder'])->name('product-category.reorder')->middleware('checkBusinessPerm:product,categories');
-            Route::resource('product-category', \App\Http\Controllers\Business\ProductCategoryController::class)->middleware('checkBusinessPerm:product,categories');
-            Route::post('product-category/status/{id}', [\App\Http\Controllers\Business\ProductCategoryController::class, 'updateStatus'])->name('product-category.status.update')->middleware('checkBusinessPerm:product,categories');
-            Route::resource('order', \App\Http\Controllers\Business\OrderController::class)->middleware('checkBusinessPerm:owner_only');
-            Route::post('order/update-status/{id}', [\App\Http\Controllers\Business\OrderController::class, 'updateStatus'])->name('order.update-status')->middleware('checkBusinessPerm:owner_only');
-            Route::post('order/update-customer/{id}', [\App\Http\Controllers\Business\OrderController::class, 'updateCustomer'])->name('order.update-customer')->middleware('checkBusinessPerm:owner_only');
+            Route::post('product/image-store', [ProductController::class, 'storeImage'])->name('product.image.store');
+            Route::post('product/image-reorder', [ProductController::class, 'reorderImages'])->name('product.image.reorder');
+            Route::delete('product/image-delete/{id}', [ProductController::class, 'deleteImage'])->name('product.image.delete');
+            Route::get('product/inventory', [ProductController::class, 'inventory'])->name('product.inventory');
+            Route::post('product/update-quantity', [ProductController::class, 'updateQuantity'])->name('product.update-quantity');
+            Route::get('product/export', [ProductController::class, 'export'])->name('product.export');
+            Route::post('product/import', [ProductController::class, 'import'])->name('product.import');
+            Route::get('product/export-stock-price', [ProductController::class, 'exportStockPrice'])->name('product.export-stock-price');
+            Route::post('product/import-stock-price', [ProductController::class, 'importStockPrice'])->name('product.import-stock-price');
+            Route::post('product/status-toggle', [ProductController::class, 'statusToggle'])->name('product.status-toggle');
+            Route::get('product/{id}/detail', [ProductController::class, 'showDetail'])->name('product.showDetail');
+            Route::resource('product', ProductController::class);
+            Route::get('product-share', [\App\Http\Controllers\Business\ProductShareController::class, 'index'])->name('product.share.index');
+            Route::get('product-share/search-businesses', [\App\Http\Controllers\Business\ProductShareController::class, 'searchBusinesses'])->name('product.share.search_businesses');
+            Route::post('product-share', [\App\Http\Controllers\Business\ProductShareController::class, 'store'])->name('product.share.store');
+            Route::post('product-share/status-toggle', [\App\Http\Controllers\Business\ProductShareController::class, 'statusToggle'])->name('product.share.status-toggle');
+            Route::delete('product-share/{id}', [\App\Http\Controllers\Business\ProductShareController::class, 'destroy'])->name('product.share.destroy');
+            Route::get('product-share/manage/{id}', [\App\Http\Controllers\Business\ProductShareController::class, 'manage'])->name('product.share.manage');
+            Route::post('product-share/manage/{id}/action', [\App\Http\Controllers\Business\ProductShareController::class, 'action'])->name('product.share.manage.action');
+            Route::post('product-share/manage/{id}/sync-categories', [\App\Http\Controllers\Business\ProductShareController::class, 'syncCategories'])->name('product.share.manage.sync_categories');
+
+            Route::post('product-category/status-toggle', [\App\Http\Controllers\Business\ProductCategoryController::class, 'statusToggle'])->name('product-category.status-toggle');
+            Route::post('product-category/reorder', [\App\Http\Controllers\Business\ProductCategoryController::class, 'reorder'])->name('product-category.reorder');
+            Route::resource('product-category', \App\Http\Controllers\Business\ProductCategoryController::class);
+            Route::post('label/status-toggle', [\App\Http\Controllers\Business\LabelController::class, 'statusToggle'])->name('label.status-toggle');
+            Route::post('label/reorder', [\App\Http\Controllers\Business\LabelController::class, 'reorder'])->name('label.reorder');
+            Route::resource('label', \App\Http\Controllers\Business\LabelController::class);
+            Route::resource('order', \App\Http\Controllers\Business\OrderController::class);
+            Route::post('order/update-status/{id}', [\App\Http\Controllers\Business\OrderController::class, 'updateStatus'])->name('order.update-status');
+
 
             // Home Management Routes
             Route::controller(\App\Http\Controllers\Business\HomeManagementController::class)->group(function () {
                 Route::get('home-management', 'index')->name('home-management');
-                Route::post('home-management/add-category', 'addCategory')->name('home-management.add-category');
-                Route::post('home-management/remove-category', 'removeCategory')->name('home-management.remove-category');
-                Route::get('home-management/search-category', 'searchCategory')->name('home-management.search-category');
-            })->middleware('checkBusinessPerm:home_management');
 
+                // Layouts Routes
+                Route::get('home-management/layouts', 'layoutsIndex')->name('home-management.layouts');
+                Route::get('home-management/layouts/search-items', 'layoutsSearchItems')->name('home-management.layouts.search-items');
+                Route::post('home-management/layouts/store', 'layoutsStore')->name('home-management.layouts.store');
+                Route::get('home-management/layouts/{id}/edit', 'layoutsEdit')->name('home-management.layouts.edit');
+                Route::post('home-management/layouts/{id}/update', 'layoutsUpdate')->name('home-management.layouts.update');
+                Route::post('home-management/layouts/update-order', 'layoutsUpdateOrder')->name('home-management.layouts.update-order');
+                Route::post('home-management/layouts/{id}/toggle-status', 'layoutsToggleStatus')->name('home-management.layouts.toggle-status')->whereNumber('id');
+                Route::post('home-management/layouts/item/{id}/toggle-status', 'layoutsItemToggleStatus')->name('home-management.layouts.item.toggle-status')->whereNumber('id');
+                Route::delete('home-management/layouts/{id}', 'layoutsDestroy')->name('home-management.layouts.destroy');
 
+                // Settings Routes (Business Home Popups)
+                Route::get('home-management/settings', 'settingsIndex')->name('home-management.settings');
+                Route::get('home-management/google-sheets-setup', 'googleSheetsSetupHelp')->name('home-management.google-sheets-setup');
+                Route::post('home-management/settings/store', 'settingsStore')->name('home-management.settings.store');
+                Route::get('home-management/settings/{id}/edit', 'settingsEdit')->name('home-management.settings.edit');
+                Route::post('home-management/settings/{id}/update', 'settingsUpdate')->name('home-management.settings.update');
+                Route::post('home-management/settings/{id}/toggle-status', 'settingsToggleStatus')->name('home-management.settings.toggle-status');
+                Route::delete('home-management/settings/{id}', 'settingsDestroy')->name('home-management.settings.destroy');
 
-            // Quotation Routes
-            Route::get('quotation/search-customer', [\App\Http\Controllers\Business\QuotationController::class, 'searchCustomer'])->name('quotation.search-customer')->middleware('checkBusinessPerm:product,products');
-            Route::get('quotation/search-product', [\App\Http\Controllers\Business\QuotationController::class, 'searchProduct'])->name('quotation.search-product')->middleware('checkBusinessPerm:product,products');
-            Route::resource('quotation', \App\Http\Controllers\Business\QuotationController::class)->middleware('checkBusinessPerm:product,products');
-            Route::post('quotation/convert/{id}', [\App\Http\Controllers\Business\QuotationController::class, 'convertToOrder'])->name('quotation.convert')->middleware('checkBusinessPerm:product,products');
-            Route::post('quotation/cancel/{id}', [\App\Http\Controllers\Business\QuotationController::class, 'cancel'])->name('quotation.cancel')->middleware('checkBusinessPerm:product,products');
-            Route::post('quotation/notify/{id}', [\App\Http\Controllers\Business\QuotationController::class, 'notify'])->name('quotation.notify')->middleware('checkBusinessPerm:product,products');
+            });
 
-            // Product Share Routes
-            Route::controller(\App\Http\Controllers\Business\ProductShareController::class)->prefix('product-share')->name('product.share.')->group(function () {
-                Route::get('/', 'index')->name('index');
-                Route::get('search-businesses', 'searchBusinesses')->name('search_businesses');
-                Route::post('/', 'store')->name('store');
-                Route::post('status-toggle', 'statusToggle')->name('status-toggle');
-                Route::get('{id}/manage', 'manage')->name('manage');
-                Route::post('{id}/action', 'action')->name('manage.action');
-                Route::delete('{id}', 'destroy')->name('destroy');
-            })->middleware('checkBusinessPerm:product,products');
+            // Campaign Leads Routes
+            Route::controller(\App\Http\Controllers\Business\CampaignLeadController::class)->group(function () {
+                Route::get('home-management/leads', 'index')->name('home-management.leads');
+                Route::post('home-management/leads/store', 'store')->name('home-management.leads.store');
+                Route::get('home-management/leads/{id}/edit', 'edit')->name('home-management.leads.edit');
+                Route::post('home-management/leads/{id}/update', 'update')->name('home-management.leads.update');
+                Route::post('home-management/leads/{id}/recall-webhook', 'recallWebhook')->name('home-management.leads.recall-webhook');
+                Route::delete('home-management/leads/{id}', 'destroy')->name('home-management.leads.destroy');
+            });
+
+            // Product Plan Routes
+            Route::controller(ProductPlanController::class)->group(function () {
+                Route::get('product-plans', 'index')->name('product.plans');
+                Route::post('product-plans/buy', 'buy')->name('product.plans.buy');
+            });
         });
-        Route::resource('banner', BannerController::class)->middleware('checkBusinessPerm:owner_only');
+        Route::resource('banner', BannerController::class);
 
         Route::middleware(['checkModule:service'])->group(function () {
-            Route::resource('service', ServiceController::class)->middleware('checkBusinessPerm:service,service_list');
-            Route::post('service/status/{id}', [ServiceController::class, 'updateStatus'])->name('service.status.update')->middleware('checkBusinessPerm:service,service_list');
-            Route::post('service-category/reorder', [\App\Http\Controllers\Business\ServiceCategoryController::class, 'reorder'])->name('service-category.reorder')->middleware('checkBusinessPerm:service,categories');
-            Route::resource('service-category', \App\Http\Controllers\Business\ServiceCategoryController::class)->middleware('checkBusinessPerm:service,categories');
-            Route::post('service-category/status/{id}', [\App\Http\Controllers\Business\ServiceCategoryController::class, 'updateStatus'])->name('service-category.status.update')->middleware('checkBusinessPerm:service,categories');
+            Route::post('service/status-toggle', [ServiceController::class, 'statusToggle'])->name('service.status-toggle');
+            Route::resource('service', ServiceController::class);
+            Route::post('service-category/status-toggle', [\App\Http\Controllers\Business\ServiceCategoryController::class, 'statusToggle'])->name('service-category.status-toggle');
+            Route::post('service-category/reorder', [\App\Http\Controllers\Business\ServiceCategoryController::class, 'reorder'])->name('service-category.reorder');
+            Route::resource('service-category', \App\Http\Controllers\Business\ServiceCategoryController::class);
 
-
+            // Service Plan Routes
+            Route::controller(\App\Http\Controllers\Business\ServicePlanController::class)->group(function () {
+                Route::get('service-plans', 'index')->name('service.plans');
+                Route::post('service-plans/buy', 'buy')->name('service.plans.buy');
+            });
         });
-        Route::resource('gallery', GalleryController::class)->middleware('checkBusinessPerm:store_management,gallery');
+        Route::post('gallery/status-toggle', [GalleryController::class, 'statusToggle'])->name('gallery.status-toggle');
+        Route::resource('gallery', GalleryController::class);
+
+        Route::post('blog/upload-image', [\App\Http\Controllers\Business\BlogController::class, 'uploadImage'])->name('blog.uploadImage');
+        Route::post('blog/status-toggle', [\App\Http\Controllers\Business\BlogController::class, 'statusToggle'])->name('blog.status-toggle');
+        Route::resource('blog', \App\Http\Controllers\Business\BlogController::class);
+
+        Route::name('appointment.')->group(function () {
+            Route::get('customers/export', [CustomerController::class, 'export'])->name('customers.export');
+            Route::resource('customers', CustomerController::class)->only(['index', 'show', 'edit', 'update']);
+            Route::post('customers/{id}/update', [CustomerController::class, 'update'])->name('customers.update-post');
+            Route::get('customers/{id}/profile', [CustomerController::class, 'profile'])->name('customers.profile');
+            Route::post('customers/{id}/assign-role', [CustomerController::class, 'assignRole'])->name('customers.assign-role');
+
+            Route::prefix('customer-roles')->name('customer-roles.')->group(function () {
+                Route::get('/', [CustomerRoleController::class, 'index'])->name('index');
+                Route::post('/', [CustomerRoleController::class, 'store'])->name('store');
+                Route::get('/{id}', [CustomerRoleController::class, 'show'])->name('show');
+                Route::post('/{id}/update', [CustomerRoleController::class, 'update'])->name('update');
+                Route::post('/{id}/status-toggle', [CustomerRoleController::class, 'toggleStatus'])->name('status-toggle');
+                Route::delete('/{id}', [CustomerRoleController::class, 'destroy'])->name('destroy');
+            });
+        });
 
         Route::name('appointment.')->middleware(['checkModule:appointment'])->group(function () {
-            Route::get('bookings/export', [AppointmentBookingController::class, 'export'])->name('bookings.export')->middleware('checkBusinessPerm:appointments,appointments');
-            Route::resource('bookings', AppointmentBookingController::class)->middleware('checkBusinessPerm:appointments,appointments');
             Route::controller(AppointmentBookingController::class)->group(function () {
+                Route::get('bookings/export', 'export')->name('bookings.export');
                 Route::get('bookings/pending/list', 'gatPendingBookings')->name('bookings.pending');
-
+                Route::get('bookings/search-product', 'searchProduct')->name('bookings.search-product');
                 Route::post('bookings/change-status', 'changeStatus')->name('bookings.change.status');
-
                 Route::post('bookings/get-expert', 'getExpertByDepartment')->name('bookings.get.expert');
                 Route::post('bookings/get-expert-timing', 'getExpertTiming')->name('bookings.get.expert.timing');
-            })->middleware('checkBusinessPerm:appointments,appointments');
-            Route::resource('department', AppointmentDepartmentController::class)->middleware('checkBusinessPerm:appointments,department');
-            Route::resource('customers', CustomerController::class)->middleware('checkBusinessPerm:customers');
+            });
+            Route::resource('bookings', AppointmentBookingController::class);
+            Route::resource('department', AppointmentDepartmentController::class);
 
-            Route::resource('expert', ExpertController::class)->middleware('checkBusinessPerm:appointments,experts');
+            Route::resource('expert', ExpertController::class);
             Route::controller(ExpertController::class)->group(function () {
+                Route::post('expert/status-toggle', 'statusToggle')->name('expert.status-toggle');
+                Route::post('expert/check-user', 'checkUser')->name('expert.check-user');
                 Route::get('expert/timing/{id}', 'timing')->name('expert.timing');
                 Route::post('expert/timing/{id}', 'timingStore')->name('expert.timing.store');
                 Route::post('expert/Timingdestroy', 'TimingDestroy')->name('expert.timing.destroy');
-                Route::post('expert/status/{id}', 'updateStatus')->name('expert.status.update');
-            })->middleware('checkBusinessPerm:appointments,experts');
+            });
         });
 
         Route::controller(SettingController::class)->group(function () {
             Route::get('setting/profile', 'profile')->name('setting.profile');
             Route::post('setting/profile/{id}', 'profileUpdate')->name('setting.profile.update');
 
-            Route::get('setting/business/profile', 'businessProfile')->name('setting.business')->middleware('checkBusinessPerm:owner_only');
-            Route::get('setting/business/seo', 'businessSeo')->name('setting.business.seo')->middleware('checkBusinessPerm:owner_only');
+            Route::get('setting/business/profile', 'businessProfile')->name('setting.business');
+            Route::get('setting/business/seo', 'businessSeo')->name('setting.business.seo');
             Route::get('setting/business/share', 'businessShare')->name('setting.business.share');
-            Route::get('setting/business/configuration', 'businessConfiguration')->name('setting.business.configuration')->middleware('checkBusinessPerm:owner_only');
-            Route::get('setting/business/about-us', 'businessAboutUs')->name('setting.business.about_us')->middleware('checkBusinessPerm:owner_only');
+            Route::get('setting/business/configuration', 'businessConfiguration')->name('setting.business.configuration');
+            Route::get('setting/business/about-us', 'businessAboutUs')->name('setting.business.about_us');
 
-            Route::post('setting/business/profile/{id}', 'businessUpdate')->name('setting.business.update')->middleware('checkBusinessPerm:owner_only');
-            Route::post('setting/business/seo/{id}', 'seoUpdate')->name('setting.seo.update')->middleware('checkBusinessPerm:owner_only');
+            Route::post('setting/business/profile/{id}', 'businessUpdate')->name('setting.business.update');
+            Route::post('setting/business/seo/{id}', 'seoUpdate')->name('setting.seo.update');
 
-            Route::get('setting/business/timings', 'businessTiming')->name('setting.business.timing')->middleware('checkBusinessPerm:store_management,timing');
-            Route::post('setting/business/timings/add', 'businessTimingStore')->name('setting.business.timing.add')->middleware('checkBusinessPerm:store_management,timing');
-            Route::post('setting/business/timings/remove', 'businessTimingSestroy')->name('setting.business.timing.remove')->middleware('checkBusinessPerm:store_management,timing');
-            Route::post('setting/business/system-setting', 'systemSettingUpdate')->name('setting.systemsetting.update')->middleware('checkBusinessPerm:owner_only');
+            Route::get('setting/business/timings', 'businessTiming')->name('setting.business.timing');
+            Route::post('setting/business/timings/add', 'businessTimingStore')->name('setting.business.timing.add');
+            Route::post('setting/business/timings/remove', 'businessTimingSestroy')->name('setting.business.timing.remove');
+            Route::get('setting/business/theme', 'businessTheme')->name('setting.business.theme');
+            Route::post('setting/business/theme', 'themeUpdate')->name('setting.business.theme.update');
+            Route::post('setting/business/theme/reset', 'themeReset')->name('setting.business.theme.reset');
+            Route::post('setting/business/system-setting', 'systemSettingUpdate')->name('setting.systemsetting.update');
             Route::get('switch-business/{id}', 'switchBusiness')->name('switchBusiness');
 
+            Route::post('setting/business/service-limit/buy', 'serviceLimitBuy')->name('setting.business.servicelimit.buy');
+        });
 
+        Route::resource('setting/business/leagle-page', \App\Http\Controllers\Business\BusinessLeaglePageController::class)
+            ->names([
+                'index' => 'setting.business.leagle-page.index',
+                'create' => 'setting.business.leagle-page.create',
+                'store' => 'setting.business.leagle-page.store',
+                'edit' => 'setting.business.leagle-page.edit',
+                'update' => 'setting.business.leagle-page.update',
+                'destroy' => 'setting.business.leagle-page.destroy',
+            ]);
+
+        Route::controller(StateDeliveryChargeController::class)->group(function () {
+            Route::get('setting/business/state-charges', 'index')->name('setting.business.state-charges');
+            Route::post('setting/business/state-charges', 'store')->name('setting.business.state-charges.store');
+            Route::get('setting/business/state-charges/{id}/edit', 'edit')->name('setting.business.state-charges.edit');
+            Route::post('setting/business/state-charges/{id}/update', 'update')->name('setting.business.state-charges.update');
+            Route::delete('setting/business/state-charges/{id}', 'destroy')->name('setting.business.state-charges.destroy');
         });
 
         // Credit Routes
         Route::controller(CreditController::class)->group(function () {
             Route::get('credits', 'index')->name('credits');
-            Route::get('credits/history-data', 'historyData')->name('credits.history.data');
+            Route::get('credits/history', 'history')->name('credits.history');
             Route::get('credits/details', 'show')->name('credits.details');
             Route::post('credits/validate-coupon', 'validateCouponAjax')->name('credits.validate_coupon');
             Route::post('credits/buy', 'buy')->name('credits.buy');
-        })->middleware('checkBusinessPerm:owner_only');
+        });
+
+        // Lucky Draw Routes
+        Route::controller(\App\Http\Controllers\Business\LuckyDrawController::class)->prefix('lucky-draw')->name('lucky-draw.')->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/store', 'store')->name('store');
+            Route::get('/{id}', 'show')->name('show');
+            Route::post('/{id}/update', 'update')->name('update');
+            Route::post('/{id}/change-status', 'changeStatus')->name('change-status');
+            Route::delete('/{id}', 'destroy')->name('destroy');
+            Route::get('/{id}/source-prizes/{source_id}', 'getSourcePrizes')->name('source-prizes');
+            Route::post('/{id}/import-prizes', 'importPrizes')->name('import-prizes');
+            Route::post('/{id}/prize/store', 'storePrize')->name('prize.store');
+            Route::delete('/{id}/prize/{prize_id}', 'deletePrize')->name('prize.delete');
+            Route::post('/{id}/generate-entry', 'generateEntry')->name('generate-entry');
+            Route::post('/{id}/entry/{entry_id}/update', 'updateEntry')->name('entry.update');
+        });
+
+        Route::controller(ProductPlanController::class)->group(function () {
+            Route::get('product-plan', 'index')->name('product.plan');
+            Route::get('product-plan/details/{id}', 'show')->name('product.plan.details');
+            Route::post('product-plan/validate-coupon', 'validateCouponAjax')->name('product.plan.validate_coupon');
+            Route::post('product-plan/buy', 'buy')->name('product.plan.buy');
+        });
+
+        Route::controller(ServicePlanController::class)->group(function () {
+            Route::get('service-plan', 'index')->name('service.plan');
+            Route::get('service-plan/details/{id}', 'show')->name('service.plan.details');
+            Route::post('service-plan/validate-coupon', 'validateCouponAjax')->name('service.plan.validate_coupon');
+            Route::post('service-plan/buy', 'buy')->name('service.plan.buy');
+        });
+
+        Route::controller(SubscriptionPlanController::class)->group(function () {
+            Route::get('subscription', 'index')->name('subscription');
+            Route::get('subscription/details/{id}', 'show')->name('subscription.details');
+            Route::post('subscription/validate-coupon', 'validateCouponAjax')->name('subscription.validate_coupon');
+            Route::post('subscription/buy', 'buy')->name('subscription.buy');
+        });
 
         Route::controller(PurchaseHistoryController::class)->group(function () {
             Route::get('purchase-history', 'index')->name('purchase.history');
             Route::get('purchase-history/{id}', 'show')->name('purchase.history.detail');
             Route::get('purchase-history/invoice/{id}', 'downloadInvoice')->name('purchase.history.invoice');
-        })->middleware('checkBusinessPerm:owner_only');
+        });
 
         Route::controller(PaymentController::class)->group(function () {
             Route::get('payment/{type}/{id}', 'Payment')->name('Payment');
             Route::post('payment/response', 'paymentResponse')->name('payment.response');
+            Route::post('payment/razorpay-verify', 'razorpayVerify')->name('payment.razorpay.verify');
             Route::post('payment/upi-submit', 'upiPaymentSubmit')->name('payment.upi.submit');
         });
 
         // Store Management Routes
-        Route::resource('role', \App\Http\Controllers\Business\RoleController::class)->middleware('checkBusinessPerm:store_management,role');
-        Route::post('staff/check-email', [\App\Http\Controllers\Business\StaffController::class, 'checkEmail'])->name('staff.check-email')->middleware('checkBusinessPerm:store_management,staff');
-        Route::resource('staff', \App\Http\Controllers\Business\StaffController::class)->middleware('checkBusinessPerm:store_management,staff');
+        Route::resource('role', \App\Http\Controllers\Business\RoleController::class);
+        Route::post('staff/check-email', [\App\Http\Controllers\Business\StaffController::class, 'checkEmail'])->name('staff.check-email');
+        Route::get('staff/{user_id}/history', [\App\Http\Controllers\Business\StaffController::class, 'history'])->name('staff.history');
+        Route::resource('staff', \App\Http\Controllers\Business\StaffController::class);
 
         Route::controller(AuthController::class)->group(function () {
             Route::get('logout', 'destroy')->name('logout');
         });
     });
 });
-

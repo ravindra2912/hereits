@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
 
 class ServiceController extends Controller
 {
+    use \App\Traits\ManageListingLimits;
+    use \App\Traits\CacheManagement;
 
     /**
      * Display a listing of the resource.
@@ -21,10 +23,12 @@ class ServiceController extends Controller
     {
         if (request()->ajax()) {
             $business_id = Auth::user()->business_id;
-            $data = Service::with('category')->where('business_id', $business_id);
+            $data = Service::select('services.*')
+                ->with('category:id,name')
+                ->where('services.business_id', $business_id);
 
             if (request()->has('category_id') && !empty(request()->category_id)) {
-                $data->where('category_id', request()->category_id);
+                $data->where('services.category_id', request()->category_id);
             }
 
             return datatables()->of($data)
@@ -37,8 +41,8 @@ class ServiceController extends Controller
                             <img src="' . $img . '" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
                         <div>
-                            <div class="fw-bold text-dark">' . $row->name . '</div>
-                            <div class="small text-muted">' . (Str::limit($row->description, 30) ?: 'No description') . '</div>
+                            <div class="fw-bold text-dark">' . e($row->name) . '</div>
+                            <div class="small text-muted">' . e(Str::limit($row->description, 30) ?: 'No description') . '</div>
                         </div>
                     </div>';
                 })
@@ -48,7 +52,7 @@ class ServiceController extends Controller
                         <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-1 me-2 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
                             <i class="bi bi-tag small"></i>
                         </div>
-                        <span class="text-dark">' . ($row->category?->name ?? 'Uncategorized') . '</span>
+                        <span class="text-dark">' . e($row->category?->name ?? 'Uncategorized') . '</span>
                     </div>';
                 })
                 ->addColumn('price_info', function ($row) {
@@ -61,23 +65,21 @@ class ServiceController extends Controller
                     }
                 })
                 ->addColumn('status_info', function ($row) {
-                    return renderStatusControl(
-                        route('business.service.status.update', $row->id),
-                        $row->status,
-                        $row->id,
-                        checkBusinessPermission('service', 'service_list', 'update'),
-                        [
-                            'active_label' => 'Active',
-                            'inactive_label' => 'Inactive',
-                        ]
-                    );
+                    $canEdit = checkBusinessPermission('edit_services');
+                    $checked = $row->status == 'active' ? 'checked' : '';
+                    $disabled = $canEdit ? '' : 'disabled title="You do not have permission to edit services"';
+                    return '<div class="d-flex justify-content-center m-0">
+                                <div class="form-check form-switch text-switch m-0 p-0">
+                                    <input class="form-check-input status-toggle m-0" type="checkbox" role="switch" data-id="' . $row->id . '" data-on="Active" data-off="In-Active" ' . $checked . ' ' . $disabled . '>
+                                </div>
+                            </div>';
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<div class="btn-group">';
-                    if (checkBusinessPermission('service', 'service_list', 'update') || checkBusinessPermission('service', 'service_list', 'view')) {
+                    if (checkBusinessPermission('edit_services')) {
                         $btn .= '<a href="' . route('business.service.edit', $row->id) . '" class="btn btn-outline-primary btn-sm rounded-pill px-3 me-2">Edit</a>';
                     }
-                    if (checkBusinessPermission('service', 'service_list', 'delete')) {
+                    if (checkBusinessPermission('delete_services')) {
                         $btn .= '<button type="button" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm" onclick="deleteService(' . $row->id . ')" title="Delete Service"><i class="bi bi-trash text-danger"></i></button>';
                     }
                     $btn .= '</div>';
@@ -89,45 +91,9 @@ class ServiceController extends Controller
         $categories = getServiceCategory();
         $business_id = Auth::user()->business_id;
         $totalServices = Service::where('business_id', $business_id)->count();
+        $limit = $this->getEffectiveLimit($business_id, 'service');
 
-        return view('business.service.index', compact('categories', 'totalServices'));
-    }
-
-    public function updateStatus(Request $request, $id)
-    {
-        $request->validate([
-            'status' => 'required|in:active,in-active',
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $businessId = getBusinessId();
-            $service = Service::where('id', $id)
-                ->where('business_id', $businessId)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $service->status = $request->status;
-
-            $service->status = $request->status;
-            $service->save();
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Service status updated successfully.',
-                'redirect' => route('business.service.index'),
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
-        }
+        return view('business.service.index', compact('categories', 'totalServices', 'limit'));
     }
 
     /**
@@ -171,6 +137,11 @@ class ServiceController extends Controller
                 $message = $validator->errors();
             } else {
                 $business_id = getBusinessId();
+                $limitCheck = $this->checkListingLimit($business_id, Service::class, 'service');
+
+                if ($limitCheck) {
+                    return response()->json(['success' => false, 'message' => $limitCheck]);
+                }
 
                 $image_url = '';
                 if ($request->hasFile('image')) {
@@ -194,10 +165,11 @@ class ServiceController extends Controller
                 $success = true;
                 $message = 'Service created successfully.';
                 DB::commit();
+                $this->clearBusinessServiceCache($business_id);
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_url)) {
                 fileRemoveStorage($image_url);
             }
@@ -264,6 +236,13 @@ class ServiceController extends Controller
                 $service->price = $request->price;
                 $service->min_price = $request->min_price;
                 $service->max_price = $request->max_price;
+                if ($service->status != 'active' && $request->status == 'active') {
+                    $limitCheck = $this->checkListingLimit($business_id, Service::class, 'service');
+
+                    if ($limitCheck) {
+                        return response()->json(['success' => false, 'message' => $limitCheck]);
+                    }
+                }
                 $service->status = $request->status;
 
                 $service->save();
@@ -275,10 +254,11 @@ class ServiceController extends Controller
                 $success = true;
                 $message = 'Service updated successfully.';
                 DB::commit();
+                $this->clearBusinessServiceCache($business_id);
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($newimg)) {
                 fileRemoveStorage($newimg);
             }
@@ -292,17 +272,52 @@ class ServiceController extends Controller
      */
     public function destroy($id)
     {
+        if (!checkBusinessPermission('delete_services')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to delete services.'], 403);
+        }
+
         try {
             DB::beginTransaction();
             $service = Service::where('id', $id)->where('business_id', Auth::user()->business_id)->lockForUpdate()->firstOrFail();
             fileRemoveStorage($service->image_url);
             $service->delete();
             DB::commit();
+            $this->clearBusinessServiceCache(Auth::user()->business_id);
 
             return response()->json(['success' => true, 'message' => 'Service deleted successfully.']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => checkResponse($e)], 500);
+        }
+    }
+
+    public function statusToggle(Request $request)
+    {
+        if (!checkBusinessPermission('edit_services')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to edit services.'], 403);
+        }
+
+        try {
+            $service = Service::where('id', $request->id)
+                ->where('business_id', Auth::user()->business_id)
+                ->firstOrFail();
+
+            if ($service->status == 'active') {
+                $service->status = 'in-active';
+            } else {
+                $limitCheck = $this->checkListingLimit(Auth::user()->business_id, Service::class, 'service');
+                if ($limitCheck) {
+                    return response()->json(['success' => false, 'message' => $limitCheck]);
+                }
+                $service->status = 'active';
+            }
+            
+            $service->save();
+            $this->clearBusinessServiceCache(Auth::user()->business_id);
+
+            return response()->json(['success' => true, 'message' => 'Status updated successfully.', 'status' => $service->status]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to update status.']);
         }
     }
 }

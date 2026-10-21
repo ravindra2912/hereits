@@ -10,7 +10,7 @@
 <div class="card border-0 shadow-sm rounded-4 mb-4">
     <div class="card-header py-3 ps-4 d-flex justify-content-between align-items-center bg-white border-bottom-0">
         <h5 class="m-0 font-weight-bold text-dark">Staff Management</h5>
-        @if(checkBusinessPermission('store_management', 'staff', 'add'))
+        @if(checkBusinessPermission('add_staff'))
         <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" onclick="openCreateModal()">
             <i class="bi bi-plus-circle me-1"></i> Add Staff
         </button>
@@ -49,7 +49,10 @@
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label for="email" class="form-label fw-bold">Email ID <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control rounded-3" id="email" name="email" placeholder="Enter email address" required>
+                        <div class="position-relative">
+                            <input type="email" class="form-control rounded-3 pe-5" id="email" name="email" placeholder="Enter email address" required>
+                            <span id="email-check-spinner" class="spinner-border spinner-border-sm text-primary position-absolute end-0 top-50 translate-middle-y me-3 d-none" role="status" aria-hidden="true"></span>
+                        </div>
                     </div>
 
                     <div id="new-user-fields" style="display: none;">
@@ -63,9 +66,15 @@
                                 <input type="text" class="form-control rounded-3" id="last_name" name="last_name" maxlength="20" placeholder="Last name">
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label fw-bold">Password <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control rounded-3" id="password" name="password" placeholder="Min 8 characters">
+                        <div class="mb-3" id="password-group">
+                            <label for="password" class="form-label fw-bold">Password <span id="password-required-mark" class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="password" class="form-control rounded-3 pe-5" id="password" name="password" placeholder="Min 8 characters" autocomplete="new-password">
+                                <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y text-muted text-decoration-none pe-3 toggle-password-visibility" tabindex="-1">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <div id="password-help-text" class="form-text small text-muted d-none">Leave blank to keep the current password.</div>
                         </div>
                     </div>
 
@@ -87,6 +96,28 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- History Modal -->
+<div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold" id="historyModalLabel">Staff Activity History</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="historyModalContent" style="max-height: 450px; overflow-y: auto;">
+                <div class="text-center py-4" id="historyLoader">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pb-4 px-4">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
@@ -144,28 +175,69 @@
             ]
         });
 
+        let emailCheckTimeout = null;
+        let emailCheckXHR = null;
+
         $('#email').on('input', function() {
-            let email = $(this).val();
-            if (email && email.includes('@')) {
-                $.ajax({
-                    url: "{{ route('business.staff.check-email') }}",
-                    type: "POST",
-                    data: {
-                        email: email,
-                        _token: "{{ csrf_token() }}"
-                    },
-                    success: function(response) {
-                        if (response.exists) {
-                            $('#new-user-fields').slideUp();
-                            $('#first_name, #last_name, #password').prop('required', false);
-                        } else {
-                            if ($('#formMethod').val() === 'POST') {
-                                $('#new-user-fields').slideDown();
-                                $('#first_name, #last_name, #password').prop('required', true);
+            let email = $(this).val().trim();
+            clearTimeout(emailCheckTimeout);
+
+            if (emailCheckXHR) {
+                emailCheckXHR.abort();
+                emailCheckXHR = null;
+            }
+
+            let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (email && emailRegex.test(email)) {
+                $('#email-check-spinner').removeClass('d-none');
+                $('.btn_action').prop('disabled', true);
+
+                emailCheckTimeout = setTimeout(function() {
+                    emailCheckXHR = $.ajax({
+                        url: "{{ route('business.staff.check-email') }}",
+                        type: "POST",
+                        data: {
+                            email: email,
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.exists) {
+                                $('#new-user-fields').slideUp();
+                                $('#first_name, #last_name, #password').prop('required', false);
+                            } else {
+                                if ($('#formMethod').val() === 'POST') {
+                                    $('#new-user-fields').slideDown();
+                                    $('#first_name, #last_name, #password').prop('required', true);
+                                    $('#password-required-mark').show();
+                                    $('#password-help-text').addClass('d-none');
+                                    $('#password').attr('placeholder', 'Min 8 characters');
+                                }
                             }
+                        },
+                        complete: function() {
+                            $('#email-check-spinner').addClass('d-none');
+                            $('.btn_action').prop('disabled', false);
+                            emailCheckXHR = null;
                         }
-                    }
-                });
+                    });
+                }, 300);
+            } else {
+                $('#email-check-spinner').addClass('d-none');
+                $('.btn_action').prop('disabled', false);
+            }
+        });
+
+        $(document).on('click', '.toggle-password-visibility', function(e) {
+            e.preventDefault();
+            let $input = $(this).closest('.position-relative').find('input');
+            let $icon = $(this).find('i');
+            if ($input.attr('type') === 'password') {
+                $input.attr('type', 'text');
+                $icon.removeClass('bi-eye').addClass('bi-eye-slash');
+            } else {
+                $input.attr('type', 'password');
+                $icon.removeClass('bi-eye-slash').addClass('bi-eye');
             }
         });
     });
@@ -176,8 +248,15 @@
         $('#formMethod').val('POST');
         $('#staffForm').trigger('reset');
         $('#email').prop('disabled', false);
+        $('#email-check-spinner').addClass('d-none');
+        $('.btn_action').prop('disabled', false);
         $('#new-user-fields').hide();
-        $('#password').parent().show(); // Ensure password field is visible
+        $('#password-group').show();
+        $('#password-required-mark').show();
+        $('#password-help-text').addClass('d-none');
+        $('#password').prop('required', false).attr('placeholder', 'Min 8 characters').val('');
+        $('#password').attr('type', 'password');
+        $('.toggle-password-visibility i').removeClass('bi-eye-slash').addClass('bi-eye');
         $('#staffModal').modal('show');
     }
 
@@ -189,11 +268,16 @@
                 $('#staffForm').attr('action', "{{ route('business.staff.update', ':id') }}".replace(':id', id));
                 $('#formMethod').val('PATCH');
                 $('#email').val(response.data.user.email).prop('disabled', true);
-                $('#first_name').val(response.data.user.first_name);
-                $('#last_name').val(response.data.user.last_name);
+                $('#first_name').val(response.data.user.first_name).prop('required', true);
+                $('#last_name').val(response.data.user.last_name).prop('required', true);
                 $('#role_id').val(response.data.role_id);
                 $('#new-user-fields').show();
-                $('#password').parent().hide(); // Hide password on edit
+                $('#password-group').show();
+                $('#password-required-mark').hide();
+                $('#password-help-text').removeClass('d-none');
+                $('#password').val('').prop('required', false).attr('placeholder', 'Enter new password (optional)');
+                $('#password').attr('type', 'password');
+                $('.toggle-password-visibility i').removeClass('bi-eye-slash').addClass('bi-eye');
                 $('#staffModal').modal('show');
             }
         });
@@ -226,10 +310,35 @@
                         }
                     },
                     error: function(e) {
-                        Swal.fire('Error', 'Something went wrong', 'error');
+                        let msg = e.responseJSON?.message || (e.status === 403 ? 'Unauthorized. You do not have permission to delete staff.' : 'Something went wrong');
+                        Swal.fire('Error', msg, 'error');
                     }
                 });
             }
+        });
+    }
+
+    function viewHistory(userId, name) {
+        $('#historyModalLabel').text(name + "'s Activity History");
+        $('#historyModalContent').html(`
+            <div class="text-center py-4" id="historyLoader">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `);
+        $('#historyModal').modal('show');
+
+        let url = "{{ route('business.staff.history', ':id') }}".replace(':id', userId);
+        $.get(url, function(response) {
+            $('#historyModalContent').html(response);
+        }).fail(function() {
+            $('#historyModalContent').html(`
+                <div class="text-center text-danger py-4">
+                    <i class="bi bi-exclamation-triangle fs-3 d-block mb-2"></i>
+                    Failed to load activity history. Please try again.
+                </div>
+            `);
         });
     }
 

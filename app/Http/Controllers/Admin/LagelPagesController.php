@@ -68,7 +68,7 @@ class LagelPagesController extends Controller
                     $update = new LegalPage();
                 }
                 $update->page_type = $request->type;
-                $update->description = $request->description;
+                $update->description = cleanHtml($request->description);
                 $update->save();
                 $success = true;
                 $message = 'Page updated successfully.';
@@ -76,7 +76,7 @@ class LagelPagesController extends Controller
                 Cache::forget($request->type);
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }

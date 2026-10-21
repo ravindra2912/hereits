@@ -7,9 +7,11 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Traits\CacheManagement;
 
 class BannerController extends Controller
 {
+    use CacheManagement;
     /**
      * Display a listing of the resource.
      */
@@ -62,7 +64,7 @@ class BannerController extends Controller
 
         try {
             $rules = [
-                'image' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+                'image' => 'required|image|mimes:jpeg,png,jpg,webp',
                 'status' => 'required',
             ];
 
@@ -73,7 +75,7 @@ class BannerController extends Controller
             } else {
                 $image_url = '';
                 if ($request->hasFile('image')) {
-                    $image_url = fileUploadStorage($request->file('image'), 'banners');
+                    $image_url = fileUploadStorage($request->file('image'), 'banners', 1800, 600);
                 }
 
                 Banner::create([
@@ -84,9 +86,10 @@ class BannerController extends Controller
 
                 $success = true;
                 $message = 'Banner created successfully.';
+                $this->clearBusinessBannerCache(Auth::user()->business_id);
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($image_url)) {
                 fileRemoveStorage($image_url);
             }
@@ -117,7 +120,7 @@ class BannerController extends Controller
             $banner = Banner::where('id', $id)->where('business_id', Auth::user()->business_id)->firstOrFail();
 
             $rules = [
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,webp',
                 'status' => 'required',
             ];
 
@@ -128,7 +131,7 @@ class BannerController extends Controller
             } else {
                 if ($request->hasFile('image')) {
                     $oldimg = $banner->image_url;
-                    $newimg = fileUploadStorage($request->file('image'), 'banners');
+                    $newimg = fileUploadStorage($request->file('image'), 'banners', 1800, 600);
                     $banner->image_url = $newimg;
                 }
 
@@ -141,9 +144,10 @@ class BannerController extends Controller
 
                 $success = true;
                 $message = 'Banner updated successfully.';
+                $this->clearBusinessBannerCache(Auth::user()->business_id);
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
             if (isset($newimg)) {
                 fileRemoveStorage($newimg);
             }
@@ -160,6 +164,7 @@ class BannerController extends Controller
         $banner = Banner::where('id', $id)->where('business_id', Auth::user()->business_id)->firstOrFail();
         fileRemoveStorage($banner->image_url);
         $banner->delete();
+        $this->clearBusinessBannerCache(Auth::user()->business_id);
 
         return response()->json(['success' => true, 'message' => 'Banner deleted successfully.']);
     }

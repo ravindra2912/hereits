@@ -17,11 +17,15 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\BookingsExport;
 use App\Models\BusinessCategory;
-use App\Repositories\AppointmentRepository;
+use App\Services\CreditService;
+use App\Services\ExpertService;
 
 class AppointmentBookingController extends Controller
 {
-    public function __construct(protected AppointmentRepository $appointmentRepository) {}
+    public function __construct(protected ExpertService $expertService)
+    {
+    }
+
     /**
      * Display the user's profile form.
      */
@@ -32,10 +36,10 @@ class AppointmentBookingController extends Controller
             $data = AppointmentBooking::with(['department' => function ($q) {
                 $q->select('id', 'department_name');
             }, 'expert' => function ($q) {
-                $q->select('id', 'expert_name');
-            }])
+                $q->select('id', 'user_id')->with('user:id,first_name,last_name');
+            }, 'appointmentProducts'])
                 ->where('appointment_bookings.business_id', getBusinessId())
-                ->select('appointment_bookings.id', 'appointment_bookings.business_id', 'appointment_bookings.department_id', 'token_number', 'expert_id', 'user_name', 'user_contact', 'booking_date', 'slot_start_time', 'slot_end_time', 'appointment_bookings.status', 'appointment_bookings.amount', 'appointment_bookings.payment_type');
+                ->select('appointment_bookings.id', 'appointment_bookings.business_id', 'appointment_bookings.department_id', 'token_number', 'expert_id', 'user_name', 'user_contact', 'booking_date', 'slot_start_time', 'slot_end_time', 'appointment_bookings.status', 'appointment_bookings.amount', 'appointment_bookings.product_amount', 'appointment_bookings.payment_type');
 
             if ($request->filter_type == 'custom' && $request->filled('start_date')) {
                 if ($request->filled('end_date')) {
@@ -64,17 +68,34 @@ class AppointmentBookingController extends Controller
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->filterColumn('expert_info', function ($query, $keyword) {
+                    $query->whereHas('expert.user', function ($uq) use ($keyword) {
+                        $uq->where(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$keyword}%")
+                           ->orWhere('first_name', 'like', "%{$keyword}%")
+                           ->orWhere('last_name', 'like', "%{$keyword}%");
+                    });
+                })
                 ->addColumn('expert_info', function ($row) {
-                    $html = '<div class="fw-bold text-dark">' . $row->expert->expert_name . '</div>';
+                    $html = '<div class="fw-bold text-dark">' . ($row->expert?->user?->name ?? '') . '</div>';
                     if (isset($row->department) && !empty($row->department->department_name)) {
                         $html .= '<div class="small text-muted">' . $row->department->department_name . '</div>';
                     }
                     return $html;
                 })
-                ->addColumn('user_info', function ($row) {
+                ->addColumn('user_info', function ($row) use ($businessSetting) {
                     $html = '<div class="fw-bold text-dark">' . $row->user_name . '</div>';
                     if (!empty($row->user_contact)) {
                         $html .= '<div class="small text-muted"><i class="bi bi-telephone me-1"></i>' . $row->user_contact . '</div>';
+                    }
+                    if ($businessSetting->allow_appointment_product_selection && $row->appointmentProducts->isNotEmpty()) {
+                        $html .= '<div class="mt-1 pt-1 border-top"><strong class="small text-secondary text-uppercase d-block mb-1">Products:</strong>';
+                        foreach ($row->appointmentProducts as $ap) {
+                            $html .= '<div class="small text-muted py-0.5"><i class="bi bi-box me-1"></i>' . $ap->product_name . ' (' . $ap->qty . ' &times; ' . currencyFormat($ap->product_price) . ')</div>';
+                        }
+                        if ($row->product_amount > 0) {
+                            $html .= '<div class="small fw-bold text-dark mt-1">Product Total: ' . currencyFormat($row->product_amount) . '</div>';
+                        }
+                        $html .= '</div>';
                     }
                     return $html;
                 })
@@ -101,8 +122,16 @@ class AppointmentBookingController extends Controller
 
                     $html = '<div class="text-center">';
                     $html .= '<span class="badge rounded-pill ' . $class . ' px-3 py-1 mb-1">' . $label . '</span>';
-                    if ($businessSetting->is_appointment_price_required && $row->status == 'completed' && $row->amount > 0) {
-                        $html .= '<div class="small fw-bold text-success">' . currencyFormat($row->amount) . ' (' . $row->payment_type . ')</div>';
+                    if ($row->status == 'completed') {
+                        if ($businessSetting->is_appointment_price_required && $row->amount > 0) {
+                            $html .= '<div class="small fw-bold text-success">Service: ' . currencyFormat($row->amount) . ' (' . $row->payment_type . ')</div>';
+                        }
+                        if ($businessSetting->allow_appointment_product_selection && $row->product_amount > 0) {
+                            $html .= '<div class="small fw-bold text-primary">Products: ' . currencyFormat($row->product_amount) . '</div>';
+                            if ($businessSetting->is_appointment_price_required && $row->amount > 0) {
+                                $html .= '<div class="small fw-bold text-dark border-top mt-1 pt-1">Total: ' . currencyFormat($row->amount + $row->product_amount) . '</div>';
+                            }
+                        }
                     }
                     $html .= '</div>';
                     return $html;
@@ -110,7 +139,7 @@ class AppointmentBookingController extends Controller
                 ->addColumn('action', function ($row) {
                     $btn = '<div class="d-flex justify-content-end gap-2">';
 
-                    if (checkBusinessPermission('appointments', 'appointments', 'update')) {
+                    if (checkBusinessPermission('edit_appointments')) {
                         if (Carbon::parse($row->booking_date)->toDateString() == now()->toDateString()) {
                             if ($row->status == 'pending') {
                                 $btn .= '<button class="ststus_chenge_btn btn btn-primary btn-sm rounded-pill px-3" data-id="' . $row->id . '" data-status="confirmed">Accept</button>';
@@ -123,13 +152,11 @@ class AppointmentBookingController extends Controller
                                 $btn .= '<button class="ststus_chenge_btn btn btn-outline-primary btn-sm rounded-pill px-3" data-id="' . $row->id . '" data-status="completeAndNext">Complete & Next</button>';
                             }
                         }
-                    }
 
-                    if (checkBusinessPermission('appointments', 'appointments', 'update') || checkBusinessPermission('appointments', 'appointments', 'view')) {
                         $btn .= '<a href="' . route('business.appointment.bookings.edit', $row->id) . '" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm" title="Edit"><i class="bi bi-pencil-square text-primary"></i></a>';
                     }
 
-                    if (checkBusinessPermission('appointments', 'appointments', 'delete')) {
+                    if (checkBusinessPermission('delete_appointments')) {
                         $url = route('business.appointment.bookings.destroy', $row->id);
                         $btn .= '<button onclick="destroy(\'' . $url . '\', ' . $row->id . ')" class="btn btn-light btn-sm rounded-pill px-2 border shadow-sm btn_delete-' . $row->id . '" title="Delete">
                                     <i id="buttonText" class="bi bi-trash text-danger"></i>
@@ -175,12 +202,18 @@ class AppointmentBookingController extends Controller
                             $aggrQuery->where('status', $request->status);
                         }
 
-                        $totals = $aggrQuery->selectRaw('payment_type, SUM(amount) as sum_amount')
+                        $totals = $aggrQuery->selectRaw('payment_type, SUM(amount) as sum_amount, SUM(product_amount) as sum_product_amount')
                             ->groupBy('payment_type')
-                            ->pluck('sum_amount', 'payment_type');
+                            ->get()
+                            ->keyBy('payment_type');
 
-                        $metrics['total_cash'] = $totals['Cash'] ?? 0;
-                        $metrics['total_online'] = $totals['Online'] ?? 0;
+                        $cashService = $totals['Cash']->sum_amount ?? 0;
+                        $cashProduct = $totals['Cash']->sum_product_amount ?? 0;
+                        $onlineService = $totals['Online']->sum_amount ?? 0;
+                        $onlineProduct = $totals['Online']->sum_product_amount ?? 0;
+
+                        $metrics['total_cash'] = $cashService + $cashProduct;
+                        $metrics['total_online'] = $onlineService + $onlineProduct;
                         $metrics['total_all'] = $metrics['total_cash'] + $metrics['total_online'];
                     }
                     return $metrics;
@@ -194,7 +227,7 @@ class AppointmentBookingController extends Controller
         if ($businessSetting->is_appointment_with_department) {
             $departments = AppointmentDepartment::select('id', 'department_name')->where('business_id', getBusinessId())->get();
         } else {
-            $experts = Expert::select('id', 'expert_name')->where('business_id', getBusinessId())->get();
+            $experts = Expert::with('user:id,first_name,last_name')->select('id', 'user_id')->where('business_id', getBusinessId())->get();
         }
 
         return view('business.appointment.booking.index', compact('businessSetting', 'departments', 'experts'));
@@ -207,37 +240,53 @@ class AppointmentBookingController extends Controller
 
     public function create()
     {
+        if (!checkBusinessPermission('add_appointments')) {
+            abort(403, 'Unauthorized. You do not have permission to add appointments.');
+        }
         $businessSetting = getBusinessSettings();
         $departments = array();
         $experts = array();
         if ($businessSetting->is_appointment_with_department) {
             $departments = AppointmentDepartment::select('id', 'department_name')->where('business_id', getBusinessId())->get();
         } else {
-            $experts = Expert::select('id', 'expert_name', 'is_appointment_book_with_time_slot')->where('business_id', getBusinessId())->get();
+            $experts = Expert::with('user:id,first_name,last_name')->select('id', 'user_id', 'is_appointment_book_with_time_slot')->where('business_id', getBusinessId())->get();
         }
 
-        $creditDeductionAmount = app(\App\Services\CreditService::class)->getAppointmentCreditDeductionAmount(getBusinessId(), 'self');
-        return view('business.appointment.booking.create', compact('departments', 'experts', 'businessSetting', 'creditDeductionAmount'));
+        return view('business.appointment.booking.create', compact('departments', 'experts', 'businessSetting'));
     }
 
     public function getExpertTiming(Request $request)
     {
-        $appoinment_id = $request->appoinment_id ?? null;
-        $slots = $this->appointmentRepository->resolveExpertTimeSlots($request->expert_id, $request->date, $appoinment_id);
+        $appoinment_id = $request->appoinment_id ? (int) $request->appoinment_id : null;
+        $slots = $this->expertService->getExpertTiming((int) $request->expert_id, (string) $request->date, $appoinment_id, getBusinessId());
         return response()->json($slots);
     }
 
     public function getExpertByDepartment(Request $request)
     {
-        $Expert = Expert::where('department_id', $request->department_id)->where('business_id', getBusinessId())->get();
-        return response()->json($Expert);
+        $experts = Expert::with('user:id,first_name,last_name')
+            ->select('id', 'user_id', 'is_appointment_book_with_time_slot')
+            ->where('department_id', $request->department_id)
+            ->where('business_id', getBusinessId())
+            ->get()
+            ->map(function ($expert) {
+                return [
+                    'id' => $expert->id,
+                    'expert_name' => $expert->user?->name ?? '',
+                    'is_appointment_book_with_time_slot' => $expert->is_appointment_book_with_time_slot,
+                ];
+            });
+        return response()->json($experts);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, CreditService $creditService)
     {
+        if (!checkBusinessPermission('add_appointments')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to add appointments.'], 403);
+        }
         $success = false;
         $message = 'Something Wrong!';
         $redirect = Route('business.appointment.bookings.index');
@@ -275,60 +324,86 @@ class AppointmentBookingController extends Controller
             if ($validator->fails()) { // Validation fails
                 $message = $validator->errors();
             } else {
-                $creditService = app(\App\Services\CreditService::class);
-                $requiredCredit = $creditService->getAppointmentCreditDeductionAmount($businessId, 'self');
-                $availableCredit = $creditService->getAvailableCredits($businessId);
+                try {
+                    $creditService->checkSelfAppointmentCredit($businessId);
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    return response()->json(['success' => false, 'message' => checkResponse($e)]);
+                }
 
-                if ($availableCredit < $requiredCredit) {
-                    $message = 'Credit is not available.';
-                } else {
-                    $getLastToken = AppointmentBooking::where('expert_id', $request->expert_id)
-                        ->whereDate('booking_date', Carbon::parse($request->booking_date))
-                        ->where('business_id', $businessId)
-                        ->orderBy('token_number', 'desc')
-                        ->lockForUpdate()
-                        ->first();
+                $getLastToken = AppointmentBooking::where('expert_id', $request->expert_id)
+                    ->whereDate('booking_date', Carbon::parse($request->booking_date))
+                    ->where('business_id', $businessId)
+                    ->orderBy('token_number', 'desc')
+                    ->lockForUpdate()
+                    ->first();
 
-                    $tokenNumber = $getLastToken ? $getLastToken->token_number + 1 : 1;
+                $tokenNumber = $getLastToken ? $getLastToken->token_number + 1 : 1;
 
-                    $insert = new AppointmentBooking();
-                    $insert->business_id  = $businessId;
-                    $insert->token_number  = $tokenNumber;
-                    $insert->department_id = $request->department_id;
-                    $insert->expert_id = $request->expert_id;
-                    $insert->user_name = $request->user_name;
-                    $insert->user_contact = $request->user_contact;
-                    $insert->booking_date = $request->booking_date;
-                    $insert->status = $request->status;
-                    $insert->note = $request->note;
-                    $insert->expert_note = $request->expert_note;
+                $insert = new AppointmentBooking();
+                $insert->business_id  = $businessId;
+                $insert->token_number  = $tokenNumber;
+                $insert->department_id = $request->department_id;
+                $insert->expert_id = $request->expert_id;
+                $insert->user_name = $request->user_name;
+                $insert->user_contact = $request->user_contact;
+                $insert->booking_date = $request->booking_date;
+                $insert->status = $request->status;
+                $insert->note = $request->note;
+                $insert->expert_note = $request->expert_note;
 
-                    if ($expert->is_appointment_book_with_time_slot) {
-                        $timeslote = explode(' - ', $request->timeslote);
-                        if (count($timeslote) == 2) {
-                            $insert->slot_start_time = Carbon::parse($request->booking_date . ' ' . $timeslote[0]);
-                            $insert->slot_end_time = Carbon::parse($request->booking_date . ' ' . $timeslote[1]);
+                if ($expert->is_appointment_book_with_time_slot) {
+                    $timeslote = explode(' - ', $request->timeslote);
+                    if (count($timeslote) == 2) {
+                        $insert->slot_start_time = Carbon::parse($request->booking_date . ' ' . $timeslote[0]);
+                        $insert->slot_end_time = Carbon::parse($request->booking_date . ' ' . $timeslote[1]);
+                    }
+                }
+
+                if ($businessSetting->is_appointment_price_required && $request->status == 'completed') {
+                    $insert->amount = $request->amount;
+                    $insert->payment_type = $request->payment_type;
+                }
+
+                $product_amount = 0;
+                if ($businessSetting->allow_appointment_product_selection && $request->has('products')) {
+                    foreach ($request->input('products') as $item) {
+                        if (!empty($item['product_id']) || !empty($item['product_name'])) {
+                            $price = (float)($item['product_price'] ?? 0);
+                            $qty = (int)($item['qty'] ?? 1);
+                            $product_amount += $price * $qty;
                         }
                     }
-
-                    if ($businessSetting->is_appointment_price_required && $request->status == 'completed') {
-                        $insert->amount = $request->amount;
-                        $insert->payment_type = $request->payment_type;
-                    }
-
-                    $insert->save();
-
-                    // Deduct credit
-                    $creditService->deductAppointmentCredit($businessId, 'self', $insert->id, 'Business Self Appointment Booking');
-
-                    $success = true;
-                    $message = 'Appoinment Create successfully.';
-                    DB::commit();
                 }
+                $insert->product_amount = $product_amount;
+
+                $insert->save();
+
+                if ($businessSetting->allow_appointment_product_selection && $request->has('products')) {
+                    foreach ($request->input('products') as $item) {
+                        if (!empty($item['product_id']) || !empty($item['product_name'])) {
+                            \App\Models\AppointmentProduct::create([
+                                'business_id' => $businessId,
+                                'appointment_id' => $insert->id,
+                                'product_id' => !empty($item['product_id']) ? $item['product_id'] : null,
+                                'product_name' => $item['product_name'],
+                                'product_price' => (float)($item['product_price'] ?? 0),
+                                'qty' => (int)($item['qty'] ?? 1),
+                            ]);
+                        }
+                    }
+                }
+
+                // Deduct credit
+                $creditService->deductSelfAppointmentCharge($businessId);
+
+                $success = true;
+                $message = 'Appoinment Create successfully.';
+                DB::commit();
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -343,10 +418,18 @@ class AppointmentBookingController extends Controller
 
     public function edit(Request $request, $id)
     {
-        $appontment = AppointmentBooking::with(['expert:id,expert_name,is_appointment_book_with_time_slot'])->find($id);
+        if (!checkBusinessPermission('edit_appointments')) {
+            abort(403, 'Unauthorized. You do not have permission to edit appointments.');
+        }
+        $appontment = AppointmentBooking::with([
+            'expert' => function ($q) {
+                $q->select('id', 'user_id', 'is_appointment_book_with_time_slot')->with('user:id,first_name,last_name');
+            },
+            'appointmentProducts.product:id,sku'
+        ])->find($id);
         $appontment->bookdate = Carbon::parse($appontment->slot_start_time)->format('h:i a') . ' - ' . Carbon::parse($appontment->slot_end_time)->format('h:i a');
         $businessSetting = getBusinessSettings();
-        $experts = Expert::select('id', 'expert_name', 'is_appointment_book_with_time_slot')->where('business_id', getBusinessId());
+        $experts = Expert::with('user:id,first_name,last_name')->select('id', 'user_id', 'is_appointment_book_with_time_slot')->where('business_id', getBusinessId());
         $departments = array();
         if ($businessSetting->is_appointment_with_department) {
             $departments = AppointmentDepartment::select('id', 'department_name')->where('business_id', getBusinessId())->get();
@@ -356,7 +439,7 @@ class AppointmentBookingController extends Controller
 
         $timeSlots = array();
         if ($appontment->expert->is_appointment_book_with_time_slot) {
-            $timeSlots = $this->appointmentRepository->resolveExpertTimeSlots($appontment->expert_id, $appontment->booking_date, $id);
+            $timeSlots = $this->expertService->getExpertTiming((int) $appontment->expert_id, $appontment->booking_date, (int) $id, getBusinessId());
         }
 
         return view('business.appointment.booking.edit', compact('departments', 'experts', 'businessSetting', 'appontment', 'timeSlots'));
@@ -364,6 +447,9 @@ class AppointmentBookingController extends Controller
 
     public function update(Request $request, $id)
     {
+        if (!checkBusinessPermission('edit_appointments')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to edit appointments.'], 403);
+        }
         $success = false;
         $message = 'Something Wrong!';
         $redirect = Route('business.appointment.bookings.index');
@@ -417,7 +503,39 @@ class AppointmentBookingController extends Controller
                     $insert->amount = $request->amount;
                     $insert->payment_type = $request->payment_type;
                 }
+
+                $product_amount = 0;
+                if ($businessSetting->allow_appointment_product_selection && $request->has('products')) {
+                    foreach ($request->input('products') as $item) {
+                        if (!empty($item['product_id']) || !empty($item['product_name'])) {
+                            $price = (float)($item['product_price'] ?? 0);
+                            $qty = (int)($item['qty'] ?? 1);
+                            $product_amount += $price * $qty;
+                        }
+                    }
+                }
+                $insert->product_amount = $product_amount;
+
                 $insert->save();
+
+                if ($businessSetting->allow_appointment_product_selection) {
+                    \App\Models\AppointmentProduct::where('appointment_id', $insert->id)->delete();
+                    if ($request->has('products')) {
+                        $businessId = getBusinessId();
+                        foreach ($request->input('products') as $item) {
+                            if (!empty($item['product_id']) || !empty($item['product_name'])) {
+                                \App\Models\AppointmentProduct::create([
+                                    'business_id' => $businessId,
+                                    'appointment_id' => $insert->id,
+                                    'product_id' => !empty($item['product_id']) ? $item['product_id'] : null,
+                                    'product_name' => $item['product_name'],
+                                    'product_price' => (float)($item['product_price'] ?? 0),
+                                    'qty' => (int)($item['qty'] ?? 1),
+                                ]);
+                            }
+                        }
+                    }
+                }
 
                 $success = true;
                 $message = 'Appoinment Update successfully.';
@@ -425,13 +543,16 @@ class AppointmentBookingController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
 
     public function changeStatus(Request $request)
     {
+        if (!checkBusinessPermission('edit_appointments')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to update appointment status.'], 403);
+        }
         $success = false;
         $message = 'Something Wrong!';
         $redirect = '';
@@ -504,7 +625,7 @@ class AppointmentBookingController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -514,6 +635,9 @@ class AppointmentBookingController extends Controller
      */
     public function destroy(string $id)
     {
+        if (!checkBusinessPermission('delete_appointments')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to delete appointments.'], 403);
+        }
         $success = false;
         $message = 'Something Wrong!';
         $redirect = route('admin.user.index');
@@ -528,7 +652,7 @@ class AppointmentBookingController extends Controller
                 $message = 'Appointment deleted successfully.';
             }
         } catch (\Exception $e) {
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
@@ -540,7 +664,7 @@ class AppointmentBookingController extends Controller
             $data = AppointmentBooking::with(['department' => function ($q) {
                 $q->select('id', 'department_name');
             }, 'expert' => function ($q) {
-                $q->select('id', 'expert_name');
+                $q->select('id', 'user_id')->with('user:id,first_name,last_name');
             }])
                 ->where('appointment_bookings.business_id', getBusinessId())
                 ->whereDate('booking_date', now()->toDateString())
@@ -555,8 +679,15 @@ class AppointmentBookingController extends Controller
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->filterColumn('expert_info', function ($query, $keyword) {
+                    $query->whereHas('expert.user', function ($uq) use ($keyword) {
+                        $uq->where(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$keyword}%")
+                           ->orWhere('first_name', 'like', "%{$keyword}%")
+                           ->orWhere('last_name', 'like', "%{$keyword}%");
+                    });
+                })
                 ->addColumn('expert_info', function ($row) {
-                    $expinfo = $row->expert->expert_name;
+                    $expinfo = $row->expert?->user?->name ?? '';
                     if (isset($row->department) && !empty($row->department->department_name)) {
                         $expinfo .= " (" . $row->department->department_name . ")";
                     }
@@ -587,8 +718,10 @@ class AppointmentBookingController extends Controller
                         $statusUi .= '<div class="small fw-bold text-success">' . currencyFormat($row->amount) . '</div>';
                     } else {
                         $statusUi .= '<p class="mb-1 small">Status: ' . ucwords(str_replace('_', ' ', $row->status)) . '</p>';
-                        $statusUi .= '<button class="ststus_chenge_btn btn btn-primary btn-sm" data-id="' . $row->id . '" data-status="confirmed" >Accept</button>';
-                        $statusUi .= '<button class="ststus_chenge_btn btn btn-danger btn-sm ml-1" data-id="' . $row->id . '" data-status="cancel" >Cancel</button>';
+                        if (checkBusinessPermission('edit_appointments')) {
+                            $statusUi .= '<button class="ststus_chenge_btn btn btn-primary btn-sm" data-id="' . $row->id . '" data-status="confirmed" >Accept</button>';
+                            $statusUi .= '<button class="ststus_chenge_btn btn btn-danger btn-sm ml-1" data-id="' . $row->id . '" data-status="cancel" >Cancel</button>';
+                        }
                     }
                     $statusUi .= '</div>';
                     return $statusUi;
@@ -597,13 +730,12 @@ class AppointmentBookingController extends Controller
                 ->addColumn('action', function ($row) {
                     $url = route('business.appointment.bookings.destroy', $row->id);
                     $url = "'" . $url . "'";
-                    return ' <div class="text-center">
-                    <a href="' . route('business.appointment.bookings.edit', $row->id) . '" class="btn btn-outline-primary btn-sm" title="edit"><i class="bi bi-pencil"></i></a>
-                    <!-- button onclick="destroy(' . $url . ', ' . $row->id . ')" class="btn btn-outline-danger btn-sm btn_delete-' . $row->id . '" title="Delete">
-                        <i id="buttonText" class="bi bi-trash"></i>
-                        <span id="loader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                    </button -->
-                    </div>';
+                    $btn = '<div class="text-center">';
+                    if (checkBusinessPermission('edit_appointments')) {
+                        $btn .= '<a href="' . route('business.appointment.bookings.edit', $row->id) . '" class="btn btn-outline-primary btn-sm" title="edit"><i class="bi bi-pencil"></i></a>';
+                    }
+                    $btn .= '</div>';
+                    return $btn;
                 })
                 ->rawColumns(['action', 'img', 'appointment_date_time', 'expert_info', 'user_info', 'status_info'])
                 ->make(true);
@@ -614,9 +746,36 @@ class AppointmentBookingController extends Controller
         if ($businessSetting->is_appointment_with_department) {
             $departments = AppointmentDepartment::select('id', 'department_name')->where('business_id', getBusinessId())->get();
         } else {
-            $experts = Expert::select('id', 'expert_name')->where('business_id', getBusinessId())->get();
+            $experts = Expert::with('user:id,first_name,last_name')->select('id', 'user_id')->where('business_id', getBusinessId())->get();
         }
 
         return view('business.appointment.booking.pendig', compact('businessSetting', 'departments', 'experts'));
+    }
+
+    public function searchProduct(Request $request)
+    {
+        $businessId = getBusinessId();
+        $search = $request->get('q', '');
+
+        $products = \App\Models\Product::select('id', 'name', 'sell_price', 'sku')
+            ->where('business_id', $businessId)
+            ->where('status', 'active')
+            ->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%");
+            })
+            ->limit(10)
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'text' => $product->name . ' (₹' . number_format($product->sell_price ?? 0, 2) . ')',
+                    'name' => $product->name,
+                    'price' => (float)$product->sell_price,
+                    'sku' => $product->sku ?? '',
+                ];
+            });
+
+        return response()->json($products);
     }
 }

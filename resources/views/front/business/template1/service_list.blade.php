@@ -1,5 +1,5 @@
 @extends('front.business.template1.layouts.main', ['seo' => [
-'title' => 'Services | ' . $business->name . ' | Hereits',
+'title' => 'Services | ' . $business->name . ' | brandbatao',
 'description' => $business->seo_description ?? 'Explore services offered by ' . $business->name,
 'keywords' => 'services, ' . ($business->seo_keyword ?? $business->name),
 'image' => getImage($business->business_image)
@@ -18,15 +18,14 @@
             <h1 class="display-5 fw-bold mb-0">Our Services</h1>
         </div> -->
 
-        <!-- Category Filter (Horizontal Scroll) -->
         <div class="d-flex overflow-auto pb-2 gap-2 mb-5 text-nowrap" style="scrollbar-width: none; -ms-overflow-style: none;">
             <a href="{{ route('business-services', $business->slug) }}"
-                class="btn btn-sm rounded-pill px-3 {{ !request('category_id') ? 'btn-dark' : 'btn-light' }} overflow-visible">
+                class="btn btn-sm rounded-pill px-3 {{ (!request('category_id') && !request('category')) ? 'btn-dark' : 'btn-light' }} overflow-visible">
                 All
             </a>
             @foreach($categories as $category)
-            <a href="{{ route('business-services', ['business_slug' => $business->slug, 'category_id' => $category->id]) }}"
-                class="btn btn-sm rounded-pill px-3 {{ request('category_id') == $category->id ? 'btn-dark' : 'btn-light' }} overflow-visible">
+            <a href="{{ route('business-services', ['business_slug' => $business->slug, 'category_id' => $category->slug ?? $category->id]) }}"
+                class="btn btn-sm rounded-pill px-3 {{ (request('category_id') == $category->id || request('category_id') == $category->slug || request('category') == $category->id || request('category') == $category->slug) ? 'btn-dark' : 'btn-light' }} overflow-visible">
                 {{ $category->name }}
             </a>
             @endforeach
@@ -37,25 +36,26 @@
         <div class="row g-4">
             @foreach($services as $service)
             <div class="col-md-6 col-lg-4">
-                <div class="card h-100 border-0 shadow-sm hover-lift overflow-hidden">
+                <div class="card h-100 border-0 shadow-sm hover-lift overflow-hidden service-theme-card">
                     <a href="{{ route('service-details', ['business_slug' => $business->slug, 'service_slug' => $service->slug]) }}" class="text-decoration-none text-dark">
                         <div class="position-relative">
-                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($service->image_url) }}" class="card-img-top object-fit-cover" alt="{{ $service->name }}" style="aspect-ratio: 16/9;" loading="lazy">
-                            <div class="position-absolute top-0 start-0 p-3">
+                            <img src="{{ getImage($service->image_url) }}" class="card-img-top object-fit-cover" alt="{{ $service->name }}" style="aspect-ratio: 16/9;" loading="lazy">
+                            <div class="position-absolute top-0 end-0 p-3 d-flex align-items-center gap-2">
                                 @if($service->price_type == 'FixPrice')
                                 <span class="badge bg-primary fs-6 shadow-sm">₹{{ $service->price }}</span>
                                 @elseif($service->price_type == 'PriceInRange')
                                 <span class="badge bg-primary fs-6 shadow-sm">₹{{ $service->min_price }} - ₹{{ $service->max_price }}</span>
                                 @endif
+                                @php $isFavService = isFavorite('service', $service->id); @endphp
+                                <button type="button" class="btn-toggle-favorite card-fav-btn {{ $isFavService ? 'active' : '' }}"
+                                    data-type="service"
+                                    data-id="{{ $service->id }}"
+                                    data-business-id="{{ $service->business_id ?? $business->id }}"
+                                    title="{{ $isFavService ? 'Remove from favorites' : 'Add to favorites' }}"
+                                    style="position: static;">
+                                    <i class="{{ $isFavService ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }}"></i>
+                                </button>
                             </div>
-
-                            <button type="button" class="favorite-btn position-absolute top-0 end-0 m-3 rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
-                                data-item-id="{{ $service->id }}"
-                                data-business-id="{{ $business->id }}"
-                                data-type="service"
-                                style="width: 35px; height: 35px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
-                                <i class="{{ $service->is_favorited ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-6"></i>
-                            </button>
                         </div>
                         <div class="card-body p-4">
                             @if($service->category)
@@ -77,11 +77,9 @@
             @endforeach
         </div>
 
-        @if($services instanceof \Illuminate\Pagination\LengthAwarePaginator && $services->hasPages())
         <div class="mt-5 d-flex justify-content-center">
             {{ $services->appends(request()->query())->links('pagination::bootstrap-5') }}
         </div>
-        @endif
         @else
         <div class="text-center py-5">
             <div class="mb-4 text-muted opacity-25">

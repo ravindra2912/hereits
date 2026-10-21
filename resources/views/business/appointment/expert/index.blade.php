@@ -17,7 +17,7 @@
 <div class="card shadow mb-4">
   <div class="card-header py-3 bg-white d-flex justify-content-between align-items-center">
     <h5 class="m-0 font-weight-bold text-primary">Experts</h5>
-    @if(checkBusinessPermission('appointments', 'experts', 'add'))
+    @if(checkBusinessPermission('add_experts'))
     <a href="{{ route('business.appointment.expert.create') }}" class="btn btn-primary btn-sm shadow-sm">
       <i class="bi bi-plus-lg text-white-50"></i> Add Expert
     </a>
@@ -143,11 +143,43 @@
               }
             },
             error: function(e) {
-              Swal.fire('Error', 'Something went wrong', 'error');
+              let msg = e.responseJSON?.message || (e.status === 403 ? 'Unauthorized. You do not have permission to delete experts.' : 'Something went wrong');
+              Swal.fire('Error', msg, 'error');
             }
           });
         }
       })
   }
+
+  // Handle Status Toggle
+  $(document).on('change', '.status-toggle', function() {
+      let toggleSwitch = $(this);
+      let id = toggleSwitch.data('id');
+      let isChecked = toggleSwitch.prop('checked');
+      let status = isChecked ? 'active' : 'in-active';
+
+      $.ajax({
+          url: "{{ route('business.appointment.expert.status-toggle') }}",
+          type: "POST",
+          data: {
+              _token: "{{ csrf_token() }}",
+              id: id,
+              status: status
+          },
+          success: function(response) {
+              if (response.success) {
+                  toastr.success(response.message);
+              } else {
+                  toastr.error(response.message);
+                  toggleSwitch.prop('checked', !isChecked); // Revert switch if failed
+              }
+          },
+          error: function(xhr) {
+              let msg = xhr.responseJSON?.message || (xhr.status === 403 ? 'Unauthorized. You do not have permission to edit experts.' : 'An error occurred while updating the status.');
+              toastr.error(msg);
+              toggleSwitch.prop('checked', !isChecked); // Revert switch if failed
+          }
+      });
+  });
 </script>
 @endpush

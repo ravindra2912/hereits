@@ -46,7 +46,7 @@
                 <div class="text-secondary text-uppercase small fw-bold mb-3" style="letter-spacing: 0.5px;">Payment Screenshot proof</div>
                 <div class="text-center bg-white rounded-3 p-2 border overflow-hidden">
                     <a href="{{ getImage($transaction->payment_screen_shot) }}" target="_blank">
-                        <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($transaction->payment_screen_shot) }}" class="img-fluid rounded-3 shadow-sm hover-zoom" style="max-height: 400px; width: auto;" alt="Screenshot">
+                        <img src="{{ getImage($transaction->payment_screen_shot) }}" class="img-fluid rounded-3 shadow-sm hover-zoom" style="max-height: 400px; width: auto;" alt="Screenshot">
                     </a>
                 </div>
                 <div class="mt-2 text-center">
@@ -76,12 +76,18 @@
                     <tbody class="align-middle">
                         <tr class="border-bottom">
                             <td class="ps-4 py-3">
-                                <div class="fw-bold text-dark">{{ $transaction->purchase->quantity ? $transaction->purchase->quantity . ' Credits' : 'Credits' }}</div>
-                                <div class="small text-muted text-uppercase">{{ $transaction->purchase->plan_type ?? 'credit' }}</div>
+                                <div class="fw-bold text-dark">{{ $transaction->purchase?->plan?->name ?? ($transaction->purchase->plan_type == 'credit' ? 'Credit Recharge' : ucfirst($transaction->purchase->plan_type) . ' Plan') }}</div>
+                                <div class="small text-muted text-uppercase">{{ $transaction->purchase->plan_type }}</div>
                             </td>
                             <td class="text-center py-3">
                                 <span class="badge bg-light text-dark border">
+                                    @if($transaction->purchase->plan_type == 'subscription')
+                                    {{ $transaction->purchase->plan->duration ?? 'N/A' }} Days/Months
+                                    @elseif($transaction->purchase->plan_type == 'credit')
                                     {{ $transaction->purchase->quantity ?? 'N/A' }} Credits
+                                    @else
+                                    {{ $transaction->purchase->quantity ?? 'N/A' }} Units
+                                    @endif
                                 </span>
                             </td>
                             <td class="text-end pe-4 py-3 fw-bold text-dark">{{ currencyFormat($transaction->purchase->total_amount) }}</td>

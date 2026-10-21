@@ -5,12 +5,12 @@ namespace App\Http\Controllers\Business;
 use App\Models\Purchase;
 use App\Models\Business;
 use App\Models\SiteSetting;
-use App\Models\BusinessCreditTransaction;
+use App\Models\CreditHistory;
+use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\DataTables;
 
 class CreditController extends Controller
 {
@@ -29,61 +29,61 @@ class CreditController extends Controller
     }
 
     /**
-     * Get credit history DataTables JSON for business
+     * Get credit history datatable response
      */
-    public function historyData(Request $request)
+    public function history(Request $request)
     {
-        $businessId = getBusinessId();
+        $business_id = getBusinessId();
 
-        $query = BusinessCreditTransaction::where('business_id', $businessId);
+        if ($request->ajax()) {
+            $query = CreditHistory::where('business_id', $business_id);
 
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
+            if ($request->filled('transaction_type')) {
+                $query->where('transaction_type', $request->transaction_type);
+            }
+
+            if ($request->filled('type')) {
+                $query->where('type', $request->type);
+            }
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->editColumn('created_at', function ($row) {
+                    return $row->created_at ? $row->created_at->format('d M Y, h:i A') : '-';
+                })
+                ->editColumn('transaction_type', function ($row) {
+                    if ($row->transaction_type === 'credit') {
+                        return '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-bold"><i class="bi bi-arrow-down-left me-1"></i> Credit</span>';
+                    }
+                    return '<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1 fw-bold"><i class="bi bi-arrow-up-right me-1"></i> Debit</span>';
+                })
+                ->editColumn('type', function ($row) {
+                    $badges = [
+                        'registration'=> '<span class="badge bg-success-subtle text-success rounded-pill px-3 py-1 text-capitalize">Registration</span>',
+                        'order'       => '<span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1 text-capitalize">Order</span>',
+                        'appointment' => '<span class="badge bg-info-subtle text-info rounded-pill px-3 py-1 text-capitalize">Appointment</span>',
+                        'quotation'   => '<span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-1 text-capitalize">Quotation</span>',
+                        'lucky_draw'  => '<span class="badge bg-secondary-subtle text-dark rounded-pill px-3 py-1 text-capitalize">Lucky Draw</span>',
+                        'recharge'    => '<span class="badge bg-success-subtle text-success rounded-pill px-3 py-1 text-capitalize">Recharge</span>',
+                    ];
+                    return $badges[$row->type] ?? '<span class="badge bg-light text-dark rounded-pill px-3 py-1 text-capitalize">' . e($row->type) . '</span>';
+                })
+                ->editColumn('amount', function ($row) {
+                    $prefix = $row->transaction_type === 'credit' ? '+' : '-';
+                    $class = $row->transaction_type === 'credit' ? 'text-success' : 'text-danger';
+                    return '<strong class="' . $class . '">' . $prefix . ' ' . number_format($row->amount, 2) . '</strong>';
+                })
+                ->editColumn('balance_after', function ($row) {
+                    return number_format($row->balance_after, 2);
+                })
+                ->editColumn('description', function ($row) {
+                    return e($row->description ?? '-');
+                })
+                ->rawColumns(['transaction_type', 'type', 'amount', 'description'])
+                ->make(true);
         }
 
-        if ($request->filled('start_date')) {
-            $query->whereDate('created_at', '>=', $request->start_date);
-        }
-
-        if ($request->filled('end_date')) {
-            $query->whereDate('created_at', '<=', $request->end_date);
-        }
-
-        return DataTables::of($query)
-            ->addIndexColumn()
-            ->addColumn('date', function ($row) {
-                return '<small class="text-muted fw-medium">' . $row->created_at->format('d M Y, h:i A') . '</small>';
-            })
-            ->addColumn('type_badge', function ($row) {
-                if ($row->type === 'credit') {
-                    return '<span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1"><i class="bi bi-plus-circle me-1"></i>Credit</span>';
-                }
-                return '<span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-1"><i class="bi bi-dash-circle me-1"></i>Debit</span>';
-            })
-            ->addColumn('amount_col', function ($row) {
-                $isCredit = $row->type === 'credit';
-                $class = $isCredit ? 'text-success' : 'text-danger';
-                $sign  = $isCredit ? '+' : '-';
-                return '<span class="fw-bold ' . $class . '">' . $sign . number_format($row->amount, 2) . '</span>';
-            })
-            ->addColumn('reference_badge', function ($row) {
-                $map = [
-                    'order'       => ['bg' => 'bg-info bg-opacity-10 text-info', 'icon' => 'bi-cart-check', 'label' => 'Order'],
-                    'pos'         => ['bg' => 'bg-primary bg-opacity-10 text-primary', 'icon' => 'bi-receipt', 'label' => 'POS Sale'],
-                    'appointment' => ['bg' => 'bg-secondary bg-opacity-10 text-secondary', 'icon' => 'bi-calendar-event', 'label' => 'Appointment'],
-                    'chat'        => ['bg' => 'bg-warning bg-opacity-10 text-warning', 'icon' => 'bi-chat-dots', 'label' => 'Chat Unlock'],
-                    'quotation'   => ['bg' => 'bg-dark bg-opacity-10 text-dark', 'icon' => 'bi-file-earmark-text', 'label' => 'Quotation'],
-                    'purchase'    => ['bg' => 'bg-success bg-opacity-10 text-success', 'icon' => 'bi-bag-check', 'label' => 'Purchase'],
-                    'free'        => ['bg' => 'bg-success bg-opacity-10 text-success', 'icon' => 'bi-gift', 'label' => 'Free Bonus'],
-                ];
-                $info = $map[$row->reference_type] ?? ['bg' => 'bg-secondary bg-opacity-10 text-secondary', 'icon' => 'bi-dash', 'label' => ucfirst($row->reference_type)];
-                return '<span class="badge ' . $info['bg'] . ' rounded-pill px-2 py-1"><i class="bi ' . $info['icon'] . ' me-1"></i>' . $info['label'] . '</span>';
-            })
-            ->addColumn('desc', function ($row) {
-                return '<span class="small text-dark">' . e($row->description ?: '-') . '</span>';
-            })
-            ->rawColumns(['date', 'type_badge', 'amount_col', 'reference_badge', 'desc'])
-            ->make(true);
+        return redirect()->route('business.credits');
     }
 
     /**
@@ -156,6 +156,7 @@ class CreditController extends Controller
 
                 $binsert = new Purchase();
                 $binsert->business_id = getBusinessId();
+                $binsert->plan_id = null; // No fixed plan for credits
                 $binsert->plan_type = 'credit';
                 $binsert->subtotal = $originalPrice;
                 $binsert->quantity = $quantity;
@@ -176,7 +177,7 @@ class CreditController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
+            $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }

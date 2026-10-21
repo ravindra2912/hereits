@@ -12,7 +12,7 @@ class PurchaseHistoryController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = Purchase::with(['business', 'transaction', 'coupon'])
+            $data = Purchase::with(['business', 'plan', 'transaction', 'coupon'])
                 ->select('purchases.*');
 
             if ($request->has('status') && !empty($request->status)) {
@@ -40,20 +40,29 @@ class PurchaseHistoryController extends Controller
                     </div>';
                 })
                 ->addColumn('plan_info', function ($row) {
+                    $typeIcons = [
+                        'subscription' => ['icon' => 'bi-star', 'color' => 'primary'],
+                        'product' => ['icon' => 'bi-box', 'color' => 'success'],
+                        'service' => ['icon' => 'bi-tools', 'color' => 'info'],
+                        'credit' => ['icon' => 'bi-wallet2', 'color' => 'warning']
+                    ];
+                    $type = $row->plan_type ?? 'subscription';
+                    $info = $typeIcons[$type] ?? ['icon' => 'bi-credit-card', 'color' => 'secondary'];
+
                     return '<div class="d-flex align-items-center">
-                        <div class="bg-success bg-opacity-10 text-success rounded-circle p-2 me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
-                            <i class="bi bi-wallet2 small"></i>
+                        <div class="bg-' . $info['color'] . ' bg-opacity-10 text-' . $info['color'] . ' rounded-circle p-2 me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                            <i class="bi ' . $info['icon'] . ' small"></i>
                         </div>
                         <div>
-                            <div class="fw-bold mb-0">' . ($row->quantity ? $row->quantity . ' Credits' : 'Credits') . '</div>
-                            <small class="text-muted text-uppercase" style="font-size: 0.65rem;">' . ($row->plan_type ?? 'credit') . '</small>
+                            <div class="fw-bold mb-0">' . ($row->plan->name ?? ucfirst($type)) . '</div>
+                            <small class="text-muted text-uppercase" style="font-size: 0.65rem;">' . $type . '</small>
                         </div>
                     </div>';
                 })
                 ->addColumn('amount', function ($row) {
                     $discounts = '';
-                    if ($row->coupon_discount_amount > 0) {
-                        $discounts .= '<small class="text-success" style="font-size: 0.7rem;">- ' . \currencyFormat($row->coupon_discount_amount) . ' (saved)</small>';
+                    if ($row->coupon_discount_amount > 0 || $row->activated_plan_discount > 0) {
+                        $discounts .= '<small class="text-success" style="font-size: 0.7rem;">- ' . \currencyFormat($row->coupon_discount_amount + $row->activated_plan_discount) . ' (saved)</small>';
                     }
                     return '<div class="fw-bold text-dark">' . \currencyFormat($row->total_amount) . '</div>' . $discounts;
                 })
@@ -100,7 +109,7 @@ class PurchaseHistoryController extends Controller
 
     public function show($id)
     {
-        $purchase = Purchase::with(['business', 'transaction', 'business.owner', 'coupon'])->find($id);
+        $purchase = Purchase::with(['business', 'plan', 'transaction', 'business.owner', 'coupon'])->find($id);
         if (!$purchase) {
             return response()->json(['success' => false, 'message' => 'Purchase not found']);
         }
@@ -111,7 +120,7 @@ class PurchaseHistoryController extends Controller
 
     public function downloadInvoice($id)
     {
-        $purchase = Purchase::with(['transaction', 'business', 'business.owner'])->findOrFail($id);
+        $purchase = Purchase::with(['transaction', 'plan', 'business', 'business.owner'])->findOrFail($id);
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('business.purchase.invoice', compact('purchase'));
         return $pdf->download('invoice-' . $purchase->id . '.pdf');
     }

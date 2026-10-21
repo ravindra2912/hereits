@@ -20,7 +20,7 @@ class ImageService
      */
     protected function getDisk(): string
     {
-        return env('IMAGE_STORAGE_DISK', 'local');
+        return config('filesystems.image_storage_disk', env('IMAGE_STORAGE_DISK', 'local'));
     }
 
     /**
@@ -44,7 +44,7 @@ class ImageService
     /**
      * Retrieve the public URL for an image.
      *
-     * @param string $url The image path or remote URL.
+     * @param string|null $url The image path or remote URL.
      * @param string $type The placeholder type (e.g. 'expert').
      * @return string The absolute URL of the image.
      */
@@ -115,12 +115,15 @@ class ImageService
             return "";
         }
 
+        // Sanitize directory name to prevent path traversal
+        $directory = trim(preg_replace('/[^a-zA-Z0-9_\-\/]/', '', $directory), '/');
+
         $width = $width !== "" ? (int) $width : null;
         $height = $height !== "" ? (int) $height : null;
 
         if ($width !== null && $height !== null) {
             $imgname = time() . "_" . rand(11111, 99999) . '.' . $convertTo;
-            $imageName = $directory . "/" . $imgname;
+            $imageName = ($directory ? $directory . "/" : "") . $imgname;
 
             if (!Storage::disk('public')->exists($directory)) {
                 Storage::disk('public')->makeDirectory($directory);
@@ -131,21 +134,44 @@ class ImageService
             $image = $manager->read($imageObject->path());
             $image->scale($width, $height); // resize
 
+            $targetDir = public_path('/storage/' . $directory);
+            if (!file_exists($targetDir)) {
+                @mkdir($targetDir, 0755, true);
+            }
+
             if (strtolower($convertTo) === 'webp') {
                 $image->toWebp()->save(public_path('/storage/' . $imageName));
             } else {
                 $image->save(public_path('/storage/' . $imageName));
             }
         } else {
-            $imgname = time() . "_" . rand(11111, 99999) . '.' . $imageObject->getClientOriginalExtension();
-            $imageName = $directory . "/" . $imgname;
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'pdf', 'csv', 'xlsx', 'xls', 'doc', 'docx'];
+            $extension = strtolower($imageObject->getClientOriginalExtension());
+            $guessedExt = strtolower($imageObject->guessExtension() ?? '');
+
+            if (!in_array($extension, $allowedExtensions) || !in_array($guessedExt, $allowedExtensions)) {
+                $extension = in_array($guessedExt, $allowedExtensions) ? $guessedExt : 'jpg';
+            }
+
+            $extension = preg_replace('/[^a-z0-9]/', '', $extension) ?: 'jpg';
+            $imgname = time() . "_" . rand(11111, 99999) . '.' . $extension;
+            $imageName = ($directory ? $directory . "/" : "") . $imgname;
 
             if (!Storage::disk('public')->exists($directory)) {
                 Storage::disk('public')->makeDirectory($directory);
             }
 
+            $fileContent = file_get_contents($imageObject->getRealPath());
+
+            // Sanitize SVG to prevent stored XSS
+            if ($extension === 'svg') {
+                $fileContent = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', '', $fileContent);
+                $fileContent = preg_replace('/\bon[a-z]+\s*=\s*(["\']).*?\1/is', '', $fileContent);
+                $fileContent = preg_replace('/\bhref\s*=\s*(["\'])\s*javascript:[^"\']*\1/is', '', $fileContent);
+            }
+
             // Using local disk as defined in filesystems config (pointing to storage/app/public)
-            Storage::disk('local')->put($imageName, file_get_contents($imageObject), 'public');
+            Storage::disk('local')->put($imageName, $fileContent, 'public');
         }
 
         return $imageName;
@@ -160,18 +186,20 @@ class ImageService
             return $this->getPlaceholder($type);
         }
 
-        if (str_contains($url, 'https://') || str_contains($url, 'http://')) {
-            // Check if it's a YouTube URL
+        // Check if it's a YouTube URL
+        if (str_contains($url, 'youtube.com') || str_contains($url, 'youtu.be')) {
             $ytId = $this->getYoutubeId($url);
             if ($ytId) {
                 return "https://img.youtube.com/vi/$ytId/hqdefault.jpg";
             }
+        }
 
+        if (str_contains($url, 'https://') || str_contains($url, 'http://')) {
             return $url;
         }
 
         $imagePath = "storage/" . $url;
-        if (file_exists(public_path($imagePath))) {
+        if (file_exists(public_path($imagePath)) || Storage::disk('public')->exists($url)) {
             return asset($imagePath);
         }
 
@@ -187,12 +215,21 @@ class ImageService
             return false;
         }
 
-        // Using 'local' disk as configured to match root of storage_path('app/public')
-        if (Storage::disk('local')->exists($imagePath)) {
-            return Storage::disk('local')->delete($imagePath);
+        $deleted = false;
+        if (Storage::disk('public')->exists($imagePath)) {
+            $deleted = Storage::disk('public')->delete($imagePath);
         }
 
-        return false;
+        if (Storage::disk('local')->exists($imagePath)) {
+            $deleted = Storage::disk('local')->delete($imagePath) || $deleted;
+        }
+
+        $fullPath = public_path('storage/' . $imagePath);
+        if (file_exists($fullPath)) {
+            $deleted = @unlink($fullPath) || $deleted;
+        }
+
+        return $deleted;
     }
 
 
@@ -209,12 +246,15 @@ class ImageService
             return "";
         }
 
+        // Sanitize directory name to prevent path traversal
+        $directory = trim(preg_replace('/[^a-zA-Z0-9_\-\/]/', '', $directory), '/');
+
         $width = $width !== "" ? (int) $width : null;
         $height = $height !== "" ? (int) $height : null;
 
         if ($width !== null && $height !== null) {
             $imgname = time() . "_" . rand(11111, 99999) . '.' . $convertTo;
-            $imageName = $directory . "/" . $imgname;
+            $imageName = ($directory ? $directory . "/" : "") . $imgname;
 
             $driverClass = config('image.driver', GdDriver::class);
             $manager = new ImageManager(new $driverClass());
@@ -230,9 +270,9 @@ class ImageService
             Storage::disk('r2')->put($imageName, (string) $encoded, 'public');
         } else {
             $imgname = time() . "_" . rand(11111, 99999) . '.' . $imageObject->getClientOriginalExtension();
-            $imageName = $directory . "/" . $imgname;
+            $imageName = ($directory ? $directory . "/" : "") . $imgname;
 
-            Storage::disk('r2')->put($imageName, file_get_contents($imageObject), 'public');
+            Storage::disk('r2')->put($imageName, file_get_contents($imageObject->getRealPath()), 'public');
         }
 
         return $imageName;
@@ -247,13 +287,15 @@ class ImageService
             return $this->getPlaceholder($type);
         }
 
-        if (str_contains($url, 'https://') || str_contains($url, 'http://')) {
-            // Check if it's a YouTube URL
+        // Check if it's a YouTube URL
+        if (str_contains($url, 'youtube.com') || str_contains($url, 'youtu.be')) {
             $ytId = $this->getYoutubeId($url);
             if ($ytId) {
                 return "https://img.youtube.com/vi/$ytId/hqdefault.jpg";
             }
+        }
 
+        if (str_contains($url, 'https://') || str_contains($url, 'http://')) {
             return $url;
         }
 
@@ -269,8 +311,12 @@ class ImageService
             return false;
         }
 
-        if (Storage::disk('r2')->exists($imagePath)) {
-            return Storage::disk('r2')->delete($imagePath);
+        try {
+            if (Storage::disk('r2')->exists($imagePath)) {
+                return Storage::disk('r2')->delete($imagePath);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Failed to remove image from R2: ' . $e->getMessage());
         }
 
         return false;

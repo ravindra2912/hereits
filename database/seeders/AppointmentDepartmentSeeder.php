@@ -38,10 +38,13 @@ class AppointmentDepartmentSeeder extends Seeder
             'Physical Therapy',
         ];
 
+        $business = \App\Models\Business::first();
+        $businessId = $business ? $business->id : 1;
+
         foreach ($departments as $department) {
             AppointmentDepartment::create([
                 'department_name' => $department,
-                'business_id' => 1000,
+                'business_id' => $businessId,
             ]);
         }
     }

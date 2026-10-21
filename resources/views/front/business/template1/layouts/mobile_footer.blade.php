@@ -14,7 +14,7 @@
             <div class="mobile-nav-item px-1">
                 <a href="{{ route('business-products', ['business_slug' => $business->slug]) }}" class="mobile-nav-link {{ request()->routeIs('business-products') ? 'active' : '' }}">
                     <div class="nav-icon-wrapper">
-                         <i class="fas fa-shopping-bag"></i>
+                        <i class="fas fa-shopping-bag"></i>
                     </div>
                     <span>Products</span>
                 </a>

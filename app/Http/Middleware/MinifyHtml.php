@@ -52,9 +52,11 @@ class MinifyHtml
      */
     protected function minify(string $html): string
     {
-        // Preserve script and style tags
+        // Preserve script, style, pre, and textarea tags
         $scripts = [];
         $styles = [];
+        $pres = [];
+        $textareas = [];
 
         // Extract and preserve script tags
         $html = preg_replace_callback(
@@ -78,7 +80,29 @@ class MinifyHtml
             $html
         );
 
-        // Minify HTML (excluding scripts and styles)
+        // Extract and preserve pre tags (code blocks, formatted text)
+        $html = preg_replace_callback(
+            '/<pre\b[^>]*>(.*?)<\/pre>/is',
+            function ($matches) use (&$pres) {
+                $placeholder = '___PRE_' . count($pres) . '___';
+                $pres[] = $matches[0];
+                return $placeholder;
+            },
+            $html
+        );
+
+        // Extract and preserve textarea tags
+        $html = preg_replace_callback(
+            '/<textarea\b[^>]*>(.*?)<\/textarea>/is',
+            function ($matches) use (&$textareas) {
+                $placeholder = '___TEXTAREA_' . count($textareas) . '___';
+                $textareas[] = $matches[0];
+                return $placeholder;
+            },
+            $html
+        );
+
+        // Minify HTML (excluding scripts, styles, pre blocks, and textareas)
         $search = [
             '/\>[^\S ]+/s',                    // Strip whitespaces after tags, except space
             '/[^\S ]+\</s',                    // Strip whitespaces before tags, except space
@@ -94,6 +118,16 @@ class MinifyHtml
         ];
 
         $html = preg_replace($search, $replace, $html);
+
+        // Restore pre tags
+        foreach ($pres as $index => $pre) {
+            $html = str_replace('___PRE_' . $index . '___', $pre, $html);
+        }
+
+        // Restore textarea tags
+        foreach ($textareas as $index => $textarea) {
+            $html = str_replace('___TEXTAREA_' . $index . '___', $textarea, $html);
+        }
 
         // Restore script tags
         foreach ($scripts as $index => $script) {

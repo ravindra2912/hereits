@@ -8,9 +8,11 @@
     <div class="card-header py-3 bg-white border-0 ps-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
         <h5 class="m-0 fw-bold text-dark"><i class="bi bi-share-fill me-2 text-primary"></i>Product Sharing</h5>
         <div class="d-flex flex-wrap align-items-center justify-content-md-end gap-2 pe-3">
+            @if(checkBusinessPermission('add_product_sharing'))
             <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm flex-fill" data-bs-toggle="modal" data-bs-target="#addShareModal">
                 <i class="bi bi-plus-lg me-1"></i> Add Share Setting
             </button>
+            @endif
         </div>
     </div>
     <div class="card-body p-0">
@@ -208,7 +210,8 @@
                             }
                         },
                         error: function(e) {
-                            Swal.fire('Error', 'Something went wrong', 'error');
+                            let msg = e.responseJSON?.message || (e.status === 403 ? 'Unauthorized. You do not have permission to delete product sharing.' : 'Something went wrong');
+                            Swal.fire('Error', msg, 'error');
                         }
                     });
                 }
@@ -238,8 +241,9 @@
                     toggleSwitch.prop('checked', !isChecked);
                 }
             },
-            error: function() {
-                toastr.error('An error occurred while updating the status.');
+            error: function(xhr) {
+                let msg = xhr.responseJSON?.message || (xhr.status === 403 ? 'Unauthorized. You do not have permission to edit product sharing.' : 'An error occurred while updating the status.');
+                toastr.error(msg);
                 toggleSwitch.prop('checked', !isChecked);
             }
         });

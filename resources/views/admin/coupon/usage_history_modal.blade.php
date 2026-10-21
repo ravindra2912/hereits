@@ -11,7 +11,7 @@
                 <tr>
                     <th class="ps-3">Date</th>
                     <th>Business</th>
-                    <th>Item</th>
+                    <th>Plan</th>
                     <th class="text-end pe-3">Discount</th>
                 </tr>
             </thead>
@@ -24,14 +24,14 @@
                     </td>
                     <td>
                         <div class="d-flex align-items-center">
-                            <img onerror="this.src='{{ getImage(null) }}'" src="{{ $purchase->business && $purchase->business->business_logo ? getImage($purchase->business->business_logo) : asset('assets/images/default.png') }}"
+                            <img src="{{ $purchase->business && $purchase->business->business_logo ? getImage($purchase->business->business_logo) : asset('assets/images/default.png') }}"
                                 class="rounded-circle me-2" style="width: 24px; height: 24px; object-fit: cover;">
                             <div class="small fw-bold">{{ $purchase->business->name ?? 'N/A' }}</div>
                         </div>
                     </td>
                     <td>
                         <span class="badge bg-soft-primary text-primary small py-1 px-2 border border-primary border-opacity-25">
-                            {{ $purchase->quantity ? $purchase->quantity . ' Credits' : 'Credits' }}
+                            {{ $purchase->plan->name ?? ($purchase->plan_type == 'credit' ? 'Credit Recharge' : ucfirst($purchase->plan_type)) }}
                         </span>
                     </td>
                     <td class="text-end pe-3">
