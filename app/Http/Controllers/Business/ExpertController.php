@@ -76,7 +76,7 @@ class ExpertController extends Controller
                     $url = "'" . $url . "'";
                     $userEmail = $row->user ? $row->user->email : '';
                     $expertName = $row->user?->name ?? '';
-                    $whatsappMessage = "Hello " . $expertName . "! \n\nManage your professional profile and appointments on BrandBatao.\n\nLogin to Expert Dashboard: https://brandbatao.com/expert-manager/login\nEmail: " . $userEmail . "\n\nUse your assigned password to access your dashboard. \n\nBest Regards,\nTeam BrandBatao";
+                    $whatsappMessage = "Hello " . $expertName . "! \n\nManage your professional profile and appointments on hereits.\n\nLogin to Expert Dashboard: https://hereits.com/expert-manager/login\nEmail: " . $userEmail . "\n\nUse your assigned password to access your dashboard. \n\nBest Regards,\nTeam hereits";
                     $whatsappUrl = "https://api.whatsapp.com/send?text=" . urlencode($whatsappMessage);
 
                     $html = ' <div class="text-center">';

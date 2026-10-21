@@ -1,5 +1,5 @@
 @extends('front.business.template1.layouts.main', ['seo' => [
-'title' => ($expert->user?->name ?? 'Expert').' | brandbatao',
+'title' => ($expert->user?->name ?? 'Expert').' | hereits',
 'description' => $expert->user?->name ?? 'Expert',
 'keywords' => $expert->user?->name ?? 'Expert',
 'image' => getImage($expert->user?->profile) ,

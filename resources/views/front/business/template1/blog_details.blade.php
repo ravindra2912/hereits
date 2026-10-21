@@ -1,5 +1,5 @@
 @extends('front.business.template1.layouts.main', ['seo' => [
-'title' => ($blog->meta_title ?: $blog->title) . ' | ' . $business->name . ' | brandbatao',
+'title' => ($blog->meta_title ?: $blog->title) . ' | ' . $business->name . ' | hereits',
 'description' => $blog->meta_description ?: \Illuminate\Support\Str::limit($blog->short_description ?? strip_tags($blog->content), 160),
 'keywords' => $blog->meta_keywords ?: 'blog, article, ' . $blog->title . ', ' . $business->name,
 'image' => getImage($blog->image)

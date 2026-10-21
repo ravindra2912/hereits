@@ -664,7 +664,7 @@
                             <!-- Preview Header -->
                             <div class="preview-header d-flex align-items-center justify-content-between gap-2" id="previewHeader">
                                 <div class="d-flex align-items-center gap-1">
-                                    <span class="fw-bold small text-truncate" style="max-width: 90px;">{{ $business->name ?? 'BrandBatao Store' }}</span>
+                                    <span class="fw-bold small text-truncate" style="max-width: 90px;">{{ $business->name ?? 'hereits Store' }}</span>
                                 </div>
                                 <div class="preview-search-box flex-grow-1 mx-1" id="previewSearchBox" style="background-color: {{ $themeSetting['header']['search_background_color'] ?? '#f8fafc' }}; color: {{ $themeSetting['header']['search_text_color'] ?? '#1e293b' }}; border-radius: 20px; padding: 3px 8px; font-size: 0.65rem; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(0,0,0,0.06);">
                                     <i class="bi bi-search" style="font-size: 0.6rem; opacity: 0.7;"></i>

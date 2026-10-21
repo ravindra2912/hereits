@@ -14,7 +14,7 @@
                 <label class="form-label">Email Address</label>
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0"><i class="bi bi-envelope text-muted"></i></span>
-                    <input type="email" name="email" class="form-control border-start-0 ps-0" placeholder="expert@brandbatao.com" required>
+                    <input type="email" name="email" class="form-control border-start-0 ps-0" placeholder="expert@hereits.com" required>
                 </div>
             </div>
 

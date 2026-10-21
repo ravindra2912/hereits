@@ -22,9 +22,9 @@ class ApiV1ServiceListResource extends JsonResource
                 $imageUrl = asset('storage/' . $this->image_url);
             } elseif (function_exists('getImage')) {
                 $resolved = getImage($this->image_url, 'service');
-                $imageUrl = !empty($resolved) ? $resolved : ('https://brandbatao.com/storage/' . $this->image_url);
+                $imageUrl = !empty($resolved) ? $resolved : ('https://hereits.com/storage/' . $this->image_url);
             } else {
-                $imageUrl = 'https://brandbatao.com/storage/' . $this->image_url;
+                $imageUrl = 'https://hereits.com/storage/' . $this->image_url;
             }
         }
 

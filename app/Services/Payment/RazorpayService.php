@@ -23,7 +23,7 @@ class RazorpayService
     }
 
     /**
-     * Create an instance configured with BrandBatao platform keys (.env / config).
+     * Create an instance configured with hereits platform keys (.env / config).
      * Used for Business Panel purchases (subscriptions, limits, credits).
      */
     public static function forPlatform(): self

@@ -48,7 +48,7 @@ class ApiV1AuthService
             ];
         }
 
-        $token = $user->createToken('BrandBatao API')->accessToken;
+        $token = $user->createToken('hereits API')->accessToken;
 
         return [
             'success' => true,
@@ -81,7 +81,7 @@ class ApiV1AuthService
             $user->password = Hash::make($data['password']);
             $user->save();
 
-            $token = $user->createToken('BrandBatao API')->accessToken;
+            $token = $user->createToken('hereits API')->accessToken;
 
             return [
                 'success' => true,

@@ -1,5 +1,5 @@
 @extends('front.business.template1.layouts.main', ['seo' => [
-'title' => 'Checkout | ' . $business->name . ' | brandbatao',
+'title' => 'Checkout | ' . $business->name . ' | hereits',
 'description' => 'Checkout for ' . $business->name,
 'keywords' => 'checkout, ' . $business->name,
 'image' => getImage($business->business_image),

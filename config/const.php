@@ -82,9 +82,9 @@ return [
 
     "social_links" => [
         "facebook" => "https://www.facebook.com/",
-        "twitter" => "https://x.com/brandbatao",
+        "twitter" => "https://x.com/hereits",
         "instagram" => "https://www.instagram.com/brand_batao/",
-        "linkedin" => "https://www.linkedin.com/in/brandbatao/",
+        "linkedin" => "https://www.linkedin.com/in/hereits/",
         "youtube" => "https://www.youtube.com/",
     ],
     "category_type" => ['Services', 'Products'],

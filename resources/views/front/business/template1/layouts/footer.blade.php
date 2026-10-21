@@ -160,8 +160,8 @@
 
         @php
             $currentHost = request()->header('X-Forwarded-Host') ?: request()->getHost();
-            $primaryHost = parse_url(config('app.url'), PHP_URL_HOST) ?? 'brandbatao.com';
-            $isPrimaryDomain = in_array(strtolower($currentHost), ['brandbatao.com', 'www.brandbatao.com', strtolower($primaryHost)]);
+            $primaryHost = parse_url(config('app.url'), PHP_URL_HOST) ?? 'hereits.com';
+            $isPrimaryDomain = in_array(strtolower($currentHost), ['hereits.com', 'www.hereits.com', strtolower($primaryHost)]);
         @endphp
 
         <div class="footer-bottom">

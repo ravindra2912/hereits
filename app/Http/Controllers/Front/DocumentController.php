@@ -35,7 +35,7 @@ class DocumentController extends Controller
         }
 
         $appUrl = config('app.url');
-        $targetDomain = parse_url($appUrl, PHP_URL_HOST) ?? 'brandbatao.com';
+        $targetDomain = parse_url($appUrl, PHP_URL_HOST) ?? 'hereits.com';
 
         return view('front.documents.domain_mapping', compact('business', 'slug', 'targetDomain', 'proxyHashKey', 'isAdmin'));
     }
