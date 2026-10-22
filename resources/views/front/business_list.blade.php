@@ -9,10 +9,32 @@
 @section('content')
 <div class="listing-page-wrap bg-light pb-5">
     <div class="container pt-5">
+        <!-- Header Section -->
+        <div class="row mb-4 align-items-center reveal-on-scroll">
+            <div class="col-12 text-center text-md-start">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-center justify-content-md-start mb-2">
+                        <li class="breadcrumb-item"><a href="{{ route('home') }}" class="text-decoration-none text-muted">Home</a></li>
+                        <li class="breadcrumb-item active text-primary" aria-current="page">Businesses</li>
+                    </ol>
+                </nav>
+                <h1 class="display-6 fw-bold text-dark mb-1">
+                    @if(request('filter') === 'favorites')
+                        Your Saved Businesses
+                    @elseif(request('category'))
+                        Explore {{ ucwords(str_replace('-', ' ', request('category'))) }}
+                    @else
+                        Explore Local Businesses
+                    @endif
+                </h1>
+                <p class="text-muted small mb-0">Discover verified stores, salons, clinics, and experts in your area</p>
+            </div>
+        </div>
+
         <div class="row g-4">
             <!-- Full Width Business List -->
             <div class="col-12">
-                <div class="row g-4">
+                <div class="row g-4 reveal-on-scroll reveal-stagger">
                     @foreach($businesses as $business)
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="modern-business-card h-100 d-flex flex-column">
@@ -70,7 +92,7 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="mt-5 d-flex justify-content-center">
+                <div class="mt-5 d-flex justify-content-center reveal-on-scroll">
                     @if(!$businesses->isEmpty())
                     {{ $businesses->links('pagination::bootstrap-5') }}
                     @else

@@ -21,7 +21,7 @@
                 <p class="lead mb-0 opacity-90 animate-up delay-1">Explore top-rated salons, clinics, stores, and experts in your city with ease.</p>
 
                 <div class="d-none d-md-flex flex-wrap gap-3 animate-up delay-2 mt-3 pt-1">
-                    <a href="{{ route('business-list') }}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-lg">
+                    <a href="{{ route('business-list') }}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-lg pulse-glow-primary">
                         <i class="fas fa-compass me-2"></i> Explore Now
                     </a>
                     <a href="{{ route('why-join-with-us') }}" class="btn btn-outline-light rounded-pill px-4 py-2 fw-bold">
@@ -58,7 +58,7 @@
 @if(count($categories) > 0)
 <section class="py-4 py-md-5" style="background-color: var(--bg-light);">
     <div class="container py-lg-4">
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap reveal-on-scroll">
             <div class="text-nowrap overflow-hidden">
                 <!-- <div class="d-flex align-items-center gap-2 mb-1">
                     <span class="badge bg-primary rounded-pill px-3 py-1 small fw-bold">Categories</span>
@@ -67,11 +67,12 @@
                 <p class="text-muted mb-0 small d-none d-sm-block">Find top-rated local services and stores in one tap</p>
             </div>
             <a href="{{ route('categories-list') }}" class="btn-view-all ms-3">
-                View All <i class="fas fa-arrow-right"></i>
+                <span>View All</span>
+                <i class="fas fa-arrow-right"></i>
             </a>
         </div>
 
-        <div class="row g-4 mobile-horizontal-scroll">
+        <div class="row g-4 mobile-horizontal-scroll reveal-on-scroll reveal-stagger">
             @foreach($categories as $cat)
             <div class="col-lg-2 col-md-4 col-6">
                 <a href="{{ route('business-list', ['category' => $cat['slug']]) }}" class="category-card text-center d-block text-decoration-none group p-3 p-lg-4 shadow-sm h-100">
@@ -91,7 +92,7 @@
 <!-- 3. Store List (Featured Businesses) -->
 <section class="py-5 bg-white">
     <div class="container py-lg-4">
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap reveal-on-scroll">
             <div class="text-nowrap overflow-hidden">
                 <!-- <div class="d-flex align-items-center gap-2 mb-1">
                     <span class="badge bg-primary rounded-pill px-3 py-1 small fw-bold">Verified Places</span>
@@ -100,11 +101,12 @@
                 <p class="text-muted mb-0 small d-none d-sm-block">Top-rated stores & businesses around your location</p>
             </div>
             <a href="{{ route('business-list') }}" class="btn-view-all ms-3">
-                View All <i class="fas fa-arrow-right"></i>
+                <span>View All</span>
+                <i class="fas fa-arrow-right"></i>
             </a>
         </div>
 
-        <div class="row g-4">
+        <div class="row g-4 reveal-on-scroll reveal-stagger">
             @foreach ($featured_businesses as $business)
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="modern-business-card h-100 d-flex flex-column">
@@ -217,7 +219,7 @@
 @if(auth()->check() && count($favorite_businesses) > 0)
 <section class="py-5" style="background-color: var(--bg-light);">
     <div class="container py-lg-4">
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap reveal-on-scroll">
             <div class="text-nowrap overflow-hidden">
                 <!-- <div class="d-flex align-items-center gap-2 mb-1">
                     <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 small fw-bold">Saved Places</span>
@@ -226,11 +228,12 @@
                 <p class="text-muted mb-0 small d-none d-sm-block">Quick access to your bookmarked businesses</p>
             </div>
             <a href="{{ route('business-list', ['filter' => 'favorites']) }}" class="btn-view-all ms-3">
-                View All <i class="fas fa-arrow-right"></i>
+                <span>View All</span>
+                <i class="fas fa-arrow-right"></i>
             </a>
         </div>
 
-        <div class="row g-4">
+        <div class="row g-4 reveal-on-scroll reveal-stagger">
             @foreach ($favorite_businesses as $business)
             <div class="col-6 col-md-4 col-lg-3">
                 <div class="modern-business-card h-100 d-flex flex-column">
@@ -287,7 +290,7 @@
 <section class="py-5 modern-owner-cta position-relative overflow-hidden mt-5">
     <div class="container py-lg-5 position-relative" style="z-index: 1;">
         <div class="row align-items-center">
-            <div class="col-lg-6 mb-5 mb-lg-0 text-white">
+            <div class="col-lg-6 mb-5 mb-lg-0 text-white reveal-on-scroll">
                 <span class="hero-badge-pill mb-3">
                     <i class="fas fa-rocket me-2 text-primary"></i> For Business Owners
                 </span>
@@ -298,7 +301,7 @@
                     Join thousands of local businesses boosting visibility, taking appointments, receiving customer orders, and expanding their footprint seamlessly.
                 </p>
 
-                <div class="row g-3 mb-5">
+                <div class="row g-3 mb-5 reveal-on-scroll reveal-stagger">
                     <div class="col-sm-6">
                         <div class="feature-check-card d-flex align-items-center gap-3">
                             <div class="rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 36px; height: 36px; background: rgba(79, 70, 229, 0.3);">
@@ -339,7 +342,7 @@
                 </div>
             </div>
 
-            <div class="col-lg-5 offset-lg-1">
+            <div class="col-lg-5 offset-lg-1 reveal-on-scroll">
                 <div class="cta-image-wrap position-relative">
                     <img src="{{ asset('assets/front/img/homepage/store.webp') }}" class="img-fluid rounded-5 shadow-2xl animate-float" alt="Grow your business" loading="lazy">
                     <div class="cta-floating-card p-3 rounded-4 shadow-lg position-absolute bottom-0 start-0 mb-n4 ms-n4 d-flex align-items-center gap-3" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5);">

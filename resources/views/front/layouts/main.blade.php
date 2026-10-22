@@ -226,6 +226,11 @@
 	<script src="{{ asset('assets/front/js/global-search.js') }}?v={{ filemtime(public_path('assets/front/js/global-search.js')) }}"></script>
 	@endif
 
+	@if(file_exists(public_path('assets/front/js/scroll-animations.js')))
+	<script src="{{ asset('assets/front/js/scroll-animations.js') }}?v={{ filemtime(public_path('assets/front/js/scroll-animations.js')) }}"></script>
+	@endif
+
+
 	<script>
 		$(document).on('click', '.toggle-favorite-btn', function(e) {
 			e.preventDefault();
