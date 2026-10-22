@@ -15,55 +15,53 @@
                 <div class="row g-4">
                     @foreach($businesses as $business)
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="card border-0 shadow-sm rounded-4 overflow-hidden hover-lift h-100 transition-all">
-                            <a href="{{ route('business-details', $business->slug) }}" class="position-relative overflow-hidden d-block business-card-img" style="height: 200px;">
-                                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image ?? $business->business_logo) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}">
-                                <span class="badge bg-success position-absolute top-0 end-0 m-3 rounded-pill px-3">Open</span>
-                                
+                        <div class="modern-business-card h-100 d-flex flex-column">
+                            <a href="{{ route('business-details', $business->slug) }}" class="position-relative overflow-hidden d-block business-card-img" style="height: 190px;">
+                                <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image ?? $business->business_logo) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}" loading="lazy">
+                                <span class="status-pill-open position-absolute top-0 end-0 m-3">Open Now</span>
+
                                 <div class="position-absolute top-0 start-0 m-3">
                                     @guest
-                                    <button type="button" class="favorite-btn rounded-circle border-0 d-flex align-items-center justify-content-center"
-                                        data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')"
-                                        style="width: 35px; height: 35px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
+                                    <button type="button" class="favorite-glass-btn rounded-circle border-0 d-flex align-items-center justify-content-center"
+                                        data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')">
                                         <i class="far fa-heart text-muted fs-6"></i>
                                     </button>
                                     @else
-                                    <button type="button" class="favorite-btn rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
+                                    <button type="button" class="favorite-glass-btn rounded-circle border-0 d-flex align-items-center justify-content-center toggle-favorite-btn"
                                         data-item-id="{{ $business->id }}"
                                         data-business-id="{{ $business->id }}"
-                                        data-type="business"
-                                        style="width: 35px; height: 35px; background: rgba(255,255,255,0.9); z-index: 10; transition: all 0.3s ease;">
+                                        data-type="business">
                                         <i class="{{ !empty($business->is_favorited) ? 'fas fa-heart text-danger' : 'far fa-heart text-muted' }} fs-6"></i>
                                     </button>
                                     @endguest
                                 </div>
                             </a>
-                            <div class="card-body p-4">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h5 class="fw-bold text-dark mb-0 text-truncate" style="max-width: 80%;">
+                            <div class="card-body p-3 p-lg-4 d-flex flex-column flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
+                                    <h5 class="fw-bold text-dark mb-0 text-truncate" style="font-size: 1.05rem;">
                                         <a href="{{ route('business-details', $business->slug) }}" class="text-decoration-none text-dark">
                                             {{ $business->name }}
                                             @if($business->businessSetting->is_verified ?? false)
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" class="ms-1" style="vertical-align: middle;" title="Verified Business">
-                                                    <path fill="var(--primary-color)" d="M23,12L20.56,9.22L20.9,5.54L17.29,4.72L15.4,1.54L12,3L8.6,1.54L6.71,4.72L3.1,5.53L3.44,9.21L1,12L3.44,14.78L3.1,18.47L6.71,19.29L8.6,22.47L12,21L15.4,22.46L17.29,19.28L20.9,18.46L20.56,14.77L23,12Z" />
-                                                    <path fill="white" d="M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9L10,17Z" />
-                                                </svg>
+                                            <span class="text-primary ms-1" title="Verified Business"><i class="fas fa-check-circle" style="font-size: 0.9rem;"></i></span>
                                             @endif
                                         </a>
                                     </h5>
-                                    <div class="text-warning small d-flex align-items-center gap-1 flex-shrink-0">
-                                        <i class="fas fa-star"></i> <span>{{ number_format($business->rating, 1) }}</span>
-                                    </div>
+                                    <span class="rating-chip flex-shrink-0">
+                                        <i class="fas fa-star text-warning" style="font-size: 0.7rem;"></i> {{ number_format($business->rating, 1) }}
+                                    </span>
                                 </div>
-                                <div class="d-flex align-items-center mb-3">
-                                    <p class="text-muted small mb-0 text-truncate"><i class="fas fa-map-marker-alt text-primary me-2"></i> {{ $business->area ? $business->area .', ' : '' }} {{ $business->city->name ?? '' }}</p>
+                                <div class="d-flex align-items-center mb-3 text-muted small">
+                                    <i class="fas fa-map-marker-alt me-1 text-primary" style="font-size: 0.8rem;"></i>
+                                    <span class="text-truncate">{{ $business->area ? $business->area . ', ' : '' }}{{ $business->city->name ?? '' }}</span>
                                     @if(isset($business->distance))
-                                    <span class="ms-auto text-primary fw-bold extra-small"><i class="fas fa-route me-1"></i> {{ number_format($business->distance, 1) }} km</span>
+                                    <span class="ms-auto text-primary fw-bold" style="font-size: 0.75rem;"><i class="fas fa-route me-1"></i>{{ number_format($business->distance, 1) }} km</span>
                                     @endif
                                 </div>
-                                
-                                <div class="d-flex gap-2 flex-wrap">
-                                    <span class="badge bg-light text-muted fw-normal">{{ $business->businessCategory->name ?? 'Business' }}</span>
+                                <div class="mt-auto d-flex align-items-center justify-content-between pt-2 border-top">
+                                    <span class="badge bg-light text-secondary rounded-pill px-2 py-1 small fw-semibold">{{ $business->businessCategory->name ?? 'Business' }}</span>
+                                    <a href="{{ route('business-details', $business->slug) }}" class="small fw-bold text-primary text-decoration-none">
+                                        Visit Store <i class="fas fa-arrow-right ms-1"></i>
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -104,88 +102,4 @@
     </div>
 </div>
 
-<style>
-    .favorite-btn:hover {
-        transform: scale(1.1);
-        background: #fff !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    @media (max-width: 575.98px) {
-        .listing-page-wrap {
-            min-height: 100vh;
-        }
-    }
-
-    .hover-lift:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 1rem 3rem rgba(0, 0, 0, .1) !important;
-    }
-
-    .pagination-rounded .page-link {
-        border-radius: 50% !important;
-        margin: 0 5px;
-        width: 45px;
-        height: 45px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        color: var(--bs-dark);
-        font-weight: 600;
-        background-color: white;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-
-    .pagination-rounded .page-item.active .page-link {
-        background-color: var(--primary-color);
-        color: white;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .pagination-rounded .page-item.disabled .page-link {
-        opacity: 0.5;
-        background-color: #f8f9fa;
-    }
-    @media (max-width: 575.98px) {
-        .card-body {
-            padding: 0.75rem !important;
-        }
-        .business-card-img {
-            height: 120px !important;
-        }
-        .card-body h5 {
-            font-size: 0.85rem !important;
-        }
-        .card-body p {
-            font-size: 0.7rem !important;
-            margin-bottom: 0.5rem !important;
-        }
-        .card-body .badge {
-            font-size: 0.6rem !important;
-            padding: 0.2rem 0.5rem !important;
-        }
-        .card-body .btn {
-            padding: 0.3rem 0.8rem !important;
-            font-size: 0.7rem !important;
-        }
-        .g-4, .gx-4 {
-            --bs-gutter-x: 0.5rem !important;
-        }
-        .g-4, .gy-4 {
-            --bs-gutter-y: 0.5rem !important;
-        }
-        .favorite-btn {
-            width: 28px !important;
-            height: 28px !important;
-        }
-        .favorite-btn i {
-            font-size: 0.75rem !important;
-        }
-        .badge.position-absolute {
-            font-size: 0.6rem !important;
-            padding: 0.2rem 0.5rem !important;
-            margin: 0.5rem !important;
-        }
-    }
-</style>
 @endsection

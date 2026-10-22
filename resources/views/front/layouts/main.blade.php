@@ -59,7 +59,10 @@
 	<!-- Favicon -->
 	<link rel="icon" type="image/png" href="{{ config('const.site_setting.fevicon') }}">
 
-	<meta name="robots" content="index, follow">
+	<!-- Google Fonts: Plus Jakarta Sans -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
 	<!-- Bootstrap 5 CSS -->
 	<link rel="stylesheet" href="{{ asset('assets/common/css/bootstrap.min.css') }}?v={{ filemtime(public_path('assets/common/css/bootstrap.min.css')) }}">

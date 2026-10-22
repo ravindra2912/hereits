@@ -49,14 +49,4 @@
         </div>
     </div>
 </div>
-
-<style>
-    .category-card {
-        border: 1px solid rgba(0,0,0,0.03);
-    }
-    .hover-lift:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 1rem 3rem rgba(0, 0, 0, .075) !important;
-    }
-</style>
 @endsection
