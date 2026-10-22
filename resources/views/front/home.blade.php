@@ -60,14 +60,14 @@
     <div class="container py-lg-4">
         <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap">
             <div class="text-nowrap overflow-hidden">
-                <div class="d-flex align-items-center gap-2 mb-1">
-                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1 small fw-bold">Categories</span>
-                </div>
+                <!-- <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-primary rounded-pill px-3 py-1 small fw-bold">Categories</span>
+                </div> -->
                 <h2 class="fw-bold mb-0 fs-4 fs-md-2" style="letter-spacing: -0.02em;">Explore What You Need</h2>
                 <p class="text-muted mb-0 small d-none d-sm-block">Find top-rated local services and stores in one tap</p>
             </div>
-            <a href="{{ route('categories-list') }}" class="btn btn-outline-primary rounded-pill d-inline-flex align-items-center text-nowrap ms-3" style="font-size: 0.85rem; padding: 0.45rem 1.1rem;">
-                View All <i class="fas fa-arrow-right ms-2"></i>
+            <a href="{{ route('categories-list') }}" class="btn-view-all ms-3">
+                View All <i class="fas fa-arrow-right"></i>
             </a>
         </div>
 
@@ -93,14 +93,14 @@
     <div class="container py-lg-4">
         <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap">
             <div class="text-nowrap overflow-hidden">
-                <div class="d-flex align-items-center gap-2 mb-1">
-                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-1 small fw-bold">Verified Places</span>
-                </div>
+                <!-- <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-primary rounded-pill px-3 py-1 small fw-bold">Verified Places</span>
+                </div> -->
                 <h2 class="fw-bold mb-0 fs-4 fs-md-2" style="letter-spacing: -0.02em;">Recommended for You</h2>
                 <p class="text-muted mb-0 small d-none d-sm-block">Top-rated stores & businesses around your location</p>
             </div>
-            <a href="{{ route('business-list') }}" class="btn btn-outline-primary rounded-pill d-inline-flex align-items-center text-nowrap ms-3" style="font-size: 0.85rem; padding: 0.45rem 1.1rem;">
-                View All <i class="fas fa-arrow-right ms-2"></i>
+            <a href="{{ route('business-list') }}" class="btn-view-all ms-3">
+                View All <i class="fas fa-arrow-right"></i>
             </a>
         </div>
 
@@ -219,14 +219,14 @@
     <div class="container py-lg-4">
         <div class="d-flex justify-content-between align-items-center mb-4 flex-nowrap">
             <div class="text-nowrap overflow-hidden">
-                <div class="d-flex align-items-center gap-2 mb-1">
+                <!-- <div class="d-flex align-items-center gap-2 mb-1">
                     <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 small fw-bold">Saved Places</span>
-                </div>
+                </div> -->
                 <h2 class="fw-bold mb-0 fs-4 fs-md-2" style="letter-spacing: -0.02em;">Your Favorites</h2>
                 <p class="text-muted mb-0 small d-none d-sm-block">Quick access to your bookmarked businesses</p>
             </div>
-            <a href="{{ route('business-list', ['filter' => 'favorites']) }}" class="btn btn-outline-primary rounded-pill d-inline-flex align-items-center text-nowrap ms-3" style="font-size: 0.85rem; padding: 0.45rem 1.1rem;">
-                View All <i class="fas fa-arrow-right ms-2"></i>
+            <a href="{{ route('business-list', ['filter' => 'favorites']) }}" class="btn-view-all ms-3">
+                View All <i class="fas fa-arrow-right"></i>
             </a>
         </div>
 
