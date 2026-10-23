@@ -15,7 +15,7 @@ return [
     "contact_info" => [
         "phone" => "8306426026",
         "email" => " support@hereits.com",
-        "address" => "Khar get, Mahuva, Bhavangar Road",
+        "address" => "D -102, Shantinagar co opp house society, Vallabhacharya Road,  Raj Mandir Apartment, Varachha, Surat, Gujarat, 395006",
         "upi_id" => "gosaikrishna85-1@okicici",
     ],
 
