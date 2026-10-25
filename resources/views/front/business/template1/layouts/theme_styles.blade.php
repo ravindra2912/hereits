@@ -41,6 +41,21 @@
         @endif
     }
 
+    .navbar-nav .nav-link:hover,
+    .navbar-nav .nav-link.active {
+        color: {{ $primaryColor }} !important;
+    }
+    .navbar-nav .nav-link::after {
+        background: {{ $primaryColor }} !important;
+    }
+    .offcanvas-body .nav-link.active {
+        @if($primaryRgb)
+        background: rgba({{ $primaryRgb }}, 0.1) !important;
+        @endif
+        color: {{ $primaryColor }} !important;
+    }
+
+
     .btn-primary,
     .btn-primary:not(:disabled):not(.disabled),
     .add-to-cart-btn,

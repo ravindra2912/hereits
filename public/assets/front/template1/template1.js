@@ -198,4 +198,100 @@ $(document).ready(function () {
             }
         }
     });
+
+    // --- Active Page & In-Page ScrollSpy Navigation ---
+    const businessSlug = $('meta[name="business-slug"]').attr('content') || '';
+    const currentPath = window.location.pathname.replace(/\/+$/, '');
+    const homePath = `/${businessSlug}`.replace(/\/+$/, '');
+    const isBusinessHomePage = $('#home').length > 0 || (businessSlug && currentPath === homePath) || currentPath === '';
+
+    if (isBusinessHomePage) {
+        const $navLinks = $('#businessNav .nav-link, #businessOffcanvas .nav-link');
+        const trackedSections = [];
+
+        $navLinks.each(function () {
+            const href = $(this).attr('href') || '';
+            const hashIndex = href.indexOf('#');
+            if (hashIndex !== -1) {
+                const targetHash = href.substring(hashIndex);
+                if (targetHash && targetHash !== '#') {
+                    const $section = $(targetHash);
+                    if ($section.length && !trackedSections.some(s => s.id === targetHash)) {
+                        trackedSections.push({
+                            id: targetHash,
+                            $el: $section
+                        });
+                    }
+                }
+            }
+        });
+
+        function updateActiveSection(activeHash) {
+            $navLinks.each(function () {
+                const href = $(this).attr('href') || '';
+                const hashIndex = href.indexOf('#');
+                const linkHash = hashIndex !== -1 ? href.substring(hashIndex) : '';
+
+                if (linkHash === activeHash || (activeHash === '#home' && (linkHash === '#home' || !linkHash))) {
+                    $(this).addClass('active text-primary');
+                } else if (href.includes('#')) {
+                    $(this).removeClass('active text-primary');
+                }
+            });
+        }
+
+        // Initialize active state based on current URL hash or top of page
+        const currentHash = window.location.hash || '#home';
+        updateActiveSection(currentHash);
+
+        // ScrollSpy observer
+        if (trackedSections.length > 0) {
+            let isScrollThrottled = false;
+            $(window).on('scroll', function () {
+                if (isScrollThrottled) return;
+                isScrollThrottled = true;
+
+                setTimeout(() => {
+                    const scrollPosition = $(window).scrollTop() + 150; // Offset for sticky navbar
+                    let visibleSectionId = '#home';
+
+                    // If reached near bottom of page, activate last tracked section (e.g. Contact Us)
+                    if ($(window).scrollTop() + $(window).height() >= $(document).height() - 50) {
+                        visibleSectionId = trackedSections[trackedSections.length - 1].id;
+                    } else {
+                        for (let i = 0; i < trackedSections.length; i++) {
+                            const top = trackedSections[i].$el.offset().top;
+                            const height = trackedSections[i].$el.outerHeight();
+                            if (scrollPosition >= top && scrollPosition < top + height) {
+                                visibleSectionId = trackedSections[i].id;
+                                break;
+                            }
+                        }
+                    }
+
+                    updateActiveSection(visibleSectionId);
+                    isScrollThrottled = false;
+                }, 50);
+            });
+        }
+
+        // On click of anchor links, instantly highlight and scroll smoothly
+        $(document).on('click', '#businessNav a[href*="#"], #businessOffcanvas a[href*="#"]', function () {
+            const href = $(this).attr('href') || '';
+            const hashIndex = href.indexOf('#');
+            if (hashIndex !== -1) {
+                const hash = href.substring(hashIndex);
+                if (hash && $(hash).length) {
+                    updateActiveSection(hash);
+                }
+            }
+        });
+
+        // Listen for popstate / hashchange (e.g., browser back/forward buttons)
+        $(window).on('hashchange', function () {
+            const newHash = window.location.hash || '#home';
+            updateActiveSection(newHash);
+        });
+    }
 });
+

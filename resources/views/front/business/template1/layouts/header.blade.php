@@ -90,19 +90,19 @@
                 <!-- Dynamic Module Links -->
                 @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
                 <li class="nav-item">
-                    <a class="nav-link fw-500 {{ request()->routeIs('business-products') ? 'active text-primary' : '' }}" href="{{ route('business-products', ['business_slug' => $business->slug]) }}">Products</a>
+                    <a class="nav-link fw-500 {{ request()->routeIs('business-products*') || request()->routeIs('product-detail*') ? 'active text-primary' : '' }}" href="{{ route('business-products', ['business_slug' => $business->slug]) }}">Products</a>
                 </li>
                 @endif
 
                 @if(isset($setting->is_service_system) && $setting->is_service_system)
                 <li class="nav-item">
-                    <a class="nav-link fw-500 {{ request()->routeIs('business-services') ? 'active text-primary' : '' }}" href="{{ route('business-services', ['business_slug' => $business->slug]) }}">Services</a>
+                    <a class="nav-link fw-500 {{ request()->routeIs('business-services*') || request()->routeIs('service-details*') ? 'active text-primary' : '' }}" href="{{ route('business-services', ['business_slug' => $business->slug]) }}">Services</a>
                 </li>
                 @endif
 
                 @if(isset($setting) && $setting->is_appointment_system)
                 <li class="nav-item">
-                    <a class="nav-link fw-500 {{ request()->routeIs('expert.list') ? 'active text-primary' : '' }}" href="{{ route('expert.list', $business->slug) }}">Experts</a>
+                    <a class="nav-link fw-500 {{ request()->routeIs('expert*') ? 'active text-primary' : '' }}" href="{{ route('expert.list', $business->slug) }}">Experts</a>
                 </li>
                 @endif
 
@@ -113,11 +113,11 @@
                 @endif
 
                 <li class="nav-item">
-                    <a class="nav-link fw-500" href="{{ route('business-details', $business->slug) }}#gallery">Gallery</a>
+                    <a class="nav-link fw-500 {{ request()->routeIs('business-galleries*') ? 'active text-primary' : '' }}" href="{{ route('business-details', $business->slug) }}#gallery">Gallery</a>
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link fw-500 {{ request()->routeIs('business-blogs') || request()->routeIs('business-blog-details') ? 'active text-primary' : '' }}" href="{{ route('business-blogs', $business->slug) }}">Blogs</a>
+                    <a class="nav-link fw-500 {{ request()->routeIs('business-blogs*') || request()->routeIs('business-blog-details*') ? 'active text-primary' : '' }}" href="{{ route('business-blogs', $business->slug) }}">Blogs</a>
                 </li>
 
                 @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
@@ -191,14 +191,14 @@
     <div class="offcanvas-body">
         <ul class="navbar-nav gap-2">
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('business-details') ? 'active' : '' }}" href="{{ route('business-details', $business->slug) }}#home">
+                <a class="nav-link {{ request()->routeIs('business-details') ? 'active text-primary' : '' }}" href="{{ route('business-details', $business->slug) }}#home">
                     <i class="fas fa-home me-2"></i>Home
                 </a>
             </li>
 
             @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('business-products') ? 'active' : '' }}" href="{{ route('business-products', ['business_slug' => $business->slug]) }}">
+                <a class="nav-link {{ request()->routeIs('business-products*') || request()->routeIs('product-detail*') ? 'active text-primary' : '' }}" href="{{ route('business-products', ['business_slug' => $business->slug]) }}">
                     <i class="fas fa-box me-2"></i>Products
                 </a>
             </li>
@@ -206,7 +206,7 @@
 
             @if(isset($setting->is_service_system) && $setting->is_service_system)
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('business-services') ? 'active' : '' }}" href="{{ route('business-services', ['business_slug' => $business->slug]) }}">
+                <a class="nav-link {{ request()->routeIs('business-services*') || request()->routeIs('service-details*') ? 'active text-primary' : '' }}" href="{{ route('business-services', ['business_slug' => $business->slug]) }}">
                     <i class="fas fa-concierge-bell me-2"></i>Services
                 </a>
             </li>
@@ -214,7 +214,7 @@
 
             @if(isset($setting) && $setting->is_appointment_system)
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('expert.list') ? 'active' : '' }}" href="{{ route('expert.list', $business->slug) }}">
+                <a class="nav-link {{ request()->routeIs('expert*') ? 'active text-primary' : '' }}" href="{{ route('expert.list', $business->slug) }}">
                     <i class="fas fa-user-tie me-2"></i>Experts
                 </a>
             </li>
@@ -229,13 +229,13 @@
             @endif
 
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('business-details', $business->slug) }}#gallery">
+                <a class="nav-link {{ request()->routeIs('business-galleries*') ? 'active text-primary' : '' }}" href="{{ route('business-details', $business->slug) }}#gallery">
                     <i class="fas fa-images me-2"></i>Gallery
                 </a>
             </li>
 
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('business-blogs') || request()->routeIs('business-blog-details') ? 'active' : '' }}" href="{{ route('business-blogs', $business->slug) }}">
+                <a class="nav-link {{ request()->routeIs('business-blogs*') || request()->routeIs('business-blog-details*') ? 'active text-primary' : '' }}" href="{{ route('business-blogs', $business->slug) }}">
                     <i class="fas fa-journal-text me-2"></i>Blogs
                 </a>
             </li>
@@ -247,6 +247,7 @@
                 </a>
             </li>
             @endif
+
 
             @auth
             <li class="nav-item mt-3 pt-3 border-top">
