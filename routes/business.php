@@ -77,46 +77,43 @@ Route::name('business.')->group(function () {
             Route::resource('label', \App\Http\Controllers\Business\LabelController::class);
             Route::resource('order', \App\Http\Controllers\Business\OrderController::class);
             Route::post('order/update-status/{id}', [\App\Http\Controllers\Business\OrderController::class, 'updateStatus'])->name('order.update-status');
-
-
-            // Home Management Routes
-            Route::controller(\App\Http\Controllers\Business\HomeManagementController::class)->group(function () {
-                Route::get('home-management', 'index')->name('home-management');
-
-                // Layouts Routes
-                Route::get('home-management/layouts', 'layoutsIndex')->name('home-management.layouts');
-                Route::get('home-management/layouts/search-items', 'layoutsSearchItems')->name('home-management.layouts.search-items');
-                Route::post('home-management/layouts/store', 'layoutsStore')->name('home-management.layouts.store');
-                Route::get('home-management/layouts/{id}/edit', 'layoutsEdit')->name('home-management.layouts.edit');
-                Route::post('home-management/layouts/{id}/update', 'layoutsUpdate')->name('home-management.layouts.update');
-                Route::post('home-management/layouts/update-order', 'layoutsUpdateOrder')->name('home-management.layouts.update-order');
-                Route::post('home-management/layouts/{id}/toggle-status', 'layoutsToggleStatus')->name('home-management.layouts.toggle-status')->whereNumber('id');
-                Route::post('home-management/layouts/item/{id}/toggle-status', 'layoutsItemToggleStatus')->name('home-management.layouts.item.toggle-status')->whereNumber('id');
-                Route::delete('home-management/layouts/{id}', 'layoutsDestroy')->name('home-management.layouts.destroy');
-
-                // Settings Routes (Business Home Popups)
-                Route::get('home-management/settings', 'settingsIndex')->name('home-management.settings');
-                Route::get('home-management/google-sheets-setup', 'googleSheetsSetupHelp')->name('home-management.google-sheets-setup');
-                Route::post('home-management/settings/store', 'settingsStore')->name('home-management.settings.store');
-                Route::get('home-management/settings/{id}/edit', 'settingsEdit')->name('home-management.settings.edit');
-                Route::post('home-management/settings/{id}/update', 'settingsUpdate')->name('home-management.settings.update');
-                Route::post('home-management/settings/{id}/toggle-status', 'settingsToggleStatus')->name('home-management.settings.toggle-status');
-                Route::delete('home-management/settings/{id}', 'settingsDestroy')->name('home-management.settings.destroy');
-
-            });
-
-            // Campaign Leads Routes
-            Route::controller(\App\Http\Controllers\Business\CampaignLeadController::class)->group(function () {
-                Route::get('home-management/leads', 'index')->name('home-management.leads');
-                Route::post('home-management/leads/store', 'store')->name('home-management.leads.store');
-                Route::get('home-management/leads/{id}/edit', 'edit')->name('home-management.leads.edit');
-                Route::post('home-management/leads/{id}/update', 'update')->name('home-management.leads.update');
-                Route::post('home-management/leads/{id}/recall-webhook', 'recallWebhook')->name('home-management.leads.recall-webhook');
-                Route::delete('home-management/leads/{id}', 'destroy')->name('home-management.leads.destroy');
-            });
-
-
         });
+
+        // Home Management Routes
+        Route::controller(\App\Http\Controllers\Business\HomeManagementController::class)->group(function () {
+            Route::get('home-management', 'index')->name('home-management');
+
+            // Layouts Routes
+            Route::get('home-management/layouts', 'layoutsIndex')->name('home-management.layouts');
+            Route::get('home-management/layouts/search-items', 'layoutsSearchItems')->name('home-management.layouts.search-items');
+            Route::post('home-management/layouts/store', 'layoutsStore')->name('home-management.layouts.store');
+            Route::get('home-management/layouts/{id}/edit', 'layoutsEdit')->name('home-management.layouts.edit');
+            Route::post('home-management/layouts/{id}/update', 'layoutsUpdate')->name('home-management.layouts.update');
+            Route::post('home-management/layouts/update-order', 'layoutsUpdateOrder')->name('home-management.layouts.update-order');
+            Route::post('home-management/layouts/{id}/toggle-status', 'layoutsToggleStatus')->name('home-management.layouts.toggle-status')->whereNumber('id');
+            Route::post('home-management/layouts/item/{id}/toggle-status', 'layoutsItemToggleStatus')->name('home-management.layouts.item.toggle-status')->whereNumber('id');
+            Route::delete('home-management/layouts/{id}', 'layoutsDestroy')->name('home-management.layouts.destroy');
+
+            // Settings Routes (Business Home Popups)
+            Route::get('home-management/settings', 'settingsIndex')->name('home-management.settings');
+            Route::get('home-management/google-sheets-setup', 'googleSheetsSetupHelp')->name('home-management.google-sheets-setup');
+            Route::post('home-management/settings/store', 'settingsStore')->name('home-management.settings.store');
+            Route::get('home-management/settings/{id}/edit', 'settingsEdit')->name('home-management.settings.edit');
+            Route::post('home-management/settings/{id}/update', 'settingsUpdate')->name('home-management.settings.update');
+            Route::post('home-management/settings/{id}/toggle-status', 'settingsToggleStatus')->name('home-management.settings.toggle-status');
+            Route::delete('home-management/settings/{id}', 'settingsDestroy')->name('home-management.settings.destroy');
+        });
+
+        // Campaign Leads Routes
+        Route::controller(\App\Http\Controllers\Business\CampaignLeadController::class)->group(function () {
+            Route::get('home-management/leads', 'index')->name('home-management.leads');
+            Route::post('home-management/leads/store', 'store')->name('home-management.leads.store');
+            Route::get('home-management/leads/{id}/edit', 'edit')->name('home-management.leads.edit');
+            Route::post('home-management/leads/{id}/update', 'update')->name('home-management.leads.update');
+            Route::post('home-management/leads/{id}/recall-webhook', 'recallWebhook')->name('home-management.leads.recall-webhook');
+            Route::delete('home-management/leads/{id}', 'destroy')->name('home-management.leads.destroy');
+        });
+
         Route::resource('banner', BannerController::class);
 
         Route::middleware(['checkModule:service'])->group(function () {
@@ -125,8 +122,6 @@ Route::name('business.')->group(function () {
             Route::post('service-category/status-toggle', [\App\Http\Controllers\Business\ServiceCategoryController::class, 'statusToggle'])->name('service-category.status-toggle');
             Route::post('service-category/reorder', [\App\Http\Controllers\Business\ServiceCategoryController::class, 'reorder'])->name('service-category.reorder');
             Route::resource('service-category', \App\Http\Controllers\Business\ServiceCategoryController::class);
-
-
         });
         Route::post('gallery/status-toggle', [GalleryController::class, 'statusToggle'])->name('gallery.status-toggle');
         Route::resource('gallery', GalleryController::class);
