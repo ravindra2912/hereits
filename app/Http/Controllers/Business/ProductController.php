@@ -18,6 +18,7 @@ use App\Exports\ProductStockPriceExport;
 use App\Imports\ProductStockPriceImport;
 use App\Models\BusinessSetting;
 use Illuminate\Support\Facades\Cache;
+use App\Http\Requests\Business\StoreProductRequest;
 
 class ProductController extends Controller
 {
@@ -125,7 +126,7 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
         $success = false;
         $message = 'Something Wrong!';
@@ -134,44 +135,27 @@ class ProductController extends Controller
 
         try {
             DB::beginTransaction();
+            $business_id = getBusinessId();
 
-            $rules = [
-                'name' => 'required|string|max:255',
-                'sku' => 'required|string|max:100',
-                'category_id' => 'required|exists:categories,id',
-                'label_id' => 'nullable|array',
-                'label_id.*' => 'exists:labels,id',
-                'quantity' => 'required|integer|min:0'
-            ];
+            $product = Product::create([
+                'business_id' => $business_id,
+                'category_id' => $request->category_id,
+                'label_id' => $request->label_id ? array_map('intval', (array)$request->label_id) : null,
+                'name' => $request->name,
+                'sku' => $request->sku,
+                'quantity' => $request->quantity ?? 0,
+                'length' => $request->length,
+                'width' => $request->width,
+                'height' => $request->height,
+                'weight' => $request->weight,
+                'slug' => generateUniqueSlug(Product::class, $request->name, 'slug', $business_id),
+            ]);
 
-            $validator = Validator::make($request->all(), $rules);
-
-            if ($validator->fails()) {
-                $message = $validator->errors();
-            } else if (Product::where('sku', $request->sku)->where('business_id', getBusinessId())->exists()) {
-                $message = 'SKU already exists.';
-                $business_id = getBusinessId();
-
-                $product = Product::create([
-                    'business_id' => $business_id,
-                    'category_id' => $request->category_id,
-                    'label_id' => $request->label_id ? array_map('intval', (array)$request->label_id) : null,
-                    'name' => $request->name,
-                    'sku' => $request->sku,
-                    'quantity' => $request->quantity ?? 0,
-                    'length' => $request->length,
-                    'width' => $request->width,
-                    'height' => $request->height,
-                    'weight' => $request->weight,
-                    'slug' => generateUniqueSlug(Product::class, $request->name, 'slug', $business_id),
-                ]);
-
-                $success = true;
-                $message = 'Product created successfully.';
-                $redirect = route('business.product.edit', $product->id);
-                DB::commit();
-                $this->removeProductCashe();
-            }
+            $success = true;
+            $message = 'Product created successfully.';
+            $redirect = route('business.product.edit', $product->id);
+            DB::commit();
+            $this->removeProductCashe();
         } catch (\Exception $e) {
             DB::rollBack();
             $message = checkResponse($e);
