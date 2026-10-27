@@ -6,12 +6,12 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use App\Traits\CacheManagement;
+use App\Http\Requests\Business\StoreServiceCategoryRequest;
+use App\Http\Requests\Business\UpdateServiceCategoryRequest;
 
 class ServiceCategoryController extends Controller
 {
@@ -117,7 +117,7 @@ class ServiceCategoryController extends Controller
         return view('business.service-category.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreServiceCategoryRequest $request)
     {
         if (!checkBusinessPermission('add_service_category')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to add service categories.'], 403);
@@ -129,42 +129,26 @@ class ServiceCategoryController extends Controller
 
         try {
             DB::beginTransaction();
-            $rules = [
-                'name' => [
-                    'required',
-                    Rule::unique('categories')->where(function ($query) {
-                        return $query->where('business_id', getBusinessId());
-                    })
-                ],
-                'parent_id' => 'nullable|exists:categories,id',
-                'status' => 'required'
-            ];
 
-            $validator = Validator::make($request->all(), $rules);
+            $insert = new Category();
+            $insert->business_id = getBusinessId();
+            $insert->parent_id = $request->parent_id ?: null;
+            $insert->name = $request->name;
+            $insert->slug = Str::slug($request->name);
+            $insert->type = 'Services';
+            $insert->status = $request->status;
+            $insert->sort_order = Category::where('business_id', getBusinessId())->where('type', 'Services')->max('sort_order') + 1;
 
-            if ($validator->fails()) {
-                $message = $validator->errors();
-            } else {
-                $insert = new Category();
-                $insert->business_id = getBusinessId();
-                $insert->parent_id = $request->parent_id ?: null;
-                $insert->name = $request->name;
-                $insert->slug = Str::slug($request->name);
-                $insert->type = 'Services';
-                $insert->status = $request->status;
-                $insert->sort_order = Category::where('business_id', getBusinessId())->where('type', 'Services')->max('sort_order') + 1;
-
-                if ($request->hasFile('image')) {
-                    $insert->image_url = fileUploadStorage($request->file('image'), 'category', 200, 200);
-                }
-
-                $insert->save();
-
-                $success = true;
-                $message = 'Service Category added successfully.';
-                DB::commit();
-                $this->clearBusinessServiceCache(getBusinessId());
+            if ($request->hasFile('image')) {
+                $insert->image_url = fileUploadStorage($request->file('image'), 'category', 200, 200);
             }
+
+            $insert->save();
+
+            $success = true;
+            $message = 'Service Category added successfully.';
+            DB::commit();
+            $this->clearBusinessServiceCache(getBusinessId());
         } catch (\Exception $e) {
             DB::rollBack();
             $message = checkResponse($e);
@@ -185,7 +169,7 @@ class ServiceCategoryController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateServiceCategoryRequest $request, $id)
     {
         if (!checkBusinessPermission('edit_service_category')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to edit service categories.'], 403);
@@ -197,50 +181,34 @@ class ServiceCategoryController extends Controller
 
         try {
             DB::beginTransaction();
-            $rules = [
-                'name' => [
-                    'required',
-                    Rule::unique('categories')->where(function ($query) {
-                        return $query->where('business_id', getBusinessId());
-                    })->ignore($id)
-                ],
-                'parent_id' => 'nullable|exists:categories,id',
-                'status' => 'required'
-            ];
 
-            $validator = Validator::make($request->all(), $rules);
+            $update = Category::where('business_id', getBusinessId())->where('type', 'Services')->findOrFail($id);
+            $update->parent_id = ($request->parent_id && $request->parent_id != $id) ? $request->parent_id : null;
+            $update->name = $request->name;
+            $update->slug = Str::slug($request->name);
+            $update->status = $request->status;
 
-            if ($validator->fails()) {
-                $message = $validator->errors();
-            } else {
-                $update = Category::where('business_id', getBusinessId())->where('type', 'Services')->findOrFail($id);
-                $update->parent_id = ($request->parent_id && $request->parent_id != $id) ? $request->parent_id : null;
-                $update->name = $request->name;
-                $update->slug = Str::slug($request->name);
-                $update->status = $request->status;
+            if ($request->hasFile('image')) {
+                if (isset($update->image_url) && $update->image_url) {
+                    $check = Category::where('business_id', getBusinessId())
+                        ->where('type', 'Services')
+                        ->where('id', '!=', $id)
+                        ->where('image_url', $update->image_url)
+                        ->exists();
 
-                if ($request->hasFile('image')) {
-                    if (isset($update->image_url) && $update->image_url) {
-                        $check = Category::where('business_id', getBusinessId())
-                            ->where('type', 'Services')
-                            ->where('id', '!=', $id)
-                            ->where('image_url', $update->image_url)
-                            ->exists();
-
-                        if (!$check) {
-                            fileRemoveStorage($update->image_url);
-                        }
+                    if (!$check) {
+                        fileRemoveStorage($update->image_url);
                     }
-                    $update->image_url = fileUploadStorage($request->file('image'), 'category', 200, 200);
                 }
-
-                $update->save();
-
-                $success = true;
-                $message = 'Service Category updated successfully.';
-                DB::commit();
-                $this->clearBusinessServiceCache(getBusinessId());
+                $update->image_url = fileUploadStorage($request->file('image'), 'category', 200, 200);
             }
+
+            $update->save();
+
+            $success = true;
+            $message = 'Service Category updated successfully.';
+            DB::commit();
+            $this->clearBusinessServiceCache(getBusinessId());
         } catch (\Exception $e) {
             DB::rollBack();
             $message = checkResponse($e);

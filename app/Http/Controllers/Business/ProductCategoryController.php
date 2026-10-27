@@ -6,12 +6,12 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use App\Traits\CacheManagement;
+use App\Http\Requests\Business\StoreProductCategoryRequest;
+use App\Http\Requests\Business\UpdateProductCategoryRequest;
 
 class ProductCategoryController extends Controller
 {
@@ -114,7 +114,7 @@ class ProductCategoryController extends Controller
         return view('business.product-category.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreProductCategoryRequest $request)
     {
         $success = false;
         $message = 'Something Wrong!';
@@ -123,43 +123,27 @@ class ProductCategoryController extends Controller
 
         try {
             DB::beginTransaction();
-            $rules = [
-                'name' => [
-                    'required',
-                    Rule::unique('categories')->where(function ($query) {
-                        return $query->where('business_id', getBusinessId());
-                    })
-                ],
-                'parent_id' => 'nullable|exists:categories,id',
-                'status' => 'required'
-            ];
 
-            $validator = Validator::make($request->all(), $rules);
+            $insert = new Category();
+            $insert->business_id = getBusinessId();
+            $insert->parent_id = $request->parent_id ?: null;
+            $insert->name = $request->name;
+            $insert->slug = Str::slug($request->name);
+            $insert->type = 'Products';
+            $insert->status = $request->status;
+            $insert->sort_order = Category::where('business_id', getBusinessId())->where('type', 'Products')->max('sort_order') + 1;
 
-            if ($validator->fails()) {
-                $message = $validator->errors();
-            } else {
-                $insert = new Category();
-                $insert->business_id = getBusinessId();
-                $insert->parent_id = $request->parent_id ?: null;
-                $insert->name = $request->name;
-                $insert->slug = Str::slug($request->name);
-                $insert->type = 'Products';
-                $insert->status = $request->status;
-                $insert->sort_order = Category::where('business_id', getBusinessId())->where('type', 'Products')->max('sort_order') + 1;
-
-                if ($request->hasFile('image')) {
-                    $newimg = fileUploadStorage($request->file('image'), 'category_images', 200, 200);
-                    $insert->image_url = $newimg;
-                }
-
-                $insert->save();
-
-                $success = true;
-                $message = 'Product Category added successfully.';
-                DB::commit();
-                $this->clearBusinessProductCache(getBusinessId());
+            if ($request->hasFile('image')) {
+                $newimg = fileUploadStorage($request->file('image'), 'category_images', 200, 200);
+                $insert->image_url = $newimg;
             }
+
+            $insert->save();
+
+            $success = true;
+            $message = 'Product Category added successfully.';
+            DB::commit();
+            $this->clearBusinessProductCache(getBusinessId());
         } catch (\Exception $e) {
             DB::rollBack();
             if (isset($newimg) && $newimg) {
@@ -180,7 +164,7 @@ class ProductCategoryController extends Controller
         ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateProductCategoryRequest $request, $id)
     {
         $success = false;
         $message = 'Something Wrong!';
@@ -189,52 +173,36 @@ class ProductCategoryController extends Controller
 
         try {
             DB::beginTransaction();
-            $rules = [
-                'name' => [
-                    'required',
-                    Rule::unique('categories')->where(function ($query) {
-                        return $query->where('business_id', getBusinessId());
-                    })->ignore($id)
-                ],
-                'parent_id' => 'nullable|exists:categories,id',
-                'status' => 'required'
-            ];
 
-            $validator = Validator::make($request->all(), $rules);
+            $update = Category::where('business_id', getBusinessId())->where('type', 'Products')->findOrFail($id);
+            $update->parent_id = ($request->parent_id && $request->parent_id != $id) ? $request->parent_id : null;
+            $update->name = $request->name;
+            $update->slug = Str::slug($request->name);
+            $update->status = $request->status;
 
-            if ($validator->fails()) {
-                $message = $validator->errors();
-            } else {
-                $update = Category::where('business_id', getBusinessId())->where('type', 'Products')->findOrFail($id);
-                $update->parent_id = ($request->parent_id && $request->parent_id != $id) ? $request->parent_id : null;
-                $update->name = $request->name;
-                $update->slug = Str::slug($request->name);
-                $update->status = $request->status;
-
-                if ($request->hasFile('image')) {
-                    $oldimg = $update->image_url;
-                    $newimg = fileUploadStorage($request->file('image'), 'category_images', 200, 200);
-                    $update->image_url = $newimg;
-                }
-
-                $update->save();
-
-                if (isset($oldimg) && $oldimg) {
-                    $check = Category::where('type', 'Products')
-                        ->where('id', '!=', $id)
-                        ->where('image_url', $oldimg)
-                        ->exists();
-
-                    if (!$check) {
-                        fileRemoveStorage($oldimg);
-                    }
-                }
-
-                $success = true;
-                $message = 'Product Category updated successfully.';
-                DB::commit();
-                $this->clearBusinessProductCache(getBusinessId());
+            if ($request->hasFile('image')) {
+                $oldimg = $update->image_url;
+                $newimg = fileUploadStorage($request->file('image'), 'category_images', 200, 200);
+                $update->image_url = $newimg;
             }
+
+            $update->save();
+
+            if (isset($oldimg) && $oldimg) {
+                $check = Category::where('type', 'Products')
+                    ->where('id', '!=', $id)
+                    ->where('image_url', $oldimg)
+                    ->exists();
+
+                if (!$check) {
+                    fileRemoveStorage($oldimg);
+                }
+            }
+
+            $success = true;
+            $message = 'Product Category updated successfully.';
+            DB::commit();
+            $this->clearBusinessProductCache(getBusinessId());
         } catch (\Exception $e) {
             DB::rollBack();
             if (isset($newimg) && $newimg) {
