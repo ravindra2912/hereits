@@ -44,7 +44,7 @@ class AuthController extends Controller
         $data = array();
 
         try {
-            $loginInput = $request->email;
+            $loginInput = trim($request->email);
             $user = User::with('getBusinessDetails:id,owner_id,name,business_image')
                 ->where(function ($q) use ($loginInput) {
                     $q->where('email', $loginInput);
@@ -55,7 +55,11 @@ class AuthController extends Controller
                 ->whereIn('role', ['Business', 'User'])
                 ->first();
 
-            if ($user && Hash::check($request['password'], $user->password)) {
+            if (!$user) {
+                $message = 'User not found.';
+            } elseif (!Hash::check($request['password'], $user->password)) {
+                $message = 'Invalid Credentials!';
+            } else {
                 if (isset($request->notification_token)) {
                     $user->notification_token = $request->notification_token;
                     $user->save();
@@ -70,7 +74,6 @@ class AuthController extends Controller
                     $user->getBusinessDetails = $business;
                 }
 
-
                 $request->authenticate();
                 $request->session()->regenerate();
 
@@ -79,8 +82,6 @@ class AuthController extends Controller
 
                 $success = true;
                 $message = 'Login Successfully!';
-            } else {
-                $message = 'Invalid Credentials!';
             }
         } catch (\Exception $e) {
             $message = checkResponse($e);

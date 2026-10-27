@@ -6,11 +6,11 @@ test('login route with tenant slug does not return 404', function () {
         'password' => 'invalid-password',
     ]);
 
-    // Should return 200 with invalid credentials message, not 404 route not found
+    // Should return 200 with user not found message, not 404 route not found
     $response->assertStatus(200);
     $response->assertJson([
         'success' => false,
-        'message' => 'Invalid Credentials!',
+        'message' => 'User not found.',
     ]);
 });
 
@@ -23,7 +23,7 @@ test('root login route returns json response', function () {
     $response->assertStatus(200);
     $response->assertJson([
         'success' => false,
-        'message' => 'Invalid Credentials!',
+        'message' => 'User not found.',
     ]);
 });
 
