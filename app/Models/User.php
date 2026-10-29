@@ -85,6 +85,18 @@ class User extends Authenticatable
         return $this->hasMany(Business::class, 'owner_id', 'id');
     }
 
+    /**
+     * Check if the user is a business owner or associated with a business.
+     */
+    public function hasBusiness(): bool
+    {
+        if ($this->role === 'Business' || !empty($this->business_id)) {
+            return true;
+        }
+
+        return $this->getBusinesses()->exists() || $this->businessUsers()->exists();
+    }
+
     public function appointments()
     {
         return $this->hasMany(AppointmentBooking::class, 'user_id');

@@ -46,9 +46,15 @@
             <ul class="navbar-nav ms-auto gap-2 gap-lg-3 text-center text-lg-start shadow-sm-mobile align-items-center">
                 @if(!request()->routeIs('account.*'))
                 <li class="nav-item">
+                    @if(Auth::check() && Auth::user()->hasBusiness())
+                    <a class="nav-link highlight-register-btn px-3 py-2 rounded-pill fw-bold text-white shadow-sm" href="{{ route('business.dashboard') }}">
+                        <i class="fas fa-chart-line me-1"></i>Go to Dashboard
+                    </a>
+                    @else
                     <a class="nav-link highlight-register-btn px-3 py-2 rounded-pill fw-bold text-white shadow-sm" href="{{ route('why-join-with-us') }}">
                         <i class="fas fa-plus-circle me-1 pulse-icon"></i>List Your Business
                     </a>
+                    @endif
                 </li>
                 @endif
 
@@ -81,7 +87,7 @@
                                     <span>Account</span>
                                 </a>
                             </li>
-                            @if(Auth::user()->role == 'Business')
+                            @if(Auth::user()->hasBusiness())
                             <li>
                                 <a class="dropdown-item py-2 d-flex align-items-center gap-3" href="{{ route('business.dashboard') }}">
                                     <i class="fas fa-chart-line text-muted"></i>
@@ -143,11 +149,19 @@
                     <i class="fas fa-rocket me-2"></i>Why Join With Us
                 </a>
             </li>
+            @if(Auth::check() && Auth::user()->hasBusiness())
+            <li class="nav-item mt-2">
+                <a class="nav-link bg-gradient-primary text-white px-3 py-2 rounded-3 fw-bold shadow-sm" href="{{ route('business.dashboard') }}">
+                    <i class="fas fa-chart-line me-2"></i>Go to Dashboard
+                </a>
+            </li>
+            @else
             <li class="nav-item mt-2">
                 <a class="nav-link bg-gradient-primary text-white px-3 py-2 rounded-3 fw-bold shadow-sm" href="{{ route('why-join-with-us') }}">
                     <i class="fas fa-plus-circle me-2"></i>List Your Business
                 </a>
             </li>
+            @endif
             @endif
 
             @php
@@ -178,7 +192,7 @@
                     <i class="fas fa-user me-2"></i>Account
                 </a>
             </li>
-            @if(Auth::user()->role == 'Business')
+            @if(Auth::user()->hasBusiness())
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('business.dashboard') }}">
                     <i class="fas fa-chart-line me-2"></i>Dashboard
