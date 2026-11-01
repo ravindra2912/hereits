@@ -9,17 +9,17 @@
     <!-- Appointment For Selection -->
     <div class="col-12">
       <label class="form-label fw-bold small text-uppercase text-muted letter-spacing-1 mb-2">Who is this appointment for?</label>
-      <div class="d-flex gap-2">
-        <div class="flex-grow-1">
+      <div class="row g-2">
+        <div class="col-6">
           <input type="radio" class="btn-check" name="appointment_for" id="Self" value="self" checked>
-          <label class="btn btn-outline-primary w-100 py-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center" for="Self">
-            <i class="far fa-user me-2"></i> Myself
+          <label class="btn btn-outline-primary w-100 py-2 px-2 px-sm-3 rounded-3 fw-semibold text-nowrap d-flex align-items-center justify-content-center small" for="Self">
+            Myself
           </label>
         </div>
-        <div class="flex-grow-1">
+        <div class="col-6">
           <input type="radio" class="btn-check" name="appointment_for" id="Other" value="other">
-          <label class="btn btn-outline-primary w-100 py-2 rounded-3 fw-semibold d-flex align-items-center justify-content-center" for="Other">
-            <i class="fas fa-user-friends me-2"></i> Someone Else
+          <label class="btn btn-outline-primary w-100 py-2 px-2 px-sm-3 rounded-3 fw-semibold text-nowrap d-flex align-items-center justify-content-center small" for="Other">
+            Someone Else
           </label>
         </div>
       </div>
