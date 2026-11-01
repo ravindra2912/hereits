@@ -145,23 +145,23 @@
 
         $slides = collect();
         if ($slideSlotWise && $totalItems > $itemsPerSlide) {
-            $numSlides = $infiniteLoop ? $totalItems : ($totalItems - $itemsPerSlide + 1);
-            for ($i = 0; $i < $numSlides; $i++) {
-                $slideChunk = collect();
-                for ($j = 0; $j < $itemsPerSlide; $j++) {
-                    $itemIdx = ($i + $j) % $totalItems;
-                    $slideChunk->push($activeSliderItems->get($itemIdx));
-                }
-                $slides->push($slideChunk);
+        $numSlides = $infiniteLoop ? $totalItems : ($totalItems - $itemsPerSlide + 1);
+        for ($i = 0; $i < $numSlides; $i++) {
+            $slideChunk=collect();
+            for ($j=0; $j < $itemsPerSlide; $j++) {
+            $itemIdx=($i + $j) % $totalItems;
+            $slideChunk->push($activeSliderItems->get($itemIdx));
             }
-        } else {
+            $slides->push($slideChunk);
+            }
+            } else {
             $chunks = $activeSliderItems->chunk($itemsPerSlide);
-            if ($chunks->count() <= 1 && $totalItems > 1) {
+            if ($chunks->count() <= 1 && $totalItems> 1) {
                 $itemsPerSlide = 1;
                 $chunks = $activeSliderItems->chunk(1);
-            }
-            $slides = $chunks;
-        }
+                }
+                $slides = $chunks;
+                }
 
                 $countCols = [
                 1 => 'col-12',
@@ -389,7 +389,7 @@
                         @foreach($productCategoriesList as $category)
                         <a href="{{ route('business-products', ['business_slug' => $business->slug, 'category' => $category->slug ?? $category->id]) }}" class="text-decoration-none text-center d-flex flex-column align-items-center flex-shrink-0 hover-lift category-item category-item-link">
                             <div class="rounded-circle mb-2 d-flex align-items-center justify-content-center bg-white overflow-hidden category-image-wrapper">
-                                <img src="{{ getImage($category->image_url) }}" alt="{{ $category->name }}" class="w-100 h-100 object-fit-cover" draggable="false" loading="lazy">
+                                <img src="{{ getImage($category->image_url, 'category') }}" alt="{{ $category->name }}" class="w-100 h-100 object-fit-cover" draggable="false" loading="lazy">
                             </div>
                             <span class="text-dark small fw-medium text-truncate w-100" title="{{ $category->name }}">{{ $category->name }}</span>
                         </a>
@@ -437,7 +437,7 @@
                         @foreach($serviceCategoriesList as $category)
                         <a href="{{ route('business-services', ['business_slug' => $business->slug, 'category_id' => $category->slug ?? $category->id]) }}" class="text-decoration-none text-center d-flex flex-column align-items-center flex-shrink-0 hover-lift category-item category-item-link">
                             <div class="rounded-circle mb-2 d-flex align-items-center justify-content-center bg-white overflow-hidden category-image-wrapper">
-                                <img src="{{ getImage($category->image_url) }}" alt="{{ $category->name }}" class="w-100 h-100 object-fit-cover" draggable="false" loading="lazy">
+                                <img src="{{ getImage($category->image_url, 'category') }}" alt="{{ $category->name }}" class="w-100 h-100 object-fit-cover" draggable="false" loading="lazy">
                             </div>
                             <span class="text-dark small fw-medium text-truncate w-100" title="{{ $category->name }}">{{ $category->name }}</span>
                         </a>

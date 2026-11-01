@@ -97,6 +97,8 @@ class ImageService
     {
         if ($type === 'expert') {
             return asset('assets/images/expert.webp');
+        } else if ($type === 'category') {
+            return asset('assets/images/default_category.webp');
         }
         return asset('assets/images/default.png');
     }
