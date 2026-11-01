@@ -12,6 +12,8 @@ use App\Models\Coupon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\Business\PurchaseSuccessMail;
+use App\Services\FirebaseNotificationService;
+
 trait BusinessTraits
 {
     use CacheManagement;
@@ -111,6 +113,17 @@ trait BusinessTraits
             $type = $purchase->plan_type;
             if ($type == 'credit') {
                 app(\App\Services\CreditService::class)->addCredit($purchase->business_id, (float)$purchase->quantity, 'recharge', 'Purchased ' . $purchase->quantity . ' credits', $purchase->id);
+
+                // Notify Admins: Credit Purchased
+                $purchase->loadMissing('business:id,name');
+                $businessName = $purchase->business?->name ?? 'A business';
+
+                FirebaseNotificationService::sendToAdmins(
+                    title: 'Credits Purchased',
+                    message: "{$businessName} purchased {$purchase->quantity} credits.",
+                    redirectUrl: route('admin.credit-history.index'),
+                    data: ['event_type' => 'credit_buy', 'purchase_id' => (string) $purchase->id, 'business_id' => (string) $purchase->business_id]
+                );
             }
             DB::commit();
         } catch (\Exception $e) {

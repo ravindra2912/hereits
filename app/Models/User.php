@@ -32,6 +32,8 @@ class User extends Authenticatable
         'business_id',
         'role',
         'status',
+        'notification_token',
+        'fcm_token',
     ];
 
     /**

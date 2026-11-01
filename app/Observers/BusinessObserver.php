@@ -8,6 +8,7 @@ use App\Mail\Business\BusinessBannedMail;
 use App\Mail\Business\BusinessApprovedMail;
 use App\Models\BusinessLeaglePage;
 use App\Models\HomeSection;
+use App\Services\FirebaseNotificationService;
 use Illuminate\Support\Facades\Mail;
 
 class BusinessObserver
@@ -24,6 +25,14 @@ class BusinessObserver
         if (isset($business->owner) && !empty($business->owner->email)) {
             Mail::to($business->owner->email)->send(new BusinessWelcomeMail($business->owner, $business));
         }
+
+        // Notify Admins: New Store Registered
+        FirebaseNotificationService::sendToAdmins(
+            title: 'New Store Registered',
+            message: "New store '{$business->name}' has just registered on Hereits.",
+            redirectUrl: route('admin.business.index'),
+            data: ['event_type' => 'new_store_registration', 'business_id' => (string) $business->id]
+        );
 
         //add custome home management layer
         if ($business->business_type == 'Service') {

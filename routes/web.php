@@ -15,6 +15,9 @@ use App\Http\Controllers\Front\Business\ServiceController;
 use App\Http\Controllers\Front\Business\CommonController as BusinessCommonController;
 use App\Http\Controllers\Front\BlogController;
 use App\Http\Controllers\Front\LocationController;
+use App\Http\Controllers\NotificationTokenController;
+
+Route::post('/save-fcm-token', [NotificationTokenController::class, 'saveFcmToken'])->name('notification.save-fcm-token');
 
 Route::post('/set-location', [LocationController::class, 'setLocation'])->name('set-location');
 

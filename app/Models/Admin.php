@@ -19,6 +19,7 @@ class Admin extends Authenticatable
         'role',
         'profile',
         'password',
+        'fcm_token',
     ];
 
     protected $hidden = [

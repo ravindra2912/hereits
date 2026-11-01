@@ -99,6 +99,8 @@
 
   @stack('js')
 
+  <x-firebase-init />
+
 </body>
 
 </html>
