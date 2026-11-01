@@ -117,6 +117,7 @@
   @push('js')
   <script>
     function responce(res) {
+      $('#bookAppointmentModal').modal('hide');
       $('#thank-you-modal').modal('show');
       $('.status-checker').attr('href', res.data.status_url);
       // console.log(res.data.status_url);

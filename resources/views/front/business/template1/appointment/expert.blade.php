@@ -89,6 +89,14 @@ $business = $expert->business;
                   <i class="far fa-clipboard me-1"></i> Live Board
                 </a>
               </div>
+
+              <!-- Book Appointment Button (Mobile Only) -->
+              <div class="d-lg-none mt-3">
+                <button type="button" class="btn btn-primary rounded-pill w-100 py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" data-bs-toggle="modal" data-bs-target="#bookAppointmentModal">
+                  <i class="far fa-calendar-check"></i>
+                  <span>Book Appointment</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -179,8 +187,8 @@ $business = $expert->business;
         </div>
         @endif
 
-        <!-- Booking Form Section -->
-        <div id="book-appointment" class="card border-0 shadow-lg rounded-4 mb-4 overflow-hidden">
+        <!-- Booking Form Section (Desktop) -->
+        <div id="book-appointment" class="card border-0 shadow-lg rounded-4 mb-4 overflow-hidden d-none d-lg-block">
           <div class="card-header bg-white border-0 py-4 px-4 px-lg-5 position-relative">
             <div class="d-flex align-items-center position-relative z-10">
               <div class="flex-shrink-0 bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
@@ -194,9 +202,22 @@ $business = $expert->business;
             <!-- Decorative circle -->
             <div class="position-absolute top-0 end-0 p-5 rounded-circle bg-primary bg-opacity-10 opacity-25" style="margin-top: -30px; margin-right: -30px;"></div>
           </div>
-          <div class="card-body p-4 p-lg-5 border-top border-light">
+          <div class="card-body p-4 p-lg-5 border-top border-light" id="desktop-appointment-container">
             @include('front.business.template1.appointment.appointmentForm')
           </div>
+        </div>
+
+        <!-- Book Appointment Callout (Mobile Only) -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 d-lg-none text-center p-4">
+          <div class="flex-shrink-0 bg-primary rounded-circle text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 50px; height: 50px;">
+            <i class="far fa-calendar-check fa-lg text-white"></i>
+          </div>
+          <h5 class="fw-bold mb-1">Book Appointment</h5>
+          <p class="text-muted small mb-3">Schedule your visit with <span class="fw-semibold text-dark">{{ $expert->user?->name }}</span></p>
+          <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center gap-2" data-bs-toggle="modal" data-bs-target="#bookAppointmentModal">
+            <i class="far fa-calendar-check"></i>
+            <span>Book Appointment</span>
+          </button>
         </div>
 
         <!-- Reviews Section -->
@@ -275,6 +296,29 @@ $business = $expert->business;
   </div>
 </div>
 
+<!-- Book Appointment Modal (Mobile View) -->
+<div class="modal fade" id="bookAppointmentModal" tabindex="-1" aria-labelledby="bookAppointmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <div class="d-flex align-items-center">
+          <div class="flex-shrink-0 bg-primary rounded-circle text-white d-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px;">
+            <i class="far fa-calendar-check fs-5 text-white"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold mb-0" id="bookAppointmentModalLabel">Book Appointment</h5>
+            <small class="text-muted">with {{ $expert->user?->name }}</small>
+          </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4" id="mobile-appointment-container">
+        <!-- Appointment form moves here on mobile -->
+      </div>
+    </div>
+  </div>
+</div>
+
 @push('js')
 <script>
   function copyCheckLink() {
@@ -284,6 +328,35 @@ $business = $expert->business;
     // You might want to add a toast notification here
     alert("Link copied to clipboard!");
   }
+
+  function adaptAppointmentFormLocation() {
+    var isMobile = window.innerWidth < 992;
+    var form = $('#appointment-form');
+    if (!form.length) return;
+
+    if (isMobile) {
+      if (!$('#mobile-appointment-container').find('#appointment-form').length) {
+        $('#mobile-appointment-container').append(form);
+      }
+    } else {
+      if (!$('#desktop-appointment-container').find('#appointment-form').length) {
+        $('#desktop-appointment-container').append(form);
+      }
+    }
+  }
+
+  $(document).ready(function() {
+    adaptAppointmentFormLocation();
+    $(window).on('resize', function() {
+      adaptAppointmentFormLocation();
+    });
+
+    $('#authModal').on('show.bs.modal', function() {
+      if ($('#bookAppointmentModal').hasClass('show')) {
+        $('#bookAppointmentModal').modal('hide');
+      }
+    });
+  });
 </script>
 @endpush
 
