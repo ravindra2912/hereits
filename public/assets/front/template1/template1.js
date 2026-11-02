@@ -104,7 +104,7 @@ $(document).ready(function () {
     const $navContainer = $('.navbar .container');
     const $searchInput = $('#searchInput');
     const $searchResults = $('#searchResults');
-    const businessSlug = $('meta[name="business-slug"]').attr('content');
+    const businessSlug = $('meta[name="business-slug"]').attr('content') || '';
 
     $('#mobileSearchTrigger').on('click', function () {
         $navContainer.addClass('search-active');
@@ -200,7 +200,6 @@ $(document).ready(function () {
     });
 
     // --- Active Page & In-Page ScrollSpy Navigation ---
-    const businessSlug = $('meta[name="business-slug"]').attr('content') || '';
     const currentPath = window.location.pathname.replace(/\/+$/, '');
     const homePath = `/${businessSlug}`.replace(/\/+$/, '');
     const isBusinessHomePage = $('#home').length > 0 || (businessSlug && currentPath === homePath) || currentPath === '';
