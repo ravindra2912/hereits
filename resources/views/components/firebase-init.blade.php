@@ -10,5 +10,5 @@
         vapidKey: "{{ config('services.firebase.vapid_key') }}"
     };
 </script>
-<script type="module" src="{{ asset('assets/common/js/firebase-notification.js') }}"></script>
+<script type="module" src="{{ asset('assets/common/js/firebase-notification.js') }}?v={{ file_exists(public_path('assets/common/js/firebase-notification.js')) ? filemtime(public_path('assets/common/js/firebase-notification.js')) : time() }}"></script>
 @endif

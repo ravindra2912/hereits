@@ -12,32 +12,36 @@ const messagingSenderId = swUrl.searchParams.get('messagingSenderId') || '';
 const appId = swUrl.searchParams.get('appId') || '';
 
 if (projectId) {
-    firebase.initializeApp({
-        apiKey: apiKey,
-        projectId: projectId,
-        messagingSenderId: messagingSenderId,
-        appId: appId
-    });
+    try {
+        firebase.initializeApp({
+            apiKey: apiKey,
+            projectId: projectId,
+            messagingSenderId: messagingSenderId,
+            appId: appId
+        });
 
-    const messaging = firebase.messaging();
+        const messaging = firebase.messaging();
 
-    // Catch background messages
-    messaging.onBackgroundMessage(function(payload) {
-        const title = payload.notification?.title || payload.data?.title || 'Notification';
-        const body = payload.notification?.body || payload.data?.body || payload.data?.message || '';
-        const targetUrl = payload.fcmOptions?.link || payload.data?.click_url || payload.data?.url || '/';
+        // Catch background messages
+        messaging.onBackgroundMessage(function(payload) {
+            const title = payload.notification?.title || payload.data?.title || 'Notification';
+            const body = payload.notification?.body || payload.data?.body || payload.data?.message || '';
+            const targetUrl = payload.fcmOptions?.link || payload.data?.click_url || payload.data?.url || '/';
 
-        const notificationOptions = {
-            body: body,
-            icon: payload.notification?.icon || '/assets/images/logo.png',
-            badge: payload.notification?.badge || '/assets/images/badge.png',
-            data: {
-                click_url: targetUrl
-            }
-        };
+            const notificationOptions = {
+                body: body,
+                icon: payload.notification?.icon || '/assets/images/logo.png',
+                badge: payload.notification?.badge || '/assets/images/badge.png',
+                data: {
+                    click_url: targetUrl
+                }
+            };
 
-        return self.registration.showNotification(title, notificationOptions);
-    });
+            return self.registration.showNotification(title, notificationOptions);
+        });
+    } catch (e) {
+        console.warn('Firebase Service Worker init skipped:', e);
+    }
 }
 
 // Global click event listener for background notifications: opens/focuses and navigates to event URL
