@@ -213,6 +213,8 @@
     @include('front.business.template1.elements.popups')
 
     @stack('js')
+
+    <x-firebase-init />
 </body>
 
 </html>

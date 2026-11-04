@@ -49,10 +49,24 @@ $(function () {
 			scrollIntoView = false;
 		}
 
+		var formData = new FormData(this);
+		var cachedFcmToken = localStorage.getItem('hereits_fcm_token');
+		if (cachedFcmToken && (!formData.get('fcm_token') || String(formData.get('fcm_token')).trim() === '')) {
+			formData.set('fcm_token', cachedFcmToken);
+		}
+		var cachedDeviceId = localStorage.getItem('hereits_device_id');
+		if (cachedDeviceId && (!formData.get('device_id') || String(formData.get('device_id')).trim() === '')) {
+			formData.set('device_id', cachedDeviceId);
+		}
+		var cachedDeviceName = localStorage.getItem('hereits_device_name');
+		if (cachedDeviceName && (!formData.get('device_name') || String(formData.get('device_name')).trim() === '')) {
+			formData.set('device_name', cachedDeviceName);
+		}
+
 		$.ajax({
 			url: this.action,
 			type: "POST",
-			data: new FormData(this),
+			data: formData,
 			dataType: "json",
 			//headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
 			contentType: false,

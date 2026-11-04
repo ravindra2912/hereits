@@ -4,6 +4,9 @@
 
     <form method="POST" action="{{ route('login') }}">
         @csrf
+        <input type="hidden" name="fcm_token" class="fcm-token-input">
+        <input type="hidden" name="device_id" class="device-id-input">
+        <input type="hidden" name="device_name" class="device-name-input">
 
         <!-- Mobile / Email Address -->
         <div>

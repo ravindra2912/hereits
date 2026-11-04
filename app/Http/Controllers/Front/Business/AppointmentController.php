@@ -27,8 +27,7 @@ class AppointmentController extends Controller
     public function __construct(
         protected BusinessAnalyticsService $analyticsService,
         protected ExpertService $expertService
-    ) {
-    }
+    ) {}
 
     public function expertList(Request $request, $business_slug): View
     {
@@ -58,8 +57,8 @@ class AppointmentController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->whereHas('user', function ($uq) use ($search) {
                     $uq->where(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%")
-                       ->orWhere('first_name', 'like', "%{$search}%")
-                       ->orWhere('last_name', 'like', "%{$search}%");
+                        ->orWhere('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%");
                 })->orWhere('title', 'like', "%{$search}%");
             });
         }
@@ -124,6 +123,8 @@ class AppointmentController extends Controller
             $expert->timing = $this->expertService->isExpertAvailable((int) $expert->id, (int) $expert->business_id);
 
             $setting = getBusinessSettings($expert->business_id);
+
+            $setting->credit = app(CreditService::class)->getAvailableCredit((int) $expert->business_id);
 
             $expertTimings = $expert->timings->groupBy('day');
 

@@ -34,6 +34,9 @@
         <p class="login-box-msg">Sign in to start your session</p>
         <form action="{{ route('admin.login') }}" method="POST" id="loginForm">
           @csrf
+          <input type="hidden" name="fcm_token" class="fcm-token-input">
+          <input type="hidden" name="device_id" class="device-id-input">
+          <input type="hidden" name="device_name" class="device-name-input">
 
           <div class="input-group mb-3">
             <input type="email" name="email" class="form-control" placeholder="Email" required autofocus>
@@ -94,6 +97,8 @@
       btn.disabled = true;
     });
   </script>
+
+  <x-firebase-init />
 </body>
 
 </html>

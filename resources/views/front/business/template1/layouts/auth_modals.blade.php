@@ -18,6 +18,9 @@
                 <div id="login-pane">
                     <form id="login-form" action="{{ route('login') }}" method="POST" data-action="reload" class="formaction">
                         @csrf
+                        <input type="hidden" name="fcm_token" class="fcm-token-input">
+                        <input type="hidden" name="device_id" class="device-id-input">
+                        <input type="hidden" name="device_name" class="device-name-input">
                         <div class="form-floating mb-3">
                             <input type="text" name="email" class="form-control rounded-3" id="loginEmail" placeholder="Mobile Number or Email" required>
                             <label for="loginEmail">Mobile Number or Email</label>
@@ -49,6 +52,9 @@
                     <form id="register-form" action="{{ route('register') }}" method="POST" data-action="reload" class="formaction">
                         @csrf
                         <input type="hidden" name="referrer_business_id" value="{{ $business->id }}">
+                        <input type="hidden" name="fcm_token" class="fcm-token-input">
+                        <input type="hidden" name="device_id" class="device-id-input">
+                        <input type="hidden" name="device_name" class="device-name-input">
                         <div class="row g-2 mb-3">
                             <div class="col-6">
                                 <div class="form-floating">

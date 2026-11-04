@@ -70,6 +70,31 @@ class AuthController extends Controller
         })->first();
 
         if ($user && Hash::check($request['password'], $user->password)) {
+            $fcmToken = $request->fcm_token ?? $request->notification_token;
+            if (!empty($fcmToken)) {
+                $user->fcm_token = $fcmToken;
+                $user->notification_token = $fcmToken;
+                $user->save();
+
+                $deviceId = $request->device_id ?? md5($request->userAgent() ?? 'web');
+                $deviceName = $request->device_name ?? substr($request->userAgent() ?? 'Browser', 0, 50);
+                $platform = $request->platform ?? 'web';
+
+                \App\Models\UserDevice::updateOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'device_id' => $deviceId,
+                    ],
+                    [
+                        'fcm_token' => $fcmToken,
+                        'platform' => $platform,
+                        'device_name' => $deviceName,
+                        'last_seen_at' => now(),
+                        'is_active' => true,
+                    ]
+                );
+            }
+
             $hasAccess = false;
             $targetBusinessId = null;
 

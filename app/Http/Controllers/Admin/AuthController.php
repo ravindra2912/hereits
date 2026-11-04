@@ -48,6 +48,11 @@ class AuthController extends Controller
             $request->session()->regenerate();
             $adminUser = Auth::guard('admin')->user();
             if ($adminUser) {
+                $fcmToken = $request->fcm_token ?? $request->notification_token;
+                if (!empty($fcmToken)) {
+                    $adminUser->fcm_token = $fcmToken;
+                    $adminUser->save();
+                }
                 app(\App\Services\SessionLogoutService::class)->logoutOtherDevices($adminUser->id);
             }
             return redirect()->intended(route('admin.dashboard', absolute: false));

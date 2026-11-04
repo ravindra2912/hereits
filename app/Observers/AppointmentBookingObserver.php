@@ -32,8 +32,8 @@ class AppointmentBookingObserver
             ->with([
                 'expert:id,user_id,slug,is_appointment_book_with_time_slot',
                 'expert.user:id,first_name,last_name',
-                'business:id,name,slug,address',
-                'user:id,first_name,email'
+                'business:id,owner_id,name,slug,address',
+                'user:id,first_name,email,fcm_token'
             ])
             ->find($appointmentBooking->id);
 
@@ -42,12 +42,12 @@ class AppointmentBookingObserver
                 if ($appointment_details->expert->is_appointment_book_with_time_slot) {
                     if ($appointment_details->status == 'pending') {
                     } else if ($appointment_details->status == 'confirmed') {
-                        Mail::to($appointment_details->user->email)->send(new AppointmentConfirmationMail($appointment_details));
+                        // Mail::to($appointment_details->user->email)->send(new AppointmentConfirmationMail($appointment_details));
                     }
                 } else {
                     if ($appointment_details->status == 'pending') {
                     } else if ($appointment_details->status == 'confirmed') {
-                        Mail::to($appointment_details->user->email)->send(new TokenConfirmationMail($appointment_details));
+                        // Mail::to($appointment_details->user->email)->send(new TokenConfirmationMail($appointment_details));
                     }
                 }
             }
@@ -58,29 +58,29 @@ class AppointmentBookingObserver
                     business: $appointment_details->business,
                     title: 'New Appointment Booking',
                     message: "Booking #{$appointment_details->token_number} received from {$appointment_details->user_name}",
-                    redirectUrl: route('business.bookings.index'),
+                    redirectUrl: route('business.appointment.bookings.index'),
                     data: ['event_type' => 'appointment_booking', 'id' => (string) $appointment_details->id]
                 );
             }
 
             // 2. Send push to Admins
-            FirebaseNotificationService::sendToAdmins(
-                title: 'New System Booking',
-                message: "Booking #{$appointment_details->token_number} created for {$appointment_details->business->name}",
-                redirectUrl: route('admin.dashboard'),
-                data: ['event_type' => 'appointment_booking', 'id' => (string) $appointment_details->id]
-            );
+            // FirebaseNotificationService::sendToAdmins(
+            //     title: 'New System Booking',
+            //     message: "Booking #{$appointment_details->token_number} created for {$appointment_details->business->name}",
+            //     redirectUrl: route('admin.dashboard'),
+            //     data: ['event_type' => 'appointment_booking', 'id' => (string) $appointment_details->id]
+            // );
 
             // 3. Send push to Customer
-            if ($appointment_details->user) {
-                FirebaseNotificationService::sendToUser(
-                    user: $appointment_details->user,
-                    title: 'Appointment Received',
-                    message: "Your booking #{$appointment_details->token_number} has been recorded.",
-                    redirectUrl: route('account.booking.details', $appointment_details->id),
-                    data: ['event_type' => 'appointment_booking', 'id' => (string) $appointment_details->id]
-                );
-            }
+            // if ($appointment_details->user) {
+            //     FirebaseNotificationService::sendToUser(
+            //         user: $appointment_details->user,
+            //         title: 'Appointment Received',
+            //         message: "Your booking #{$appointment_details->token_number} has been recorded.",
+            //         redirectUrl: route('account.booking.details', $appointment_details->id),
+            //         data: ['event_type' => 'appointment_booking', 'id' => (string) $appointment_details->id]
+            //     );
+            // }
         }
 
         // BusinessSetting::find($appointment_details->business_id)->decrement('credit', 1);
@@ -101,7 +101,7 @@ class AppointmentBookingObserver
                     ->with([
                         'expert:id,user_id,slug,is_appointment_book_with_time_slot',
                         'expert.user:id,first_name,last_name',
-                        'business:id,name,slug,address',
+                        'business:id,owner_id,name,slug,address',
                         'user:id,first_name,email,notification_token,fcm_token'
                     ])
                     ->find($insert->id);
@@ -118,7 +118,7 @@ class AppointmentBookingObserver
                                 business: $appointment_details->business,
                                 title: 'Booking Cancelled by Customer',
                                 message: "Booking #{$appointment_details->token_number} for {$appointment_details->user_name} was cancelled by the customer.",
-                                redirectUrl: route('business.bookings.index'),
+                                redirectUrl: route('business.appointment.bookings.index'),
                                 data: [
                                     'event_type' => 'booking_cancelled_by_user',
                                     'id' => (string) $appointment_details->id,
@@ -130,9 +130,9 @@ class AppointmentBookingObserver
                         // Send cancellation confirmation email to user
                         if (!empty($userEmail)) {
                             if ($hasTimeSlot) {
-                                Mail::to($userEmail)->send(new AppointmentCancelledMail($appointment_details));
+                                // Mail::to($userEmail)->send(new AppointmentCancelledMail($appointment_details));
                             } else {
-                                Mail::to($userEmail)->send(new TokenCancelledMail($appointment_details));
+                                // Mail::to($userEmail)->send(new TokenCancelledMail($appointment_details));
                             }
                         }
                     }
@@ -153,9 +153,9 @@ class AppointmentBookingObserver
 
                             if (!empty($userEmail)) {
                                 if ($hasTimeSlot) {
-                                    Mail::to($userEmail)->send(new AppointmentConfirmationMail($appointment_details));
+                                    // Mail::to($userEmail)->send(new AppointmentConfirmationMail($appointment_details));
                                 } else {
-                                    Mail::to($userEmail)->send(new TokenConfirmationMail($appointment_details));
+                                    // Mail::to($userEmail)->send(new TokenConfirmationMail($appointment_details));
                                 }
                             }
                         } elseif ($changes['status'] === 'completed') {
@@ -172,9 +172,9 @@ class AppointmentBookingObserver
 
                             if (!empty($userEmail)) {
                                 if ($hasTimeSlot) {
-                                    Mail::to($userEmail)->send(new AppointmentComplitedMail($appointment_details));
+                                    // Mail::to($userEmail)->send(new AppointmentComplitedMail($appointment_details));
                                 } else {
-                                    Mail::to($userEmail)->send(new TokenComplitedMail($appointment_details));
+                                    // Mail::to($userEmail)->send(new TokenComplitedMail($appointment_details));
                                 }
                             }
                         } elseif ($changes['status'] === 'cancel') {
@@ -191,9 +191,9 @@ class AppointmentBookingObserver
 
                             if (!empty($userEmail)) {
                                 if ($hasTimeSlot) {
-                                    Mail::to($userEmail)->send(new AppointmentCancelledMail($appointment_details));
+                                    // Mail::to($userEmail)->send(new AppointmentCancelledMail($appointment_details));
                                 } else {
-                                    Mail::to($userEmail)->send(new TokenCancelledMail($appointment_details));
+                                    // Mail::to($userEmail)->send(new TokenCancelledMail($appointment_details));
                                 }
                             }
                         } elseif ($changes['status'] === 'in_progress') {
@@ -233,7 +233,7 @@ class AppointmentBookingObserver
                                 ->with([
                                     'expert:id,user_id,slug,is_appointment_book_with_time_slot',
                                     'expert.user:id,first_name,last_name',
-                                    'business:id,name,slug,address',
+                                    'business:id,owner_id,name,slug,address',
                                     'user:id,first_name,email,notification_token,fcm_token',
                                 ])
                                 ->whereDate('booking_date', Carbon::today())

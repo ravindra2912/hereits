@@ -250,6 +250,7 @@ $userBusinesses = getPosUserBusinesses();
         });
     </script>
     @stack('scripts')
+    <x-firebase-init />
 </body>
 
 </html>

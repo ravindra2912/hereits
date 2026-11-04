@@ -26,5 +26,6 @@
                 {{ $slot }}
             </div>
         </div>
+        <x-firebase-init />
     </body>
 </html>

@@ -48,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
 
         ReviewAndRating::observe(ReviewAndRatingObserver::class);
         User::observe(UserObserver::class);
-        //AppointmentBooking::observe(AppointmentBookingObserver::class);
+        AppointmentBooking::observe(AppointmentBookingObserver::class);
         Business::observe(BusinessObserver::class);
 
         Passport::tokensExpireIn(now()->addDays(15));

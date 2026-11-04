@@ -37,7 +37,10 @@ class NotificationTokenController extends Controller
         // 2. Web / User Guard Check (Customer or Business)
         if (Auth::guard('web')->check()) {
             $user = Auth::guard('web')->user();
-            $user->update(['fcm_token' => $token]);
+            $user->update([
+                'fcm_token' => $token,
+                'notification_token' => $token,
+            ]);
 
             // If device_id provided, sync into user_devices table for multi-device support
             $deviceId = $validated['device_id'] ?? md5($request->userAgent() ?? 'web');

@@ -1,6 +1,9 @@
 <x-guest-layout>
     <form method="POST" action="{{ route('register') }}">
         @csrf
+        <input type="hidden" name="fcm_token" class="fcm-token-input">
+        <input type="hidden" name="device_id" class="device-id-input">
+        <input type="hidden" name="device_name" class="device-name-input">
 
         <!-- Name -->
         <div>

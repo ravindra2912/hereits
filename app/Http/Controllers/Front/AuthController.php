@@ -60,9 +60,29 @@ class AuthController extends Controller
             } elseif (!Hash::check($request['password'], $user->password)) {
                 $message = 'Invalid Credentials!';
             } else {
-                if (isset($request->notification_token)) {
-                    $user->notification_token = $request->notification_token;
+                $fcmToken = $request->fcm_token ?? $request->notification_token;
+                if (!empty($fcmToken)) {
+                    $user->fcm_token = $fcmToken;
+                    $user->notification_token = $fcmToken;
                     $user->save();
+
+                    $deviceId = $request->device_id ?? md5($request->userAgent() ?? 'web');
+                    $deviceName = $request->device_name ?? substr($request->userAgent() ?? 'Browser', 0, 50);
+                    $platform = $request->platform ?? 'web';
+
+                    \App\Models\UserDevice::updateOrCreate(
+                        [
+                            'user_id' => $user->id,
+                            'device_id' => $deviceId,
+                        ],
+                        [
+                            'fcm_token' => $fcmToken,
+                            'platform' => $platform,
+                            'device_name' => $deviceName,
+                            'last_seen_at' => now(),
+                            'is_active' => true,
+                        ]
+                    );
                 }
                 if ($user->role == 'Business' && $user->business_id == null) {
                     $business = Business::select('id', 'owner_id', 'name', 'business_image')
@@ -127,7 +147,33 @@ class AuthController extends Controller
                 }
                 $insert->referrer_business_id = $referrerId;
                 $insert->password = Hash::make($request->password);
+
+                $fcmToken = $request->fcm_token ?? $request->notification_token;
+                if (!empty($fcmToken)) {
+                    $insert->fcm_token = $fcmToken;
+                    $insert->notification_token = $fcmToken;
+                }
                 $insert->save();
+
+                if (!empty($fcmToken)) {
+                    $deviceId = $request->device_id ?? md5($request->userAgent() ?? 'web');
+                    $deviceName = $request->device_name ?? substr($request->userAgent() ?? 'Browser', 0, 50);
+                    $platform = $request->platform ?? 'web';
+
+                    \App\Models\UserDevice::updateOrCreate(
+                        [
+                            'user_id' => $insert->id,
+                            'device_id' => $deviceId,
+                        ],
+                        [
+                            'fcm_token' => $fcmToken,
+                            'platform' => $platform,
+                            'device_name' => $deviceName,
+                            'last_seen_at' => now(),
+                            'is_active' => true,
+                        ]
+                    );
+                }
 
                 if ($insert->referrer_business_id) {
                     \App\Models\BusinessCustomer::firstOrCreate([
@@ -465,10 +511,7 @@ class AuthController extends Controller
 
     public function redirectToGoogle(Request $request)
     {
-        $token = '';
-        if (isset($request->notificationtoken) && !empty($request->notificationtoken)) {
-            $token = $request->notificationtoken;
-        }
+        $token = $request->fcm_token ?? ($request->notificationtoken ?? '');
         session()->put('googleAuth', [
             'data' => $token,
             'redirectUrl' => url()->previous(),
@@ -505,7 +548,10 @@ class AuthController extends Controller
                     $business = Business::select('id', 'owner_id')->where('owner_id', $user->id)->first();
                     $user->business_id = $business->id;
                 }
-                $user->notification_token = $notificationtoken;
+                if (!empty($notificationtoken)) {
+                    $user->notification_token = $notificationtoken;
+                    $user->fcm_token = $notificationtoken;
+                }
                 $user->save();
             } else {
                 $name = explode(' ', $googleUser->getName());
@@ -534,7 +580,10 @@ class AuthController extends Controller
                 $user->last_name = isset($name[1]) != null ? $name[1] : $name[0];
                 $user->email = $googleUser->getEmail();
                 $user->google_key = $googleUser->getId();
-                $user->notification_token = $notificationtoken;
+                if (!empty($notificationtoken)) {
+                    $user->notification_token = $notificationtoken;
+                    $user->fcm_token = $notificationtoken;
+                }
 
                 $user->password = Hash::make(Str::random(8)); // Generate a random 8-character password
                 $user->save();

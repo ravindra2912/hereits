@@ -125,6 +125,53 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
         console.warn('Firebase Messaging init skipped:', e.message || e);
     }
 
+    // Ensure persistent unique device identifier for this browser
+    let deviceId = localStorage.getItem('hereits_device_id');
+    if (!deviceId) {
+        deviceId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 12);
+        localStorage.setItem('hereits_device_id', deviceId);
+    }
+    const deviceName = navigator.userAgent ? navigator.userAgent.substring(0, 50) : 'Browser';
+    localStorage.setItem('hereits_device_name', deviceName);
+
+    function populateFormTokens(token) {
+        const currentToken = token || localStorage.getItem('hereits_fcm_token') || '';
+        const currentDeviceId = localStorage.getItem('hereits_device_id') || deviceId;
+        const currentDeviceName = localStorage.getItem('hereits_device_name') || deviceName;
+
+        if (currentToken) {
+            document.querySelectorAll('input[name="fcm_token"]').forEach(function(el) {
+                el.value = currentToken;
+            });
+        }
+        if (currentDeviceId) {
+            document.querySelectorAll('input[name="device_id"]').forEach(function(el) {
+                el.value = currentDeviceId;
+            });
+        }
+        if (currentDeviceName) {
+            document.querySelectorAll('input[name="device_name"]').forEach(function(el) {
+                el.value = currentDeviceName;
+            });
+        }
+    }
+
+    // Pre-fill any existing form fields on page load
+    populateFormTokens(localStorage.getItem('hereits_fcm_token'));
+
+    // Re-fill token and device info whenever any modal opens
+    document.addEventListener('show.bs.modal', function() {
+        populateFormTokens();
+    });
+
+    if (window.jQuery) {
+        window.jQuery(document).on('show.bs.modal shown.bs.modal', function () {
+            populateFormTokens();
+        });
+    }
+
     function acquireToken(messaging, registration, vapidKey) {
         if (!vapidKey) {
             console.warn('Firebase Messaging: FIREBASE_VAPID_KEY is missing in .env. Web push subscription token requires a VAPID key from Firebase Console.');
@@ -136,40 +183,13 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
             vapidKey: vapidKey
         }).then(function (currentToken) {
             if (currentToken) {
-                const storedToken = localStorage.getItem('hereits_fcm_token');
-                if (storedToken !== currentToken) {
-                    sendTokenToServer(currentToken);
-                }
+                localStorage.setItem('hereits_fcm_token', currentToken);
+
+                // Auto-fill hidden input fields across forms (login/register)
+                populateFormTokens(currentToken);
             }
         }).catch(function (err) {
             console.warn('Error retrieving FCM registration token:', err.message || err);
-        });
-    }
-
-    function sendTokenToServer(token) {
-        const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
-        const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
-
-        fetch('/save-fcm-token', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                fcm_token: token,
-                platform: 'web',
-                device_name: navigator.userAgent.substring(0, 50)
-            })
-        }).then(function (res) {
-            return res.json();
-        }).then(function (data) {
-            if (data.status) {
-                localStorage.setItem('hereits_fcm_token', token);
-            }
-        }).catch(function (err) {
-            console.error('Failed to save FCM token on server:', err);
         });
     }
 })();

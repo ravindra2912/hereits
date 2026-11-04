@@ -14,6 +14,9 @@
                     </div>
                     <form action="{{ route('login') }}" method="POST" class="formaction" data-action="reload">
                         @csrf
+                        <input type="hidden" name="fcm_token" class="fcm-token-input">
+                        <input type="hidden" name="device_id" class="device-id-input">
+                        <input type="hidden" name="device_name" class="device-name-input">
                         <div class="mb-3">
                             <label class="form-label fw-600">Mobile Number or Email</label>
                             <input type="text" name="email" class="form-control required" placeholder="10-digit mobile number or email" required>
@@ -50,6 +53,9 @@
                     </div>
                     <form id="register" action="{{ route('register') }}" method="POST" class="formaction" data-action="reload">
                         @csrf
+                        <input type="hidden" name="fcm_token" class="fcm-token-input">
+                        <input type="hidden" name="device_id" class="device-id-input">
+                        <input type="hidden" name="device_name" class="device-name-input">
                         <div class="row g-3">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-600">First Name</label>
