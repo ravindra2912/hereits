@@ -71,12 +71,34 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
         if (registration) {
             if (Notification.permission === 'granted') {
                 acquireToken(messaging, registration, config.vapidKey);
-            } else if (Notification.permission !== 'denied') {
-                Notification.requestPermission().then(function (permission) {
-                    if (permission === 'granted') {
-                        acquireToken(messaging, registration, config.vapidKey);
+            } else if (Notification.permission === 'default') {
+                const requestWebPushPermission = function () {
+                    if (Notification.permission !== 'default') {
+                        return;
                     }
-                });
+                    Notification.requestPermission().then(function (permission) {
+                        if (permission === 'granted') {
+                            acquireToken(messaging, registration, config.vapidKey);
+                        }
+                    }).catch(function (err) {
+                        console.warn('Notification permission request error:', err);
+                    });
+                };
+
+                // 1. Immediate request (works on Desktop browsers)
+                requestWebPushPermission();
+
+                // 2. User gesture listener (required by Mobile Chrome & Safari to display prompt)
+                const onFirstInteraction = function () {
+                    if (Notification.permission === 'default') {
+                        requestWebPushPermission();
+                    }
+                    document.removeEventListener('click', onFirstInteraction);
+                    document.removeEventListener('touchend', onFirstInteraction);
+                };
+
+                document.addEventListener('click', onFirstInteraction, { passive: true });
+                document.addEventListener('touchend', onFirstInteraction, { passive: true });
             }
         }
 
@@ -193,3 +215,4 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
         });
     }
 })();
+
