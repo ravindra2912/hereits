@@ -87,7 +87,7 @@
         $('#shareTwitter').attr('href', `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`);
 
         // Show Modal
-        const modal = new bootstrap.Modal(document.getElementById('shareModal'));
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('shareModal'));
         modal.show();
     }
 

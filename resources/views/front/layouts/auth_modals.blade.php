@@ -128,6 +128,14 @@
         }
     }
 
+    // Close any open offcanvas when auth modal opens
+    $('#authModal').on('show.bs.modal', function() {
+        const offcanvasEl = document.querySelector('.offcanvas.show');
+        if (offcanvasEl && typeof bootstrap !== 'undefined' && bootstrap.Offcanvas) {
+            bootstrap.Offcanvas.getInstance(offcanvasEl)?.hide();
+        }
+    });
+
     // Reset modals on close
     $('#authModal').on('hidden.bs.modal', function() {
         switchAuthSection('login');

@@ -166,10 +166,7 @@
             let timerInstance = null;
 
             function showModal() {
-                let bsModal = bootstrap.Modal.getInstance(modalElement[0]);
-                if (!bsModal) {
-                    bsModal = new bootstrap.Modal(modalElement[0]);
-                }
+                let bsModal = bootstrap.Modal.getOrCreateInstance(modalElement[0]);
                 bsModal.show();
             }
 

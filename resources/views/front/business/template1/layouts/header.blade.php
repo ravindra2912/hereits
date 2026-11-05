@@ -286,7 +286,7 @@
             </li>
             @else
             <li class="nav-item mt-3 pt-3 border-top">
-                <button type="button" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#authModal" data-bs-dismiss="offcanvas">
+                <button type="button" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#authModal">
                     <i class="fas fa-sign-in-alt me-2"></i>Login
                 </button>
             </li>

@@ -172,7 +172,7 @@
         if (!savedLocationName && !hasCookieLocation) {
             const modalEl = document.getElementById('locationModal');
             if (modalEl) {
-                const locationModal = new bootstrap.Modal(modalEl);
+                const locationModal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 locationModal.show();
             }
         } else if (savedLocationName) {

@@ -207,10 +207,10 @@
             @else
             <li class="nav-item mt-3 pt-3 border-top">
                 <div class="d-grid gap-2">
-                    <span data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')" data-bs-dismiss="offcanvas" class="btn btn-outline-dark rounded-pill cursor-pointer">
+                    <span data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('login')" class="btn btn-outline-dark rounded-pill cursor-pointer">
                         <i class="fas fa-sign-in-alt me-2"></i>Login
                     </span>
-                    <span data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('register')" data-bs-dismiss="offcanvas" class="btn btn-primary rounded-pill cursor-pointer">
+                    <span data-bs-toggle="modal" data-bs-target="#authModal" onclick="switchAuthSection('register')" class="btn btn-primary rounded-pill cursor-pointer">
                         <i class="fas fa-user-plus me-2"></i>Register
                     </span>
                 </div>

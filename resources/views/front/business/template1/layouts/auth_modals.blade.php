@@ -136,10 +136,14 @@
             }
         });
 
-        // Close cart drawer and overlay when login modal opens to prioritize login modal
+        // Close cart drawer, overlay, and any open offcanvas when login modal opens
         $('#authModal').on('show.bs.modal', function() {
             $('.cart-drawer').removeClass('open');
             $('.cart-overlay').removeClass('show');
+            const offcanvasEl = document.querySelector('.offcanvas.show');
+            if (offcanvasEl && typeof bootstrap !== 'undefined' && bootstrap.Offcanvas) {
+                bootstrap.Offcanvas.getInstance(offcanvasEl)?.hide();
+            }
         });
     });
 </script>
