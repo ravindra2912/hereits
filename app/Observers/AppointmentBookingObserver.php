@@ -31,7 +31,7 @@ class AppointmentBookingObserver
             ->select('id', 'token_number', 'business_id', 'expert_id', 'user_id', 'user_name', 'user_contact', 'slot_start_time', 'slot_end_time', 'booking_date', 'note', 'status')
             ->with([
                 'expert:id,user_id,slug,is_appointment_book_with_time_slot',
-                'expert.user:id,first_name,last_name',
+                'expert.user:id,first_name,last_name,email,fcm_token',
                 'business:id,owner_id,name,slug,address',
                 'user:id,first_name,email,fcm_token'
             ])
@@ -63,7 +63,20 @@ class AppointmentBookingObserver
                 );
             }
 
-            // 2. Send push to Admins
+            // 2. Send push to Expert
+            if ($appointment_details->expert && $appointment_details->expert->user_id) {
+                if (!$appointment_details->business || $appointment_details->expert->user_id != $appointment_details->business->owner_id) {
+                    FirebaseNotificationService::sendToExpert(
+                        expert: $appointment_details->expert,
+                        title: 'New Appointment Booking',
+                        message: "You have a new booking #{$appointment_details->token_number} with {$appointment_details->user_name}",
+                        redirectUrl: route('expert.dashboard'),
+                        data: ['event_type' => 'appointment_booking_expert', 'id' => (string) $appointment_details->id]
+                    );
+                }
+            }
+
+            // 3. Send push to Admins
             // FirebaseNotificationService::sendToAdmins(
             //     title: 'New System Booking',
             //     message: "Booking #{$appointment_details->token_number} created for {$appointment_details->business->name}",
@@ -71,7 +84,7 @@ class AppointmentBookingObserver
             //     data: ['event_type' => 'appointment_booking', 'id' => (string) $appointment_details->id]
             // );
 
-            // 3. Send push to Customer
+            // 4. Send push to Customer
             // if ($appointment_details->user) {
             //     FirebaseNotificationService::sendToUser(
             //         user: $appointment_details->user,
@@ -92,7 +105,9 @@ class AppointmentBookingObserver
     public function updated(AppointmentBooking $appointmentBooking): void
     {
         $insert = $appointmentBooking;
+        $notification = '';
 
+        //send mail
         if ($insert->wasChanged('status')) {
             $changes = $appointmentBooking->getChanges();
             if (in_array($changes['status'], ['confirmed', 'in_progress', 'completed', 'cancel', 'cancel_by_user'])) {
@@ -100,7 +115,7 @@ class AppointmentBookingObserver
                     ->select('id', 'token_number', 'business_id', 'expert_id', 'user_id', 'user_name', 'user_contact', 'slot_start_time', 'slot_end_time', 'booking_date', 'note', 'status')
                     ->with([
                         'expert:id,user_id,slug,is_appointment_book_with_time_slot',
-                        'expert.user:id,first_name,last_name',
+                        'expert.user:id,first_name,last_name,email,fcm_token',
                         'business:id,owner_id,name,slug,address',
                         'user:id,first_name,email,notification_token,fcm_token'
                     ])
@@ -111,7 +126,7 @@ class AppointmentBookingObserver
                     $hasTimeSlot = (bool) $appointment_details->expert?->is_appointment_book_with_time_slot;
                     $userEmail = $appointment_details->user?->email;
 
-                    // 1. ACTION FROM USER SIDE -> Notify BUSINESS PANEL
+                    // 1. ACTION FROM USER SIDE -> Notify BUSINESS PANEL & EXPERT
                     if ($changes['status'] === 'cancel_by_user') {
                         if ($appointment_details->business) {
                             FirebaseNotificationService::sendToBusiness(
@@ -125,6 +140,22 @@ class AppointmentBookingObserver
                                     'token_number' => (string) $appointment_details->token_number,
                                 ]
                             );
+                        }
+
+                        if ($appointment_details->expert && $appointment_details->expert->user_id) {
+                            if (!$appointment_details->business || $appointment_details->expert->user_id != $appointment_details->business->owner_id) {
+                                FirebaseNotificationService::sendToExpert(
+                                    expert: $appointment_details->expert,
+                                    title: 'Booking Cancelled by Customer',
+                                    message: "Booking #{$appointment_details->token_number} for {$appointment_details->user_name} was cancelled by the customer.",
+                                    redirectUrl: route('expert.dashboard'),
+                                    data: [
+                                        'event_type' => 'booking_cancelled_by_user',
+                                        'id' => (string) $appointment_details->id,
+                                        'token_number' => (string) $appointment_details->token_number,
+                                    ]
+                                );
+                            }
                         }
 
                         // Send cancellation confirmation email to user
@@ -287,3 +318,4 @@ class AppointmentBookingObserver
         //
     }
 }
+

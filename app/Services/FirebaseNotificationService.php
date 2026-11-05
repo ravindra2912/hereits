@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Jobs\SendFirebaseNotificationJob;
 use App\Models\Admin;
 use App\Models\Business;
+use App\Models\Expert;
 use App\Models\Notification;
 use App\Models\User;
 use App\Models\UserDevice;
@@ -20,96 +21,91 @@ class FirebaseNotificationService
     public static function getAccessToken(): ?string
     {
         return Cache::remember('fcm_v1_access_token', 3300, function () {
-            $clientEmail = config('services.firebase.client_email', env('FIREBASE_CLIENT_EMAIL'));
-            $privateKey = config('services.firebase.private_key', env('FIREBASE_PRIVATE_KEY'));
+            $credentialsPath = config('services.firebase.credentials') ?: base_path('firebase-credentials.json');
 
-            // Fallback to credentials JSON file if not provided directly in .env
-            if (empty($clientEmail) || empty($privateKey)) {
-                $configuredPath = config('services.firebase.credentials', env('FIREBASE_CREDENTIALS', 'storage/app/firebase/firebase_credentials.json'));
-                $credentialsPath = base_path($configuredPath);
-
-                if (file_exists($credentialsPath)) {
-                    $jsonContent = file_get_contents($credentialsPath);
-                    $credentials = json_decode($jsonContent, true);
-                    $clientEmail = $credentials['client_email'] ?? null;
-                    $privateKey = $credentials['private_key'] ?? null;
-                }
-            }
-
-            if (empty($clientEmail) || empty($privateKey)) {
-                Log::warning("Firebase credentials missing. Provide FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY in .env, or place service account JSON at storage/app/firebase/firebase_credentials.json");
+            if (!file_exists($credentialsPath)) {
+                Log::warning("FCM Error: Credentials file not found at [{$credentialsPath}].");
                 return null;
             }
 
-            // Normalize escaped newlines from .env string
-            $privateKey = str_replace('\n', "\n", $privateKey);
-
-            $credentials = [
-                'client_email' => $clientEmail,
-                'private_key' => $privateKey,
-            ];
+            $serviceAccount = json_decode(file_get_contents($credentialsPath), true);
+            if (!$serviceAccount || empty($serviceAccount['client_email']) || empty($serviceAccount['private_key'])) {
+                Log::error("FCM Error: Invalid service account format in [{$credentialsPath}].");
+                return null;
+            }
 
             $now = time();
-            $header = self::base64UrlEncode(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
-            $claim = self::base64UrlEncode(json_encode([
-                'iss' => $credentials['client_email'],
+            $header = ['alg' => 'RS256', 'typ' => 'JWT'];
+            $payload = [
+                'iss'   => $serviceAccount['client_email'],
                 'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
-                'aud' => 'https://oauth2.googleapis.com/token',
-                'exp' => $now + 3600,
-                'iat' => $now,
-            ]));
+                'aud'   => 'https://oauth2.googleapis.com/token',
+                'iat'   => $now,
+                'exp'   => $now + 3600,
+            ];
 
-            $signatureInput = "{$header}.{$claim}";
-            $signature = '';
+            $encodedHeader = self::base64UrlEncode(json_encode($header));
+            $encodedPayload = self::base64UrlEncode(json_encode($payload));
+            $signatureInput = "{$encodedHeader}.{$encodedPayload}";
 
-            if (!openssl_sign($signatureInput, $signature, $credentials['private_key'], 'sha256WithRSAEncryption')) {
-                Log::error("Failed to sign JWT for Firebase OAuth2.");
+            $privateKey = openssl_pkey_get_private($serviceAccount['private_key']);
+            if (!$privateKey) {
+                Log::error("FCM Error: Invalid private key in Firebase credentials.");
                 return null;
             }
 
+            openssl_sign($signatureInput, $signature, $privateKey, 'SHA256');
             $jwt = "{$signatureInput}." . self::base64UrlEncode($signature);
 
             $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
                 'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-                'assertion' => $jwt,
+                'assertion'  => $jwt,
             ]);
 
             if ($response->successful()) {
                 return $response->json('access_token');
             }
 
-            Log::error("Failed to retrieve Google Access Token for FCM: " . $response->body());
+            Log::error("FCM Error fetching OAuth token: " . $response->body());
             return null;
         });
     }
 
-    /**
-     * Base64 URL-safe encoder.
-     */
     private static function base64UrlEncode(string $data): string
     {
         return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
 
     /**
-     * Send direct push notification to an FCM token using FCM HTTP v1.
+     * Send raw push notification via FCM HTTP v1.
      */
     public static function sendPush(string $fcmToken, string $title, string $message, ?string $redirectUrl = null, array $data = []): bool
     {
         $accessToken = self::getAccessToken();
-        $projectId = config('services.firebase.project_id', env('FIREBASE_PROJECT_ID'));
-
-        if (!$accessToken || !$projectId) {
-            Log::warning("Skipping FCM send: Access token or FIREBASE_PROJECT_ID is missing.");
+        if (!$accessToken) {
+            Log::warning("FCM Push aborted: No valid OAuth2 access token.");
             return false;
         }
 
-        $url = $redirectUrl ?: url('/');
+        $projectId = config('services.firebase.project_id');
+        if (!$projectId) {
+            $credentialsPath = config('services.firebase.credentials') ?: base_path('firebase-credentials.json');
+            if (file_exists($credentialsPath)) {
+                $serviceAccount = json_decode(file_get_contents($credentialsPath), true);
+                $projectId = $serviceAccount['project_id'] ?? null;
+            }
+        }
 
-        // In FCM v1 data payload, all values must be string
-        $stringData = [];
-        foreach (array_merge($data, ['click_url' => $url]) as $key => $val) {
-            $stringData[(string) $key] = is_array($val) ? json_encode($val) : (string) $val;
+        if (!$projectId) {
+            Log::error("FCM Push Error: No project_id found in config or credentials.");
+            return false;
+        }
+
+        $fcmUrl = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
+
+        $customData = array_map(fn($v) => (string) $v, $data);
+        if ($redirectUrl) {
+            $customData['click_url'] = (string) $redirectUrl;
         }
 
         $payload = [
@@ -117,41 +113,45 @@ class FirebaseNotificationService
                 'token' => $fcmToken,
                 'notification' => [
                     'title' => $title,
-                    'body' => $message,
+                    'body'  => $message,
                 ],
-                'data' => $stringData,
+                'data' => (object) $customData,
                 'webpush' => [
                     'headers' => [
                         'Urgency' => 'high',
                     ],
-                    'fcm_options' => [
-                        'link' => $url,
-                    ],
                     'notification' => [
-                        'icon' => asset('assets/images/logo.png'),
-                        'badge' => asset('assets/images/badge.png'),
+                        'title' => $title,
+                        'body'  => $message,
+                        'icon'  => asset('assets/front/images/logo.png'),
+                        'badge' => asset('assets/front/images/logo.png'),
+                    ],
+                    'fcm_options' => [
+                        'link' => $redirectUrl ?: url('/'),
                     ],
                 ],
             ],
         ];
 
-        $response = Http::withToken($accessToken)
-            ->withHeaders(['Content-Type' => 'application/json; UTF-8'])
-            ->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", $payload);
+        try {
+            $response = Http::withToken($accessToken)
+                ->withHeaders(['Content-Type' => 'application/json; UTF-8'])
+                ->post($fcmUrl, $payload);
 
-        if ($response->failed()) {
-            Log::error("FCM v1 delivery error: " . $response->body(), [
-                'token' => substr($fcmToken, 0, 15) . '...',
-                'title' => $title,
-            ]);
+            if ($response->successful()) {
+                return true;
+            }
+
+            Log::error("FCM Send Error [{$response->status()}]: " . $response->body());
+            return false;
+        } catch (\Exception $e) {
+            Log::error("FCM Send Exception: " . $e->getMessage());
             return false;
         }
-
-        return true;
     }
 
     /**
-     * Send notification to a customer/front user.
+     * Send notification to a User.
      */
     public static function sendToUser(User $user, string $title, string $message, ?string $redirectUrl = null, array $data = []): void
     {
@@ -187,7 +187,7 @@ class FirebaseNotificationService
     }
 
     /**
-     * Send notification to a Business Owner & Staff.
+     * Send notification to a Business Owner.
      */
     public static function sendToBusiness(Business $business, string $title, string $message, ?string $redirectUrl = null, array $data = []): void
     {
@@ -214,6 +214,49 @@ class FirebaseNotificationService
 
         $deviceTokens = UserDevice::query()
             ->where('user_id', $owner->id)
+            ->where('is_active', true)
+            ->whereNotNull('fcm_token')
+            ->pluck('fcm_token')
+            ->toArray();
+
+        $allTokens = array_values(array_filter(array_unique(array_merge($tokens, $deviceTokens))));
+
+        if (!empty($allTokens)) {
+            SendFirebaseNotificationJob::dispatch($allTokens, $title, $message, $redirectUrl, $data);
+        }
+    }
+
+    /**
+     * Send notification to an Expert.
+     */
+    public static function sendToExpert(Expert $expert, string $title, string $message, ?string $redirectUrl = null, array $data = []): void
+    {
+        $user = $expert->relationLoaded('user') && $expert->user
+            ? $expert->user
+            : User::select('id', 'fcm_token')->find($expert->user_id);
+
+        if (!$user) {
+            return;
+        }
+
+        // 1. Record in DB notification history
+        Notification::create([
+            'user_id' => $user->id,
+            'business_id' => $expert->business_id,
+            'type' => $data['type'] ?? 'expert_appointment',
+            'title' => $title,
+            'message' => $message,
+            'data' => array_merge($data, ['click_url' => $redirectUrl]),
+        ]);
+
+        // 2. Collect tokens
+        $tokens = [];
+        if (!empty($user->fcm_token)) {
+            $tokens[] = $user->fcm_token;
+        }
+
+        $deviceTokens = UserDevice::query()
+            ->where('user_id', $user->id)
             ->where('is_active', true)
             ->whereNotNull('fcm_token')
             ->pluck('fcm_token')
