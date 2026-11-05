@@ -1,4 +1,5 @@
 @if(config('services.firebase.api_key') && config('services.firebase.project_id'))
+<link rel="stylesheet" href="{{ asset('assets/common/css/firebase-notification.css') }}?v={{ file_exists(public_path('assets/common/css/firebase-notification.css')) ? filemtime(public_path('assets/common/css/firebase-notification.css')) : time() }}">
 <script>
     window.firebaseConfig = {
         apiKey: "{{ config('services.firebase.api_key') }}",
