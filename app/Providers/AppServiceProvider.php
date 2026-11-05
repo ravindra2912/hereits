@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\URL;
 use App\Observers\ReviewAndRatingObserver;
 use App\Observers\UserObserver;
 use Laravel\Passport\Passport;
+use Illuminate\Support\Facades\Vite;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,6 +46,10 @@ class AppServiceProvider extends ServiceProvider
                 abort(403, 'Unauthorized proxy access.');
             }
         }
+
+        Vite::useScriptTagAttributes([
+            'data-cfasync' => 'false',
+        ]);
 
         ReviewAndRating::observe(ReviewAndRatingObserver::class);
         User::observe(UserObserver::class);
@@ -89,3 +94,4 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 }
+
