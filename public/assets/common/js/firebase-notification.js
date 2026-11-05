@@ -355,10 +355,98 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
                 el.value = currentDeviceName;
             });
         }
+
+        // Attach tokens to Google Login links
+        attachGoogleAuthParams(currentToken, currentDeviceId, currentDeviceName);
     }
 
-    // Pre-fill any existing form fields on page load
+    // Attach FCM token and device details to all Google Login URLs across the site
+    function attachGoogleAuthParams(token, devId, devName) {
+        const currentToken = token || localStorage.getItem('hereits_fcm_token') || '';
+        const currentDeviceId = devId || localStorage.getItem('hereits_device_id') || deviceId;
+        const currentDeviceName = devName || localStorage.getItem('hereits_device_name') || deviceName;
+
+        if (!currentToken && !currentDeviceId) {
+            return;
+        }
+
+        document.querySelectorAll('a[href*="/auth/google"], .btn-google-auth, .btn-google-login').forEach(function(link) {
+            try {
+                if (link.tagName === 'A' && link.href) {
+                    const url = new URL(link.href, window.location.origin);
+                    if (currentToken) url.searchParams.set('fcm_token', currentToken);
+                    if (currentDeviceId) url.searchParams.set('device_id', currentDeviceId);
+                    if (currentDeviceName) url.searchParams.set('device_name', currentDeviceName);
+                    url.searchParams.set('platform', 'web');
+                    link.href = url.toString();
+                }
+            } catch (err) {}
+        });
+    }
+
+    // Intercept clicks on any Google auth button (including dynamically rendered buttons in modals)
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('a[href*="/auth/google"], .btn-google-auth, .btn-google-login');
+        if (link && link.tagName === 'A') {
+            const currentToken = localStorage.getItem('hereits_fcm_token') || '';
+            const currentDeviceId = localStorage.getItem('hereits_device_id') || deviceId;
+            const currentDeviceName = localStorage.getItem('hereits_device_name') || deviceName;
+
+            try {
+                const url = new URL(link.href, window.location.origin);
+                if (currentToken) url.searchParams.set('fcm_token', currentToken);
+                if (currentDeviceId) url.searchParams.set('device_id', currentDeviceId);
+                if (currentDeviceName) url.searchParams.set('device_name', currentDeviceName);
+                url.searchParams.set('platform', 'web');
+                link.href = url.toString();
+            } catch (err) {}
+        }
+    }, true);
+
+    // Sync token with server for logged-in user (ensures Google login or existing session is kept in sync)
+    function syncTokenWithServer(token) {
+        const currentToken = token || localStorage.getItem('hereits_fcm_token');
+        if (!currentToken || !config.isAuthenticated) {
+            return;
+        }
+
+        const syncedKey = 'hereits_synced_token_' + (config.authId || 'user');
+        if (sessionStorage.getItem(syncedKey) === currentToken) {
+            return; // Already synced for this session
+        }
+
+        const currentDeviceId = localStorage.getItem('hereits_device_id') || deviceId;
+        const currentDeviceName = localStorage.getItem('hereits_device_name') || deviceName;
+        const csrfToken = config.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        fetch('/save-fcm-token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                fcm_token: currentToken,
+                device_id: currentDeviceId,
+                device_name: currentDeviceName,
+                platform: 'web'
+            })
+        }).then(function(res) {
+            return res.json();
+        }).then(function(data) {
+            if (data && data.status) {
+                sessionStorage.setItem(syncedKey, currentToken);
+                console.info('🔔 [Firebase Messaging] Token automatically synced to user account on server.');
+            }
+        }).catch(function(err) {
+            console.warn('FCM token server sync error:', err);
+        });
+    }
+
+    // Pre-fill any existing form fields on page load and sync if already authenticated
     populateFormTokens(localStorage.getItem('hereits_fcm_token'));
+    syncTokenWithServer(localStorage.getItem('hereits_fcm_token'));
 
     // Re-fill token and device info whenever any modal opens
     document.addEventListener('show.bs.modal', function() {
@@ -385,8 +473,11 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
                 localStorage.setItem('hereits_fcm_token', currentToken);
                 console.info('🔔 [Firebase Messaging] Token acquired successfully.');
 
-                // Auto-fill hidden input fields across forms (login/register)
+                // Auto-fill hidden input fields across forms (login/register) and Google links
                 populateFormTokens(currentToken);
+
+                // If user is already authenticated, sync token to their account
+                syncTokenWithServer(currentToken);
             }
         }).catch(function (err) {
             console.warn('Error retrieving FCM registration token:', err.message || err);

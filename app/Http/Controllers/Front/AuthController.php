@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Business;
 use App\Models\CityArea;
 use App\Models\LegalPage;
+use App\Models\UserDevice;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -511,11 +512,19 @@ class AuthController extends Controller
 
     public function redirectToGoogle(Request $request)
     {
-        $token = $request->fcm_token ?? ($request->notificationtoken ?? '');
+        $fcmToken = $request->fcm_token ?? $request->notification_token ?? $request->notificationtoken ?? '';
+        $deviceId = $request->device_id ?? '';
+        $deviceName = $request->device_name ?? '';
+        $platform = $request->platform ?? 'web';
+
         session()->put('googleAuth', [
-            'data' => $token,
+            'fcm_token' => $fcmToken,
+            'device_id' => $deviceId,
+            'device_name' => $deviceName,
+            'platform' => $platform,
+            'data' => $fcmToken,
             'redirectUrl' => url()->previous(),
-            'expires_at' => now()->addMinutes(5), // Set your desired expiration
+            'expires_at' => now()->addMinutes(15),
         ]);
         return Socialite::driver('google')->redirect();
     }
@@ -523,11 +532,21 @@ class AuthController extends Controller
     public function handleGoogleCallback()
     {
         try {
-            $notificationtoken = '';
             $session = session('googleAuth');
-            if ($session && (isset($session['data']) != null || $session['redirectUrl'] != null)) {
-                $notificationtoken = $session['data'];
-                $redirectUrl = $session['redirectUrl'];
+            $notificationtoken = '';
+            $deviceId = null;
+            $deviceName = null;
+            $platform = 'web';
+            $redirectUrl = '/';
+
+            if ($session) {
+                $notificationtoken = $session['fcm_token'] ?? ($session['data'] ?? '');
+                $deviceId = $session['device_id'] ?? null;
+                $deviceName = $session['device_name'] ?? null;
+                $platform = $session['platform'] ?? 'web';
+                if (!empty($session['redirectUrl'])) {
+                    $redirectUrl = $session['redirectUrl'];
+                }
             }
 
             /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
@@ -575,7 +594,6 @@ class AuthController extends Controller
                     $user->profile =  $path;
                 }
 
-
                 $user->first_name = $name[0];
                 $user->last_name = isset($name[1]) != null ? $name[1] : $name[0];
                 $user->email = $googleUser->getEmail();
@@ -588,6 +606,27 @@ class AuthController extends Controller
                 $user->password = Hash::make(Str::random(8)); // Generate a random 8-character password
                 $user->save();
             }
+
+            // Sync UserDevice record if notification token is present
+            if (!empty($notificationtoken)) {
+                $resolvedDeviceId = !empty($deviceId) ? $deviceId : md5(request()->userAgent() ?? 'web');
+                $resolvedDeviceName = !empty($deviceName) ? $deviceName : substr(request()->userAgent() ?? 'Browser', 0, 50);
+
+                UserDevice::updateOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'device_id' => $resolvedDeviceId,
+                    ],
+                    [
+                        'fcm_token' => $notificationtoken,
+                        'platform' => $platform,
+                        'device_name' => $resolvedDeviceName,
+                        'last_seen_at' => now(),
+                        'is_active' => true,
+                    ]
+                );
+            }
+
             DB::commit();
 
             // Log the user in

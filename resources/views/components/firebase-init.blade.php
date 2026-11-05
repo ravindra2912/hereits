@@ -10,7 +10,8 @@
         appId: "{{ config('services.firebase.app_id') }}",
         vapidKey: "{{ config('services.firebase.vapid_key') }}",
         isAuthenticated: {{ auth()->check() || auth('admin')->check() ? 'true' : 'false' }},
-        authId: "{{ auth()->id() ?? (auth('admin')->id() ?? '') }}"
+        authId: "{{ auth()->id() ?? (auth('admin')->id() ?? '') }}",
+        csrfToken: "{{ csrf_token() }}"
     };
 </script>
 <script type="module" crossorigin="anonymous" data-cfasync="false" src="{{ asset('assets/common/js/firebase-notification.js') }}?v={{ file_exists(public_path('assets/common/js/firebase-notification.js')) ? filemtime(public_path('assets/common/js/firebase-notification.js')) : time() }}"></script>

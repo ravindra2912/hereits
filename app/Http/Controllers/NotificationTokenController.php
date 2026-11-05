@@ -34,10 +34,10 @@ class NotificationTokenController extends Controller
             ]);
         }
 
-        // 2. Web / User Guard Check (Customer or Business)
-        if (Auth::guard('web')->check()) {
-            $user = Auth::guard('web')->user();
-            $user->update([
+        // 2. Web / User / POS / Expert Guard Check (Customer or Business or Staff)
+        $currentUser = Auth::guard('web')->user() ?? (Auth::guard('pos')->user() ?? Auth::guard('expert')->user());
+        if ($currentUser) {
+            $currentUser->update([
                 'fcm_token' => $token,
                 'notification_token' => $token,
             ]);
@@ -48,7 +48,7 @@ class NotificationTokenController extends Controller
 
             UserDevice::updateOrCreate(
                 [
-                    'user_id' => $user->id,
+                    'user_id' => $currentUser->id,
                     'device_id' => $deviceId,
                 ],
                 [
