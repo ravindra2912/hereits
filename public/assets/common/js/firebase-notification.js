@@ -2,17 +2,30 @@
  * Firebase Web Push Notification Handler
  * Manages token registration, permission prompts, foreground notifications, and click redirections.
  * Compatible with Mobile Chrome (Android), Desktop Chrome, Edge, Safari (iOS PWA & macOS), and Firefox.
+ * Robust against Cloudflare Rocket Loader and deferred script execution.
  */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
 import { isSupported, getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging.js";
 
 (async function () {
-    const config = window.firebaseConfig;
+    // 1. Wait for window.firebaseConfig if deferred by Cloudflare Rocket Loader or script loaders
+    let config = window.firebaseConfig;
+    if (!config || !config.apiKey) {
+        for (let i = 0; i < 30; i++) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            if (window.firebaseConfig && window.firebaseConfig.apiKey) {
+                config = window.firebaseConfig;
+                break;
+            }
+        }
+    }
+
     if (!config || !config.apiKey || !config.projectId) {
+        console.warn('⚠️ [Firebase Messaging] Missing firebaseConfig (apiKey or projectId not set). Init skipped.');
         return;
     }
 
-    // 1. Check if origin is a secure context (HTTPS or localhost)
+    // 2. Check if origin is a secure context (HTTPS or localhost)
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const isHttps = window.location.protocol === 'https:';
 
@@ -36,14 +49,14 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
         return;
     }
 
-    // 2. Check iOS standalone status (iOS requires PWA Home Screen install for Web Push)
+    // 3. Check iOS standalone status (iOS requires PWA Home Screen install for Web Push)
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     if (isIOS && !isStandalone) {
         console.info('ℹ️ [Firebase Messaging] On iOS Safari/Chrome, Web Push requires adding the site to your Home Screen ("Share" -> "Add to Home Screen").');
     }
 
-    // 3. Check if browser environment supports Web Push and Service Workers
+    // 4. Check if browser environment supports Web Push and Service Workers
     const hasSW = 'serviceWorker' in navigator;
     const hasNotification = 'Notification' in window;
     const hasPushManager = 'PushManager' in window;
@@ -58,10 +71,10 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
         return;
     }
 
-    console.info('🔔 [Firebase Messaging] Initializing... Permission status: "' + Notification.permission + '"');
+    console.info('🔔 [Firebase Messaging] Initializing on ' + window.location.origin + '. Current permission: "' + Notification.permission + '"');
 
     try {
-        // 4. Verify Firebase SDK browser support
+        // 5. Verify Firebase SDK browser support
         const supported = await isSupported().catch(() => false);
         if (!supported) {
             console.warn('Firebase Messaging: Browser does not support Firebase messaging APIs in this environment.');
@@ -71,7 +84,7 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
         const app = initializeApp(config);
         const messaging = getMessaging(app);
 
-        // 5. Register Service Worker
+        // 6. Register Service Worker
         const swParams = new URLSearchParams({
             apiKey: config.apiKey,
             projectId: config.projectId,
@@ -103,7 +116,7 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
                     return;
                 }
 
-                // Request permission
+                // Request native browser permission
                 Notification.requestPermission().then(function (permission) {
                     console.info('🔔 [Firebase Messaging] User responded to permission prompt:', permission);
                     if (permission === 'granted') {
@@ -125,21 +138,25 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
 
             // Expose globally so buttons or developer console can trigger it anytime
             window.requestWebPushPermission = triggerPermissionRequest;
+            window.showNotificationPrompt = function () {
+                sessionStorage.removeItem('hereits_fcm_prompt_dismissed');
+                showPromptCard(triggerPermissionRequest);
+            };
 
             // Handle permission states
             if (Notification.permission === 'granted') {
                 acquireToken(messaging, registration, config.vapidKey);
             } else if (Notification.permission === 'default') {
-                // Check if user dismissed in this session
-                const isDismissed = sessionStorage.getItem('hereits_fcm_prompt_dismissed');
+                const dismissedTime = sessionStorage.getItem('hereits_fcm_prompt_dismissed');
+                const isDismissedRecently = dismissedTime && (Date.now() - parseInt(dismissedTime, 10) < 1800000); // 30 min cooldown
 
-                if (!isDismissed) {
-                    // Show Soft Prompt Card after page stabilizes (700ms)
+                if (!isDismissedRecently) {
+                    // Show Soft Prompt Card after page stabilizes
                     setTimeout(function () {
                         if (Notification.permission === 'default') {
                             showPromptCard(triggerPermissionRequest);
                         }
-                    }, 700);
+                    }, 600);
                 } else {
                     // Show subtle floating bell widget for easy opt-in
                     showFloatingBell(triggerPermissionRequest);
@@ -149,7 +166,7 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
             }
         }
 
-        // 6. Foreground Message Listener (when user is active on the tab)
+        // 7. Foreground Message Listener (when user is active on the tab)
         onMessage(messaging, function (payload) {
             const title = payload.notification?.title || payload.data?.title || 'Notification';
             const body = payload.notification?.body || payload.data?.body || payload.data?.message || '';
@@ -199,6 +216,13 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
     // =========================================================================
 
     function showPromptCard(onAllowCallback) {
+        if (!document.body) {
+            document.addEventListener('DOMContentLoaded', function () {
+                showPromptCard(onAllowCallback);
+            });
+            return;
+        }
+
         if (document.getElementById('hereits-fcm-prompt') || Notification.permission !== 'default') {
             return;
         }
@@ -240,7 +264,7 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
 
         if (dismissBtn) {
             dismissBtn.addEventListener('click', function () {
-                sessionStorage.setItem('hereits_fcm_prompt_dismissed', '1');
+                sessionStorage.setItem('hereits_fcm_prompt_dismissed', Date.now().toString());
                 hidePromptCard();
                 showFloatingBell(onAllowCallback);
             });
@@ -260,6 +284,13 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
     }
 
     function showFloatingBell(onClickCallback) {
+        if (!document.body) {
+            document.addEventListener('DOMContentLoaded', function () {
+                showFloatingBell(onClickCallback);
+            });
+            return;
+        }
+
         if (document.getElementById('hereits-fcm-bell') || Notification.permission !== 'default') {
             return;
         }
@@ -275,6 +306,7 @@ import { isSupported, getMessaging, getToken, onMessage } from "https://www.gsta
 
         bellBtn.addEventListener('click', function () {
             hideFloatingBell();
+            sessionStorage.removeItem('hereits_fcm_prompt_dismissed');
             showPromptCard(onClickCallback);
         });
 
