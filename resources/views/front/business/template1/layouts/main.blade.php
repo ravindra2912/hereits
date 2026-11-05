@@ -215,6 +215,7 @@
     @stack('js')
 
     <x-firebase-init />
+    <x-cookie-consent />
 </body>
 
 </html>
