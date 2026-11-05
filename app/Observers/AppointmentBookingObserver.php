@@ -63,7 +63,7 @@ class AppointmentBookingObserver
                 );
             }
 
-            // 2. Send push to Expert
+            // 2. Send push to Expert 
             if ($appointment_details->expert && $appointment_details->expert->user_id) {
                 if (!$appointment_details->business || $appointment_details->expert->user_id != $appointment_details->business->owner_id) {
                     FirebaseNotificationService::sendToExpert(
@@ -318,4 +318,3 @@ class AppointmentBookingObserver
         //
     }
 }
-

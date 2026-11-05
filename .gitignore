@@ -19,3 +19,6 @@ yarn-error.log
 /composer.lock
 /projectcode
 /demo
+firebase_credentials.json
+firebase-credentials.json
+firebase*.json
