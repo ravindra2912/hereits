@@ -12,5 +12,5 @@
         authId: "{{ auth()->id() ?? (auth('admin')->id() ?? '') }}"
     };
 </script>
-<script type="module" src="{{ asset('assets/common/js/firebase-notification.js') }}?v={{ file_exists(public_path('assets/common/js/firebase-notification.js')) ? filemtime(public_path('assets/common/js/firebase-notification.js')) : time() }}"></script>
+<script type="module" crossorigin="anonymous" data-cfasync="false" src="{{ asset('assets/common/js/firebase-notification.js') }}?v={{ file_exists(public_path('assets/common/js/firebase-notification.js')) ? filemtime(public_path('assets/common/js/firebase-notification.js')) : time() }}"></script>
 @endif
