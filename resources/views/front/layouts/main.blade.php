@@ -92,6 +92,7 @@
 	@vite('resources/js/app.js')
 
 	@stack('css')
+	@stack('style')
 	@stack('schema')
 	<style>
 		.highlight-register-btn {

@@ -166,14 +166,18 @@
                             <input type="hidden" name="booking_id" value="{{ $booking->id }}">
 
                             <div class="mb-4">
-                                <label class="form-label fw-bold">How would you rate the service?</label>
-                                <div class="rating-group d-flex gap-2">
-                                    @foreach(['1'=>'Bad', '2'=>'Poor', '3'=>'Fair', '4'=>'Good', '5'=>'Excellent'] as $val => $label)
-                                    <input type="radio" name="rating" value="{{ $val }}" id="rate-{{ $val }}" class="btn-check" {{ $val == 5 ? 'checked' : '' }} required>
-                                    <label class="btn btn-outline-light text-dark flex-fill border-2 py-2 rounded-3 fw-bold" for="rate-{{ $val }}">
-                                        {{ $label }}
-                                    </label>
-                                    @endforeach
+                                <label class="form-label fw-bold mb-2">How would you rate the service?</label>
+                                
+                                <div class="service-rating-widget text-center py-4 px-3 rounded-4 mb-2">
+                                    <input type="hidden" name="rating" id="ratingInput" value="5" required>
+                                    <!-- Interactive Stars Only -->
+                                    <div class="star-rating-stars d-flex justify-content-center gap-2 gap-sm-3" id="starContainer">
+                                        @for($i = 1; $i <= 5; $i++)
+                                        <button type="button" class="star-btn active" data-rating="{{ $i }}" aria-label="{{ $i }} Stars">
+                                            <i class="fas fa-star"></i>
+                                        </button>
+                                        @endfor
+                                    </div>
                                 </div>
                             </div>
 
@@ -242,11 +246,46 @@
         letter-spacing: 0.05em;
     }
 
-    .rating-group .btn-check:checked+label {
-        background-color: var(--primary-color) !important;
-        border-color: var(--primary-color) !important;
-        color: #000 !important;
-        box-shadow: 0 4px 10px rgba(255, 199, 0, 0.2) !important;
+    /* Modern Star Rating Widget */
+    .service-rating-widget {
+        background: linear-gradient(180deg, #fbfbfd 0%, #f5f7fa 100%);
+        border: 1px solid #e9ecef;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .star-rating-stars {
+        user-select: none;
+    }
+
+    .star-btn {
+        background: transparent;
+        border: none;
+        padding: 6px 10px;
+        font-size: 2.5rem;
+        color: #d1d5db;
+        cursor: pointer;
+        line-height: 1;
+        transition: transform 0.15s ease, color 0.15s ease;
+    }
+
+    .star-btn:hover {
+        transform: scale(1.22);
+    }
+
+    .star-btn.active {
+        color: #f59e0b;
+        filter: drop-shadow(0 2px 6px rgba(245, 158, 11, 0.4));
+    }
+
+    .star-btn:focus {
+        outline: none;
+    }
+
+    @media (max-width: 576px) {
+        .star-btn {
+            font-size: 2.15rem;
+            padding: 4px 6px;
+        }
     }
 
     .form-control {
@@ -267,6 +306,47 @@
 @push('js')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    $(document).ready(function() {
+        function setRating(rating) {
+            const r = parseInt(rating, 10);
+            if (!r || r < 1 || r > 5) return;
+
+            $('#ratingInput').val(r);
+
+            $('.star-btn').each(function() {
+                const starVal = parseInt($(this).data('rating'), 10);
+                if (starVal <= r) {
+                    $(this).addClass('active');
+                } else {
+                    $(this).removeClass('active');
+                }
+            });
+        }
+
+        $('.star-btn').on('click', function(e) {
+            e.preventDefault();
+            const rating = $(this).data('rating');
+            setRating(rating);
+        });
+
+        $('.star-btn').on('mouseenter', function() {
+            const hoverVal = parseInt($(this).data('rating'), 10);
+            $('.star-btn').each(function() {
+                const starVal = parseInt($(this).data('rating'), 10);
+                if (starVal <= hoverVal) {
+                    $(this).addClass('active');
+                } else {
+                    $(this).removeClass('active');
+                }
+            });
+        });
+
+        $('#starContainer').on('mouseleave', function() {
+            const currentVal = $('#ratingInput').val() || 5;
+            setRating(currentVal);
+        });
+    });
+
     function cancelBooking(booking_id) {
         Swal.fire({
             title: 'Cancel Appointment?',
