@@ -231,16 +231,22 @@ $(document).ready(function () {
                 const hashIndex = href.indexOf('#');
                 const linkHash = hashIndex !== -1 ? href.substring(hashIndex) : '';
 
-                if (linkHash === activeHash || (activeHash === '#home' && (linkHash === '#home' || !linkHash))) {
-                    $(this).addClass('active text-primary');
-                } else if (href.includes('#')) {
+                if (linkHash) {
+                    if (linkHash === activeHash) {
+                        $(this).addClass('active text-primary');
+                    } else {
+                        $(this).removeClass('active text-primary');
+                    }
+                } else {
+                    // Non-hash links (e.g. Services, Experts, Blogs, Products) are separate pages
+                    // and must not be marked active when on the business home page.
                     $(this).removeClass('active text-primary');
                 }
             });
         }
 
         // Initialize active state based on current URL hash or top of page
-        const currentHash = window.location.hash || '#home';
+        const currentHash = (window.location.hash && window.location.hash !== '#') ? window.location.hash : '#home';
         updateActiveSection(currentHash);
 
         // ScrollSpy observer
@@ -288,7 +294,7 @@ $(document).ready(function () {
 
         // Listen for popstate / hashchange (e.g., browser back/forward buttons)
         $(window).on('hashchange', function () {
-            const newHash = window.location.hash || '#home';
+            const newHash = (window.location.hash && window.location.hash !== '#') ? window.location.hash : '#home';
             updateActiveSection(newHash);
         });
     }
