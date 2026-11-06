@@ -1,3 +1,13 @@
+@php
+    $isPrivate = false;
+    if (isset($setting) && isset($setting->is_private)) {
+        $isPrivate = (bool) $setting->is_private;
+    } elseif (isset($business->businessSetting) && isset($business->businessSetting->is_private)) {
+        $isPrivate = (bool) $business->businessSetting->is_private;
+    } elseif (isset($business->id)) {
+        $isPrivate = (bool) (getBusinessSettings($business->id)?->is_private ?? true);
+    }
+@endphp
 <!-- Top Info Bar -->
 <div class="bg-dark text-white py-2 small d-none d-lg-block">
     <div class="container">
@@ -44,16 +54,22 @@
             </button>
 
             <!-- Logo & Identity -->
-            <a class="navbar-brand d-flex align-items-center gap-2 order-1 order-lg-0 mx-auto mx-lg-0" href="{{ route('business-details', $business->slug) }}">
-                @if ($business->business_logo)
-                <img src="{{ getImage($business->business_logo) }}"
-                    alt="{{ $business->name }}"
-                    class="img-fluid rounded logo-thumb-sm"
-                    loading="lazy">
+            <a class="navbar-brand d-flex align-items-center gap-2 order-1 order-lg-0 mx-auto mx-lg-0" href="{{ $isPrivate ? route('business-details', $business->slug) : route('home') }}">
+                @if (!$isPrivate)
+                    <img src="{{ config('const.site_setting.logo-bg-white', config('const.site_setting.logo')) }}"
+                        alt="{{ config('const.site_setting.name', 'hereits') }}"
+                        class="img-fluid logo-thumb-sm"
+                        style="max-height: 40px;"
+                        loading="lazy">
+                @elseif ($business->business_logo)
+                    <img src="{{ getImage($business->business_logo) }}"
+                        alt="{{ $business->name }}"
+                        class="img-fluid rounded logo-thumb-sm"
+                        loading="lazy">
                 @else
-                <span class="fw-bold fs-2 text-uppercase logo-text-gradient">
-                    {{ $business->name }}
-                </span>
+                    <span class="fw-bold fs-2 text-uppercase logo-text-gradient">
+                        {{ $business->name }}
+                    </span>
                 @endif
             </a>
 
@@ -177,13 +193,15 @@
 <!-- Mobile Offcanvas Menu -->
 <div class="offcanvas offcanvas-start" tabindex="-1" id="businessOffcanvas" aria-labelledby="businessOffcanvasLabel">
     <div class="offcanvas-header border-bottom">
-        <a href="{{ route('business-details', $business->slug) }}" class="offcanvas-title d-flex align-items-center gap-2" id="businessOffcanvasLabel">
-            @if ($business->business_logo)
-            <img src="{{ getImage($business->business_logo) }}" alt="{{ $business->name }}" class="img-fluid rounded offcanvas-logo-sm" loading="lazy">
+        <a href="{{ $isPrivate ? route('business-details', $business->slug) : route('home') }}" class="offcanvas-title d-flex align-items-center gap-2" id="businessOffcanvasLabel">
+            @if (!$isPrivate)
+                <img src="{{ config('const.site_setting.logo-bg-white', config('const.site_setting.logo')) }}" alt="{{ config('const.site_setting.name', 'hereits') }}" class="img-fluid offcanvas-logo-sm" style="max-height: 36px;" loading="lazy">
+            @elseif ($business->business_logo)
+                <img src="{{ getImage($business->business_logo) }}" alt="{{ $business->name }}" class="img-fluid rounded offcanvas-logo-sm" loading="lazy">
             @else
-            <span class="fw-bold fs-5 text-uppercase logo-text-gradient">
-                {{ $business->name }}
-            </span>
+                <span class="fw-bold fs-5 text-uppercase logo-text-gradient">
+                    {{ $business->name }}
+                </span>
             @endif
         </a>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>

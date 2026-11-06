@@ -73,9 +73,18 @@
 
     <!-- Favicon -->
     @php
-        $businessFavicon = !empty($business->business_logo)
+        $isPrivate = false;
+        if (isset($setting) && isset($setting->is_private)) {
+            $isPrivate = (bool) $setting->is_private;
+        } elseif (isset($business->businessSetting) && isset($business->businessSetting->is_private)) {
+            $isPrivate = (bool) $business->businessSetting->is_private;
+        } elseif (isset($business->id)) {
+            $isPrivate = (bool) (getBusinessSettings($business->id)?->is_private ?? true);
+        }
+
+        $businessFavicon = ($isPrivate && !empty($business->business_logo))
             ? getImage($business->business_logo)
-            : (!empty($business->business_image)
+            : (($isPrivate && !empty($business->business_image))
                 ? getImage($business->business_image)
                 : config('const.site_setting.fevicon'));
     @endphp
