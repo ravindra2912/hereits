@@ -10,7 +10,7 @@
       @include('front.account.sidebar')
 
       <!-- Main Dashboard Content -->
-      <div class="col-lg-9">
+      <div class="col-lg-9 d-none d-lg-block">
         <div class="row g-4 mb-4">
           <div class="col-md-4">
             <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-white">

@@ -10,11 +10,14 @@
             @include('front.account.sidebar')
 
             <!-- Main Dashboard Content -->
-            <div class="col-lg-9">
+            <div class="col-lg-9 col-12">
                 <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-white">
                     <div class="card-header py-3 bg-white border-bottom d-flex flex-wrap align-items-center justify-content-between gap-3">
                         <div class="d-flex align-items-center gap-2">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                            <a href="{{ route('account.index') }}" class="btn btn-light btn-sm rounded-circle d-lg-none text-dark d-inline-flex align-items-center justify-content-center shadow-none me-1" style="width: 38px; height: 38px; flex-shrink: 0;" title="Back to Account">
+                                <i class="fas fa-arrow-left"></i>
+                            </a>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: rgba(239, 68, 68, 0.1); color: #ef4444; flex-shrink: 0;">
                                 <i class="fas fa-heart fs-5"></i>
                             </div>
                             <div>

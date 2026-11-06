@@ -1,4 +1,4 @@
-<div class="col-lg-3">
+<div class="col-lg-3 {{ !request()->routeIs('account.index') ? 'd-none d-lg-block' : 'col-12' }}">
   <div class="account-sidebar shadow-sm rounded-4 border-0 mb-4 overflow-hidden bg-white">
     <div class="p-4 text-center border-bottom bg-light">
       <div class="avatar-container mb-3 position-relative d-inline-block">
@@ -9,7 +9,7 @@
       <p class="text-muted small mb-0">{{ Auth::user()->email }}</p>
     </div>
     <div class="nav flex-column nav-pills p-3 py-4">
-      <a class="nav-link py-2 px-3 rounded-3 mb-2 d-flex align-items-center gap-3 {{ request()->routeIs('account.index') ? 'active' : '' }}" href="{{ route('account.index') }}">
+      <a class="nav-link py-2 px-3 rounded-3 mb-2 d-none d-lg-flex align-items-center gap-3 {{ request()->routeIs('account.index') ? 'active' : '' }}" href="{{ route('account.index') }}">
         <i class="fas fa-th-large fs-5"></i>
         <span>Dashboard</span>
       </a>

@@ -10,10 +10,15 @@
       @include('front.account.sidebar')
 
       <!-- Main Dashboard Content -->
-      <div class="col-lg-9">
+      <div class="col-lg-9 col-12">
         <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
           <div class="card-header py-3 bg-white border-bottom d-flex align-items-center justify-content-between">
-            <h5 class="m-0 fw-bold"><i class="fas fa-file-invoice me-2 text-primary"></i>My Quotations</h5>
+            <div class="d-flex align-items-center gap-3">
+              <a href="{{ route('account.index') }}" class="btn btn-light btn-sm rounded-circle d-lg-none text-dark d-inline-flex align-items-center justify-content-center shadow-none" style="width: 38px; height: 38px; flex-shrink: 0;" title="Back to Account">
+                <i class="fas fa-arrow-left"></i>
+              </a>
+              <h5 class="m-0 fw-bold"><i class="fas fa-file-invoice me-2 text-primary"></i>My Quotations</h5>
+            </div>
           </div>
           <div class="card-body p-4">
             @if($quotations->count() > 0)

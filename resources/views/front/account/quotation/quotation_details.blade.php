@@ -10,7 +10,7 @@
       @include('front.account.sidebar')
 
       <!-- Main Dashboard Content -->
-      <div class="col-lg-9">
+      <div class="col-lg-9 col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
           <h4 class="fw-bold mb-0">Quotation Details</h4>
           <a href="{{ route('account.quotations') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">

@@ -10,11 +10,16 @@
       @include('front.account.sidebar')
 
       <!-- Main Content -->
-      <div class="col-lg-9">
+      <div class="col-lg-9 col-12">
         <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
-          <div class="card-header bg-white border-bottom p-4">
-            <h4 class="fw-bold mb-0">Personal Information</h4>
-            <p class="text-muted small mb-0">Manage your profile details and preferences</p>
+          <div class="card-header bg-white border-bottom p-4 d-flex align-items-center gap-3">
+            <a href="{{ route('account.index') }}" class="btn btn-light btn-sm rounded-circle d-lg-none text-dark d-inline-flex align-items-center justify-content-center shadow-none" style="width: 38px; height: 38px; flex-shrink: 0;" title="Back to Account">
+              <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+              <h4 class="fw-bold mb-0">Personal Information</h4>
+              <p class="text-muted small mb-0">Manage your profile details and preferences</p>
+            </div>
           </div>
           <div class="card-body p-4 p-md-5">
             <form id="profileForm" action="{{ route('account.userprofile.update', $user->id) }}" method="POST" enctype="multipart/form-data" data-action="reload" class="formaction">

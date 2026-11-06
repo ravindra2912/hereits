@@ -10,7 +10,7 @@
             @include('front.account.sidebar')
 
             <!-- Main Content -->
-            <div class="col-lg-9">
+            <div class="col-lg-9 col-12">
                 <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden mb-4">
                     <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
                         <h4 class="fw-bold mb-0">Booking Details</h4>
