@@ -140,6 +140,7 @@ class AppointmentController extends Controller
         $expert = Expert::select('id', 'department_id', 'business_id', 'user_id', 'timing_per_appointment', 'slug', 'title', 'description')
             ->with([
                 'user:id,first_name,last_name,profile',
+                'department',
                 'business' => function ($q) {
                     return $q->select('id', 'name', 'slug', 'address', 'contact', 'rating', 'latitude', 'longitude', 'business_logo', 'facebook', 'twitter', 'instagram', 'linkedin', 'youtube');
                 }
@@ -160,8 +161,15 @@ class AppointmentController extends Controller
 
             // Fetch upcoming pending & confirmed appointments for today
             $appointmentListQuery = AppointmentBooking::select([
-                    'id', 'token_number', 'user_name', 'status', 'slot_start_time', 'slot_end_time', 'booking_date', 'expert_id'
-                ])
+                'id',
+                'token_number',
+                'user_name',
+                'status',
+                'slot_start_time',
+                'slot_end_time',
+                'booking_date',
+                'expert_id'
+            ])
                 ->whereDate('booking_date', Carbon::now()->format('Y-m-d'))
                 ->where('expert_id', $expert->id)
                 ->whereIn('status', ['confirmed', 'pending']);
@@ -176,7 +184,7 @@ class AppointmentController extends Controller
                 $appointmentListQuery->orderBy('token_number', 'asc');
             }
 
-            $appointmentList = $appointmentListQuery->limit(10)->get();
+            $appointmentList = $appointmentListQuery->limit(5)->get();
 
             $setting = getBusinessSettings($expert->business_id);
             return view('front.business.template1.appointment.board', compact('expert', 'timing', 'appointmentList', 'appointmentFirst', 'setting'));
