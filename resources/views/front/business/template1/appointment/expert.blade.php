@@ -319,6 +319,26 @@ $business = $expert->business;
   </div>
 </div>
 
+<!-- Success Modal -->
+<div id="thank-you-modal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-body p-5 text-center">
+        <div class="width-80 height-80 bg-success bg-opacity-10 rounded-circle flex-center mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+          <i class="fas fa-check fa-3x text-success"></i>
+        </div>
+        <h2 class="fw-bold text-dark mb-3">Booking Confirmed!</h2>
+        <p class="text-muted mb-4">Your appointment has been successfully scheduled. We have sent confirmation details to your account.</p>
+
+        <div class="d-grid gap-2">
+          <a href="" class="btn btn-primary rounded-pill py-2 status-checker">View Booking Details</a>
+          <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 @push('js')
 <script>
   function copyCheckLink() {
@@ -355,6 +375,19 @@ $business = $expert->business;
       if ($('#bookAppointmentModal').hasClass('show')) {
         $('#bookAppointmentModal').modal('hide');
       }
+    });
+
+    // Ensure backdrop & body scroll lock are completely cleared when modals close
+    $('#bookAppointmentModal').on('hidden.bs.modal', function() {
+      if (!$('#thank-you-modal').hasClass('show')) {
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open').css({'overflow': '', 'padding-right': ''});
+      }
+    });
+
+    $('#thank-you-modal').on('hidden.bs.modal', function() {
+      $('.modal-backdrop').remove();
+      $('body').removeClass('modal-open').css({'overflow': '', 'padding-right': ''});
     });
   });
 </script>

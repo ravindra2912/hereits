@@ -94,33 +94,35 @@
     </div>
   </form>
 
-  <!-- Success Modal -->
-  <div id="thank-you-modal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg rounded-4">
-        <div class="modal-body p-5 text-center">
-          <div class="width-80 height-80 bg-success bg-opacity-10 rounded-circle flex-center mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-            <i class="fas fa-check fa-3x text-success"></i>
-          </div>
-          <h2 class="fw-bold text-dark mb-3">Booking Confirmed!</h2>
-          <p class="text-muted mb-4">Your appointment has been successfully scheduled. We have sent a confirmation details to your account.</p>
-
-          <div class="d-grid gap-2">
-            <a href="" class="btn btn-primary rounded-pill py-2 status-checker">View Booking Details</a>
-            <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Close</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   @push('js')
   <script>
     function responce(res) {
-      $('#bookAppointmentModal').modal('hide');
-      $('#thank-you-modal').modal('show');
-      $('.status-checker').attr('href', res.data.status_url);
-      // console.log(res.data.status_url);
+      if (res && res.data && res.data.status_url) {
+        $('.status-checker').attr('href', res.data.status_url);
+      }
+
+      const bookModalEl = document.getElementById('bookAppointmentModal');
+      const thankYouModalEl = document.getElementById('thank-you-modal');
+
+      if (bookModalEl && $(bookModalEl).hasClass('show')) {
+        $(bookModalEl).one('hidden.bs.modal', function() {
+          $('.modal-backdrop').remove();
+          $('body').removeClass('modal-open').css({'overflow': '', 'padding-right': ''});
+
+          if (thankYouModalEl) {
+            const thankYouModal = bootstrap.Modal.getOrCreateInstance(thankYouModalEl);
+            thankYouModal.show();
+          }
+        });
+
+        const bookModal = bootstrap.Modal.getOrCreateInstance(bookModalEl);
+        bookModal.hide();
+      } else {
+        if (thankYouModalEl) {
+          const thankYouModal = bootstrap.Modal.getOrCreateInstance(thankYouModalEl);
+          thankYouModal.show();
+        }
+      }
     }
     $(document).ready(function() {
       // get expert time slot
