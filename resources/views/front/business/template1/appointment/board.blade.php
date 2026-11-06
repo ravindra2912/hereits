@@ -18,19 +18,23 @@ $business = $expert->business;
   .token-no {
     font-size: 4.5rem;
   }
+
   .queue-box {
     background-color: #ffffff;
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   }
+
   .queue-box:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
+
   .expert-token-divider {
     border-bottom: 1px solid rgba(255, 255, 255, 0.25);
     padding-bottom: 1.25rem;
     margin-bottom: 0.5rem;
   }
+
   @media (min-width: 768px) {
     .expert-token-divider {
       border-bottom: none;
@@ -39,6 +43,7 @@ $business = $expert->business;
       margin-bottom: 0;
     }
   }
+
   @media (max-width: 576px) {
     .token-no {
       font-size: 3.25rem;
@@ -72,112 +77,85 @@ $business = $expert->business;
           <!-- Main Board -->
           <div class="col-12 col-xl-8 col-lg-10 text-center px-lg-4">
             <div class="mb-4">
-              @if ($timing['status'] == 'open')
-                @if ($appointmentFirst)
-                  <div class="current-token-box bg-primary text-white rounded-4 p-4 p-lg-5 mb-4 shadow-sm">
-                    <div class="row align-items-center g-3">
-                      <!-- Left: Expert Info -->
-                      <div class="col-md-6 text-center text-md-start expert-token-divider pe-md-4">
-                        <div class="d-flex flex-column flex-sm-row align-items-center gap-3">
-                          <img src="{{ getImage($expert->user?->profile, 'expert') }}" 
-                               alt="{{ $expert->user?->name }}" 
-                               class="rounded-3 border border-2 border-white shadow-sm flex-shrink-0" 
-                               style="width: 125px; height: auto; max-height: 165px; object-fit: contain; background: rgba(255, 255, 255, 0.1);">
-                          <div>
-                            <h4 class="fw-bold mb-1 text-white" style="color: #ffffff !important;">{{ $expert->user?->name }}</h4>
-                            <div class="d-flex align-items-center justify-content-center justify-content-sm-start gap-2 flex-wrap mb-1">
-                              @if($expert->title)
-                                <span class="badge bg-white text-primary rounded-pill px-2 py-0 fw-bold" style="font-size: 0.75rem;">{{ $expert->title }}</span>
-                              @endif
-                              @if($expert->department)
-                                <span class="small" style="color: rgba(255, 255, 255, 0.9) !important; font-size: 0.82rem;">{{ $expert->department->department_name }}</span>
-                              @endif
-                            </div>
-                            @if($expert->description)
-                              <small class="d-block" style="color: rgba(255, 255, 255, 0.75) !important; font-size: 0.78rem;">{{ $expert->description }}</small>
-                            @endif
-                          </div>
+              <div class="current-token-box bg-primary text-white rounded-4 p-4 p-lg-5 mb-4 shadow-sm">
+                <div class="row align-items-center g-3">
+                  <!-- Left: Expert Info (Same for all statuses) -->
+                  <div class="col-md-6 text-center text-md-start expert-token-divider pe-md-4">
+                    <div class="d-flex flex-column flex-sm-row align-items-center gap-3">
+                      <img src="{{ getImage($expert->user?->profile, 'expert') }}"
+                        alt="{{ $expert->user?->name }}"
+                        class="rounded-3 border border-2 border-white shadow-sm flex-shrink-0"
+                        style="width: 125px; height: auto; max-height: 165px; object-fit: contain; background: rgba(255, 255, 255, 0.1);">
+                      <div>
+                        <h4 class="fw-bold mb-1 text-white" style="color: #ffffff !important;">{{ $expert->user?->name }}</h4>
+                        <div class="d-flex align-items-center justify-content-center justify-content-sm-start gap-2 flex-wrap mb-1">
+                          @if($expert->title)
+                          <span class="badge bg-white text-primary rounded-pill px-2 py-0 fw-bold" style="font-size: 0.75rem;">{{ $expert->title }}</span>
+                          @endif
+                          @if($expert->department)
+                          <span class="small" style="color: rgba(255, 255, 255, 0.9) !important; font-size: 0.82rem;">{{ $expert->department->department_name }}</span>
+                          @endif
                         </div>
-                      </div>
-
-                      <!-- Right: Token Info -->
-                      <div class="col-md-6 text-center ps-md-4">
-                        <span class="badge bg-white text-primary px-3 py-1 rounded-pill text-uppercase mb-2 fw-bold">In Progress</span>
-                        <h6 class="text-uppercase letter-spacing-1 mb-1" style="color: rgba(255, 255, 255, 0.8) !important;">Current Token</h6>
-                        <h1 class="token-no lh-1 mb-0 fw-bold" style="color: #ffffff !important;">{{ $appointmentFirst->token_number }}</h1>
+                        @if($expert->description)
+                        <small class="d-block" style="color: rgba(255, 255, 255, 0.75) !important; font-size: 0.78rem;">{{ $expert->description }}</small>
+                        @endif
                       </div>
                     </div>
                   </div>
-                @else
-                  <div class="py-4">
-                    <!-- Expert Details -->
-                    <div class="d-inline-flex align-items-center gap-3 mb-3 p-2 px-3 bg-white rounded-4 border shadow-xs">
-                      <img src="{{ getImage($expert->user?->profile, 'expert') }}" 
-                           alt="{{ $expert->user?->name }}" 
-                           class="rounded-3 border border-2 border-primary object-fit-contain" 
-                           style="width: 55px; height: auto; max-height: 70px; background: rgba(0, 0, 0, 0.03);">
-                      <div class="text-start pe-2">
-                        <h6 class="fw-bold mb-0 text-dark">{{ $expert->user?->name }}</h6>
-                        <small class="text-muted">{{ $expert->title ?? ($expert->department?->department_name ?? 'Expert') }}</small>
+
+                  <!-- Right: Status / Token Info -->
+                  <div class="col-md-6 text-center ps-md-4">
+                    @if ($timing['status'] == 'open')
+                    @if ($appointmentFirst)
+                    <span class="badge bg-white text-primary px-3 py-1 rounded-pill text-uppercase mb-2 fw-bold">In Progress</span>
+                    <h6 class="text-uppercase letter-spacing-1 mb-1" style="color: rgba(255, 255, 255, 0.8) !important;">Current Token</h6>
+                    <h1 class="token-no lh-1 mb-0 fw-bold" style="color: #ffffff !important;">{{ $appointmentFirst->token_number }}</h1>
+                    @else
+                    <span class="badge bg-white text-success px-3 py-1 rounded-pill text-uppercase mb-2 fw-bold">
+                      <i class="fas fa-circle text-success me-1 small"></i> Available Soon
+                    </span>
+                    <div class="my-2">
+                      <div class="rounded-circle bg-white bg-opacity-25 text-white d-inline-flex align-items-center justify-content-center mb-2" style="width: 58px; height: 58px;">
+                        <i class="fas fa-user-clock fa-2x"></i>
                       </div>
                     </div>
-
-                    <div class="rounded-circle bg-success bg-opacity-10 text-success d-inline-flex align-items-center justify-content-center mb-3 d-block mx-auto" style="width: 75px; height: 75px;">
-                      <i class="fas fa-user-clock fa-2x"></i>
-                    </div>
-                    <h2 class="text-success fw-bold mb-2">Available Soon</h2>
-                    <p class="text-muted mb-0">
-                      @if($appointmentList->isNotEmpty())
-                        Waiting for doctor to call next appointment.
+                    <h4 class="fw-bold mb-1 text-white" style="color: #ffffff !important;">Available Soon</h4>
+                    <p class="mb-0 small" style="color: rgba(255, 255, 255, 0.85) !important;">
+                      @if(isset($appointmentList) && $appointmentList->isNotEmpty())
+                      Waiting for doctor to call next appointment.
                       @else
-                        No appointments currently in queue.
+                      No appointments currently in queue.
                       @endif
                     </p>
-                  </div>
-                @endif
-              @elseif($timing['status'] == 'close')
-                <div class="py-4">
-                  <!-- Expert Details -->
-                  <div class="d-inline-flex align-items-center gap-3 mb-3 p-2 px-3 bg-white rounded-4 border shadow-xs">
-                    <img src="{{ getImage($expert->user?->profile, 'expert') }}" 
-                         alt="{{ $expert->user?->name }}" 
-                         class="rounded-3 border border-2 border-danger object-fit-contain" 
-                         style="width: 55px; height: auto; max-height: 70px; background: rgba(0, 0, 0, 0.03);">
-                      <div class="text-start pe-2">
-                        <h6 class="fw-bold mb-0 text-dark">{{ $expert->user?->name }}</h6>
-                        <small class="text-muted">{{ $expert->title ?? ($expert->department?->department_name ?? 'Expert') }}</small>
+                    @endif
+                    @elseif($timing['status'] == 'close')
+                    <span class="badge bg-white text-danger px-3 py-1 rounded-pill text-uppercase mb-2 fw-bold">
+                      <i class="fas fa-circle text-danger me-1 small"></i> Closed
+                    </span>
+                    <div class="my-2">
+                      <div class="rounded-circle bg-white bg-opacity-25 text-white d-inline-flex align-items-center justify-content-center mb-2" style="width: 58px; height: 58px;">
+                        <i class="fas fa-door-closed fa-2x"></i>
                       </div>
-                  </div>
-
-                  <div class="rounded-circle bg-danger bg-opacity-10 text-danger d-inline-flex align-items-center justify-content-center mb-3 d-block mx-auto" style="width: 70px; height: 70px;">
-                    <i class="fas fa-door-closed fa-2x"></i>
-                  </div>
-                  <h2 class="text-danger fw-bold mb-1">Closed</h2>
-                  <p class="text-muted mb-0">The queue is currently closed.</p>
-                </div>
-              @elseif($timing['status'] == 'break')
-                <div class="py-4">
-                  <!-- Expert Details -->
-                  <div class="d-inline-flex align-items-center gap-3 mb-3 p-2 px-3 bg-white rounded-4 border shadow-xs">
-                    <img src="{{ getImage($expert->user?->profile, 'expert') }}" 
-                         alt="{{ $expert->user?->name }}" 
-                         class="rounded-3 border border-2 border-warning object-fit-contain" 
-                         style="width: 55px; height: auto; max-height: 70px; background: rgba(0, 0, 0, 0.03);">
-                    <div class="text-start pe-2">
-                      <h6 class="fw-bold mb-0 text-dark">{{ $expert->user?->name }}</h6>
-                      <small class="text-muted">{{ $expert->title ?? ($expert->department?->department_name ?? 'Expert') }}</small>
                     </div>
+                    <h4 class="fw-bold mb-1 text-white" style="color: #ffffff !important;">Queue Closed</h4>
+                    <p class="mb-0 small" style="color: rgba(255, 255, 255, 0.85) !important;">The queue is currently closed.</p>
+                    @elseif($timing['status'] == 'break')
+                    <span class="badge bg-white text-warning px-3 py-1 rounded-pill text-uppercase mb-2 fw-bold">
+                      <i class="fas fa-circle text-warning me-1 small"></i> On Break
+                    </span>
+                    <div class="my-2">
+                      <div class="rounded-circle bg-white bg-opacity-25 text-white d-inline-flex align-items-center justify-content-center mb-2" style="width: 58px; height: 58px;">
+                        <i class="fas fa-coffee fa-2x"></i>
+                      </div>
+                    </div>
+                    <h4 class="fw-bold mb-1 text-white" style="color: #ffffff !important;">On Break</h4>
+                    @if(isset($timing['data']))
+                    <p class="mb-0 small" style="color: rgba(255, 255, 255, 0.85) !important;">Resumes at: {{ get_time($timing['data']->start_time) }}</p>
+                    @endif
+                    @endif
                   </div>
-
-                  <div class="rounded-circle bg-warning bg-opacity-10 text-warning d-inline-flex align-items-center justify-content-center mb-3 d-block mx-auto" style="width: 70px; height: 70px;">
-                    <i class="fas fa-coffee fa-2x"></i>
-                  </div>
-                  <h2 class="text-warning fw-bold mb-1">On Break</h2>
-                  @if(isset($timing['data']))
-                  <p class="fw-bold text-muted mb-0">Resumes at: {{ get_time($timing['data']->start_time) }}</p>
-                  @endif
                 </div>
-              @endif
+              </div>
             </div>
 
             <!-- Queue List -->
@@ -193,9 +171,9 @@ $business = $expert->business;
                   <div class="queue-box card h-100 border rounded-3 p-3 text-center shadow-xs transition-all {{ $index === 0 ? 'border-primary' : '' }}">
                     <div class="mb-2">
                       @if($index === 0)
-                        <span class="badge bg-primary text-white rounded-pill px-2 py-1 fw-semibold" style="font-size: 0.7rem; color: #ffffff !important;">Next</span>
+                      <span class="badge bg-primary text-white rounded-pill px-2 py-1 fw-semibold" style="font-size: 0.7rem; color: #ffffff !important;">Next</span>
                       @else
-                        <span class="badge bg-light text-muted rounded-pill px-2 py-1 fw-semibold" style="font-size: 0.7rem;">#{{ $index + 1 }}</span>
+                      <span class="badge bg-light text-muted rounded-pill px-2 py-1 fw-semibold" style="font-size: 0.7rem;">#{{ $index + 1 }}</span>
                       @endif
                     </div>
 
@@ -206,9 +184,9 @@ $business = $expert->business;
                     <div class="waiting-time text-muted small mt-2 d-flex align-items-center justify-content-center gap-1" style="font-size: 0.78rem;">
                       <i class="far fa-clock text-primary" style="font-size: 0.72rem;"></i>
                       @if($expert->is_appointment_book_with_time_slot && $list->slot_start_time)
-                        <span class="fw-semibold text-dark">{{ \Carbon\Carbon::parse($list->slot_start_time)->format('h:i A') }}</span>
+                      <span class="fw-semibold text-dark">{{ \Carbon\Carbon::parse($list->slot_start_time)->format('h:i A') }}</span>
                       @else
-                        <span>~{{ $expert->timing_per_appointment * ($index + 1) }} min</span>
+                      <span>~{{ $expert->timing_per_appointment * ($index + 1) }} min</span>
                       @endif
                     </div>
                   </div>
@@ -217,9 +195,9 @@ $business = $expert->business;
               </div>
             </div>
             @else
-              @if ($timing['status'] == 'open' && $appointmentFirst)
-              <p class="text-muted small mt-3">No other appointments in queue.</p>
-              @endif
+            @if ($timing['status'] == 'open' && $appointmentFirst)
+            <p class="text-muted small mt-3">No other appointments in queue.</p>
+            @endif
             @endif
           </div>
 
