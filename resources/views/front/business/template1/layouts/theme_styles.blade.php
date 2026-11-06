@@ -140,6 +140,10 @@
         background-color: {{ $primaryColor }} !important;
     }
 
+    .badge.bg-primary {
+        color: #ffffff !important;
+    }
+
     .border-primary,
     .border-2.border-primary {
         border-color: {{ $primaryColor }} !important;

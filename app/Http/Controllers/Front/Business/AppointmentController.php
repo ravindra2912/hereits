@@ -158,16 +158,26 @@ class AppointmentController extends Controller
                 $appointmentFirst = $timing['data'];
             }
 
-            $appointmentList = array();
+            // Fetch upcoming pending & confirmed appointments for today
+            $appointmentListQuery = AppointmentBooking::select([
+                    'id', 'token_number', 'user_name', 'status', 'slot_start_time', 'slot_end_time', 'booking_date', 'expert_id'
+                ])
+                ->whereDate('booking_date', Carbon::now()->format('Y-m-d'))
+                ->where('expert_id', $expert->id)
+                ->whereIn('status', ['confirmed', 'pending']);
+
             if ($appointmentFirst) {
-                $appointmentList = AppointmentBooking::whereDate('booking_date', Carbon::now())
-                    ->where('expert_id', $expert->id)
-                    ->where('id', '!=', $appointmentFirst->id)
-                    ->where('status', 'confirmed')
-                    ->orderBy('token_number', 'asc')
-                    ->limit(5)
-                    ->get();
+                $appointmentListQuery->where('id', '!=', $appointmentFirst->id);
             }
+
+            if ($expert->is_appointment_book_with_time_slot) {
+                $appointmentListQuery->orderBy('slot_start_time', 'asc')->orderBy('token_number', 'asc');
+            } else {
+                $appointmentListQuery->orderBy('token_number', 'asc');
+            }
+
+            $appointmentList = $appointmentListQuery->limit(10)->get();
+
             $setting = getBusinessSettings($expert->business_id);
             return view('front.business.template1.appointment.board', compact('expert', 'timing', 'appointmentList', 'appointmentFirst', 'setting'));
         } else {
