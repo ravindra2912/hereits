@@ -4,7 +4,7 @@
     <div class="row g-4 pb-4">
       <div class="col-lg-4 col-md-6">
         <div class="mb-3">
-          <img src="{{ config('const.site_setting.logo-bg-black', config('const.site_setting.logo')) }}" alt="Logo" class="img-fluid" style="max-height: 42px;" loading="lazy">
+          <img src="{{ config('const.site_setting.logo-white', config('const.site_setting.logo')) }}" alt="Logo" class="img-fluid" style="max-height: 42px;" loading="lazy">
         </div>
         <p class="text-white-50 mb-4 pe-lg-4" style="font-size: 0.92rem; line-height: 1.6;">
           Connecting people with trusted local businesses, healthcare specialists, salons, and retail shops. Designed for modern discovery and seamless commerce.

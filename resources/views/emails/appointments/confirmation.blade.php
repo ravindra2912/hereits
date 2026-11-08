@@ -7,7 +7,7 @@
       <!-- Header -->
       <tr>
         <td class="header">
-          <a href="#"><img src="{{ asset(config('const.site_setting.logo-bg-black')) }}" alt="hereits"></a>
+          <a href="#"><img src="{{ asset(config('const.site_setting.logo-white')) }}" alt="hereits"></a>
         </td>
       </tr>
 

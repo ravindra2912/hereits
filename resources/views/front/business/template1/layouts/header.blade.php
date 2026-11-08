@@ -56,7 +56,7 @@
             <!-- Logo & Identity -->
             <a class="navbar-brand d-flex align-items-center gap-2 order-1 order-lg-0 mx-auto mx-lg-0" href="{{ $isPrivate ? route('business-details', $business->slug) : route('home') }}">
                 @if (!$isPrivate)
-                    <img src="{{ config('const.site_setting.logo-bg-white', config('const.site_setting.logo')) }}"
+                    <img src="{{ config('const.site_setting.logo-black', config('const.site_setting.logo')) }}"
                         alt="{{ config('const.site_setting.name', 'hereits') }}"
                         class="img-fluid logo-thumb-sm"
                         style="max-height: 40px;"
@@ -195,7 +195,7 @@
     <div class="offcanvas-header border-bottom">
         <a href="{{ $isPrivate ? route('business-details', $business->slug) : route('home') }}" class="offcanvas-title d-flex align-items-center gap-2" id="businessOffcanvasLabel">
             @if (!$isPrivate)
-                <img src="{{ config('const.site_setting.logo-bg-white', config('const.site_setting.logo')) }}" alt="{{ config('const.site_setting.name', 'hereits') }}" class="img-fluid offcanvas-logo-sm" style="max-height: 36px;" loading="lazy">
+                <img src="{{ config('const.site_setting.logo-black', config('const.site_setting.logo')) }}" alt="{{ config('const.site_setting.name', 'hereits') }}" class="img-fluid offcanvas-logo-sm" style="max-height: 36px;" loading="lazy">
             @elseif ($business->business_logo)
                 <img src="{{ getImage($business->business_logo) }}" alt="{{ $business->name }}" class="img-fluid rounded offcanvas-logo-sm" loading="lazy">
             @else

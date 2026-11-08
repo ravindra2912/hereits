@@ -8,7 +8,7 @@
 
         <!-- 2. Logo (Desktop Only) -->
         <a class="navbar-brand order-1 order-lg-0 ms-lg-0 d-none d-lg-block" href="{{ route('home') }}">
-            <img src="{{ config('const.site_setting.logo-bg-white', config('const.site_setting.logo')) }}" alt="Logo" class="img-fluid" style="max-height: 40px;" loading="lazy">
+            <img src="{{ config('const.site_setting.logo-black', config('const.site_setting.logo')) }}" alt="Logo" class="img-fluid" style="max-height: 40px;" loading="lazy">
         </a>
 
         <!-- 3. Location (Center on Mobile, After Logo on Desktop) -->
@@ -122,7 +122,7 @@
 <div class="offcanvas offcanvas-start" tabindex="-1" id="navbarOffcanvas" aria-labelledby="navbarOffcanvasLabel">
     <div class="offcanvas-header border-bottom">
         <a href="{{ route('home') }}" class="offcanvas-title" id="navbarOffcanvasLabel">
-            <img src="{{ config('const.site_setting.logo-bg-white', config('const.site_setting.logo')) }}" alt="Logo" class="img-fluid" style="max-height: 35px;" loading="lazy">
+            <img src="{{ config('const.site_setting.logo-black', config('const.site_setting.logo')) }}" alt="Logo" class="img-fluid" style="max-height: 35px;" loading="lazy">
         </a>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>

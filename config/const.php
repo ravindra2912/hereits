@@ -6,8 +6,8 @@ return [
     "site_setting" => [
         "name" => "Hereits",
         "logo" => env('APP_URL') . '/assets/images/logo.png',
-        "logo-bg-white" => env('APP_URL') . '/assets/images/logo.png',
-        "logo-bg-black" => env('APP_URL') . '/assets/images/logo-white.png',
+        "logo-black" => env('APP_URL') . '/assets/images/logo.png',
+        "logo-white" => env('APP_URL') . '/assets/images/logo-white.png',
         "small_logo" => env('APP_URL') . '/assets/images/small_logo.png',
         "fevicon" => env('APP_URL') . '/assets/images/fevicon-icon.png',
     ],
