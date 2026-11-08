@@ -6,30 +6,24 @@
             <div class="col-lg-4 col-md-12">
                 <div class="footer-brand-section mb-4">
                     @php
-                        $isPrivate = false;
-                        if (isset($setting) && isset($setting->is_private)) {
-                            $isPrivate = (bool) $setting->is_private;
-                        } elseif (isset($business->businessSetting) && isset($business->businessSetting->is_private)) {
-                            $isPrivate = (bool) $business->businessSetting->is_private;
-                        } elseif (isset($business->id)) {
-                            $isPrivate = (bool) (getBusinessSettings($business->id)?->is_private ?? true);
-                        }
+                    $isPrivate = false;
+                    if (isset($setting) && isset($setting->is_private)) {
+                    $isPrivate = (bool) $setting->is_private;
+                    } elseif (isset($business->businessSetting) && isset($business->businessSetting->is_private)) {
+                    $isPrivate = (bool) $business->businessSetting->is_private;
+                    } elseif (isset($business->id)) {
+                    $isPrivate = (bool) (getBusinessSettings($business->id)?->is_private ?? true);
+                    }
                     @endphp
                     <a href="{{ $isPrivate ? route('business-details', $business->slug) : route('home') }}" class="d-inline-block mb-3">
-                        @if (!$isPrivate)
-                            <img src="{{ config('const.site_setting.logo-bg-white', config('const.site_setting.logo')) }}"
-                                alt="{{ config('const.site_setting.name', 'hereits') }}"
-                                class="footer-logo footer-logo-sm"
-                                style="max-height: 48px;"
-                                loading="lazy">
-                        @elseif ($business->business_logo)
-                            <img src="{{ getImage($business->business_logo) }}"
-                                alt="{{ $business->name ?? config('app.name') }}"
-                                class="footer-logo rounded footer-logo-sm" loading="lazy">
+                        @if ($business->business_logo)
+                        <img src="{{ getImage($business->business_logo) }}"
+                            alt="{{ $business->name ?? config('app.name') }}"
+                            class="footer-logo rounded footer-logo-sm" loading="lazy">
                         @else
-                            <span class="fw-bold fs-2 text-uppercase logo-text-gradient">
-                                {{ $business->name }}
-                            </span>
+                        <span class="fw-bold fs-2 text-uppercase logo-text-gradient">
+                            {{ $business->name }}
+                        </span>
                         @endif
                     </a>
 
@@ -96,21 +90,21 @@
                         @endif
 
                         @php
-                            $legalPageNames = [
-                                'privacy_policy' => 'Privacy Policy',
-                                'term_and_condition' => 'Terms & Conditions',
-                                'refuncd_policy' => 'Refund Policy',
-                                'quotation_policy' => 'Quotation Policy'
-                            ];
+                        $legalPageNames = [
+                        'privacy_policy' => 'Privacy Policy',
+                        'term_and_condition' => 'Terms & Conditions',
+                        'refuncd_policy' => 'Refund Policy',
+                        'quotation_policy' => 'Quotation Policy'
+                        ];
                         @endphp
                         @if(isset($activeLegalPages) && count($activeLegalPages) > 0)
-                            @foreach($activeLegalPages as $lp)
-                                <li class="pb-1">
-                                    <a href="{{ route('business-legal-page', ['business_slug' => $business->slug, 'type' => $lp->type]) }}">
-                                        {{ $legalPageNames[$lp->type] ?? ucwords(str_replace('_', ' ', $lp->type)) }}
-                                    </a>
-                                </li>
-                            @endforeach
+                        @foreach($activeLegalPages as $lp)
+                        <li class="pb-1">
+                            <a href="{{ route('business-legal-page', ['business_slug' => $business->slug, 'type' => $lp->type]) }}">
+                                {{ $legalPageNames[$lp->type] ?? ucwords(str_replace('_', ' ', $lp->type)) }}
+                            </a>
+                        </li>
+                        @endforeach
                         @endif
                     </ul>
                 </div>
@@ -175,9 +169,9 @@
         </div>
 
         @php
-            $currentHost = request()->header('X-Forwarded-Host') ?: request()->getHost();
-            $primaryHost = parse_url(config('app.url'), PHP_URL_HOST) ?? 'hereits.com';
-            $isPrimaryDomain = in_array(strtolower($currentHost), ['hereits.com', 'www.hereits.com', strtolower($primaryHost)]);
+        $currentHost = request()->header('X-Forwarded-Host') ?: request()->getHost();
+        $primaryHost = parse_url(config('app.url'), PHP_URL_HOST) ?? 'hereits.com';
+        $isPrimaryDomain = in_array(strtolower($currentHost), ['hereits.com', 'www.hereits.com', strtolower($primaryHost)]);
         @endphp
 
         <div class="footer-bottom">
