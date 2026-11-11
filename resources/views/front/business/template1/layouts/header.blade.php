@@ -7,6 +7,26 @@
     } elseif (isset($business->id)) {
         $isPrivate = (bool) (getBusinessSettings($business->id)?->is_private ?? true);
     }
+
+    // Determine logo variant based on header background color
+    $logoKey = 'logo-black'; // default: white header -> black logo
+    $themeSetting = $setting->theme_setting ?? [];
+    if (is_string($themeSetting)) {
+        $themeSetting = json_decode($themeSetting, true) ?? [];
+    }
+    $headerBgColor = $themeSetting['header']['background_color'] ?? null;
+    if ($headerBgColor) {
+        $hex = ltrim($headerBgColor, '#');
+        if (strlen($hex) === 3) {
+            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+        }
+        $r = hexdec(substr($hex, 0, 2)) / 255;
+        $g = hexdec(substr($hex, 2, 2)) / 255;
+        $b = hexdec(substr($hex, 4, 2)) / 255;
+        $toLinear = fn($c) => $c <= 0.03928 ? $c / 12.92 : pow(($c + 0.055) / 1.055, 2.4);
+        $luminance = 0.2126 * $toLinear($r) + 0.7152 * $toLinear($g) + 0.0722 * $toLinear($b);
+        $logoKey = $luminance > 0.179 ? 'logo-black' : 'logo-white';
+    }
 @endphp
 <!-- Top Info Bar -->
 <div class="bg-dark text-white py-2 small d-none d-lg-block">
@@ -56,7 +76,7 @@
             <!-- Logo & Identity -->
             <a class="navbar-brand d-flex align-items-center gap-2 order-1 order-lg-0 mx-auto mx-lg-0" href="{{ $isPrivate ? route('business-details', $business->slug) : route('home') }}">
                 @if (!$isPrivate)
-                    <img src="{{ config('const.site_setting.logo-black', config('const.site_setting.logo')) }}"
+                    <img src="{{ config('const.site_setting.' . $logoKey, config('const.site_setting.logo')) }}"
                         alt="{{ config('const.site_setting.name', 'hereits') }}"
                         class="img-fluid logo-thumb-sm"
                         style="max-height: 40px;"
@@ -195,7 +215,7 @@
     <div class="offcanvas-header border-bottom">
         <a href="{{ $isPrivate ? route('business-details', $business->slug) : route('home') }}" class="offcanvas-title d-flex align-items-center gap-2" id="businessOffcanvasLabel">
             @if (!$isPrivate)
-                <img src="{{ config('const.site_setting.logo-black', config('const.site_setting.logo')) }}" alt="{{ config('const.site_setting.name', 'hereits') }}" class="img-fluid offcanvas-logo-sm" style="max-height: 36px;" loading="lazy">
+                <img src="{{ config('const.site_setting.' . $logoKey, config('const.site_setting.logo')) }}" alt="{{ config('const.site_setting.name', 'hereits') }}" class="img-fluid offcanvas-logo-sm" style="max-height: 36px;" loading="lazy">
             @elseif ($business->business_logo)
                 <img src="{{ getImage($business->business_logo) }}" alt="{{ $business->name }}" class="img-fluid rounded offcanvas-logo-sm" loading="lazy">
             @else

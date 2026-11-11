@@ -7,6 +7,28 @@
     $primaryColor = $themeSetting['primary_color'] ?? $themeSetting['theme_colors']['primary_color'] ?? null;
     $secondaryColor = $themeSetting['secondary_color'] ?? $themeSetting['theme_colors']['secondary_color'] ?? null;
 
+    // Calculate luminance of a hex color to decide logo variant (0 = dark, 1 = light)
+    $getRelativeLuminance = function (string $hex): float {
+        $clean = ltrim($hex, '#');
+        if (strlen($clean) === 3) {
+            $clean = $clean[0].$clean[0].$clean[1].$clean[1].$clean[2].$clean[2];
+        }
+        $r = hexdec(substr($clean, 0, 2)) / 255;
+        $g = hexdec(substr($clean, 2, 2)) / 255;
+        $b = hexdec(substr($clean, 4, 2)) / 255;
+        $toLinear = fn($c) => $c <= 0.03928 ? $c / 12.92 : pow(($c + 0.055) / 1.055, 2.4);
+        return 0.2126 * $toLinear($r) + 0.7152 * $toLinear($g) + 0.0722 * $toLinear($b);
+    };
+
+    // Determine logo variant based on header background color
+    // Light bg (luminance > 0.179) => use black logo; Dark bg => use white logo
+    $headerBgColor = $themeSetting['header']['background_color'] ?? null;
+    $headerLogoVariant = 'logo-black'; // default: white header -> black logo
+    if ($headerBgColor) {
+        $luminance = $getRelativeLuminance($headerBgColor);
+        $headerLogoVariant = $luminance > 0.179 ? 'logo-black' : 'logo-white';
+    }
+
     $hexToRgb = function ($hex) {
         $clean = ltrim((string)$hex, '#');
         if (strlen($clean) === 3) {
