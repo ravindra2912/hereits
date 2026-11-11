@@ -116,7 +116,7 @@
     </p>
 
     <input type="hidden" name="payment_session_id" value="{{ $payment_session_id }}" />
-    <input type="hidden" name="mode" value="{{ env('CASHFREE_MODE') }}" />
+    <input type="hidden" name="mode" value="{{ config('services.cashfree.mode', env('CASHFREE_MODE', 'test')) }}" />
 
     <form id="paymentResponseForm" action="{{ route('business.payment.response') }}" method="post" class="formaction d-none" data-action="redirect" data-tost="false">
       @csrf

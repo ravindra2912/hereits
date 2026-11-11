@@ -389,7 +389,7 @@ class ExpertController extends Controller
                 $user->save();
                 $update->user_id = $user->id;
             } else {
-                $password = $request->filled('password') ? $request->password : 'Expert@123';
+                $password = $request->filled('password') ? $request->password : config('services.default_expert_password', env('DEFAULT_EXPERT_PASSWORD', 'Expert@123'));
                 $user = User::create([
                     'email' => $request->email,
                     'password' => Hash::make($password),

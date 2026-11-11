@@ -512,7 +512,7 @@ function getExpertTiming($id, $date, $appoinment_id = null, $getBusinessId = nul
 
 function getLatLongOnAddress($address)
 {
-    $apiKey = ''; //get your api key from https://opencagedata.com/
+    $apiKey = config('services.opencage.key', env('OPENCAGE_API_KEY')); // Loaded from environment/config
     $client = new Client();
 
     if (empty($apiKey)) {

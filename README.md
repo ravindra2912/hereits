@@ -65,6 +65,23 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
+---
+
+## 🔒 Security & Secret Management
+
+> ### ⚠️ CRITICAL WARNING: Rotate Previously Hardcoded Secrets Immediately
+> Any API key, token, service account, credential, or password that was ever written as a literal in source code, committed to Git history, or placed in unencrypted branches/backups **must be rotated immediately before deploying to production**.
+>
+> Deleting or moving a secret from the current commit does **not** erase it from Git history (`git log`). Third parties or automated scanners with access to the repository can inspect past commits.
+>
+> **Action items before going live:**
+> 1. **Rotate Credentials:** Immediately regenerate any production API keys (Razorpay, Cashfree, Firebase Service Accounts, Google Maps, OAuth credentials, SMTP/Mail passwords, Database passwords).
+> 2. **Environment Isolation:** Ensure `.env` is never committed (enforced via `.gitignore`). Use `.env.example` as a template for required variables.
+> 3. **Client vs Server Key Separation:**
+>    - **Razorpay / Stripe:** Only publishable keys (`key_id`) may be sent to client-side checkout modals. Secret keys (`key_secret`) remain strictly server-side.
+>    - **Firebase:** Only public web configuration (`apiKey`, `projectId`, etc.) is exposed to front-end push clients. Service account private keys (`FIREBASE_PRIVATE_KEY` / `firebase_credentials.json`) must remain protected on the server.
+>    - **Supabase (if used):** Anon keys must have Row Level Security (RLS) enabled on all tables; service role keys must **never** touch client code.
+> 4. **Logs & API Responses:** Secrets, connection strings, and database query traces must never be dumped in API responses, logs, or `console.log`.
 
 ## image croping
 https://github.com/Intervention/image-laravel?tab=readme-ov-file

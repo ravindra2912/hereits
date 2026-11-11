@@ -50,6 +50,20 @@ return [
         'secret' => env('RAZORPAY_KEY_SECRET'),
     ],
 
+    'cashfree' => [
+        'mode' => env('CASHFREE_MODE', 'test'),
+        'sandbox_app_id' => env('CASHFREE_SANDBOX_APP_ID'),
+        'sandbox_secret_key' => env('CASHFREE_SANDBOX_SECRET_KEY'),
+        'production_app_id' => env('CASHFREE_PRODUCTION_APP_ID'),
+        'production_secret_key' => env('CASHFREE_PRODUCTION_SECRET_KEY'),
+    ],
+
+    'opencage' => [
+        'key' => env('OPENCAGE_API_KEY'),
+    ],
+
+    'default_expert_password' => env('DEFAULT_EXPERT_PASSWORD', 'Expert@123'),
+
     'firebase' => [
         'project_id' => env('FIREBASE_PROJECT_ID'),
         'api_key' => env('FIREBASE_API_KEY'),

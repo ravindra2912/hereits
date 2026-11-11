@@ -118,7 +118,7 @@ class BusinessSetting extends Model
             'online_payment_method' => $this->paymentConfiguration?->payment_method ?? 'manual_upi',
             'upi_id' => $this->paymentConfiguration?->upi_id,
             'razorpay_key_id' => $this->paymentConfiguration?->razorpay_key_id,
-            'razorpay_key_secret' => $this->paymentConfiguration?->razorpay_key_secret,
+            'razorpay_key_secret' => null, // Never expose secret key to API responses or session; server code uses BusinessPaymentConfiguration model directly
             'accept_cash_on_delivery' => $this->accept_cash_on_delivery == '1' ? true : false,
             'theme_setting' => $this->theme_setting ?? config('theme.default_theme_setting', []),
         ];

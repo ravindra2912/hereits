@@ -3,7 +3,7 @@ function getUserLocation() {
 		navigator.geolocation.getCurrentPosition(
 			(position) => {
 				// return position;
-				
+
 				console.log(`Latitude: ${position.coords.latitude}, Longitude: ${position.coords.longitude}`);
 				return { lat: position.coords.latitude, lon: position.coords.longitude };
 			},
@@ -41,7 +41,7 @@ async function getLatLongOnAddress_OS(address) {
 
 // Google Maps API
 async function getLatLongOnAddress_google(address) {
-	const apiKey = 'YOUR_GOOGLE_API_KEY'; // Replace with your API key
+	const apiKey = window.GOOGLE_MAP_KEY || ''; // Configured via backend environment
 	const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
 
 	try {

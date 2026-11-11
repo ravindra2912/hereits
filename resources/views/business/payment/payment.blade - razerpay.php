@@ -26,7 +26,7 @@
       <div class=" text-center">
         <input type="hidden" name="sitename" value="{{ config('const.site_setting.name') }}" />
         <input type="hidden" name="sitelogo" value="{{ config('const.site_setting.logo') }}" />
-        <input type="hidden" name="KEY_ID" value="{{ env('RAZORPAY_ENV') == 'live'? env('RAZORPAY_LIVE_KEY'):env('RAZORPAY_TEST_KEY') }}" />
+        <input type="hidden" name="KEY_ID" value="{{ config('services.razorpay.key') }}" />
         <input type="hidden" name="name" value="{{$data->name}}" />
         <input type="hidden" name="email" value="{{$data->email}}" />
         <input type="hidden" name="contacts" value="{{$data->contact}}" />
