@@ -133,6 +133,7 @@ class StaffController extends Controller
             } else {
                 $user = User::where('email', $request->email)->where('role', 'User')->first();
 
+                $isNewUser = false;
                 if ($user) {
                     $exists = BusinessUser::where('business_id', $businessId)
                         ->where('user_id', $user->id)
@@ -142,6 +143,7 @@ class StaffController extends Controller
                         return response()->json(['success' => false, 'message' => 'User is already a staff member of this business.']);
                     }
                 } else {
+                    $isNewUser = true;
                     $vUser = Validator::make($request->all(), [
                         'first_name' => 'required|string|max:20',
                         'last_name' => 'required|string|max:20',
@@ -216,10 +218,9 @@ class StaffController extends Controller
                     }
                 }
 
-                // Send email
-                $tempPassword = isset($request->password) ? $request->password : null;
+                // Send email without plaintext credentials
                 Mail::to($user->email)->send(
-                    new StaffWelcomeMail($user, $business, $role, $tempPassword, $loginUrl, $permissionsList)
+                    new StaffWelcomeMail($user, $business, $role, $isNewUser, $loginUrl, $permissionsList)
                 );
 
                 $success = true;

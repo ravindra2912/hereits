@@ -91,6 +91,55 @@
             </form>
           </div>
         </div>
+
+        <!-- Account Deletion Card -->
+        <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden mt-4">
+          <div class="card-header bg-white border-bottom p-4">
+            <h5 class="fw-bold text-danger mb-0">Danger Zone</h5>
+            <p class="text-muted small mb-0">Permanently delete your account and remove or anonymize your personal data</p>
+          </div>
+          <div class="card-body p-4 p-md-5">
+            <p class="text-muted">Once your account is deleted, your profile, contact numbers, email address, devices, and preferences will be permanently wiped or anonymized in compliance with data privacy regulations.</p>
+            <button type="button" class="btn btn-outline-danger px-4 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+              <i class="fas fa-trash-alt me-2"></i>Delete My Account
+            </button>
+          </div>
+        </div>
+
+        <!-- Delete Account Modal -->
+        <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+              <div class="modal-header border-bottom p-4">
+                <h5 class="modal-title text-danger fw-bold" id="deleteAccountModalLabel">Confirm Account Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <form id="deleteAccountForm" action="{{ route('account.deleteAccount') }}" method="POST" class="formaction" data-action="redirect">
+                @csrf
+                <div class="modal-body p-4">
+                  <p class="text-muted">This action is permanent and cannot be undone. All your personal data will be erased or anonymized immediately.</p>
+                  @if(!empty($user->password))
+                  <div class="mb-3">
+                    <label class="form-label fw-600">Current Password</label>
+                    <input type="password" name="password" class="form-control required" placeholder="Enter your current password" required>
+                  </div>
+                  @endif
+                  <div class="mb-3">
+                    <label class="form-label fw-600">Type <span class="text-danger fw-bold">DELETE</span> to confirm</label>
+                    <input type="text" name="confirmation" class="form-control required" placeholder="Type DELETE" required>
+                  </div>
+                </div>
+                <div class="modal-footer border-top p-3 d-flex justify-content-end gap-2">
+                  <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-danger px-4 fw-bold btn_action">
+                    <span id="buttonText">Permanently Delete</span>
+                    <span id="loader" class="d-none">Deleting...</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

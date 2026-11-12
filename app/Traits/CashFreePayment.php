@@ -48,28 +48,28 @@ trait CashFreePayment
 
         $payload = [
             "customer_details" => [
-                "customer_id" => "12345",
+                "customer_id" => (string) ($customer_id ?: 'CUST-' . substr(md5($email . $phone), 0, 12)),
                 "customer_email" => $email,
-                "customer_phone" => "$phone",
+                "customer_phone" => (string) $phone,
             ],
             "order_id" => $order_id, // Unique ID
             "order_amount" => $order_amount, // Amount
             "order_currency" => "INR"
         ];
 
-        $response = Http::withOptions(['verify' => false])->withHeaders([
+        $response = Http::withHeaders([
             'x-client-id' => $this->app_id,
             'x-client-secret' => $this->secret_key,
             'x-api-version' => '2022-09-01',
             'Content-Type' => 'application/json',
         ])->post($url, $payload);
-        $response = $response->json();
+        $responseData = $response->json();
 
-        if (isset($response['order_id'])) {
-            return $response['payment_session_id'];
+        if (isset($responseData['order_id']) && isset($responseData['payment_session_id'])) {
+            return $responseData['payment_session_id'];
         } else {
-            // print_r($response);
-            exit('Something went wrong! ' . ($response['message'] ?? 'Unknown error'));
+            Log::error("CashFree session creation failed: HTTP " . $response->status());
+            throw new \RuntimeException('CashFree Payment initiation failed. Please try again later.');
         }
     }
 

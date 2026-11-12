@@ -120,7 +120,6 @@ $(function () {
 
 			},
 			error: function (xhr, status, error) {
-				console.log(xhr);
 				xhr._permissionErrorHandled = true;
 				if (xhr.status === 419) {
 					toastr.error('Your session has expired, please login again');

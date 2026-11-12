@@ -34,8 +34,9 @@ class TrackLastBusinessVisit
                         'slug' => $business->slug,
                         'name' => $business->name
                     ];
-                    // Set cookie for 30 days
-                    $response->cookie('last_visited_business', json_encode($cookieData), 60 * 24 * 30);
+                    // Set cookie for 30 days with secure flags
+                    $isSecure = config('session.secure', false) || $request->isSecure();
+                    $response->cookie('last_visited_business', json_encode($cookieData), 60 * 24 * 30, '/', null, $isSecure, true, false, 'lax');
                 }
             }
         }

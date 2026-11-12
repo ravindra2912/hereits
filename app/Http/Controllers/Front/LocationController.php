@@ -56,9 +56,10 @@ class LocationController extends Controller
         // Keep only last 5
         $history = array_slice($history, 0, 5);
 
-        // Store cookies for 1 week
-        $locationCookie = cookie('user_location', json_encode($locationData), 7 * 24 * 60);
-        $historyCookie = cookie('location_history', json_encode($history), 7 * 24 * 60);
+        // Store cookies for 1 week with secure flags
+        $isSecure = config('session.secure', false) || request()->isSecure();
+        $locationCookie = cookie('user_location', json_encode($locationData), 7 * 24 * 60, '/', null, $isSecure, true, false, 'lax');
+        $historyCookie = cookie('location_history', json_encode($history), 7 * 24 * 60, '/', null, $isSecure, true, false, 'lax');
 
         return response()->json(['status' => 'success', 'message' => 'Location updated successfully'])
             ->withCookie($locationCookie)

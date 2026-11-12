@@ -142,7 +142,8 @@ class FirebaseNotificationService
                 return true;
             }
 
-            Log::error("FCM Send Error [{$response->status()}]: " . $response->body());
+            $errorDetail = $response->json()['error']['message'] ?? ('HTTP status ' . $response->status());
+            Log::error("FCM Send Error [{$response->status()}]: " . $errorDetail);
             return false;
         } catch (\Exception $e) {
             Log::error("FCM Send Exception: " . $e->getMessage());

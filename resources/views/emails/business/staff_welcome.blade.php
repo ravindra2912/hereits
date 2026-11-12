@@ -10,11 +10,11 @@
 
   <p>You have been assigned to <strong>{{ $business->name }}</strong> as a <strong>{{ $role->name }}</strong>.</p>
 
-  @if($tempPassword)
+  @if($isNewUser)
   <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 24px 0;">
-    <h3 style="font-size: 16px; margin-bottom: 12px; color: #0f172a;">Your Login Credentials</h3>
+    <h3 style="font-size: 16px; margin-bottom: 12px; color: #0f172a;">Your Account Information</h3>
     <p style="margin-bottom: 8px; font-size: 14px;"><strong>Email:</strong> {{ $user->email }}</p>
-    <p style="margin-bottom: 0; font-size: 14px;"><strong>Password:</strong> <code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">{{ $tempPassword }}</code></p>
+    <p style="margin-bottom: 0; font-size: 14px; color: #4b5563;">Your staff account has been created. For your security, please use the password provided by your administrator or <a href="{{ route('password.request') }}" style="color: #2563eb; font-weight: 600;">click here to set a new password</a>.</p>
   </div>
   @else
   <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 24px 0;">

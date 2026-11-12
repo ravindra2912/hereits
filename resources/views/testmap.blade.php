@@ -68,10 +68,6 @@
             if (place.geometry && place.geometry.location) {
                 const lat = place.geometry.location.lat();
                 const lng = place.geometry.location.lng();
-
-                console.log("Latitude:", lat);
-                console.log("Longitude:", lng);
-                console.log("address:", address);
             } else {
                 console.error("No geometry found for the selected place.");
             }

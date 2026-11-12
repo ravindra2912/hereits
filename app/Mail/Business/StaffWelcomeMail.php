@@ -16,19 +16,19 @@ class StaffWelcomeMail extends Mailable implements ShouldQueue
     public $user;
     public $business;
     public $role;
-    public $tempPassword;
+    public $isNewUser;
     public $loginUrl;
     public $permissionsList;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($user, $business, $role, $tempPassword = null, $loginUrl = null, $permissionsList = [])
+    public function __construct($user, $business, $role, $isNewUser = false, $loginUrl = null, $permissionsList = [])
     {
         $this->user = $user;
         $this->business = $business;
         $this->role = $role;
-        $this->tempPassword = $tempPassword;
+        $this->isNewUser = (bool)$isNewUser;
         $this->loginUrl = $loginUrl;
         $this->permissionsList = $permissionsList;
     }
@@ -54,7 +54,7 @@ class StaffWelcomeMail extends Mailable implements ShouldQueue
                 'user' => $this->user,
                 'business' => $this->business,
                 'role' => $this->role,
-                'tempPassword' => $this->tempPassword,
+                'isNewUser' => $this->isNewUser,
                 'loginUrl' => $this->loginUrl,
                 'permissionsList' => $this->permissionsList,
             ]

@@ -136,7 +136,7 @@ class AccountController extends Controller
             } else {
                 $user = User::lockForUpdate()->find(Auth::user()->id);
                 if (password_verify($request->old_password, $user->password)) {
-                    $user->password = bcrypt($request->password);
+                    $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
                     $user->save();
                     $success = true;
                     $message = 'Password updated successfully.';
@@ -151,6 +151,80 @@ class AccountController extends Controller
             $message = checkResponse($e);
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
+    }
+
+    /**
+     * Delete and anonymize the authenticated user's account and personal data.
+     *
+     * @param Request $request
+     * @param \App\Services\UserAccountDeletionService $deletionService
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteAccount(Request $request, \App\Services\UserAccountDeletionService $deletionService)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.'
+            ], 401);
+        }
+
+        if (!empty($user->password)) {
+            $validator = Validator::make($request->all(), [
+                'password' => 'required|string',
+                'confirmation' => 'required|in:DELETE,delete',
+            ], [
+                'confirmation.in' => 'Please type DELETE to confirm account deletion.',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first(),
+                ], 422);
+            }
+
+            if (!\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The password you entered is incorrect.',
+                ], 422);
+            }
+        } else {
+            $validator = Validator::make($request->all(), [
+                'confirmation' => 'required|in:DELETE,delete',
+            ], [
+                'confirmation.in' => 'Please type DELETE to confirm account deletion.',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first(),
+                ], 422);
+            }
+        }
+
+        try {
+            $deletionService->deleteAccount($user);
+
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Your account and personal data have been permanently deleted and anonymized.',
+                'redirect' => url('/'),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => checkResponce($e, 'Failed to delete account. Please try again later.'),
+            ], 500);
+        }
     }
 
     public function booking(): View

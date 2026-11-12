@@ -178,4 +178,55 @@ class ApiV1AuthController extends BaseApiController
 
         return $this->sendResponse([], $result['message'], $result['status_code']);
     }
+
+    /**
+     * Delete and anonymize the authenticated user's account and personal data.
+     *
+     * @param Request $request
+     * @param \App\Services\UserAccountDeletionService $deletionService
+     * @return JsonResponse
+     */
+    public function deleteAccount(Request $request, \App\Services\UserAccountDeletionService $deletionService): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return $this->sendUnauthorized('Unauthenticated.');
+        }
+
+        if (!empty($user->password)) {
+            $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+                'password' => 'required|string',
+                'confirmation' => 'required|in:DELETE,delete',
+            ], [
+                'confirmation.in' => 'Please provide confirmation parameter with value DELETE.',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendValidationError($validator->errors()->first());
+            }
+
+            if (!\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+                return $this->sendError('The password you entered is incorrect.', [], 422);
+            }
+        } else {
+            $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+                'confirmation' => 'required|in:DELETE,delete',
+            ], [
+                'confirmation.in' => 'Please provide confirmation parameter with value DELETE.',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendValidationError($validator->errors()->first());
+            }
+        }
+
+        try {
+            $deletionService->deleteAccount($user);
+
+            return $this->sendResponse([], 'Your account and personal data have been permanently deleted and anonymized.');
+        } catch (\Throwable $e) {
+            return $this->sendError(checkResponce($e, 'Failed to delete account. Please try again later.'), [], 500);
+        }
+    }
 }

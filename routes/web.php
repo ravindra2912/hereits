@@ -121,6 +121,7 @@ Route::middleware(['web', 'front'])->group(function () {
         Route::post('user-profile/update/{id}', 'userProfileUpdate')->name('userprofile.update');
         Route::get('chnage-password', 'changePassword')->name('changePassword');
         Route::post('chnage-password/update', 'changePasswordUpdate')->name('changePassword.update');
+        Route::post('delete-account', 'deleteAccount')->name('deleteAccount');
 
         //booking
         Route::get('bookings', 'booking')->name('booking');

@@ -2,13 +2,9 @@ function getUserLocation() {
 	if (navigator.geolocation) {
 		navigator.geolocation.getCurrentPosition(
 			(position) => {
-				// return position;
-
-				console.log(`Latitude: ${position.coords.latitude}, Longitude: ${position.coords.longitude}`);
 				return { lat: position.coords.latitude, lon: position.coords.longitude };
 			},
 			(error) => {
-				// return null;
 				console.error('Error getting location:', error.message);
 			}
 		);
@@ -26,7 +22,6 @@ async function getLatLongOnAddress_OS(address) {
 
 		if (data.length > 0) {
 			const location = data[0];
-			console.log(`Latitude: ${location.lat}, Longitude: ${location.lon}`);
 			return { lat: location.lat, lon: location.lon };
 		} else {
 			console.error('No results found');
@@ -50,7 +45,6 @@ async function getLatLongOnAddress_google(address) {
 
 		if (data.status === 'OK') {
 			const location = data.results[0].geometry.location;
-			console.log(`Latitude: ${location.lat}, Longitude: ${location.lng}`);
 			return location;
 		} else {
 			console.error('Geocoding failed:', data.status);

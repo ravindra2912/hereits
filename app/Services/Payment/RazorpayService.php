@@ -116,9 +116,16 @@ class RazorpayService
             $error = $response->json()['error'] ?? [];
             $errorMessage = $error['description'] ?? $response->body();
 
+            $safePayload = [
+                'amount' => $payload['amount'] ?? null,
+                'currency' => $payload['currency'] ?? null,
+                'receipt' => $payload['receipt'] ?? null,
+                'notes' => '[REDACTED]',
+            ];
+
             Log::error("Razorpay order creation failed [{$this->context}]: " . $errorMessage, [
                 'status' => $response->status(),
-                'payload' => $payload,
+                'payload' => $safePayload,
             ]);
 
             throw new RuntimeException("Payment Gateway Error: " . ($error['description'] ?? 'Unable to initiate payment with Razorpay.'));
@@ -167,7 +174,7 @@ class RazorpayService
             return $response->json();
         }
 
-        Log::error("Razorpay fetch payment failed [{$this->context}]: " . $response->body());
+        Log::error("Razorpay fetch payment failed [{$this->context}]: HTTP " . $response->status());
         throw new RuntimeException('Failed to fetch payment details from Razorpay.');
     }
 }

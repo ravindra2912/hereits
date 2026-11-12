@@ -26,6 +26,10 @@ class UserDevice extends Model
         'is_active',
     ];
 
+    protected $hidden = [
+        'fcm_token',
+    ];
+
     /**
      * Get the attributes that should be cast.
      *

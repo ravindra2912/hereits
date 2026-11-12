@@ -147,7 +147,6 @@
             $('#timeslote').html('<option value="">Loading ...</option>');
           },
           success: function(res) {
-            console.log(res);
             $('#timeslote').html('<option value="">Select Timing</option>');
             $.each(res, function(index, item) {
               if (!item.is_booked && item.is_available == true) {

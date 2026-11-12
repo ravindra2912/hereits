@@ -79,6 +79,8 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/user/profile/update', 'updateProfile')->name('user.profile.update');
         Route::post('/user/profile/update-password', 'updatePassword')->name('user.profile.update_password');
         Route::post('/logout', 'logout')->name('logout');
+        Route::delete('/user/account', 'deleteAccount')->name('user.account.delete');
+        Route::post('/user/delete-account', 'deleteAccount')->name('user.account.delete_post');
     });
 
     // Favorite & Follow Module Routes

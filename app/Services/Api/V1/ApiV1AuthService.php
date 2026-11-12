@@ -127,7 +127,7 @@ class ApiV1AuthService
                 Mail::to($email)->send(new ResetPasswordEmail($mailData));
             } catch (\Throwable $e) {
                 Log::error('API ForgotPassword mail dispatch failure: ' . $e->getMessage(), [
-                    'email' => $email,
+                    'email' => '[REDACTED]',
                 ]);
             }
         }

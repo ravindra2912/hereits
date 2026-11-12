@@ -29,7 +29,6 @@ $(document).ready(function () {
             "description": "Thank You For ordering from us",
             "image": sitelogo, // Company logo
             "handler": function (pay_response) {
-                console.log("Payment Response:", pay_response);
                 $('#razorpay_payment_id').val(pay_response.razorpay_payment_id); // Assign payment ID
                 $(formId).submit(); // Submit the form
             },
