@@ -361,8 +361,7 @@
               $('.btn_action-' + id).prop('disabled', false);
             },
             error: function(e) {
-              toastr.error('Somthing Wrong');
-              console.log(e);
+              toastr.error('Something went wrong');
               $('.btn_action-' + id + ' #buttonText').removeClass('d-none');
               $('.btn_action-' + id + ' #loader').addClass('d-none');
               $('.btn_action-' + id).prop('disabled', false);

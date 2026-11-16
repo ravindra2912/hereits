@@ -126,9 +126,10 @@ class ApiV1OrderService
             ];
         } catch (\Exception $e) {
             DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('API review submission failure: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return [
                 'success' => false,
-                'message' => 'Failed to submit review: ' . $e->getMessage(),
+                'message' => 'Failed to submit review. Please try again later.',
                 'code' => 500,
             ];
         }

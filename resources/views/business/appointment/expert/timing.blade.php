@@ -153,7 +153,6 @@
             error: function(e) {
               let msg = e.responseJSON?.message || (e.status === 403 ? 'Unauthorized. You do not have permission to edit expert timing.' : 'Something went wrong');
               toastr.error(msg);
-              console.log(e);
               $('.btn_delete-' + id + ' #buttonText').removeClass('d-none');
               $('.btn_delete-' + id + ' #loader').addClass('d-none');
               $('.btn_delete-' + id).prop('disabled', false);

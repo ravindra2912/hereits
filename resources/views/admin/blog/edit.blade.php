@@ -166,7 +166,7 @@
                     $('#summernote').summernote("insertImage", url.location);
                 },
                 error: function(data) {
-                    console.log(data);
+                    toastr.error('Failed to upload image.');
                 }
             });
         }

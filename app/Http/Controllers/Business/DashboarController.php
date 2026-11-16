@@ -63,7 +63,6 @@ class DashboarController extends Controller
     {
         $startDate = Carbon::parse($date)->startOfMonth();
         $endDate = Carbon::parse($date)->endOfMonth();
-        // dd($date, $startDate, $endDate);
         return Business::select('id')
             ->withCount([
                 'bookings as complited_count' => function ($q) use ($startDate, $endDate) {
@@ -97,7 +96,6 @@ class DashboarController extends Controller
                 $all[] = $countData->all_count;
                 $complited[] = $countData->complited_count;
             }
-            // dd($months, $all, $complited);
             $data['appointmrntChart']['lable'] = $months;
             $data['appointmrntChart']['Complited'] = $complited;
             $data['appointmrntChart']['All'] = $all;

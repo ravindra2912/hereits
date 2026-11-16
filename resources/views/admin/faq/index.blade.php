@@ -138,7 +138,6 @@
             },
             error: function(e) {
               toastr.error('Something went wrong');
-              console.log(e);
               $('.btn_delete-' + id + ' #buttonText').removeClass('d-none');
               $('.btn_delete-' + id + ' #loader').addClass('d-none');
               $('.btn_delete-' + id).prop('disabled', false);

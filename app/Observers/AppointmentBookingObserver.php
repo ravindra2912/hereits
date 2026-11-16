@@ -9,7 +9,6 @@ use App\Mail\TokenCancelledMail;
 use App\Mail\TokenComplitedMail;
 use App\Models\AppointmentBooking;
 use App\Mail\TokenConfirmationMail;
-use App\Jobs\PuhsNotificationToUser;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AppointmentCancelledMail;
 use App\Mail\AppointmentComplitedMail;
@@ -25,8 +24,6 @@ class AppointmentBookingObserver
      */
     public function created(AppointmentBooking $appointmentBooking): void
     {
-        // dd($appointmentBooking->status);
-
         $appointment_details = AppointmentBooking::query()
             ->select('id', 'token_number', 'business_id', 'expert_id', 'user_id', 'user_name', 'user_contact', 'slot_start_time', 'slot_end_time', 'booking_date', 'note', 'status')
             ->with([

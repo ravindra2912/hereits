@@ -413,7 +413,6 @@
         error: function(e) {
           let msg = e.responseJSON?.message || (e.status === 403 ? 'Unauthorized. You do not have permission to update appointment status.' : 'Something went wrong');
           toastr.error(msg);
-          console.log(e);
         }
       });
     }

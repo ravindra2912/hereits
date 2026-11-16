@@ -243,8 +243,7 @@
                     // loader(true)
                 },
                 error: function(e) {
-                    toastr.error('Somthing Wrong');
-                    console.log(e);
+                    toastr.error('Something went wrong');
                     // loader(true)
                 }
             });

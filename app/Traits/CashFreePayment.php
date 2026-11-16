@@ -23,13 +23,13 @@ trait CashFreePayment
 
     public function initCashFree()
     {
-        $this->mode = config('services.cashfree.mode', env('CASHFREE_MODE', 'test'));
+        $this->mode = config('services.cashfree.mode', 'test');
         if ($this->mode === 'production') {
-            $this->app_id     = config('services.cashfree.production_app_id', env('CASHFREE_PRODUCTION_APP_ID'));
-            $this->secret_key = config('services.cashfree.production_secret_key', env('CASHFREE_PRODUCTION_SECRET_KEY'));
+            $this->app_id     = config('services.cashfree.production_app_id');
+            $this->secret_key = config('services.cashfree.production_secret_key');
         } else {
-            $this->app_id     = config('services.cashfree.sandbox_app_id', env('CASHFREE_SANDBOX_APP_ID'));
-            $this->secret_key = config('services.cashfree.sandbox_secret_key', env('CASHFREE_SANDBOX_SECRET_KEY'));
+            $this->app_id     = config('services.cashfree.sandbox_app_id');
+            $this->secret_key = config('services.cashfree.sandbox_secret_key');
         }
     }
 

@@ -1,4 +1,4 @@
-@if (env('SHOW_ADS'))
+@if (config('services.ads.show', false))
 <ins class="adsbygoogle"
     style="display:block"
     data-ad-client="ca-pub-5560225028494268"

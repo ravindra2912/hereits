@@ -16,8 +16,6 @@ class Business
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // dd(Auth::user());
-        // return $next($request);
         if (Auth::check()) {
             $user = Auth::user();
             if ($user->role == 'Business') {

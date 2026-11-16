@@ -239,7 +239,6 @@
             title: 'Error',
             text: msg
           });
-          console.log(e);
         }
       });
     }

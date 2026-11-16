@@ -312,7 +312,7 @@
         d[l] ? console.warn(p + " only loads once. Ignoring:", g) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))
     })
     ({
-        key: "{{ env('GOOGLE_MAP_KEY') }}",
+        key: "{{ config('services.google.map_key') }}",
         v: "beta",
         libraries: "places"
     });
@@ -418,8 +418,6 @@
             setAddress(marker.position);
         });
 
-        console.log('Autocomplete initialized:', placeAutocomplete);
-
         // Autocomplete selection
         placeAutocomplete.addEventListener('gmp-select', async ({
             placePrediction
@@ -499,7 +497,6 @@
                 });
                 selectElement.dispatchEvent(event);
             }
-            // console.log('Value:', option.value, 'Text:', option.text);
         });
     }
 

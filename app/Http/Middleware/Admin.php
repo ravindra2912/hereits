@@ -16,8 +16,6 @@ class Admin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // dd(Auth::user());
-        // return $next($request);
         if (Auth::guard('admin')->check()) {
 
             if (!in_array(Auth::guard('admin')->user()->role, ['superadmin', 'admin', 'subadmin'])) {

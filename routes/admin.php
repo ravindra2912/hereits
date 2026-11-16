@@ -27,7 +27,7 @@ Route::name('admin.')->group(function () {
 
         Route::controller(AuthController::class)->group(function () {
             Route::get('login', 'index')->name('login');
-            Route::post('login', 'store')->name('login.store')->middleware('throttle:6,1');
+            Route::post('login', 'store')->name('login.store')->middleware('throttle:5,1');
         });
     });
 

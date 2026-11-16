@@ -112,15 +112,19 @@ class PaymentController extends Controller
 
                     return view('business.payment.razorpay', compact('data', 'purchaseData'));
                 } catch (\Exception $e) {
-                    Log::error("Razorpay platform order initiation failed: " . $e->getMessage());
-                    exit('Payment Gateway Error: ' . $e->getMessage());
+                    $correlationId = (string) \Illuminate\Support\Str::uuid();
+                    Log::error("Razorpay platform order initiation failed [Correlation ID: {$correlationId}]: " . $e->getMessage(), [
+                        'correlation_id' => $correlationId,
+                        'trace' => $e->getTraceAsString(),
+                    ]);
+                    return redirect()->route('business.purchase-history.index')->with('error', 'Payment gateway error occurred. Please try again later. (Ref: ' . $correlationId . ')');
                 }
             } else {
-                exit('Invalid payment gateway!');
+                return redirect()->route('business.purchase-history.index')->with('error', 'Invalid payment gateway configured.');
             }
         }
 
-        exit('Something went wrong or payment already processed!');
+        return redirect()->route('business.purchase-history.index')->with('error', 'Something went wrong or payment was already processed.');
     }
 
     /**

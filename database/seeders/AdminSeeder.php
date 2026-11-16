@@ -21,6 +21,8 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
+        $password = Str::random(16);
+        $this->command?->info("Generated random password for seeded accounts: {$password}");
 
         \App\Models\Admin::firstOrCreate(
             ['email' => 'admin@gmail.com'],
@@ -28,7 +30,7 @@ class AdminSeeder extends Seeder
                 'first_name' => 'Super',
                 'last_name' => 'Admin',
                 'role' => 'superadmin',
-                'password' => Hash::make('password'),
+                'password' => Hash::make($password),
             ]
         );
 
@@ -38,7 +40,7 @@ class AdminSeeder extends Seeder
                 'first_name' => 'Seller',
                 'last_name' => 'User',
                 'role' => 'Business',
-                'password' => Hash::make('password'),
+                'password' => Hash::make($password),
             ]
         );
 
@@ -48,7 +50,7 @@ class AdminSeeder extends Seeder
                 'first_name' => 'Customer',
                 'last_name' => 'User',
                 'role' => 'User',
-                'password' => Hash::make('password'),
+                'password' => Hash::make($password),
             ]
         );
     }

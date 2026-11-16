@@ -114,8 +114,6 @@ $(function () {
 					if (typeof ajaxFailResponce === 'function') {
 						ajaxFailResponce(result);
 					}
-
-					//console.log(result.message);
 				}
 
 			},

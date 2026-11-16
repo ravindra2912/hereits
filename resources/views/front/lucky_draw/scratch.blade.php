@@ -228,7 +228,7 @@
                     cheerBuffer = decodedBuffer;
                 })
                 .catch(err => {
-                    console.log("Cheer audio buffer load error:", err);
+                    // Buffer load fallback
                 });
         }
 
@@ -538,7 +538,6 @@
                     playSynthChime(ctx);
                 }
             } catch (e) {
-                console.log("Audio playback exception:", e);
                 playSynthChime();
             }
         }
@@ -573,7 +572,7 @@
                     osc.stop(ctx.currentTime + times[i] + durations[i]);
                 });
             } catch (e) {
-                console.log("Synth audio error:", e);
+                // Audio synthesis fallback
             }
         }
 
@@ -586,7 +585,7 @@
                 try {
                     playWinningSound();
                 } catch (e) {
-                    console.log("Audio error:", e);
+                    // Audio playback fallback
                 }
             }
 

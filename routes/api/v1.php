@@ -22,13 +22,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Public Authentication Routes (Rate-limited to prevent brute-force attacks)
-Route::middleware('throttle:6,1')->controller(ApiV1AuthController::class)->group(function () {
-    Route::post('/login', 'login')->name('login');
-    Route::post('/register', 'register')->name('register');
-    Route::post('/registration', 'register')->name('registration'); // Backward compatibility
-    Route::post('/forgot-password', 'forgotPassword')->name('password.forgot');
-    Route::post('/reset-password', 'resetPassword')->name('password.reset');
+// Public Authentication Routes (Strictly rate-limited to prevent brute-force attacks)
+Route::controller(ApiV1AuthController::class)->group(function () {
+    Route::post('/login', 'login')->name('login')->middleware('throttle:5,1');
+    Route::post('/register', 'register')->name('register')->middleware('throttle:10,1');
+    Route::post('/registration', 'register')->name('registration')->middleware('throttle:10,1'); // Backward compatibility
+    Route::post('/forgot-password', 'forgotPassword')->name('password.forgot')->middleware('throttle:3,60');
+    Route::post('/reset-password', 'resetPassword')->name('password.reset')->middleware('throttle:3,60');
 });
 
 // Home Module Routes

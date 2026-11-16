@@ -381,9 +381,10 @@ class LuckyDrawController extends Controller
                 'prizes'  => $prizes,
             ]);
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to load prizes from campaign: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to load prizes from selected campaign: ' . $e->getMessage(),
+                'message' => 'Failed to load prizes from selected campaign. Please try again.',
             ], 422);
         }
     }

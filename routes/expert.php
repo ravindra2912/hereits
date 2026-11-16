@@ -8,7 +8,7 @@ Route::middleware(['web'])->group(function () {
 
     Route::middleware('guest:expert')->group(function () {
         Route::get('login', [LoginController::class, 'create'])->name('expert.login');
-        Route::post('login', [LoginController::class, 'store'])->name('expert.login.store');
+        Route::post('login', [LoginController::class, 'store'])->name('expert.login.store')->middleware('throttle:5,1');
     });
 
     Route::middleware('expert')->group(function () {

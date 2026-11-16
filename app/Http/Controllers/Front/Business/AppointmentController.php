@@ -350,7 +350,6 @@ class AppointmentController extends Controller
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            // dd($e);
             $message = checkResponse($e);
         }
         LAST:

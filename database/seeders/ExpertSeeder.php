@@ -22,12 +22,15 @@ class ExpertSeeder extends Seeder
         $businessId = $business ? $business->id : 1;
         $department = AppointmentDepartment::where('business_id', $businessId)->first();
 
+        $expertPassword = Str::random(16);
+        $this->command?->info("Generated random password for expert account: {$expertPassword}");
+
         $user = \App\Models\User::firstOrCreate(
             ['email' => 'expert@gmail.com'],
             [
                 'first_name' => 'Clinic',
                 'last_name' => 'Expert',
-                'password' => Hash::make('password'),
+                'password' => Hash::make($expertPassword),
                 'role' => 'User',
             ]
         );

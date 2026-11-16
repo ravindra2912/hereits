@@ -156,7 +156,7 @@
             }));
         d[l] ? console.warn(p + " only loads once. Re-referencing library %s.", r) : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n))
     })({
-        key: "{{ config('services.google.map_key', env('GOOGLE_MAP_KEY')) }}",
+        key: "{{ config('services.google.map_key') }}",
         v: "weekly",
     });
 </script>

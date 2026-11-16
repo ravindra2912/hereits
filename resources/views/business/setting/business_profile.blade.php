@@ -522,7 +522,7 @@
 
 @push('js')
 <!-- Google Maps JS API -->
-<script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAP_KEY') }}&libraries=places"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.map_key') }}&libraries=places"></script>
 <script>
   let inlineMap = null;
   let inlineMarker = null;

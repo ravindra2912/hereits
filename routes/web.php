@@ -26,22 +26,6 @@ Route::controller(BlogController::class)->name('blog.')->group(function () {
     Route::get('/blog/{slug}', 'show')->name('detail');
 });
 
-// Route::get('test-email', function () {
-//     // generateQRCode('sdsddsd');
-//     $appointment_details = AppointmentBooking::query()
-//         ->select('id', 'token_number', 'business_id', 'expert_id', 'user_id', 'user_name', 'user_contact', 'slot_start_time', 'slot_end_time', 'booking_date', 'note', 'status')
-//         ->with([
-//             'expert:id,expert_name,slug,is_appointment_book_with_time_slot',
-//             'business:id,name,slug,address',
-//             'user:id,first_name,email,notification_token'
-//         ])
-//         ->find(39);
-
-//     Mail::to($appointment_details->user->email)->send(new AppointmentConfirmationMail($appointment_details));
-//     echo 'success';
-// });
-
-
 Route::get('/sitemap.xml', [SitemapController::class, 'index']);
 
 Route::get('/.well-known/assetlinks.json', function () {
@@ -85,12 +69,12 @@ Route::controller(AppointmentController::class)->group(function () {
 
 // User Authenticated Routes
 Route::controller(AuthController::class)->group(function () {
-    Route::post('login', 'store')->name('login')->middleware('throttle:6,1');
+    Route::post('login', 'store')->name('login')->middleware('throttle:5,1');
     Route::post('Register', 'register')->name('register')->middleware('throttle:10,1');
     Route::post('register', 'register')->middleware('throttle:10,1');
 
     // Tenant-prefixed auth aliases (supports custom domain proxy workers)
-    Route::post('{business_slug}/login', 'store')->middleware('throttle:6,1');
+    Route::post('{business_slug}/login', 'store')->middleware('throttle:5,1');
     Route::post('{business_slug}/Register', 'register')->middleware('throttle:10,1');
     Route::post('{business_slug}/register', 'register')->middleware('throttle:10,1');
 
@@ -101,12 +85,12 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('Register-business', 'registerBusinessView')->name('register.business');
     Route::post('Register-business', 'registerBusiness')->name('register.business.store')->middleware('throttle:10,1');
 
-    Route::post('forgot-password', 'forgotPassword')->name('forgot.password')->middleware('throttle:6,1');
-    Route::post('{business_slug}/forgot-password', 'forgotPassword')->middleware('throttle:6,1');
+    Route::post('forgot-password', 'forgotPassword')->name('forgot.password')->middleware('throttle:3,60');
+    Route::post('{business_slug}/forgot-password', 'forgotPassword')->middleware('throttle:3,60');
     Route::get('password-reset/{token}/{email}', 'ResetPasswordForm')->name('password.reset');
     Route::get('{business_slug}/password-reset/{token}/{email}', 'ResetPasswordForm');
-    Route::post('password-reset', 'ResetPassword')->name('password.reset.update')->middleware('throttle:6,1');
-    Route::post('{business_slug}/password-reset', 'ResetPassword')->middleware('throttle:6,1');
+    Route::post('password-reset', 'ResetPassword')->name('password.reset.update')->middleware('throttle:3,60');
+    Route::post('{business_slug}/password-reset', 'ResetPassword')->middleware('throttle:3,60');
 });
 
 Route::middleware(['web', 'front'])->group(function () {
@@ -197,5 +181,3 @@ Route::controller(\App\Http\Controllers\Front\LuckyDrawScratchController::class)
     Route::get('{business_slug}/lucky-draw/scratch/{token}', 'scratch')->name('lucky-draw.scratch');
     Route::post('{business_slug}/lucky-draw/claim/{token}', 'claim')->name('lucky-draw.claim');
 });
-
-// require __DIR__ . '/auth.php';

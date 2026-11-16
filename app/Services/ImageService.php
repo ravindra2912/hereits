@@ -20,7 +20,7 @@ class ImageService
      */
     protected function getDisk(): string
     {
-        return config('filesystems.image_storage_disk', env('IMAGE_STORAGE_DISK', 'local'));
+        return config('filesystems.image_storage_disk', 'local');
     }
 
     /**

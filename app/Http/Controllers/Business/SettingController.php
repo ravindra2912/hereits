@@ -26,7 +26,6 @@ class SettingController extends Controller
      */
     public function profile(Request $request)
     {
-        // dd(Auth::user()->getBusinesses);
         $user = User::find(Auth::user()->id);
         return view('business.setting.profile', compact('user'));
     }
@@ -421,8 +420,6 @@ class SettingController extends Controller
 
     public function businessTiming(Request $request)
     {
-        // dd(Carbon::now()->addDay(6)->format('l'));
-
         $allTimings = BusinessTiming::whereNull('expert_id')
             ->where('business_id', Auth::user()->business_id)
             ->orderBy('start_time', 'asc')

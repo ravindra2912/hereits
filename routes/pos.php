@@ -8,7 +8,7 @@ use App\Http\Controllers\POS\PosOrderController;
 
 Route::group(['middleware' => 'web'], function () {
     Route::get('/login', [PosAuthController::class, 'showLogin'])->name('pos.login');
-    Route::post('/login', [PosAuthController::class, 'login'])->name('pos.login.submit')->middleware('throttle:6,1');
+    Route::post('/login', [PosAuthController::class, 'login'])->name('pos.login.submit')->middleware('throttle:5,1');
     Route::get('/logout', [PosAuthController::class, 'logout'])->name('pos.logout');
 
     Route::group(['middleware' => 'pos'], function () {

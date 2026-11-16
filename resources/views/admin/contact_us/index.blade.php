@@ -227,8 +227,7 @@
                 }
             },
             error: function(e) {
-                toastr.error('Something Wrong');
-                console.log(e);
+                toastr.error('Something went wrong');
             }
         });
     });
@@ -268,8 +267,7 @@
                             }
                         },
                         error: function(e) {
-                            toastr.error('Something Wrong');
-                            console.log(e);
+                            toastr.error('Something went wrong');
                         }
                     });
                 }

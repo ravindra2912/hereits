@@ -21,7 +21,7 @@ trait GoogleDrive
         $this->clientId = $settings->google_drive_client_id;
         $this->clientSecret = $settings->google_drive_client_secret;
         $this->refreshToken = $settings->google_drive_refresh_token;
-        $this->folderName = env('GOOGLE_DRIVE_FOLDER_NAME', config('app.name', 'Shoper_Uploads'));
+        $this->folderName = config('services.google_drive.folder_name', 'Shoper_Uploads');
     }
 
     /**

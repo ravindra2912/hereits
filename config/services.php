@@ -62,7 +62,13 @@ return [
         'key' => env('OPENCAGE_API_KEY'),
     ],
 
-    'default_expert_password' => env('DEFAULT_EXPERT_PASSWORD', 'Expert@123'),
+    'google_drive' => [
+        'folder_name' => env('GOOGLE_DRIVE_FOLDER_NAME', config('app.name', 'Shoper_Uploads')),
+    ],
+
+    'ads' => [
+        'show' => (bool) env('SHOW_ADS', false),
+    ],
 
     'firebase' => [
         'project_id' => env('FIREBASE_PROJECT_ID'),

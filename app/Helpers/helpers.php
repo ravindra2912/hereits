@@ -48,28 +48,30 @@ function apiResponce($statuscode, $status, $message, $data = [])
  */
 function checkResponce($exception, string $customMessage = 'Something went wrong, please try again later.'): string
 {
+    $correlationId = (string) \Illuminate\Support\Str::uuid();
+
     if ($exception instanceof \Throwable) {
-        Log::error('Exception caught in checkResponce: ' . $exception->getMessage(), [
-            'exception' => $exception,
+        Log::error("Exception caught in checkResponse [Correlation ID: {$correlationId}]: " . $exception->getMessage(), [
+            'correlation_id' => $correlationId,
+            'exception' => get_class($exception),
             'file' => $exception->getFile(),
             'line' => $exception->getLine(),
+            'trace' => $exception->getTraceAsString(),
         ]);
 
         if (app()->environment('production') || !config('app.debug')) {
-            return $customMessage;
+            return $customMessage . " (Ref: {$correlationId})";
         }
 
-        return $exception->getMessage();
+        return $customMessage . " (Ref: {$correlationId})";
     }
 
     if (is_string($exception)) {
-        if (app()->environment('production') || !config('app.debug')) {
-            $sensitivePatterns = ['SQLSTATE', 'QueryException', 'PDOException', 'syntax error', 'Column not found', 'Table '];
-            foreach ($sensitivePatterns as $pattern) {
-                if (stripos($exception, $pattern) !== false) {
-                    Log::error('Sensitive error message sanitized in checkResponce: ' . $exception);
-                    return $customMessage;
-                }
+        $sensitivePatterns = ['SQLSTATE', 'QueryException', 'PDOException', 'syntax error', 'Column not found', 'Table ', 'Illuminate\\', 'Vendor\\', '.php on line'];
+        foreach ($sensitivePatterns as $pattern) {
+            if (stripos($exception, $pattern) !== false) {
+                Log::error("Sensitive error message sanitized in checkResponse [Correlation ID: {$correlationId}]: " . $exception);
+                return $customMessage . " (Ref: {$correlationId})";
             }
         }
 
@@ -512,7 +514,7 @@ function getExpertTiming($id, $date, $appoinment_id = null, $getBusinessId = nul
 
 function getLatLongOnAddress($address)
 {
-    $apiKey = config('services.opencage.key', env('OPENCAGE_API_KEY')); // Loaded from environment/config
+    $apiKey = config('services.opencage.key');
     $client = new Client();
 
     if (empty($apiKey)) {
@@ -648,8 +650,6 @@ function businessSticker($qrdata, $text)
     $imageData = ob_get_clean();
     $base64 = base64_encode($imageData);
     $base64Image = 'data:image/png;base64,' . $base64;
-    // echo "<img src='$base64Image' height='600' />";
-    // dd($base64Image);
 
     // Cleanup
     imagedestroy($base);
@@ -759,7 +759,8 @@ function validateCoupon($couponCode, $planType, $orderAmount)
             'total_amount' => max(0, $orderAmount - $discountAmount)
         ];
     } catch (\Exception $e) {
-        return ['success' => false, 'message' => 'Error validating coupon: ' . $e->getMessage()];
+        Log::error('Error validating coupon: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+        return ['success' => false, 'message' => 'Error validating coupon. Please try again.'];
     }
 }
 

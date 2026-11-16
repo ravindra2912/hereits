@@ -12,8 +12,12 @@ use App\Http\Middleware\Expert;
 use App\Http\Middleware\CheckBusinessModule;
 use App\Http\Middleware\MinifyHtml;
 use App\Http\Middleware\POS;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -81,6 +85,8 @@ return Application::configure(basePath: dirname(__DIR__))
             MinifyHtml::class,
             \App\Http\Middleware\TrackLastBusinessVisit::class,
         ]);
+
+        $middleware->append(SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, Request $request) {
@@ -111,6 +117,52 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => $e->validator->errors()->first() ?? 'Validation failed.',
                     'errors' => $e->validator->errors(),
                 ], 422);
+            }
+        });
+
+        $exceptions->render(function (Throwable $e, Request $request) {
+            $correlationId = (string) Str::uuid();
+
+            // Log detailed error and stack trace strictly to server-side logs
+            Log::error("Unhandled Exception [Correlation ID: {$correlationId}]: " . $e->getMessage(), [
+                'correlation_id' => $correlationId,
+                'exception'      => get_class($e),
+                'file'           => $e->getFile(),
+                'line'           => $e->getLine(),
+                'trace'          => $e->getTraceAsString(),
+                'url'            => $request->fullUrl(),
+                'method'         => $request->method(),
+                'ip'             => $request->ip(),
+            ]);
+
+            $statusCode = 500;
+            if ($e instanceof HttpExceptionInterface) {
+                $statusCode = $e->getStatusCode();
+            }
+
+            // Clean, sanitized API / JSON response
+            if ($request->is('api/*') || $request->expectsJson() || $request->ajax()) {
+                $clientMessage = match ($statusCode) {
+                    401 => 'Unauthenticated access.',
+                    403 => 'Access forbidden.',
+                    404 => 'Resource not found.',
+                    429 => 'Too many requests. Please slow down.',
+                    default => 'An unexpected server error occurred. Please contact support with the correlation ID if the issue persists.',
+                };
+
+                return response()->json([
+                    'success' => false,
+                    'status_code' => $statusCode,
+                    'message' => $clientMessage,
+                    'correlation_id' => $correlationId,
+                ], $statusCode)->header('X-Correlation-ID', $correlationId);
+            }
+
+            // Web HTML responses for server errors (500-level)
+            if ($statusCode >= 500) {
+                return response()->view('errors.500', [
+                    'correlationId' => $correlationId,
+                ], $statusCode)->header('X-Correlation-ID', $correlationId);
             }
         });
     })->create();
