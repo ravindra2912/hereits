@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Blog;
 use App\Models\Business;
 use App\Models\BusinessCategory;
+use App\Models\BusinessTiming;
 use App\Models\Expert;
 use App\Models\Faq;
 use App\Models\Favorite;
@@ -13,6 +14,7 @@ use App\Models\LegalPage;
 use App\Models\Product;
 use App\Models\Service;
 use App\Models\SiteSetting;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -142,6 +144,9 @@ class HomeController extends Controller
             }
         }
 
+        $this->attachOpenStatus($featured_businesses);
+        $this->attachOpenStatus($favorite_businesses);
+
         return view('front.home', compact('categories', 'featured_businesses', 'favorite_businesses'));
     }
 
@@ -234,6 +239,8 @@ class HomeController extends Controller
                 $business->is_favorited = in_array($business->id, $favoriteBusinessIds);
             });
         }
+
+        $this->attachOpenStatus($businesses);
 
         return view('front.business_list', compact('businesses'));
     }
@@ -468,5 +475,61 @@ class HomeController extends Controller
             return LegalPage::where('page_type', 'VendorPolicy')->first();
         });
         return view('front.vendor_policy', compact('data'));
+    }
+
+    /**
+     * Batch check and attach is_open status to business collection without N+1 queries.
+     *
+     * @param mixed $businesses
+     * @return void
+     */
+    protected function attachOpenStatus($businesses): void
+    {
+        if (empty($businesses)) {
+            return;
+        }
+
+        $items = $businesses instanceof \Illuminate\Pagination\LengthAwarePaginator
+            ? $businesses->getCollection()
+            : $businesses;
+
+        if ($items->isEmpty()) {
+            return;
+        }
+
+        $businessIds = $items->pluck('id')->filter()->unique()->toArray();
+        if (empty($businessIds)) {
+            return;
+        }
+
+        $day = Carbon::now()->format('l');
+        $time = Carbon::now()->format('H:i:s');
+
+        $openBusinessIds = BusinessTiming::where('day', $day)
+            ->whereIn('business_id', $businessIds)
+            ->whereNull('expert_id')
+            ->where('start_time', '<=', $time)
+            ->where('end_time', '>=', $time)
+            ->pluck('business_id')
+            ->unique()
+            ->toArray();
+
+        $remainingIds = array_diff($businessIds, $openBusinessIds);
+        if (!empty($remainingIds)) {
+            $alsoOpen = BusinessTiming::where('day', $day)
+                ->whereIn('business_id', $remainingIds)
+                ->where('start_time', '<=', $time)
+                ->where('end_time', '>=', $time)
+                ->pluck('business_id')
+                ->unique()
+                ->toArray();
+            if (!empty($alsoOpen)) {
+                $openBusinessIds = array_unique(array_merge($openBusinessIds, $alsoOpen));
+            }
+        }
+
+        $items->each(function ($business) use ($openBusinessIds) {
+            $business->setAttribute('is_open', in_array($business->id, $openBusinessIds));
+        });
     }
 }

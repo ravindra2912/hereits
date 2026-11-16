@@ -145,6 +145,17 @@ class Business extends Model
         return $this->hasMany(Favorite::class, 'favorite_item_id', 'id')->where('favorite_type', 'business');
     }
 
+    /**
+     * Check if business is currently open based on timing.
+     */
+    public function getIsOpenAttribute(): bool
+    {
+        if (array_key_exists('is_open', $this->attributes)) {
+            return (bool) $this->attributes['is_open'];
+        }
+        return function_exists('isBusinessOpen') ? isBusinessOpen($this->id) : false;
+    }
+
     // ***************************
     // for dashboard calculation end
     // ***************************

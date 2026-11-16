@@ -40,7 +40,11 @@
                         <div class="modern-business-card h-100 d-flex flex-column">
                             <a href="{{ route('business-details', $business->slug) }}" class="position-relative overflow-hidden d-block business-card-img" style="height: 190px;">
                                 <img onerror="this.src='{{ getImage(null) }}'" src="{{ getImage($business->business_image ?? $business->business_logo) }}" class="w-100 h-100 object-fit-cover" alt="{{ $business->name }}" loading="lazy">
-                                <span class="status-pill-open position-absolute top-0 end-0 m-3">Open Now</span>
+                                @if($business->is_open)
+                                <span class="status-pill-open position-absolute top-0 end-0 m-3">Open</span>
+                                @else
+                                <span class="status-pill-closed position-absolute top-0 end-0 m-3">Closed</span>
+                                @endif
 
                                 <div class="position-absolute top-0 start-0 m-3">
                                     @guest

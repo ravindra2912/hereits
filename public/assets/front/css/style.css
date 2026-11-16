@@ -1813,6 +1813,40 @@ footer a:hover {
     animation: pulseGreenDot 1.8s ease-in-out infinite;
 }
 
+@keyframes pulseRedDot {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.35;
+        transform: scale(0.7);
+    }
+}
+
+.status-pill-closed {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(239, 68, 68, 0.9);
+    backdrop-filter: blur(8px);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+}
+
+.status-pill-closed::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffffff;
+    animation: pulseRedDot 1.8s ease-in-out infinite;
+}
+
 .favorite-glass-btn {
     width: 36px;
     height: 36px;

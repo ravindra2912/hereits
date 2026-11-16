@@ -420,11 +420,20 @@ function isBusinessOpen($business_id = null)
     }
     $day = Carbon::now()->format('l');
     $time = Carbon::now()->format('H:i:s');
-    $businessTiming = BusinessTiming::where('day', $day)->where('business_id', $business_id)->where('start_time', '<=', $time)->where('end_time', '>=', $time)->first();
+    $businessTiming = BusinessTiming::where('day', $day)
+        ->where('business_id', $business_id)
+        ->whereNull('expert_id')
+        ->where('start_time', '<=', $time)
+        ->where('end_time', '>=', $time)
+        ->exists();
     if ($businessTiming) {
         return true;
     }
-    return false;
+    return BusinessTiming::where('day', $day)
+        ->where('business_id', $business_id)
+        ->where('start_time', '<=', $time)
+        ->where('end_time', '>=', $time)
+        ->exists();
 }
 
 function isExpertAvailable($expert_id = null, $business_id = null)
