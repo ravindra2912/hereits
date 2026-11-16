@@ -75,8 +75,44 @@
 
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Contact Number <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control required numeric" name="business_contact" id="business_contact" placeholder="+91 99999 00000" required>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label mb-0" for="business_contact">Contact Number (WhatsApp) <span class="text-danger">*</span></label>
+                                    <span id="contactVerifiedBadge" class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small d-none">
+                                        <i class="fas fa-check-circle me-1"></i> WhatsApp Verified
+                                    </span>
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted fw-bold">+91</span>
+                                    <input type="text" class="form-control required numeric" name="business_contact" id="business_contact" placeholder="9876543210" maxlength="10" required>
+                                    <button class="btn btn-outline-success d-flex align-items-center gap-1" type="button" id="btnSendWhatsappOtp">
+                                        <i class="fab fa-whatsapp fs-6"></i>
+                                        <span id="sendOtpBtnText">Verify</span>
+                                        <span id="sendOtpSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                    </button>
+                                </div>
+                                <input type="hidden" name="whatsapp_verification_token" id="whatsapp_verification_token" value="">
+                                <div class="form-text small text-muted" id="contactHelpText">We will send a 6-digit verification code to this WhatsApp number.</div>
+
+                                <!-- WhatsApp OTP Verification Box -->
+                                <div id="whatsappOtpBox" class="mt-2 p-3 rounded-3 whatsapp-otp-box shadow-sm d-none">
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <span class="small fw-bold text-dark d-flex align-items-center">
+                                            <i class="fab fa-whatsapp text-success fs-5 me-1"></i> Enter 6-digit WhatsApp Code
+                                        </span>
+                                        <button type="button" class="btn btn-link btn-sm text-secondary p-0 text-decoration-none small" id="btnChangeContact">Change Number</button>
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control text-center fw-bold fs-5 letter-spacing-2 numeric" id="whatsapp_otp" maxlength="6" placeholder="• • • • • •" autocomplete="one-time-code">
+                                        <button class="btn btn-success px-3 fw-bold d-flex align-items-center gap-1" type="button" id="btnVerifyWhatsappOtp">
+                                            <span id="verifyOtpBtnText">Submit OTP</span>
+                                            <span id="verifyOtpSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                        </button>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center small text-muted">
+                                        <span id="otpCountdownText">Resend in <strong id="otpSeconds">60</strong>s</span>
+                                        <button type="button" class="btn btn-link btn-sm text-success fw-semibold p-0 text-decoration-none d-none" id="btnResendOtp">Resend OTP</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -616,6 +652,219 @@
     });
 </script>
 @endguest
+
+<script>
+    $(document).ready(function() {
+        var otpTimer = null;
+
+        function startOtpCountdown(duration) {
+            if (otpTimer) {
+                clearInterval(otpTimer);
+            }
+            var seconds = parseInt(duration, 10) || 60;
+            $('#otpCountdownText').removeClass('d-none');
+            $('#btnResendOtp').addClass('d-none');
+            $('#otpSeconds').text(seconds);
+
+            otpTimer = setInterval(function() {
+                seconds--;
+                $('#otpSeconds').text(seconds);
+                if (seconds <= 0) {
+                    clearInterval(otpTimer);
+                    otpTimer = null;
+                    $('#otpCountdownText').addClass('d-none');
+                    $('#btnResendOtp').removeClass('d-none');
+                }
+            }, 1000);
+        }
+
+        function resetVerificationState() {
+            if (otpTimer) {
+                clearInterval(otpTimer);
+                otpTimer = null;
+            }
+            $('#whatsapp_verification_token').val('');
+            $('#contactVerifiedBadge').addClass('d-none');
+            $('#whatsappOtpBox').addClass('d-none');
+            $('#whatsapp_otp').val('');
+            $('#business_contact').prop('readonly', false).removeClass('is-invalid');
+            $('#btnSendWhatsappOtp').removeClass('btn-success disabled').addClass('btn-outline-success').prop('disabled', false);
+            $('#sendOtpBtnText').text('Verify');
+            $('#contactHelpText').text('We will send a 6-digit verification code to this WhatsApp number.');
+        }
+
+        // Contact Number Input: sanitize to numbers and reset on edit
+        $('#business_contact').on('input', function() {
+            var val = $(this).val().replace(/\D/g, '');
+            if (val.length > 10) {
+                val = val.substring(0, 10);
+            }
+            $(this).val(val);
+
+            if ($('#whatsapp_verification_token').val()) {
+                resetVerificationState();
+            }
+        });
+
+        // OTP input numeric limit
+        $('#whatsapp_otp').on('input', function() {
+            var val = $(this).val().replace(/\D/g, '');
+            if (val.length > 6) {
+                val = val.substring(0, 6);
+            }
+            $(this).val(val);
+
+            // Auto-trigger verify on 6 digits
+            if (val.length === 6) {
+                $('#btnVerifyWhatsappOtp').trigger('click');
+            }
+        });
+
+        // Send / Resend WhatsApp OTP
+        $(document).on('click', '#btnSendWhatsappOtp, #btnResendOtp', function(e) {
+            e.preventDefault();
+            var contact = $('#business_contact').val().trim();
+
+            if (contact.length !== 10) {
+                toastr.error('Please enter a valid 10-digit mobile number.');
+                $('#business_contact').focus().addClass('is-invalid');
+                return;
+            }
+
+            var $btn = $(this);
+            var isResend = $btn.attr('id') === 'btnResendOtp';
+
+            if (!isResend) {
+                $('#sendOtpBtnText').addClass('d-none');
+                $('#sendOtpSpinner').removeClass('d-none');
+                $('#btnSendWhatsappOtp').prop('disabled', true);
+            } else {
+                $btn.addClass('disabled').prop('disabled', true);
+            }
+
+            $.ajax({
+                url: "{{ route('register.business.send-whatsapp-otp') }}",
+                type: "POST",
+                data: {
+                    business_contact: contact
+                },
+                dataType: "json",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    toastr.success(response.message);
+                    $('#whatsappOtpBox').removeClass('d-none');
+                    $('#business_contact').prop('readonly', true).removeClass('is-invalid');
+                    $('#whatsapp_otp').val('').focus();
+                    startOtpCountdown(response.cooldown || 60);
+                },
+                error: function(xhr) {
+                    var errorMsg = 'Failed to send WhatsApp verification code.';
+                    if (xhr.responseJSON) {
+                        if (xhr.responseJSON.message) {
+                            errorMsg = typeof xhr.responseJSON.message === 'string' 
+                                ? xhr.responseJSON.message 
+                                : (xhr.responseJSON.message.business_contact ? xhr.responseJSON.message.business_contact[0] : Object.values(xhr.responseJSON.message)[0]);
+                        } else if (xhr.responseJSON.errors && xhr.responseJSON.errors.business_contact) {
+                            errorMsg = xhr.responseJSON.errors.business_contact[0];
+                        }
+                    }
+                    toastr.error(errorMsg);
+                    $('#business_contact').prop('readonly', false);
+                },
+                complete: function() {
+                    $('#sendOtpSpinner').addClass('d-none');
+                    $('#sendOtpBtnText').removeClass('d-none');
+                    $('#btnSendWhatsappOtp').prop('disabled', false);
+                    if (isResend) {
+                        $btn.removeClass('disabled').prop('disabled', false);
+                    }
+                }
+            });
+        });
+
+        // Verify WhatsApp OTP
+        $('#btnVerifyWhatsappOtp').on('click', function(e) {
+            e.preventDefault();
+            var contact = $('#business_contact').val().trim();
+            var otp = $('#whatsapp_otp').val().trim();
+
+            if (otp.length !== 6) {
+                toastr.error('Please enter the 6-digit verification code.');
+                $('#whatsapp_otp').focus();
+                return;
+            }
+
+            $('#verifyOtpBtnText').addClass('d-none');
+            $('#verifyOtpSpinner').removeClass('d-none');
+            $('#btnVerifyWhatsappOtp').prop('disabled', true);
+
+            $.ajax({
+                url: "{{ route('register.business.verify-whatsapp-otp') }}",
+                type: "POST",
+                data: {
+                    business_contact: contact,
+                    otp: otp
+                },
+                dataType: "json",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    toastr.success(response.message);
+                    $('#whatsapp_verification_token').val(response.token);
+                    $('#whatsappOtpBox').addClass('d-none');
+                    $('#contactVerifiedBadge').removeClass('d-none');
+                    $('#business_contact').prop('readonly', true).removeClass('is-invalid');
+                    $('#btnSendWhatsappOtp').removeClass('btn-outline-success').addClass('btn-success disabled').prop('disabled', true);
+                    $('#sendOtpBtnText').html('<i class="fas fa-check me-1"></i> Verified');
+                    $('#contactHelpText').html('<span class="text-success"><i class="fas fa-check-circle me-1"></i> WhatsApp contact number verified.</span>');
+                },
+                error: function(xhr) {
+                    var errorMsg = 'Invalid verification code.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = typeof xhr.responseJSON.message === 'string' 
+                            ? xhr.responseJSON.message 
+                            : Object.values(xhr.responseJSON.message)[0];
+                    }
+                    toastr.error(errorMsg);
+                    $('#whatsapp_otp').focus();
+                },
+                complete: function() {
+                    $('#verifyOtpSpinner').addClass('d-none');
+                    $('#verifyOtpBtnText').removeClass('d-none');
+                    $('#btnVerifyWhatsappOtp').prop('disabled', false);
+                }
+            });
+        });
+
+        // Change contact number
+        $('#btnChangeContact').on('click', function(e) {
+            e.preventDefault();
+            resetVerificationState();
+            $('#business_contact').focus();
+        });
+
+        // Intercept form submission to guarantee verified contact
+        $('#loginForm2').on('submit', function(e) {
+            var token = $('#whatsapp_verification_token').val();
+            if (!token) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                toastr.error('Please verify your contact number via WhatsApp OTP before completing registration.');
+                $('html, body').animate({
+                    scrollTop: $('#business_contact').offset().top - 120
+                }, 400);
+                $('#business_contact').addClass('is-invalid').focus();
+                if ($('#whatsappOtpBox').hasClass('d-none')) {
+                    $('#btnSendWhatsappOtp').trigger('click');
+                }
+                return false;
+            }
+        });
+    });
+</script>
 @endpush
 
 @endsection

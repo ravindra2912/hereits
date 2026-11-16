@@ -2257,3 +2257,19 @@ footer a:hover {
 .pulse-glow-primary {
     animation: pulseGlowIndigo 3s infinite;
 }
+
+/* WhatsApp OTP Verification */
+.letter-spacing-2 {
+    letter-spacing: 0.25rem;
+}
+
+.whatsapp-otp-box {
+    border: 1px dashed rgba(16, 185, 129, 0.45);
+    background-color: #f8fafc;
+    transition: all 0.25s ease-in-out;
+}
+
+.whatsapp-otp-box:focus-within {
+    border-color: #10b981;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.15);
+}

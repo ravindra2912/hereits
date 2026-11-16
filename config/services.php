@@ -83,4 +83,14 @@ return [
         'private_key' => env('FIREBASE_PRIVATE_KEY'),
     ],
 
+    'whatsapp' => [
+        'token' => env('META_WHATSAPP_TOKEN', env('WHATSAPP_TOKEN')),
+        'phone_number_id' => env('META_WHATSAPP_PHONE_NUMBER_ID', env('WHATSAPP_PHONE_NUMBER_ID')),
+        'business_account_id' => env('META_WHATSAPP_WABA_ID', env('WHATSAPP_BUSINESS_ACCOUNT_ID')),
+        'api_version' => env('META_WHATSAPP_API_VERSION', 'v21.0'),
+        'template_name' => env('META_WHATSAPP_OTP_TEMPLATE', env('WHATSAPP_OTP_TEMPLATE')),
+        'template_lang' => env('META_WHATSAPP_TEMPLATE_LANG', 'en_US'),
+        'otp_expiry_minutes' => (int) env('WHATSAPP_OTP_EXPIRY_MINUTES', 10),
+    ],
+
 ];

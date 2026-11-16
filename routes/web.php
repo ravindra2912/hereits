@@ -84,6 +84,8 @@ Route::controller(AuthController::class)->group(function () {
 
     Route::get('Register-business', 'registerBusinessView')->name('register.business');
     Route::post('Register-business', 'registerBusiness')->name('register.business.store')->middleware('throttle:10,1');
+    Route::post('register-business/send-whatsapp-otp', 'sendBusinessContactOtp')->name('register.business.send-whatsapp-otp')->middleware('throttle:5,1');
+    Route::post('register-business/verify-whatsapp-otp', 'verifyBusinessContactOtp')->name('register.business.verify-whatsapp-otp')->middleware('throttle:10,1');
 
     Route::post('forgot-password', 'forgotPassword')->name('forgot.password')->middleware('throttle:3,60');
     Route::post('{business_slug}/forgot-password', 'forgotPassword')->middleware('throttle:3,60');

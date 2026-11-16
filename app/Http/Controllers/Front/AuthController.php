@@ -25,8 +25,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Front\SendWhatsAppOtpRequest;
+use App\Http\Requests\Front\VerifyWhatsAppOtpRequest;
 use App\Models\BusinessCategory;
 use App\Models\City;
+use App\Services\WhatsAppOtpService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Redirect;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\Validator;
@@ -362,8 +366,35 @@ class AuthController extends Controller
         return view('front.auth.businessRegistration', compact('businessCat', 'VendorPolicy'));
     }
 
+    /**
+     * Send WhatsApp OTP for business contact verification.
+     */
+    public function sendBusinessContactOtp(SendWhatsAppOtpRequest $request, WhatsAppOtpService $otpService): JsonResponse
+    {
+        $result = $otpService->generateAndSendOtp($request->business_contact);
 
-    public function registerBusiness(Request $request, CreditService $creditService)
+        return response()->json([
+            'success' => $result['success'],
+            'message' => $result['message'],
+            'cooldown' => $result['cooldown'] ?? 0,
+        ], $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Verify WhatsApp OTP for business contact.
+     */
+    public function verifyBusinessContactOtp(VerifyWhatsAppOtpRequest $request, WhatsAppOtpService $otpService): JsonResponse
+    {
+        $result = $otpService->verifyOtp($request->business_contact, $request->otp);
+
+        return response()->json([
+            'success' => $result['success'],
+            'message' => $result['message'],
+            'token' => $result['token'] ?? null,
+        ], $result['success'] ? 200 : 422);
+    }
+
+    public function registerBusiness(Request $request, CreditService $creditService, WhatsAppOtpService $otpService)
     {
         $success = false;
         $message = 'Something Wrong!';
@@ -393,6 +424,10 @@ class AuthController extends Controller
             if ($validator->fails()) { // Validation fails
                 $message = $validator->errors();
                 // $message = $validator->errors()->first();
+            } else if (!$otpService->isContactVerified($request->business_contact, $request->input('whatsapp_verification_token'))) {
+                $message = [
+                    'business_contact' => ['Please verify your contact number via WhatsApp OTP before completing registration.']
+                ];
             } else if ($request->latitude == null || $request->longitude == null) {
                 $message = 'Pleaase select location on map';
             } else {
@@ -494,6 +529,7 @@ class AuthController extends Controller
                 $message = 'Business register successfully.';
 
                 DB::commit();
+                $otpService->consumeVerification($request->business_contact);
 
 
             }
