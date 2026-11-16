@@ -18,7 +18,14 @@ class WhatsAppService
     {
         $this->token = config('services.whatsapp.token');
         $this->phoneNumberId = config('services.whatsapp.phone_number_id');
-        $this->apiVersion = config('services.whatsapp.api_version', 'v21.0');
+
+        $rawVersion = (string) (config('services.whatsapp.api_version', 'v21.0') ?: 'v21.0');
+        $normalizedVersion = ltrim(trim($rawVersion), 'vV');
+        if (!str_contains($normalizedVersion, '.')) {
+            $normalizedVersion .= '.0';
+        }
+        $this->apiVersion = 'v' . $normalizedVersion;
+
         $this->templateName = config('services.whatsapp.template_name');
         $this->templateLang = config('services.whatsapp.template_lang', 'en_US');
     }
