@@ -56,7 +56,7 @@ class AccountController extends Controller
         try {
             DB::beginTransaction();
             $rules = [
-                'profile' => 'nullable|mimes:jpg,jpeg,png,webp|',
+                'profile' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
                 'first_name' => 'required',
                 'last_name' => 'required',
                 'email' => 'required|email|unique:users,email,' . $id,

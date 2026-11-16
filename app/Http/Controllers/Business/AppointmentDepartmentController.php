@@ -123,7 +123,7 @@ class AppointmentDepartmentController extends Controller
         if (!checkBusinessPermission('edit_department')) {
             abort(403, 'Unauthorized. You do not have permission to edit departments.');
         }
-        $department = AppointmentDepartment::find($id);
+        $department = AppointmentDepartment::where('business_id', getBusinessId())->findOrFail($id);
         return view('business.appointment.department.edit', compact('department'));
     }
 
@@ -148,7 +148,7 @@ class AppointmentDepartmentController extends Controller
                 $message = $validator->errors();
                 // $message = $validator->errors()->first();
             } else {
-                $insert = AppointmentDepartment::find($id);
+                $insert = AppointmentDepartment::where('business_id', getBusinessId())->findOrFail($id);
                 $insert->department_name = $request->department_name;
                 $insert->save();
 
@@ -180,7 +180,7 @@ class AppointmentDepartmentController extends Controller
             if ($checkExpert && count($checkExpert) > 0) {
                 $message = 'Please first delete experts which are in this department.';
             } else {
-                $delete = AppointmentDepartment::find($id);
+                $delete = AppointmentDepartment::where('business_id', getBusinessId())->findOrFail($id);
                 if ($delete) {
                     // fileRemoveStorage($delete->profile);
                     $delete->delete();

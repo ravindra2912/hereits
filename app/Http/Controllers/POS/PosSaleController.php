@@ -145,9 +145,47 @@ class PosSaleController extends Controller
             $user = Auth::guard('pos')->user();
             $business_id = getPosBusinessId();
 
+            // Security: Batch load products directly from DB to verify prices and ownership
+            $cartProductIds = collect($request->cart)->pluck('id')->filter()->unique()->all();
+            $dbProducts = Product::select('id', 'name', 'price', 'sell_price', 'price_type', 'business_id')
+                ->where('business_id', $business_id)
+                ->whereIn('id', $cartProductIds)
+                ->get()
+                ->keyBy('id');
+
+            $canOverridePrice = checkPosPermission('override_product_price');
+
             $subtotal = 0;
+            $verifiedItems = [];
             foreach ($request->cart as $item) {
-                $subtotal += (float)$item['price'] * (int)$item['qty'];
+                $productId = (int)$item['id'];
+                $qty = max(1, min(10000, (int)$item['qty']));
+                $dbProduct = $dbProducts->get($productId);
+
+                if (!$dbProduct) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Product ID {$productId} not found in this business catalog."
+                    ], 422);
+                }
+
+                $systemPrice = (float)($dbProduct->sell_price > 0 ? $dbProduct->sell_price : $dbProduct->price);
+                if ($dbProduct->price_type === 'FixPrice' && !$canOverridePrice) {
+                    $unitPrice = $systemPrice;
+                } elseif (isset($item['price']) && is_numeric($item['price']) && (float)$item['price'] >= 0) {
+                    $unitPrice = (float)$item['price'];
+                } else {
+                    $unitPrice = $systemPrice;
+                }
+
+                $subtotal += ($unitPrice * $qty);
+                $verifiedItems[] = [
+                    'id' => $dbProduct->id,
+                    'name' => $dbProduct->name,
+                    'qty' => $qty,
+                    'price' => $unitPrice,
+                ];
             }
 
             $discount = $request->filled('discount') ? (float)$request->discount : 0;
@@ -203,21 +241,21 @@ class PosSaleController extends Controller
             // Deduct POS order charge from business credit
             $creditService->deductPosOrderCharge($business_id);
 
-            foreach ($request->cart as $item) {
+            foreach ($verifiedItems as $vItem) {
                 OrderItem::create([
                     'business_id' => $business_id,
                     'order_id' => $order->id,
-                    'item_id' => $item['id'],
-                    'item_name' => $item['name'],
-                    'price' => $item['price'],
-                    'quantity' => $item['qty'],
+                    'item_id' => $vItem['id'],
+                    'item_name' => $vItem['name'],
+                    'price' => $vItem['price'],
+                    'quantity' => $vItem['qty'],
                 ]);
 
                 if ($order->order_status == 'delivered') {
-                    Product::where('id', $item['id'])
+                    Product::where('id', $vItem['id'])
                         ->where('business_id', $business_id)
                         ->lockForUpdate()
-                        ->decrement('quantity', $item['qty']);
+                        ->decrement('quantity', $vItem['qty']);
                 }
             }
 

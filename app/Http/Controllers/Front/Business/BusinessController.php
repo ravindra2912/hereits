@@ -429,6 +429,18 @@ class BusinessController extends Controller
             ->where('quotation_no', $quotation_no)
             ->firstOrFail();
 
+        // Authorization check: If logged in, ensure caller is the quotation's customer or a member/owner of the business
+        if (auth()->check()) {
+            $user = auth()->user();
+            $isCustomerOwner = $quotation->customer && (int)$quotation->customer->customer_id === (int)$user->id;
+            $isBusinessStaffOrOwner = (int)$user->business_id === (int)$business->id;
+            $isAdmin = \Illuminate\Support\Facades\Auth::guard('admin')->check() || $user->role === 'Admin';
+
+            if (!$isCustomerOwner && !$isBusinessStaffOrOwner && !$isAdmin) {
+                abort(403, 'Unauthorized access to this quotation.');
+            }
+        }
+
         $quotationPolicy = \App\Models\BusinessLeaglePage::where('business_id', $business->id)
             ->where('type', 'quotation_policy')
             ->where('status', 'active')
@@ -478,6 +490,24 @@ class BusinessController extends Controller
         $quotation = Quotation::where('business_id', $business->id)
             ->where('quotation_no', $quotation_no)
             ->firstOrFail();
+
+        if (in_array($quotation->status, ['converted', 'cancel'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This quotation is closed and can no longer be modified.'
+            ], 422);
+        }
+
+        if (auth()->check()) {
+            $user = auth()->user();
+            $isCustomerOwner = $quotation->customer && (int)$quotation->customer->customer_id === (int)$user->id;
+            $isBusinessStaffOrOwner = (int)$user->business_id === (int)$business->id;
+            $isAdmin = \Illuminate\Support\Facades\Auth::guard('admin')->check() || $user->role === 'Admin';
+
+            if (!$isCustomerOwner && !$isBusinessStaffOrOwner && !$isAdmin) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized action.'], 403);
+            }
+        }
 
         $subtotal = 0;
         foreach ($request->items as $itemData) {

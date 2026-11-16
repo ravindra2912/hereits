@@ -95,8 +95,8 @@ class PosOrderController extends Controller
                 ->addColumn('customer_info', function ($row) {
                     return '
                     <div>
-                        <div class="fw-bold text-dark">' . $row->customer_name . '</div>
-                        <div class="small text-muted">' . ($row->customer_contact ?: 'N/A') . '</div>
+                        <div class="fw-bold text-dark">' . e($row->customer_name) . '</div>
+                        <div class="small text-muted">' . e($row->customer_contact ?: 'N/A') . '</div>
                     </div>';
                 })
                 ->addColumn('staff_info', function ($row) use ($staffList) {

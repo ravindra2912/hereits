@@ -111,6 +111,38 @@ class PaymentController extends Controller
                         ->with('error', 'Payment verification failed. Signature mismatch.');
                 }
 
+                // 2. Prevent Replay Attacks: Ensure payment ID hasn't already been recorded
+                $isDuplicate = BusinessTransactions::where('transaction_id', $request->razorpay_payment_id)->exists();
+                if ($isDuplicate) {
+                    if ($request->expectsJson() || $request->ajax()) {
+                        return response()->json(['success' => false, 'message' => 'This payment transaction has already been processed.'], 422);
+                    }
+                    return redirect()->route('payment.show', ['type' => $type, 'source_id' => $source_id])
+                        ->with('error', 'This payment transaction has already been processed.');
+                }
+
+                // 3. Server-side verification with Razorpay API (amount, status)
+                $paymentDetails = $razorpayService->fetchPayment($request->razorpay_payment_id);
+                $expectedAmountInPaise = (int) round($order->total * 100);
+                $paidAmountInPaise = (int) ($paymentDetails['amount'] ?? 0);
+
+                if ($paidAmountInPaise < $expectedAmountInPaise) {
+                    \Illuminate\Support\Facades\Log::critical("Payment amount mismatch for Order #{$order->id}: Expected {$expectedAmountInPaise} paise, received {$paidAmountInPaise} paise.");
+                    if ($request->expectsJson() || $request->ajax()) {
+                        return response()->json(['success' => false, 'message' => 'Payment amount mismatch detected. Please contact support.'], 400);
+                    }
+                    return redirect()->route('payment.show', ['type' => $type, 'source_id' => $source_id])
+                        ->with('error', 'Payment amount mismatch detected. Please contact support.');
+                }
+
+                if (($paymentDetails['status'] ?? '') !== 'captured') {
+                    if ($request->expectsJson() || $request->ajax()) {
+                        return response()->json(['success' => false, 'message' => 'Payment has not been captured yet by the payment gateway.'], 400);
+                    }
+                    return redirect()->route('payment.show', ['type' => $type, 'source_id' => $source_id])
+                        ->with('error', 'Payment has not been captured yet by the payment gateway.');
+                }
+
                 \Illuminate\Support\Facades\DB::beginTransaction();
 
                 $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->first();

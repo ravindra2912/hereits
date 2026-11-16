@@ -484,7 +484,7 @@ class ExpertController extends Controller
             $temp['timing'] = $allTimings->get($day, collect());
             $timing[] = $temp;
         }
-        $expert = Expert::find($id);
+        $expert = Expert::where('business_id', getBusinessId())->findOrFail($id);
         return view('business.appointment.expert.timing', compact('expert', 'timing'));
     }
 

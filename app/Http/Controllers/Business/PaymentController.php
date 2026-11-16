@@ -214,6 +214,26 @@ class PaymentController extends Controller
                 ], 400);
             }
 
+            // Prevent Replay Attacks
+            $isDuplicate = Transactions::where('payment_id', $request->razorpay_payment_id)->exists();
+            if ($isDuplicate) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This payment transaction has already been processed.',
+                    'redirect' => $redirect
+                ], 422);
+            }
+
+            // Server-side verification with Razorpay API (amount, status)
+            $paymentDetails = $razorpayService->fetchPayment($request->razorpay_payment_id);
+            if (($paymentDetails['status'] ?? '') !== 'captured') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment has not been captured yet by the payment gateway.',
+                    'redirect' => $redirect
+                ], 400);
+            }
+
             DB::beginTransaction();
 
             $purchaseData = Purchase::where('id', $id)
@@ -228,6 +248,18 @@ class PaymentController extends Controller
                     'message' => 'Purchase record not found.',
                     'redirect' => $redirect
                 ], 404);
+            }
+
+            $expectedAmountInPaise = (int) round($purchaseData->total_amount * 100);
+            $paidAmountInPaise = (int) ($paymentDetails['amount'] ?? 0);
+            if ($paidAmountInPaise < $expectedAmountInPaise) {
+                DB::rollBack();
+                Log::critical("Payment amount mismatch for Purchase #{$id}: Expected {$expectedAmountInPaise} paise, received {$paidAmountInPaise} paise.");
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment amount mismatch detected. Please contact support.',
+                    'redirect' => $redirect
+                ], 400);
             }
 
             if ($purchaseData->status === 'paid') {

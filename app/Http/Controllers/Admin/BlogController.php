@@ -177,6 +177,10 @@ class BlogController extends Controller
     // Handle Summernote image upload
     public function uploadImage(Request $request)
     {
+        $request->validate([
+            'file' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
         $url = '';
         if ($request->hasFile('file')) {
             // Store image using existing helper, resize to 800x800

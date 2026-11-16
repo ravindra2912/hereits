@@ -164,7 +164,7 @@ class ApiV1AuthService
             ];
         }
 
-        if (Carbon::parse($record->created_at)->addMinutes(60)->isPast()) {
+        if (Carbon::parse($record->created_at)->addMinutes(15)->isPast()) {
             DB::table('password_reset_tokens')->where('email', $data['email'])->delete();
             return [
                 'success' => false,
@@ -203,10 +203,16 @@ class ApiV1AuthService
     public function logout(User $user): array
     {
         $token = $user->token();
+        $refreshTokenRepository = app(\Laravel\Passport\RefreshTokenRepository::class);
+
         if ($token) {
+            $refreshTokenRepository->revokeRefreshTokensByAccessTokenId($token->id);
             $token->revoke();
         } else {
-            $user->tokens()->delete();
+            foreach ($user->tokens as $t) {
+                $refreshTokenRepository->revokeRefreshTokensByAccessTokenId($t->id);
+                $t->revoke();
+            }
         }
 
         return [

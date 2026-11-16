@@ -34,7 +34,7 @@ use Illuminate\Support\Facades\Validator;
 class AuthController extends Controller
 {
 
-    public $forgotPasswordTimeLimite = 110; // in minutes
+    public $forgotPasswordTimeLimite = 15; // in minutes (Strict 15-minute token validity)
     function __construct() {}
 
     public function store(LoginRequest $request, ?string $business_slug = null)

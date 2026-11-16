@@ -83,14 +83,14 @@ class AppointmentBookingController extends Controller
                     return $html;
                 })
                 ->addColumn('user_info', function ($row) use ($businessSetting) {
-                    $html = '<div class="fw-bold text-dark">' . $row->user_name . '</div>';
+                    $html = '<div class="fw-bold text-dark">' . e($row->user_name) . '</div>';
                     if (!empty($row->user_contact)) {
-                        $html .= '<div class="small text-muted"><i class="bi bi-telephone me-1"></i>' . $row->user_contact . '</div>';
+                        $html .= '<div class="small text-muted"><i class="bi bi-telephone me-1"></i>' . e($row->user_contact) . '</div>';
                     }
                     if ($businessSetting->allow_appointment_product_selection && $row->appointmentProducts->isNotEmpty()) {
                         $html .= '<div class="mt-1 pt-1 border-top"><strong class="small text-secondary text-uppercase d-block mb-1">Products:</strong>';
                         foreach ($row->appointmentProducts as $ap) {
-                            $html .= '<div class="small text-muted py-0.5"><i class="bi bi-box me-1"></i>' . $ap->product_name . ' (' . $ap->qty . ' &times; ' . currencyFormat($ap->product_price) . ')</div>';
+                            $html .= '<div class="small text-muted py-0.5"><i class="bi bi-box me-1"></i>' . e($ap->product_name) . ' (' . (int)$ap->qty . ' &times; ' . currencyFormat($ap->product_price) . ')</div>';
                         }
                         if ($row->product_amount > 0) {
                             $html .= '<div class="small fw-bold text-dark mt-1">Product Total: ' . currencyFormat($row->product_amount) . '</div>';
@@ -426,7 +426,9 @@ class AppointmentBookingController extends Controller
                 $q->select('id', 'user_id', 'is_appointment_book_with_time_slot')->with('user:id,first_name,last_name');
             },
             'appointmentProducts.product:id,sku'
-        ])->find($id);
+        ])
+            ->where('business_id', getBusinessId())
+            ->findOrFail($id);
         $appontment->bookdate = Carbon::parse($appontment->slot_start_time)->format('h:i a') . ' - ' . Carbon::parse($appontment->slot_end_time)->format('h:i a');
         $businessSetting = getBusinessSettings();
         $experts = Expert::with('user:id,first_name,last_name')->select('id', 'user_id', 'is_appointment_book_with_time_slot')->where('business_id', getBusinessId());
@@ -481,7 +483,7 @@ class AppointmentBookingController extends Controller
             if ($validator->fails()) { // Validation fails
                 $message = $validator->errors();
             } else {
-                $insert = AppointmentBooking::find($id);
+                $insert = AppointmentBooking::where('business_id', getBusinessId())->findOrFail($id);
                 $insert->department_id = $request->department_id;
                 $insert->expert_id = $request->expert_id;
                 $insert->user_name = $request->user_name;
@@ -644,7 +646,7 @@ class AppointmentBookingController extends Controller
         $data = array();
 
         try {
-            $delete = AppointmentBooking::find($id);
+            $delete = AppointmentBooking::where('business_id', getBusinessId())->findOrFail($id);
             if ($delete) {
                 $delete->delete();
 
@@ -694,9 +696,9 @@ class AppointmentBookingController extends Controller
                     return $expinfo;
                 })
                 ->addColumn('user_info', function ($row) {
-                    $expinfo = $row->user_name;
+                    $expinfo = e($row->user_name);
                     if (!empty($row->user_contact)) {
-                        $expinfo .= "</br>" . $row->user_contact;
+                        $expinfo .= "</br>" . e($row->user_contact);
                     }
                     return $expinfo;
                 })
