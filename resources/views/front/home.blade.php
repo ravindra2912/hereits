@@ -144,14 +144,14 @@
                                 <i class="fas fa-star text-warning" style="font-size: 0.7rem;"></i> {{ number_format($business->rating, 1) }}
                             </span>
                         </div>
-                        <div class="d-flex align-items-center mb-3 text-muted small">
+                        <div class="d-flex align-items-center mb-0 mb-md-3 text-muted small">
                             <i class="fas fa-map-marker-alt me-1 text-primary" style="font-size: 0.8rem;"></i>
                             <span class="text-truncate">{{ $business->area ? $business->area . ', ' : '' }}{{ $business->city->name ?? '' }}</span>
                             @if(isset($business->distance))
                             <span class="ms-auto text-primary fw-bold" style="font-size: 0.75rem;"><i class="fas fa-route me-1"></i>{{ number_format($business->distance, 1) }} km</span>
                             @endif
                         </div>
-                        <div class="mt-auto d-flex align-items-center justify-content-between pt-2 border-top">
+                        <div class="mt-auto d-none d-md-flex align-items-center justify-content-between pt-2 border-top">
                             <span class="badge bg-light text-secondary rounded-pill px-2 py-1 small fw-semibold">{{ $business->businessCategory->name ?? 'Business' }}</span>
                             <a href="{{ route('business-details', $business->slug) }}" class="small fw-bold text-primary text-decoration-none">
                                 Visit Store <i class="fas fa-arrow-right ms-1"></i>
@@ -264,14 +264,14 @@
                                 <i class="fas fa-star text-warning" style="font-size: 0.7rem;"></i> {{ number_format($business->rating, 1) }}
                             </span>
                         </div>
-                        <div class="d-flex align-items-center mb-3 text-muted small">
+                        <div class="d-flex align-items-center mb-0 mb-md-3 text-muted small">
                             <i class="fas fa-map-marker-alt me-1 text-primary" style="font-size: 0.8rem;"></i>
                             <span class="text-truncate">{{ $business->area ? $business->area . ', ' : '' }}{{ $business->city->name ?? '' }}</span>
                             @if(isset($business->distance))
                             <span class="ms-auto text-primary fw-bold" style="font-size: 0.75rem;"><i class="fas fa-route me-1"></i>{{ number_format($business->distance, 1) }} km</span>
                             @endif
                         </div>
-                        <div class="mt-auto d-flex align-items-center justify-content-between pt-2 border-top">
+                        <div class="mt-auto d-none d-md-flex align-items-center justify-content-between pt-2 border-top">
                             <span class="badge bg-light text-secondary rounded-pill px-2 py-1 small fw-semibold">{{ $business->businessCategory->name ?? 'Business' }}</span>
                             <a href="{{ route('business-details', $business->slug) }}" class="small fw-bold text-primary text-decoration-none">
                                 Visit Store <i class="fas fa-arrow-right ms-1"></i>
