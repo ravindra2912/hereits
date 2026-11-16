@@ -403,8 +403,10 @@ class SettingController extends Controller
                 $message = $validator->errors();
                 // $message = $validator->errors()->first();
             } else {
+                $businessId = getBusinessId();
+                $business = Business::where('id', $businessId)->findOrFail($id);
 
-                Business::where('id', $id)->update([
+                $business->update([
                     'seo_description' => $request->seo_description,
                     'seo_keyword' => $request->seo_keyword,
                 ]);

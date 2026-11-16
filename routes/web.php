@@ -138,7 +138,7 @@ Route::post('favorite/toggle', [AccountController::class, 'toggleFavorite'])->na
 Route::post('{business_slug}/favorite/toggle', [AccountController::class, 'toggleFavorite']);
 
 Route::controller(BusinessController::class)->group(function () {
-    Route::post('{business_slug}/campaign-lead/submit', 'submitCampaignLead')->name('business.campaign-lead.submit');
+    Route::post('{business_slug}/campaign-lead/submit', 'submitCampaignLead')->name('business.campaign-lead.submit')->middleware('throttle:10,1');
     Route::get('{business_slug}', 'businessDetails')->name('business-details');
     Route::get('{business_slug}/legal/{type}', 'legalPageDetails')->name('business-legal-page');
     Route::get('{business_slug}/quotation/{quotation_no}', 'quotationDetails')->name('quotation-details');

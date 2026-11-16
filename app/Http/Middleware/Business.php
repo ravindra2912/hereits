@@ -82,28 +82,17 @@ class Business
                             'business.analytics',
                             'business.credits',
                             'business.purchase.history',
-                            'business.setting.business.seo',
-                            'business.setting.business.configuration',
-                            'business.setting.business.about_us',
-                            'business.setting.business.leagle-page',
-                            'business.setting.business.timing',
+                            'business.setting.business',
+                            'business.setting.systemsetting',
                         ];
 
                         foreach ($ownerOnlyRoutes as $prefix) {
-                            if (str_starts_with($routeName, $prefix)) {
+                            if (str_starts_with($routeName, $prefix) || $routeName === $prefix) {
                                 if ($request->ajax()) {
                                     return response()->json(['success' => false, 'message' => 'Unauthorized. This section is only accessible by the business owner.'], 403);
                                 }
                                 abort(403, 'Unauthorized. This section is only accessible by the business owner.');
                             }
-                        }
-
-                        // Business profile is owner only, except timing and configuration and seo (which are also listed above)
-                        if ($routeName === 'business.setting.business') {
-                            if ($request->ajax()) {
-                                return response()->json(['success' => false, 'message' => 'Unauthorized. This section is only accessible by the business owner.'], 403);
-                            }
-                            abort(403, 'Unauthorized. This section is only accessible by the business owner.');
                         }
 
                         // Map route name prefixes to business permissions

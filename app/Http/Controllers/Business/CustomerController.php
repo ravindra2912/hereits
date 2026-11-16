@@ -301,13 +301,28 @@ class CustomerController extends Controller
             })
             ->first();
 
-        $userId = $businessCustomer?->customer_id ?: (is_numeric($id) ? (int)$id : null);
-        $user = User::select('id', 'first_name', 'last_name', 'email', 'profile', 'contact', 'gender', 'created_at')
-            ->find($userId);
+        if (!$businessCustomer) {
+            abort(404, 'Customer not found.');
+        }
+
+        $userId = $businessCustomer->customer_id;
+        $user = null;
+        if ($userId) {
+            $user = User::select('id', 'first_name', 'last_name', 'email', 'profile', 'contact', 'gender', 'created_at')
+                ->find($userId);
+        }
 
         if (!$user) {
-            $user = User::select('id', 'first_name', 'last_name', 'email', 'profile', 'contact', 'gender', 'created_at')
-                ->findOrFail($id);
+            $nameParts = explode(' ', trim($businessCustomer->customer_name ?? 'Customer'), 2);
+            $user = new User();
+            $user->id = $businessCustomer->id;
+            $user->first_name = $nameParts[0] ?? 'Customer';
+            $user->last_name = $nameParts[1] ?? '';
+            $user->email = null;
+            $user->profile = null;
+            $user->contact = $businessCustomer->contact;
+            $user->gender = null;
+            $user->created_at = $businessCustomer->created_at;
         }
 
         $businessSetting = getBusinessSettings();

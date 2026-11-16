@@ -698,6 +698,11 @@ function validateCoupon($couponCode, $planType, $orderAmount)
             return ['success' => false, 'message' => 'This coupon is not applicable for ' . $typeLabel . '.'];
         }
 
+        // Prevent Influencer Self-Referral
+        if (!empty($coupon->Influencer_business_id) && !empty($currentBusinessId) && (int)$coupon->Influencer_business_id === (int)$currentBusinessId) {
+            return ['success' => false, 'message' => 'You cannot use your own influencer or referral coupon code.'];
+        }
+
         // 3. Check Specific Business
         if ($coupon->is_for_specific_business) {
             $allowedBusinesses = is_array($coupon->business_ids) ? $coupon->business_ids : [];

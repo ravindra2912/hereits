@@ -27,11 +27,10 @@ class BusinessController extends Controller
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('owner', function ($row) {
-                    return isset($row->owner) && !empty($row->owner->first_name) ? $row->owner->first_name : '';
+                    return isset($row->owner) && !empty($row->owner->first_name) ? e($row->owner->first_name) : '';
                 })
                 ->addColumn('category', function ($row) {
-                    return isset($row->businessCategory) && !empty($row->businessCategory->name) ? $row->businessCategory->name : '';
-                    return $row->businessCategory->name;
+                    return isset($row->businessCategory) && !empty($row->businessCategory->name) ? e($row->businessCategory->name) : '';
                 })
                 ->addColumn('img', function ($row) {
                     return '<div class="text-center d-flex gap-2 justify-content-center">
@@ -482,11 +481,10 @@ class BusinessController extends Controller
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('owner', function ($row) {
-                    return isset($row->owner) && !empty($row->owner->first_name) ? $row->owner->first_name : '';
+                    return isset($row->owner) && !empty($row->owner->first_name) ? e($row->owner->first_name) : '';
                 })
                 ->addColumn('category', function ($row) {
-                    return isset($row->businessCategory) && !empty($row->businessCategory->name) ? $row->businessCategory->name : '';
-                    return $row->businessCategory->name;
+                    return isset($row->businessCategory) && !empty($row->businessCategory->name) ? e($row->businessCategory->name) : '';
                 })
                 ->addColumn('img', function ($row) {
                     return '<div class="text-center"><img src="' . getImage($row->business_image) . '" class="avatar-img rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" /></div>';

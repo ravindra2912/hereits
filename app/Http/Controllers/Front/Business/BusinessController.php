@@ -429,16 +429,17 @@ class BusinessController extends Controller
             ->where('quotation_no', $quotation_no)
             ->firstOrFail();
 
-        // Authorization check: If logged in, ensure caller is the quotation's customer or a member/owner of the business
-        if (auth()->check()) {
-            $user = auth()->user();
-            $isCustomerOwner = $quotation->customer && (int)$quotation->customer->customer_id === (int)$user->id;
-            $isBusinessStaffOrOwner = (int)$user->business_id === (int)$business->id;
-            $isAdmin = \Illuminate\Support\Facades\Auth::guard('admin')->check() || $user->role === 'Admin';
+        // Authorization check: Ensure caller is the quotation's owner, business staff, or admin
+        $user = auth()->user();
+        $isCustomerOwner = $user && $quotation->customer && (int)$quotation->customer->customer_id === (int)$user->id;
+        $isBusinessStaffOrOwner = $user && (int)$user->business_id === (int)$business->id;
+        $isAdmin = \Illuminate\Support\Facades\Auth::guard('admin')->check() || ($user && $user->role === 'Admin');
 
-            if (!$isCustomerOwner && !$isBusinessStaffOrOwner && !$isAdmin) {
-                abort(403, 'Unauthorized access to this quotation.');
+        if (!$isCustomerOwner && !$isBusinessStaffOrOwner && !$isAdmin) {
+            if (!auth()->check()) {
+                return redirect()->route('login')->with('warning', 'Please login to view this quotation.');
             }
+            abort(403, 'Unauthorized access to this quotation.');
         }
 
         $quotationPolicy = \App\Models\BusinessLeaglePage::where('business_id', $business->id)
@@ -463,6 +464,17 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         $quotation = $this->quotationRepository->findByNo($quotation_no, $business->id);
+
+        // Authorization check: Ensure caller is authorized to view/download this quotation PDF
+        $user = auth()->user();
+        $isCustomerOwner = $user && $quotation->customer && (int)$quotation->customer->customer_id === (int)$user->id;
+        $isBusinessStaffOrOwner = $user && (int)$user->business_id === (int)$business->id;
+        $isAdmin = \Illuminate\Support\Facades\Auth::guard('admin')->check() || ($user && $user->role === 'Admin');
+
+        if (!$isCustomerOwner && !$isBusinessStaffOrOwner && !$isAdmin) {
+            abort(403, 'Unauthorized access to this quotation PDF.');
+        }
+
         $business = $quotation->business;
         $businessSetting = $business ? $business->businessSetting : null;
         $quotationPolicy = $business && $business->leaglePages ? $business->leaglePages->where('type', 'quotation_policy')->first() : null;
@@ -498,15 +510,21 @@ class BusinessController extends Controller
             ], 422);
         }
 
-        if (auth()->check()) {
-            $user = auth()->user();
-            $isCustomerOwner = $quotation->customer && (int)$quotation->customer->customer_id === (int)$user->id;
-            $isBusinessStaffOrOwner = (int)$user->business_id === (int)$business->id;
-            $isAdmin = \Illuminate\Support\Facades\Auth::guard('admin')->check() || $user->role === 'Admin';
+        // Authorization check: caller must be authenticated and authorized
+        if (!auth()->check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please login to modify this quotation.'
+            ], 401);
+        }
 
-            if (!$isCustomerOwner && !$isBusinessStaffOrOwner && !$isAdmin) {
-                return response()->json(['success' => false, 'message' => 'Unauthorized action.'], 403);
-            }
+        $user = auth()->user();
+        $isCustomerOwner = $quotation->customer && (int)$quotation->customer->customer_id === (int)$user->id;
+        $isBusinessStaffOrOwner = (int)$user->business_id === (int)$business->id;
+        $isAdmin = \Illuminate\Support\Facades\Auth::guard('admin')->check() || $user->role === 'Admin';
+
+        if (!$isCustomerOwner && !$isBusinessStaffOrOwner && !$isAdmin) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized action.'], 403);
         }
 
         $subtotal = 0;
