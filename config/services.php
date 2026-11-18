@@ -90,6 +90,7 @@ return [
         'api_version' => env('META_WHATSAPP_API_VERSION', 'v21.0'),
         'template_name' => env('META_WHATSAPP_OTP_TEMPLATE', env('WHATSAPP_OTP_TEMPLATE')),
         'template_lang' => env('META_WHATSAPP_TEMPLATE_LANG', 'en_US'),
+        'template_button_type' => env('META_WHATSAPP_TEMPLATE_BUTTON_TYPE'),
         'otp_expiry_minutes' => (int) env('WHATSAPP_OTP_EXPIRY_MINUTES', 10),
     ],
 

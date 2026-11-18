@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\Business;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Hash;
+use App\Models\OtpManagement;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class WhatsAppOtpService
@@ -35,13 +35,20 @@ class WhatsAppOtpService
     }
 
     /**
-     * Generate and dispatch WhatsApp OTP.
+     * Generate and dispatch WhatsApp OTP, recording into otp_management table.
      *
      * @param string $contact
+     * @param string|null $templateName
+     * @param string|null $language
+     * @param string $source
      * @return array
      */
-    public function generateAndSendOtp(string $contact): array
-    {
+    public function generateAndSendOtp(
+        string $contact,
+        ?string $templateName = null,
+        ?string $language = null,
+        string $source = 'whatsapp'
+    ): array {
         $cleanContact = $this->sanitizeContact($contact);
 
         if (strlen($cleanContact) !== 10) {
@@ -51,7 +58,7 @@ class WhatsAppOtpService
             ];
         }
 
-        // Check if phone number is already registered
+        // Prevent registration if phone number already belongs to an existing business
         if (Business::where('contact', $cleanContact)->exists()) {
             return [
                 'success' => false,
@@ -59,39 +66,61 @@ class WhatsAppOtpService
             ];
         }
 
-        // Check rate limiting / cooldown
-        $cooldownKey = "whatsapp_otp_cooldown_{$cleanContact}";
-        if (Cache::has($cooldownKey)) {
-            $expireAt = Cache::get($cooldownKey);
-            $remaining = max(1, $expireAt - now()->timestamp);
-            return [
-                'success' => false,
-                'message' => "Please wait {$remaining} seconds before requesting a new OTP.",
-                'cooldown' => $remaining,
-            ];
+        // Rate limiting / Cooldown check directly from otp_management table (60 seconds)
+        $latestRecord = OtpManagement::select('id', 'created_at')
+            ->where('contact', $cleanContact)
+            ->where('source', $source)
+            ->latest('id')
+            ->first();
+
+        if ($latestRecord && $latestRecord->created_at) {
+            $elapsedSeconds = $latestRecord->created_at->diffInSeconds(now());
+            if ($elapsedSeconds < 60) {
+                $remaining = 60 - $elapsedSeconds;
+                return [
+                    'success' => false,
+                    'message' => "Please wait {$remaining} seconds before requesting a new OTP.",
+                    'cooldown' => $remaining,
+                ];
+            }
         }
 
-        // Generate 6-digit OTP
+        // Expire any existing pending OTPs for this contact & source to ensure only 1 active code
+        OtpManagement::where('contact', $cleanContact)
+            ->where('source', $source)
+            ->where('status', 'pending')
+            ->update(['status' => 'expired']);
+
+        // Generate secure 6-digit numeric OTP
         $otp = (string) random_int(100000, 999999);
-        $expiryMinutes = config('services.whatsapp.otp_expiry_minutes', 10);
+        $expiryMinutes = (int) config('services.whatsapp.otp_expiry_minutes', 10);
 
-        // Store hashed OTP in cache
-        $otpKey = "whatsapp_otp_{$cleanContact}";
-        Cache::put($otpKey, [
-            'otp' => Hash::make($otp),
-            'created_at' => now()->timestamp,
+        // Store OTP entry in otp_management table
+        $otpEntry = OtpManagement::create([
+            'contact' => $cleanContact,
+            'otp' => $otp,
+            'source' => $source,
+            'valid' => $expiryMinutes,
+            'status' => 'pending',
             'attempts' => 0,
-        ], now()->addMinutes($expiryMinutes));
+        ]);
 
-        // Set 60-second cooldown
-        Cache::put($cooldownKey, now()->timestamp + 60, 60);
+        Log::info("WhatsApp OTP Generated and Logged to Table", [
+            'id' => $otpEntry->id,
+            'contact' => $cleanContact,
+            'otp' => $otp,
+            'source' => $source,
+            'valid_minutes' => $expiryMinutes,
+            'template' => $templateName,
+            'language' => $language,
+        ]);
 
-        // Dispatch via WhatsApp Meta API
-        $sendResult = $this->whatsAppService->sendOtp($cleanContact, $otp);
+        // Dispatch via WhatsApp Meta Cloud API
+        $sendResult = $this->whatsAppService->sendOtp($cleanContact, $otp, $templateName, $language);
 
         if (!$sendResult['success']) {
-            Cache::forget($otpKey);
-            Cache::forget($cooldownKey);
+            $otpEntry->update(['status' => 'failed']);
+
             return [
                 'success' => false,
                 'message' => $sendResult['message'] ?? 'Failed to send WhatsApp verification code. Please try again.',
@@ -108,57 +137,114 @@ class WhatsAppOtpService
     }
 
     /**
-     * Verify the entered WhatsApp OTP.
+     * Verify the entered WhatsApp OTP using the otp_management table (No Cache).
      *
      * @param string $contact
      * @param string $otp
+     * @param string $source
      * @return array
      */
-    public function verifyOtp(string $contact, string $otp): array
+    public function verifyOtp(string $contact, string $otp, string $source = 'whatsapp'): array
     {
         $cleanContact = $this->sanitizeContact($contact);
-        $otpKey = "whatsapp_otp_{$cleanContact}";
 
-        $cachedData = Cache::get($otpKey);
+        Log::info("WhatsApp OTP Verification Attempt", [
+            'contact' => $cleanContact,
+            'source' => $source,
+        ]);
 
-        if (!$cachedData || !isset($cachedData['otp'])) {
+        // Query the latest pending OTP entry for this contact from otp_management table
+        $otpRecord = OtpManagement::where('contact', $cleanContact)
+            ->where('source', $source)
+            ->where('status', 'pending')
+            ->latest('id')
+            ->first();
+
+        if (!$otpRecord) {
+            Log::warning("WhatsApp OTP Verification Failed: No pending OTP found in table", [
+                'contact' => $cleanContact,
+            ]);
+
             return [
                 'success' => false,
-                'message' => 'Verification code expired or not found. Please request a new code.',
+                'message' => 'Verification code not found or already used. Please request a new code.',
             ];
         }
 
-        // Check max attempts
-        if (($cachedData['attempts'] ?? 0) >= 5) {
-            Cache::forget($otpKey);
+        // Check expiration based on the `valid` column (minutes) and `created_at`
+        if ($otpRecord->created_at->addMinutes($otpRecord->valid)->isPast()) {
+            $otpRecord->update(['status' => 'expired']);
+
+            Log::warning("WhatsApp OTP Verification Failed: OTP expired", [
+                'id' => $otpRecord->id,
+                'contact' => $cleanContact,
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Verification code has expired. Please request a new code.',
+            ];
+        }
+
+        // Check maximum failed attempts limit
+        if ($otpRecord->attempts >= 5) {
+            $otpRecord->update(['status' => 'expired']);
+
+            Log::warning("WhatsApp OTP Verification Failed: Max attempts reached", [
+                'id' => $otpRecord->id,
+                'contact' => $cleanContact,
+            ]);
+
             return [
                 'success' => false,
                 'message' => 'Too many failed attempts. Please request a new verification code.',
             ];
         }
 
-        if (!Hash::check($otp, $cachedData['otp'])) {
-            $cachedData['attempts'] = ($cachedData['attempts'] ?? 0) + 1;
-            Cache::put($otpKey, $cachedData, now()->addMinutes(config('services.whatsapp.otp_expiry_minutes', 10)));
+        // Verify OTP match
+        if (trim($otpRecord->otp) !== trim($otp)) {
+            $otpRecord->increment('attempts');
+            $remainingAttempts = max(0, 5 - (int) $otpRecord->attempts);
 
-            $remainingAttempts = 5 - $cachedData['attempts'];
+            if ($remainingAttempts <= 0) {
+                $otpRecord->update(['status' => 'expired']);
+
+                return [
+                    'success' => false,
+                    'message' => 'Too many failed attempts. Please request a new verification code.',
+                ];
+            }
+
+            Log::warning("WhatsApp OTP Verification Failed: Incorrect code", [
+                'id' => $otpRecord->id,
+                'contact' => $cleanContact,
+                'attempts' => $otpRecord->attempts,
+                'remaining' => $remainingAttempts,
+            ]);
+
             return [
                 'success' => false,
                 'message' => "Invalid verification code. {$remainingAttempts} attempt(s) remaining.",
             ];
         }
 
-        // OTP Verified successfully!
-        Cache::forget($otpKey);
-        Cache::forget("whatsapp_otp_cooldown_{$cleanContact}");
-
+        // OTP is valid: Generate verification token & mark as verified in table
         $verificationToken = Str::random(40);
 
-        // Store verification in Cache for 60 minutes
-        Cache::put("whatsapp_verified_{$cleanContact}", $verificationToken, now()->addMinutes(60));
+        $otpRecord->update([
+            'status' => 'verified',
+            'token' => $verificationToken,
+            'verified_at' => now(),
+        ]);
 
-        // Also store in session for multi-layered validation
+        // Keep session token for seamless multi-factor browser state
         session()->put("whatsapp_verified_{$cleanContact}", $verificationToken);
+
+        Log::info("WhatsApp OTP Verified Successfully in Table", [
+            'id' => $otpRecord->id,
+            'contact' => $cleanContact,
+            'token' => $verificationToken,
+        ]);
 
         return [
             'success' => true,
@@ -168,37 +254,51 @@ class WhatsAppOtpService
     }
 
     /**
-     * Check if a contact number has a valid verified token.
+     * Check if a contact number has a valid verified token in otp_management table.
      *
      * @param string $contact
      * @param string|null $token
+     * @param string $source
      * @return bool
      */
-    public function isContactVerified(string $contact, ?string $token = null): bool
+    public function isContactVerified(string $contact, ?string $token = null, string $source = 'whatsapp'): bool
     {
         $cleanContact = $this->sanitizeContact($contact);
-        $cacheToken = Cache::get("whatsapp_verified_{$cleanContact}");
-        $sessionToken = session("whatsapp_verified_{$cleanContact}");
+
+        // Check otp_management table for a verified record within last 2 hours
+        $query = OtpManagement::where('contact', $cleanContact)
+            ->where('source', $source)
+            ->where('status', 'verified')
+            ->where('verified_at', '>=', now()->subHours(2));
 
         if (!empty($token)) {
-            return ($cacheToken && hash_equals($cacheToken, $token)) ||
-                   ($sessionToken && hash_equals($sessionToken, $token));
+            $query->where('token', $token);
         }
 
-        return !empty($cacheToken) || !empty($sessionToken);
+        return $query->exists();
     }
 
     /**
-     * Invalidate verification token once registration is complete.
+     * Consume verification record in otp_management table once registration is complete.
      *
      * @param string $contact
+     * @param string $source
      * @return void
      */
-    public function consumeVerification(string $contact): void
+    public function consumeVerification(string $contact, string $source = 'whatsapp'): void
     {
         $cleanContact = $this->sanitizeContact($contact);
-        Cache::forget("whatsapp_verified_{$cleanContact}");
+
+        OtpManagement::where('contact', $cleanContact)
+            ->where('source', $source)
+            ->where('status', 'verified')
+            ->update(['status' => 'used']);
+
         session()->forget("whatsapp_verified_{$cleanContact}");
+
+        Log::info("WhatsApp OTP Verification Consumed", [
+            'contact' => $cleanContact,
+            'source' => $source,
+        ]);
     }
 }
-

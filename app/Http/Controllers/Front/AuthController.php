@@ -371,7 +371,11 @@ class AuthController extends Controller
      */
     public function sendBusinessContactOtp(SendWhatsAppOtpRequest $request, WhatsAppOtpService $otpService): JsonResponse
     {
-        $result = $otpService->generateAndSendOtp($request->business_contact);
+        $result = $otpService->generateAndSendOtp(
+            $request->business_contact,
+            $request->input('template_name'),
+            $request->input('language')
+        );
 
         return response()->json([
             'success' => $result['success'],
