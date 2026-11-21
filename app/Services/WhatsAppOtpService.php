@@ -50,7 +50,8 @@ class WhatsAppOtpService
         ?string $templateName = null,
         ?string $language = null,
         string $source = 'whatsapp',
-        string $type = 'business'
+        string $type = 'business',
+        ?int $ignoreId = null
     ): array {
         $cleanContact = $this->sanitizeContact($contact);
 
@@ -63,14 +64,22 @@ class WhatsAppOtpService
 
         // Prevent registration if phone number already belongs to an existing user/business
         if ($type === 'user') {
-            if (User::where('contact', $cleanContact)->exists()) {
+            $userQuery = User::where('contact', $cleanContact);
+            if ($ignoreId) {
+                $userQuery->where('id', '!=', $ignoreId);
+            }
+            if ($userQuery->exists()) {
                 return [
                     'success' => false,
                     'message' => 'This contact number is already registered with an existing account.',
                 ];
             }
         } else {
-            if (Business::where('contact', $cleanContact)->exists()) {
+            $businessQuery = Business::where('contact', $cleanContact);
+            if ($ignoreId) {
+                $businessQuery->where('id', '!=', $ignoreId);
+            }
+            if ($businessQuery->exists()) {
                 return [
                     'success' => false,
                     'message' => 'This contact number is already registered with another business.',

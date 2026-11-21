@@ -18,6 +18,20 @@ class Front
     {
         if (Auth::check()) {
             if (Auth::user()->role == 'Business' || Auth::user()->role == 'User') {
+                $target = app(\App\Services\ContactVerificationService::class)->getPendingVerificationTarget($request);
+                if ($target !== null) {
+                    if ($request->ajax() || $request->expectsJson()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Contact verification is required to continue.',
+                            'redirect' => route('verify.contact'),
+                        ], 403);
+                    }
+                    if ($request->isMethod('GET')) {
+                        session(['contact_verify_return_url' => $request->fullUrl()]);
+                    }
+                    return redirect()->route('verify.contact');
+                }
                 return $next($request);
             } else {
                 if ($request->ajax()) {

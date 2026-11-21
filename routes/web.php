@@ -15,11 +15,19 @@ use App\Http\Controllers\Front\Business\ServiceController;
 use App\Http\Controllers\Front\Business\CommonController as BusinessCommonController;
 use App\Http\Controllers\Front\BlogController;
 use App\Http\Controllers\Front\LocationController;
+use App\Http\Controllers\Front\ContactVerificationController;
 use App\Http\Controllers\NotificationTokenController;
 
 Route::post('/save-fcm-token', [NotificationTokenController::class, 'saveFcmToken'])->name('notification.save-fcm-token');
 
 Route::post('/set-location', [LocationController::class, 'setLocation'])->name('set-location');
+
+// Contact Number Verification Routes (Applies across Front, Business, POS, and Expert panels)
+Route::controller(ContactVerificationController::class)->prefix('verify-contact')->group(function () {
+    Route::get('', 'show')->name('verify.contact');
+    Route::post('send-otp', 'sendOtp')->name('verify.contact.send-otp')->middleware('throttle:5,1');
+    Route::post('verify-otp', 'verifyOtp')->name('verify.contact.verify-otp')->middleware('throttle:10,1');
+});
 
 Route::controller(BlogController::class)->name('blog.')->group(function () {
     Route::get('/blogs', 'index')->name('index');

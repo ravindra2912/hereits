@@ -50,7 +50,7 @@ class Expert extends Authenticatable
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id', 'id')->select('id', 'first_name', 'last_name', 'email', 'profile');
+        return $this->belongsTo(User::class, 'user_id', 'id')->select('id', 'first_name', 'last_name', 'email', 'profile', 'contact', 'is_contact_verify');
     }
 
     public function timings()

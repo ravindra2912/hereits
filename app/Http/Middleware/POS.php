@@ -40,6 +40,21 @@ class POS
             return redirect()->route('pos.login')->with('error', 'Unauthorized access.');
         }
 
+        $target = app(\App\Services\ContactVerificationService::class)->getPendingVerificationTarget($request);
+        if ($target !== null) {
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Contact verification is required to continue.',
+                    'redirect' => route('verify.contact'),
+                ], 403);
+            }
+            if ($request->isMethod('GET')) {
+                session(['contact_verify_return_url' => $request->fullUrl()]);
+            }
+            return redirect()->route('verify.contact');
+        }
+
         // Sync session data if missing, or perform periodic permissions re-sync every 10 mins for non-owners
         if (!session()->has('pos_business_details') || !session()->has('pos_user_businesses') || !session()->has('pos_permissions')) {
             app(\App\Services\PosSessionService::class)->syncAll($user);

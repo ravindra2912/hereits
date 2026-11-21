@@ -8,6 +8,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\Admin;
 use App\Http\Middleware\Business;
 use App\Http\Middleware\Front;
+use App\Http\Middleware\EnsureContactIsVerified;
 use App\Http\Middleware\Expert;
 use App\Http\Middleware\CheckBusinessModule;
 use App\Http\Middleware\MinifyHtml;
@@ -43,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'front' => Front::class,
             'pos' => POS::class,
             'checkModule' => CheckBusinessModule::class,
+            'verified.contact' => EnsureContactIsVerified::class,
         ]);
 
         $middleware->redirectTo(
@@ -84,6 +86,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             MinifyHtml::class,
             \App\Http\Middleware\TrackLastBusinessVisit::class,
+            EnsureContactIsVerified::class,
         ]);
 
         $middleware->append(SecurityHeaders::class);
