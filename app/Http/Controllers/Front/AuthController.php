@@ -136,7 +136,7 @@ class AuthController extends Controller
             if ($validator->fails()) { // Validation fails
                 $message = $validator->errors();
                 // $message = $validator->errors()->first();
-            } else if (!$otpService->isContactVerified($request->contact, $request->input('whatsapp_verification_token'))) {
+            } else if (!$otpService->isContactVerified($request->contact, $request->input('whatsapp_verification_token'), 'whatsapp', 'user')) {
                 $message = [
                     'contact' => ['Please verify your contact number via WhatsApp OTP before completing registration.']
                 ];
@@ -147,6 +147,7 @@ class AuthController extends Controller
                 $insert->last_name = $request->last_name;
                 $insert->email = $request->email;
                 $insert->contact = $request->contact;
+                $insert->is_contact_verify = 1;
                 $referrerId = $request->referrer_business_id ?? null;
                 if (empty($referrerId) && !empty($business_slug)) {
                     $referrerBusiness = Business::select('id')->where('slug', $business_slug)->first();
@@ -199,7 +200,7 @@ class AuthController extends Controller
                 DB::commit();
 
                 // Invalidate WhatsApp OTP verification token after successful user registration
-                $otpService->consumeVerification($request->contact);
+                $otpService->consumeVerification($request->contact, 'whatsapp', 'user');
             }
         } catch (\Exception $e) {
             DB::rollBack();
@@ -398,7 +399,7 @@ class AuthController extends Controller
      */
     public function verifyUserContactOtp(VerifyWhatsAppOtpRequest $request, WhatsAppOtpService $otpService): JsonResponse
     {
-        $result = $otpService->verifyOtp($request->getContact(), $request->otp);
+        $result = $otpService->verifyOtp($request->getContact(), $request->otp, 'whatsapp', 'user');
 
         return response()->json([
             'success' => $result['success'],
@@ -432,7 +433,7 @@ class AuthController extends Controller
      */
     public function verifyBusinessContactOtp(VerifyWhatsAppOtpRequest $request, WhatsAppOtpService $otpService): JsonResponse
     {
-        $result = $otpService->verifyOtp($request->getContact(), $request->otp);
+        $result = $otpService->verifyOtp($request->getContact(), $request->otp, 'whatsapp', 'business');
 
         return response()->json([
             'success' => $result['success'],
@@ -471,7 +472,7 @@ class AuthController extends Controller
             if ($validator->fails()) { // Validation fails
                 $message = $validator->errors();
                 // $message = $validator->errors()->first();
-            } else if (!$otpService->isContactVerified($request->business_contact, $request->input('whatsapp_verification_token'))) {
+            } else if (!$otpService->isContactVerified($request->business_contact, $request->input('whatsapp_verification_token'), 'whatsapp', 'business')) {
                 $message = [
                     'business_contact' => ['Please verify your contact number via WhatsApp OTP before completing registration.']
                 ];
@@ -501,6 +502,7 @@ class AuthController extends Controller
                 $insert->owner_id = $user_id;
                 $insert->name = $request->business_name;
                 $insert->contact = $request->business_contact;
+                $insert->is_contact_verify = 1;
                 $insert->slug = generateUniqueSlug(Business::class, $request->business_name . ' ' . $city->name);
                 $insert->business_category_id = $request->business_category_id;
                 $insert->business_type = $request->business_type;
@@ -576,7 +578,7 @@ class AuthController extends Controller
                 $message = 'Business register successfully.';
 
                 DB::commit();
-                $otpService->consumeVerification($request->business_contact);
+                $otpService->consumeVerification($request->business_contact, 'whatsapp', 'business');
 
 
             }

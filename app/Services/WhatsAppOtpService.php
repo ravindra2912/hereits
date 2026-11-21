@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Business;
 use App\Models\OtpManagement;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -62,7 +63,7 @@ class WhatsAppOtpService
 
         // Prevent registration if phone number already belongs to an existing user/business
         if ($type === 'user') {
-            if (\App\Models\User::where('contact', $cleanContact)->exists()) {
+            if (User::where('contact', $cleanContact)->exists()) {
                 return [
                     'success' => false,
                     'message' => 'This contact number is already registered with an existing account.',
@@ -81,6 +82,7 @@ class WhatsAppOtpService
         $latestRecord = OtpManagement::select('id', 'created_at')
             ->where('contact', $cleanContact)
             ->where('source', $source)
+            ->where('type', $type)
             ->latest('id')
             ->first();
 
@@ -96,9 +98,10 @@ class WhatsAppOtpService
             }
         }
 
-        // Expire any existing pending OTPs for this contact & source to ensure only 1 active code
+        // Expire any existing pending OTPs for this contact, source, and type
         OtpManagement::where('contact', $cleanContact)
             ->where('source', $source)
+            ->where('type', $type)
             ->where('status', 'pending')
             ->update(['status' => 'expired']);
 
@@ -111,6 +114,7 @@ class WhatsAppOtpService
             'contact' => $cleanContact,
             'otp' => $otp,
             'source' => $source,
+            'type' => $type,
             'valid' => $expiryMinutes,
             'status' => 'pending',
             'attempts' => 0,
@@ -121,6 +125,7 @@ class WhatsAppOtpService
             'contact' => $cleanContact,
             'otp' => $otp,
             'source' => $source,
+            'type' => $type,
             'valid_minutes' => $expiryMinutes,
             'template' => $templateName,
             'language' => $language,
@@ -153,27 +158,38 @@ class WhatsAppOtpService
      * @param string $contact
      * @param string $otp
      * @param string $source
+     * @param string|null $type 'user' or 'business'
      * @return array
      */
-    public function verifyOtp(string $contact, string $otp, string $source = 'whatsapp'): array
-    {
+    public function verifyOtp(
+        string $contact,
+        string $otp,
+        string $source = 'whatsapp',
+        ?string $type = null
+    ): array {
         $cleanContact = $this->sanitizeContact($contact);
 
         Log::info("WhatsApp OTP Verification Attempt", [
             'contact' => $cleanContact,
             'source' => $source,
+            'type' => $type,
         ]);
 
         // Query the latest pending OTP entry for this contact from otp_management table
-        $otpRecord = OtpManagement::where('contact', $cleanContact)
+        $query = OtpManagement::where('contact', $cleanContact)
             ->where('source', $source)
-            ->where('status', 'pending')
-            ->latest('id')
-            ->first();
+            ->where('status', 'pending');
+
+        if (!empty($type)) {
+            $query->where('type', $type);
+        }
+
+        $otpRecord = $query->latest('id')->first();
 
         if (!$otpRecord) {
             Log::warning("WhatsApp OTP Verification Failed: No pending OTP found in table", [
                 'contact' => $cleanContact,
+                'type' => $type,
             ]);
 
             return [
@@ -248,12 +264,25 @@ class WhatsAppOtpService
             'verified_at' => now(),
         ]);
 
+        // Selectively update is_contact_verify based on verification type
+        $resolvedType = !empty($type) ? $type : ($otpRecord->type ?? null);
+
+        if ($resolvedType === 'user') {
+            User::where('contact', $cleanContact)->update(['is_contact_verify' => 1]);
+        } elseif ($resolvedType === 'business') {
+            Business::where('contact', $cleanContact)->update(['is_contact_verify' => 1]);
+        } else {
+            User::where('contact', $cleanContact)->update(['is_contact_verify' => 1]);
+            Business::where('contact', $cleanContact)->update(['is_contact_verify' => 1]);
+        }
+
         // Keep session token for seamless multi-factor browser state
         session()->put("whatsapp_verified_{$cleanContact}", $verificationToken);
 
         Log::info("WhatsApp OTP Verified Successfully in Table", [
             'id' => $otpRecord->id,
             'contact' => $cleanContact,
+            'type' => $resolvedType,
             'token' => $verificationToken,
         ]);
 
@@ -270,10 +299,15 @@ class WhatsAppOtpService
      * @param string $contact
      * @param string|null $token
      * @param string $source
+     * @param string|null $type 'user' or 'business'
      * @return bool
      */
-    public function isContactVerified(string $contact, ?string $token = null, string $source = 'whatsapp'): bool
-    {
+    public function isContactVerified(
+        string $contact,
+        ?string $token = null,
+        string $source = 'whatsapp',
+        ?string $type = null
+    ): bool {
         $cleanContact = $this->sanitizeContact($contact);
 
         // Check otp_management table for a verified record within last 2 hours
@@ -286,6 +320,10 @@ class WhatsAppOtpService
             $query->where('token', $token);
         }
 
+        if (!empty($type)) {
+            $query->where('type', $type);
+        }
+
         return $query->exists();
     }
 
@@ -294,22 +332,32 @@ class WhatsAppOtpService
      *
      * @param string $contact
      * @param string $source
+     * @param string|null $type 'user' or 'business'
      * @return void
      */
-    public function consumeVerification(string $contact, string $source = 'whatsapp'): void
-    {
+    public function consumeVerification(
+        string $contact,
+        string $source = 'whatsapp',
+        ?string $type = null
+    ): void {
         $cleanContact = $this->sanitizeContact($contact);
 
-        OtpManagement::where('contact', $cleanContact)
+        $query = OtpManagement::where('contact', $cleanContact)
             ->where('source', $source)
-            ->where('status', 'verified')
-            ->update(['status' => 'used']);
+            ->where('status', 'verified');
+
+        if (!empty($type)) {
+            $query->where('type', $type);
+        }
+
+        $query->update(['status' => 'used']);
 
         session()->forget("whatsapp_verified_{$cleanContact}");
 
         Log::info("WhatsApp OTP Verification Consumed", [
             'contact' => $cleanContact,
             'source' => $source,
+            'type' => $type,
         ]);
     }
 }

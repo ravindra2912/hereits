@@ -19,6 +19,10 @@ class Business extends Model
         'deleted_at',
     ];
 
+    protected $casts = [
+        'is_contact_verify' => 'boolean',
+    ];
+
     protected static function booted(): void
     {
         static::saved(function () {

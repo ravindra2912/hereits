@@ -15,6 +15,7 @@ class OtpManagement extends Model
         'contact',
         'otp',
         'source',
+        'type',
         'valid',
         'status',
         'attempts',
