@@ -360,15 +360,54 @@ class AuthController extends Controller
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
 
-    public function destroy(Request $request, ?string $business_slug = null): RedirectResponse
+    public function destroy(Request $request, ?string $business_slug = null): RedirectResponse|JsonResponse
     {
         if (Auth::check()) {
             User::where('id', Auth::user()->id)->update(['notification_token' => null]);
         }
 
+        $businessSlug = $business_slug ?: $request->route('business_slug');
+
+        // Capture previous URL / Referer before clearing session
+        $previousUrl = $request->headers->get('referer') ?: url()->previous();
+        if ($previousUrl && !str_starts_with($previousUrl, 'http://') && !str_starts_with($previousUrl, 'https://')) {
+            $previousUrl = url($previousUrl);
+        }
+
         Auth::guard('web')->logout();
-        $request->session()->regenerate();
-        return redirect()->route('home');
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        $targetUrl = null;
+
+        if ($previousUrl && filter_var($previousUrl, FILTER_VALIDATE_URL)) {
+            $parsed = parse_url($previousUrl);
+            $path = trim($parsed['path'] ?? '', '/');
+
+            // Do not stay on auth-only pages or logout endpoints after logout
+            $isRestricted = str_starts_with($path, 'account')
+                || str_starts_with($path, 'verify-contact')
+                || str_ends_with($path, 'logout');
+
+            if (!$isRestricted && $path !== '') {
+                $targetUrl = $previousUrl;
+            }
+        }
+
+        if (!$targetUrl) {
+            if (!empty($businessSlug)) {
+                $targetUrl = route('business-details', ['business_slug' => $businessSlug]);
+            } else {
+                $targetUrl = route('home');
+            }
+        }
+
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json(['success' => true, 'redirect' => $targetUrl]);
+        }
+
+        return redirect()->to($targetUrl);
     }
 
     public function registerBusinessView(): View

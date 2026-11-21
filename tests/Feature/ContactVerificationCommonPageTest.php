@@ -343,8 +343,12 @@ class ContactVerificationCommonPageTest extends TestCase
         $user->is_contact_verify = 0;
         $user->save();
 
-        $response = $this->actingAs($user, 'web')->get(route('logout'));
-        $response->assertRedirect(route('home'));
+        $response = $this->actingAs($user, 'web')
+            ->from('/clinic')
+            ->get(route('logout'));
+
+        // Should stay on the same page (/clinic) after logout
+        $response->assertRedirect('/clinic');
         $this->assertGuest('web');
     }
 
@@ -355,7 +359,7 @@ class ContactVerificationCommonPageTest extends TestCase
         $user->save();
 
         $response = $this->actingAs($user, 'web')->get('/clinic/logout');
-        $response->assertRedirect(route('home'));
+        $response->assertRedirect(route('business-details', ['business_slug' => 'clinic']));
         $this->assertGuest('web');
     }
 
