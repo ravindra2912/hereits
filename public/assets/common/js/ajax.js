@@ -93,7 +93,9 @@ $(function () {
 						form.reset();
 					}
 
-					if ($(form).data('action') == 'reload') {
+					if (result.redirect && (result.redirect.indexOf('verify-contact') !== -1 || result.redirect.indexOf('/verify-contact') !== -1)) {
+						setTimeout(function () { window.location.href = result.redirect }, 600);
+					} else if ($(form).data('action') == 'reload') {
 						setTimeout(function () { location.reload(); }, 1000);
 					} else if ($(form).data('action') == 'call') {
 						responce(result);

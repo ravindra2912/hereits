@@ -16,6 +16,11 @@ class Business
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Always allow logout without contact verification
+        if ($request->is('business-manager/logout', '*/logout', 'logout') || str_contains((string) $request->route()?->getName(), 'logout')) {
+            return $next($request);
+        }
+
         if (Auth::check()) {
             $target = app(\App\Services\ContactVerificationService::class)->getPendingVerificationTarget($request);
             if ($target !== null) {

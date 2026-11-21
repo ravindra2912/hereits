@@ -40,6 +40,11 @@ class POS
             return redirect()->route('pos.login')->with('error', 'Unauthorized access.');
         }
 
+        // Always allow logout without contact verification
+        if ($request->is('pos-manager/logout', '*/logout', 'logout') || str_contains((string) $request->route()?->getName(), 'logout')) {
+            return $next($request);
+        }
+
         $target = app(\App\Services\ContactVerificationService::class)->getPendingVerificationTarget($request);
         if ($target !== null) {
             if ($request->ajax() || $request->expectsJson()) {

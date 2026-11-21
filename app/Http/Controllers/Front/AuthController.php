@@ -105,6 +105,12 @@ class AuthController extends Controller
                 // Enforce single device/browser login per user
                 app(\App\Services\SessionLogoutService::class)->logoutOtherDevices($user->id);
 
+                // If user contact is not verified, directly redirect to contact verification page
+                $verificationTarget = app(\App\Services\ContactVerificationService::class)->getPendingVerificationTarget();
+                if ($verificationTarget !== null) {
+                    $redirect = route('verify.contact');
+                }
+
                 $success = true;
                 $message = 'Login Successfully!';
             }

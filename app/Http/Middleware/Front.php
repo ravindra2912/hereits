@@ -16,6 +16,11 @@ class Front
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Always allow logout without contact verification
+        if ($request->is('logout', '*/logout') || str_contains((string) $request->route()?->getName(), 'logout')) {
+            return $next($request);
+        }
+
         if (Auth::check()) {
             if (Auth::user()->role == 'Business' || Auth::user()->role == 'User') {
                 $target = app(\App\Services\ContactVerificationService::class)->getPendingVerificationTarget($request);

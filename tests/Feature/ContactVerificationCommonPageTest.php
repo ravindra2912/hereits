@@ -308,4 +308,73 @@ class ContactVerificationCommonPageTest extends TestCase
         $user->refresh();
         $this->assertFalse((bool) $user->is_contact_verify);
     }
+
+    public function test_logged_in_user_visiting_business_slug_is_redirected()
+    {
+        $user = User::find(1000);
+        $user->is_contact_verify = 0;
+        $user->save();
+
+        $business = Business::where('slug', 'clinic')->first();
+
+        $response = $this->actingAs($user, 'web')->get('/' . $business->slug);
+        $response->assertRedirect(route('verify.contact'));
+    }
+
+    public function test_logged_in_user_with_admin_session_is_still_redirected_on_front()
+    {
+        $user = User::find(1000);
+        $user->is_contact_verify = 0;
+        $user->save();
+
+        $admin = \App\Models\Admin::first();
+
+        // Simulate user logged in as both web user and admin in the same browser session
+        $response = $this->actingAs($user, 'web')
+            ->actingAs($admin, 'admin')
+            ->get('/clinic');
+
+        $response->assertRedirect(route('verify.contact'));
+    }
+
+    public function test_unverified_user_can_logout_without_being_blocked()
+    {
+        $user = User::find(1000);
+        $user->is_contact_verify = 0;
+        $user->save();
+
+        $response = $this->actingAs($user, 'web')->get(route('logout'));
+        $response->assertRedirect(route('home'));
+        $this->assertGuest('web');
+    }
+
+    public function test_unverified_user_can_logout_via_tenant_logout_route()
+    {
+        $user = User::find(1000);
+        $user->is_contact_verify = 0;
+        $user->save();
+
+        $response = $this->actingAs($user, 'web')->get('/clinic/logout');
+        $response->assertRedirect(route('home'));
+        $this->assertGuest('web');
+    }
+
+    public function test_unverified_user_login_returns_redirect_to_verify_contact()
+    {
+        $user = User::find(1000);
+        $user->is_contact_verify = 0;
+        $user->password = bcrypt('secret123');
+        $user->save();
+
+        $response = $this->postJson(route('login'), [
+            'email' => $user->email,
+            'password' => 'secret123',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'redirect' => route('verify.contact'),
+        ]);
+    }
 }
