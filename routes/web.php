@@ -72,11 +72,15 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('login', 'store')->name('login')->middleware('throttle:5,1');
     Route::post('Register', 'register')->name('register')->middleware('throttle:10,1');
     Route::post('register', 'register')->middleware('throttle:10,1');
+    Route::post('register/send-whatsapp-otp', 'sendUserContactOtp')->name('register.send-whatsapp-otp')->middleware('throttle:5,1');
+    Route::post('register/verify-whatsapp-otp', 'verifyUserContactOtp')->name('register.verify-whatsapp-otp')->middleware('throttle:10,1');
 
     // Tenant-prefixed auth aliases (supports custom domain proxy workers)
     Route::post('{business_slug}/login', 'store')->middleware('throttle:5,1');
     Route::post('{business_slug}/Register', 'register')->middleware('throttle:10,1');
     Route::post('{business_slug}/register', 'register')->middleware('throttle:10,1');
+    Route::post('{business_slug}/register/send-whatsapp-otp', 'sendUserContactOtp')->middleware('throttle:5,1');
+    Route::post('{business_slug}/register/verify-whatsapp-otp', 'verifyUserContactOtp')->middleware('throttle:10,1');
 
     Route::get('/auth/google', 'redirectToGoogle')->name('auth.google');
     Route::get('/auth/google/callback', 'handleGoogleCallback')->name('auth.google.callback');

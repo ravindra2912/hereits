@@ -41,13 +41,15 @@ class WhatsAppOtpService
      * @param string|null $templateName
      * @param string|null $language
      * @param string $source
+     * @param string $type 'business' or 'user'
      * @return array
      */
     public function generateAndSendOtp(
         string $contact,
         ?string $templateName = null,
         ?string $language = null,
-        string $source = 'whatsapp'
+        string $source = 'whatsapp',
+        string $type = 'business'
     ): array {
         $cleanContact = $this->sanitizeContact($contact);
 
@@ -58,12 +60,21 @@ class WhatsAppOtpService
             ];
         }
 
-        // Prevent registration if phone number already belongs to an existing business
-        if (Business::where('contact', $cleanContact)->exists()) {
-            return [
-                'success' => false,
-                'message' => 'This contact number is already registered with another business.',
-            ];
+        // Prevent registration if phone number already belongs to an existing user/business
+        if ($type === 'user') {
+            if (\App\Models\User::where('contact', $cleanContact)->exists()) {
+                return [
+                    'success' => false,
+                    'message' => 'This contact number is already registered with an existing account.',
+                ];
+            }
+        } else {
+            if (Business::where('contact', $cleanContact)->exists()) {
+                return [
+                    'success' => false,
+                    'message' => 'This contact number is already registered with another business.',
+                ];
+            }
         }
 
         // Rate limiting / Cooldown check directly from otp_management table (60 seconds)

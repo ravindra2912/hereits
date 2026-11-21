@@ -114,7 +114,7 @@ class AuthController extends Controller
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
     }
 
-    public function register(Request $request, ?string $business_slug = null)
+    public function register(Request $request, WhatsAppOtpService $otpService, ?string $business_slug = null)
     {
         $success = false;
         $message = 'Something Wrong!';
@@ -136,6 +136,10 @@ class AuthController extends Controller
             if ($validator->fails()) { // Validation fails
                 $message = $validator->errors();
                 // $message = $validator->errors()->first();
+            } else if (!$otpService->isContactVerified($request->contact, $request->input('whatsapp_verification_token'))) {
+                $message = [
+                    'contact' => ['Please verify your contact number via WhatsApp OTP before completing registration.']
+                ];
             } else {
 
                 $insert = new User();
@@ -193,6 +197,9 @@ class AuthController extends Controller
                 $success = true;
                 $message = 'User register successfully.';
                 DB::commit();
+
+                // Invalidate WhatsApp OTP verification token after successful user registration
+                $otpService->consumeVerification($request->contact);
             }
         } catch (\Exception $e) {
             DB::rollBack();
@@ -367,14 +374,50 @@ class AuthController extends Controller
     }
 
     /**
+     * Send WhatsApp OTP for user contact verification.
+     */
+    public function sendUserContactOtp(SendWhatsAppOtpRequest $request, WhatsAppOtpService $otpService): JsonResponse
+    {
+        $result = $otpService->generateAndSendOtp(
+            $request->getContact(),
+            $request->input('template_name'),
+            $request->input('language'),
+            'whatsapp',
+            'user'
+        );
+
+        return response()->json([
+            'success' => $result['success'],
+            'message' => $result['message'],
+            'cooldown' => $result['cooldown'] ?? 0,
+        ], $result['success'] ? 200 : 422);
+    }
+
+    /**
+     * Verify WhatsApp OTP for user contact.
+     */
+    public function verifyUserContactOtp(VerifyWhatsAppOtpRequest $request, WhatsAppOtpService $otpService): JsonResponse
+    {
+        $result = $otpService->verifyOtp($request->getContact(), $request->otp);
+
+        return response()->json([
+            'success' => $result['success'],
+            'message' => $result['message'],
+            'token' => $result['token'] ?? null,
+        ], $result['success'] ? 200 : 422);
+    }
+
+    /**
      * Send WhatsApp OTP for business contact verification.
      */
     public function sendBusinessContactOtp(SendWhatsAppOtpRequest $request, WhatsAppOtpService $otpService): JsonResponse
     {
         $result = $otpService->generateAndSendOtp(
-            $request->business_contact,
+            $request->getContact(),
             $request->input('template_name'),
-            $request->input('language')
+            $request->input('language'),
+            'whatsapp',
+            'business'
         );
 
         return response()->json([
@@ -389,7 +432,7 @@ class AuthController extends Controller
      */
     public function verifyBusinessContactOtp(VerifyWhatsAppOtpRequest $request, WhatsAppOtpService $otpService): JsonResponse
     {
-        $result = $otpService->verifyOtp($request->business_contact, $request->otp);
+        $result = $otpService->verifyOtp($request->getContact(), $request->otp);
 
         return response()->json([
             'success' => $result['success'],
