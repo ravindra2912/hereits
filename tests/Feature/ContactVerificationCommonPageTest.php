@@ -381,4 +381,72 @@ class ContactVerificationCommonPageTest extends TestCase
             'redirect' => route('verify.contact'),
         ]);
     }
+
+    public function test_verifying_user_contact_also_verifies_owned_business_with_same_contact()
+    {
+        $contact = '9' . rand(100000000, 999999999);
+        $diffContact = '8' . rand(100000000, 999999999);
+
+        $user = User::create([
+            'first_name' => 'Owner',
+            'last_name' => 'Sync',
+            'email' => 'sync_' . uniqid() . '@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'Business',
+            'contact' => $contact,
+            'is_contact_verify' => 0,
+            'status' => 'active',
+        ]);
+
+        $ownedBusinessSameContact = Business::forceCreate([
+            'owner_id' => $user->id,
+            'name' => 'Same Contact Business',
+            'slug' => 'same-biz-' . uniqid(),
+            'business_type' => 'Service',
+            'contact' => $contact,
+            'is_contact_verify' => 0,
+            'status' => 'active',
+        ]);
+
+        $ownedBusinessDifferentContact = Business::forceCreate([
+            'owner_id' => $user->id,
+            'name' => 'Different Contact Business',
+            'slug' => 'diff-biz-' . uniqid(),
+            'business_type' => 'Service',
+            'contact' => $diffContact,
+            'is_contact_verify' => 0,
+            'status' => 'active',
+        ]);
+
+        OtpManagement::create([
+            'contact' => $contact,
+            'otp' => '123456',
+            'source' => 'whatsapp',
+            'type' => 'user',
+            'valid' => 10,
+            'status' => 'pending',
+            'attempts' => 0,
+        ]);
+
+        $response = $this->actingAs($user, 'web')->postJson(route('verify.contact.verify-otp'), [
+            'contact' => $contact,
+            'otp' => '123456',
+            'type' => 'user',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+
+        // User should be verified
+        $user->refresh();
+        $this->assertEquals(1, $user->is_contact_verify);
+
+        // Owned business with same contact MUST be verified
+        $ownedBusinessSameContact->refresh();
+        $this->assertEquals(1, $ownedBusinessSameContact->is_contact_verify);
+
+        // Owned business with different contact must NOT be verified
+        $ownedBusinessDifferentContact->refresh();
+        $this->assertEquals(0, $ownedBusinessDifferentContact->is_contact_verify);
+    }
 }

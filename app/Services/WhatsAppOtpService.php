@@ -277,7 +277,10 @@ class WhatsAppOtpService
         $resolvedType = !empty($type) ? $type : ($otpRecord->type ?? null);
 
         if ($resolvedType === 'user') {
-            User::where('contact', $cleanContact)->update(['is_contact_verify' => 1]);
+            if ($userId = User::where('contact', $cleanContact)->value('id')) {
+                User::where('id', $userId)->update(['is_contact_verify' => 1]);
+                Business::where('owner_id', $userId)->where('contact', $cleanContact)->update(['is_contact_verify' => 1]);
+            }
         } elseif ($resolvedType === 'business') {
             Business::where('contact', $cleanContact)->update(['is_contact_verify' => 1]);
         } else {
