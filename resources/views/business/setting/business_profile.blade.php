@@ -141,8 +141,19 @@
                   <span class="fw-medium">{{ $business->business_type }}</span>
                 </div>
                 <div class="bg-white p-2 rounded border">
-                  <small class="text-muted d-block text-uppercase fw-bold brand-badge-label">Category</small>
-                  <span class="fw-medium">{{ isset($business->businessCategory) ? $business->businessCategory->name : '-' }}</span>
+                  <small class="text-muted d-block text-uppercase fw-bold brand-badge-label">Categories</small>
+                  <div class="d-flex flex-wrap gap-1 mt-1" id="brandSidebarCategoriesContainer">
+                    @php
+                      $bizCats = $business->businessCategories && $business->businessCategories->isNotEmpty() ? $business->businessCategories : (isset($business->businessCategory) ? collect([$business->businessCategory]) : collect());
+                    @endphp
+                    @forelse($bizCats as $bCat)
+                      <span class="badge {{ $bCat->id == $business->business_category_id ? 'bg-primary text-white' : 'bg-primary bg-opacity-10 text-primary border border-primary-subtle' }}">
+                        @if($bCat->id == $business->business_category_id)<i class="bi bi-star-fill me-1"></i>@endif{{ $bCat->name }}
+                      </span>
+                    @empty
+                      <span class="fw-medium">-</span>
+                    @endforelse
+                  </div>
                 </div>
                 <div class="bg-white p-2 rounded border">
                   <small class="text-muted d-block text-uppercase fw-bold brand-badge-label">Credits</small>
@@ -161,6 +172,12 @@
               <button class="nav-link active rounded-pill fw-bold py-2 px-3 d-flex align-items-center justify-content-center gap-2" id="general-tab" data-bs-toggle="tab" data-bs-target="#tab-general" type="button" role="tab" aria-controls="tab-general" aria-selected="true">
                 <i class="bi bi-building"></i>
                 <span>Business Info</span>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link rounded-pill fw-bold py-2 px-3 d-flex align-items-center justify-content-center gap-2" id="categories-tab" data-bs-toggle="tab" data-bs-target="#tab-categories" type="button" role="tab" aria-controls="tab-categories" aria-selected="false">
+                <i class="bi bi-tags-fill text-success"></i>
+                <span>Store Categories</span>
               </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -205,6 +222,24 @@
                 <div class="col-12 mt-4">
                   <div class="p-3 bg-light rounded-3 border">
                     <div class="d-flex align-items-center justify-content-between mb-2">
+                      <span class="fw-bold small text-uppercase text-muted"><i class="bi bi-tags me-1 text-primary"></i> Store Categories Overview</span>
+                      <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 fw-semibold btn-switch-tab" data-tab-target="#categories-tab">
+                        Manage Categories <i class="bi bi-arrow-right ms-1"></i>
+                      </button>
+                    </div>
+                    <div class="d-flex flex-wrap gap-1">
+                      @forelse($bizCats as $bCat)
+                        <span class="badge bg-white text-dark border"><i class="bi bi-check2 text-success me-1"></i>{{ $bCat->name }}</span>
+                      @empty
+                        <span class="text-muted small fst-italic">No categories selected yet. Click "Manage Categories" to select.</span>
+                      @endforelse
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 mt-3">
+                  <div class="p-3 bg-light rounded-3 border">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
                       <span class="fw-bold small text-uppercase text-muted"><i class="bi bi-geo-alt me-1 text-primary"></i> Address & Pin Overview</span>
                       <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 fw-semibold btn-switch-tab" data-tab-target="#address-tab">
                         Manage Address on Map <i class="bi bi-arrow-right ms-1"></i>
@@ -244,6 +279,97 @@
                       @else
                         <span class="text-muted small fst-italic">No social media links connected yet. Click "Manage Social Links" to add.</span>
                       @endif
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB: Store Categories Selection -->
+            <div class="tab-pane fade" id="tab-categories" role="tabpanel" aria-labelledby="categories-tab">
+              <div class="row g-3">
+                <div class="col-12">
+                  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                    <div>
+                      <h6 class="fw-bold text-primary mb-0">Store Categories</h6>
+                      <small class="text-muted">Manage categories associated with your store and select your primary category.</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="badge bg-light text-secondary border">Multi-Category</span>
+                      <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#manageStoreCategoriesModal">
+                        <i class="bi bi-plus-circle me-1"></i> Add Category
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                @php
+                  $selectedCategoryIds = $business->businessCategories->pluck('id')->toArray();
+                  if (empty($selectedCategoryIds) && $business->business_category_id) {
+                      $selectedCategoryIds = [$business->business_category_id];
+                  }
+                  $primaryCatId = $business->business_category_id ?? ($selectedCategoryIds[0] ?? null);
+                @endphp
+
+                <!-- Hidden inputs so categories & primary category are always submitted with full profile form -->
+                <div id="hiddenCategoryInputsContainer">
+                  @foreach($selectedCategoryIds as $catId)
+                    <input type="hidden" name="business_category_ids[]" value="{{ $catId }}" class="hidden-category-input" data-cat-id="{{ $catId }}">
+                  @endforeach
+                  <input type="hidden" name="primary_category_id" id="hidden_primary_category_id" value="{{ $primaryCatId }}">
+                </div>
+
+                <div class="col-12">
+                  <div class="card border rounded-3 p-3 bg-light mb-2">
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                      <div>
+                        <label class="form-label small fw-bold text-uppercase text-muted mb-0">Configured Store Categories</label>
+                        <div class="form-text small text-muted">
+                          Your primary category represents your main store classification. Products & services can be created under any of your categories.
+                        </div>
+                      </div>
+                      <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#manageStoreCategoriesModal">
+                        <i class="bi bi-gear-fill me-1"></i> Manage Categories
+                      </button>
+                    </div>
+
+                    <div class="row g-3" id="storeCategoriesCardsContainer">
+                      @foreach($allCategories as $cat)
+                        @if(in_array($cat->id, $selectedCategoryIds))
+                          @php $isPrimary = ($cat->id == $primaryCatId); @endphp
+                          <div class="col-md-6 category-card-col" data-cat-id="{{ $cat->id }}" data-cat-name="{{ $cat->name }}">
+                            <div class="card h-100 border {{ $isPrimary ? 'border-primary shadow-sm bg-white' : 'border-light-subtle bg-white' }} rounded-3 p-3 transition-base">
+                              <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                  <div class="category-icon-box rounded-circle d-flex align-items-center justify-content-center {{ $isPrimary ? 'bg-primary text-white' : 'bg-light text-primary' }}" style="width: 38px; height: 38px;">
+                                    <i class="bi {{ $isPrimary ? 'bi-star-fill' : 'bi-tag-fill' }}"></i>
+                                  </div>
+                                  <div>
+                                    <h6 class="mb-0 fw-bold text-dark">{{ $cat->name }}</h6>
+                                    <small class="category-status-text {{ $isPrimary ? 'text-primary fw-semibold' : 'text-muted' }}">
+                                      {{ $isPrimary ? 'Primary Business Category' : 'Additional Store Category' }}
+                                    </small>
+                                  </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 category-action-buttons">
+                                  @if($isPrimary)
+                                    <span class="badge bg-warning text-dark border border-warning-subtle py-1 px-2 primary-badge">
+                                      <i class="bi bi-star-fill me-1"></i> Primary
+                                    </span>
+                                  @else
+                                    <button type="button" class="btn btn-sm btn-outline-warning text-dark py-1 px-2 set-primary-direct-btn" data-cat-id="{{ $cat->id }}" title="Set as Primary Category">
+                                      <i class="bi bi-star me-1"></i> Set Primary
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 remove-category-direct-btn" data-cat-id="{{ $cat->id }}" title="Remove Category">
+                                      <i class="bi bi-trash"></i>
+                                    </button>
+                                  @endif
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        @endif
+                      @endforeach
                     </div>
                   </div>
                 </div>
@@ -515,6 +641,63 @@
         </div>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Manage Store Categories Modal -->
+<div class="modal fade" id="manageStoreCategoriesModal" tabindex="-1" aria-labelledby="manageStoreCategoriesModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-light border-0 py-3 px-4">
+        <h5 class="modal-title fw-bold text-dark" id="manageStoreCategoriesModalLabel">
+          <i class="bi bi-tags-fill me-2 text-primary"></i>Manage Store Categories
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <!-- Add Category Section -->
+        <div class="card border rounded-3 p-3 bg-light mb-4">
+          <label class="form-label small fw-bold text-uppercase text-muted mb-2">Add Category to Store</label>
+          <div class="d-flex gap-2">
+            <select class="form-select" id="modal_select_new_category">
+              <option value="">-- Choose Category to Add --</option>
+              @foreach($allCategories as $cat)
+                <option value="{{ $cat->id }}" data-name="{{ $cat->name }}">
+                  {{ $cat->name }}
+                </option>
+              @endforeach
+            </select>
+            <button type="button" class="btn btn-primary px-3 rounded-3 text-nowrap d-flex align-items-center gap-1 shadow-sm" id="modalAddCategoryBtn">
+              <i class="bi bi-plus-lg"></i> Add
+            </button>
+          </div>
+          <small class="text-muted mt-1 d-block"><i class="bi bi-info-circle me-1"></i>Select a category and click "Add" to include it in your store categories.</small>
+        </div>
+
+        <!-- Selected Categories & Primary Radio Selection -->
+        <div class="mb-2">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h6 class="fw-bold text-dark mb-0">Configured Categories & Primary Selection</h6>
+            <small class="text-muted"><span id="modalSelectedCount">0</span> category(ies) in store</small>
+          </div>
+          <p class="small text-muted mb-3">
+            Select the <span class="fw-bold text-dark">radio button</span> next to a category to designate it as your <strong>Primary Category</strong>.
+          </p>
+
+          <div class="list-group rounded-3 shadow-none border" id="modalCategoryListGroup">
+            <!-- Dynamically populated via JS -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-light border-0 py-3 px-4 d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm" id="saveStoreCategoriesBtn">
+          <i class="bi bi-check2-circle me-1"></i> Save Categories
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -816,7 +999,343 @@
     }
   });
 
-  // Image previews
+  // Store Categories Management
+  const allCategoriesMap = {
+    @foreach($allCategories as $cat)
+      {{ $cat->id }}: { id: {{ $cat->id }}, name: @json($cat->name) },
+    @endforeach
+  };
+
+  function getCurrentCategoryIds() {
+    const ids = [];
+    $('#hiddenCategoryInputsContainer .hidden-category-input').each(function() {
+      const val = parseInt($(this).val());
+      if (val && !ids.includes(val)) ids.push(val);
+    });
+    return ids;
+  }
+
+  function getCurrentPrimaryId() {
+    return parseInt($('#hidden_primary_category_id').val()) || (getCurrentCategoryIds()[0] || null);
+  }
+
+  function renderModalList(categoryIds, primaryId) {
+    const listGroup = $('#modalCategoryListGroup');
+    listGroup.empty();
+
+    if (!categoryIds || categoryIds.length === 0) {
+      listGroup.html('<div class="p-4 text-center text-muted fst-italic">No categories selected. Please choose a category above.</div>');
+      $('#modalSelectedCount').text(0);
+      return;
+    }
+
+    if (!primaryId || !categoryIds.includes(primaryId)) {
+      primaryId = categoryIds[0];
+    }
+
+    $('#modalSelectedCount').text(categoryIds.length);
+
+    categoryIds.forEach(function(catId) {
+      const cat = allCategoriesMap[catId] || { id: catId, name: 'Category #' + catId };
+      const isPrimary = (catId === primaryId);
+
+      const itemHtml = `
+        <div class="list-group-item d-flex align-items-center justify-content-between p-3 modal-cat-item ${isPrimary ? 'border-primary bg-primary bg-opacity-10' : ''}" data-cat-id="${cat.id}">
+          <div class="d-flex align-items-center gap-3">
+            <div class="form-check m-0">
+              <input class="form-check-input modal-primary-radio" type="radio" name="modal_primary_radio" id="modal_radio_${cat.id}" value="${cat.id}" ${isPrimary ? 'checked' : ''} style="cursor: pointer; width: 1.25em; height: 1.25em;">
+            </div>
+            <label class="form-check-label mb-0" for="modal_radio_${cat.id}" style="cursor: pointer;">
+              <span class="fw-bold text-dark">${cat.name}</span>
+              ${isPrimary ? '<span class="badge bg-warning text-dark border border-warning-subtle ms-2"><i class="bi bi-star-fill me-1"></i> Primary Category</span>' : '<span class="badge bg-light text-muted border ms-2">Secondary</span>'}
+            </label>
+          </div>
+          <div>
+            <button type="button" class="btn btn-sm btn-outline-danger border-0 modal-remove-cat-btn" data-cat-id="${cat.id}" title="Remove Category">
+              <i class="bi bi-trash fs-6"></i>
+            </button>
+          </div>
+        </div>
+      `;
+      listGroup.append(itemHtml);
+    });
+  }
+
+  function updatePageUI(categoryIds, primaryId) {
+    // 1. Update hidden inputs
+    const hiddenContainer = $('#hiddenCategoryInputsContainer');
+    hiddenContainer.empty();
+    categoryIds.forEach(function(id) {
+      hiddenContainer.append(`<input type="hidden" name="business_category_ids[]" value="${id}" class="hidden-category-input" data-cat-id="${id}">`);
+    });
+    hiddenContainer.append(`<input type="hidden" name="primary_category_id" id="hidden_primary_category_id" value="${primaryId}">`);
+
+    // 2. Update cards container
+    const cardsContainer = $('#storeCategoriesCardsContainer');
+    cardsContainer.empty();
+
+    categoryIds.forEach(function(catId) {
+      const cat = allCategoriesMap[catId] || { id: catId, name: 'Category #' + catId };
+      const isPrimary = (catId === primaryId);
+
+      const cardHtml = `
+        <div class="col-md-6 category-card-col" data-cat-id="${cat.id}" data-cat-name="${cat.name}">
+          <div class="card h-100 border ${isPrimary ? 'border-primary shadow-sm bg-white' : 'border-light-subtle bg-white'} rounded-3 p-3 transition-base">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-2">
+                <div class="category-icon-box rounded-circle d-flex align-items-center justify-content-center ${isPrimary ? 'bg-primary text-white' : 'bg-light text-primary'}" style="width: 38px; height: 38px;">
+                  <i class="bi ${isPrimary ? 'bi-star-fill' : 'bi-tag-fill'}"></i>
+                </div>
+                <div>
+                  <h6 class="mb-0 fw-bold text-dark">${cat.name}</h6>
+                  <small class="category-status-text ${isPrimary ? 'text-primary fw-semibold' : 'text-muted'}">
+                    ${isPrimary ? 'Primary Business Category' : 'Additional Store Category'}
+                  </small>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2 category-action-buttons">
+                ${isPrimary ? `
+                  <span class="badge bg-warning text-dark border border-warning-subtle py-1 px-2 primary-badge">
+                    <i class="bi bi-star-fill me-1"></i> Primary
+                  </span>
+                ` : `
+                  <button type="button" class="btn btn-sm btn-outline-warning text-dark py-1 px-2 set-primary-direct-btn" data-cat-id="${cat.id}" title="Set as Primary Category">
+                    <i class="bi bi-star me-1"></i> Set Primary
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 remove-category-direct-btn" data-cat-id="${cat.id}" title="Remove Category">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                `}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      cardsContainer.append(cardHtml);
+    });
+
+    // 3. Update sidebar brand column
+    const sidebarContainer = $('#brandSidebarCategoriesContainer');
+    if (sidebarContainer.length) {
+      sidebarContainer.empty();
+      categoryIds.forEach(function(catId) {
+        const cat = allCategoriesMap[catId] || { id: catId, name: 'Category #' + catId };
+        const isPrimary = (catId === primaryId);
+        sidebarContainer.append(`
+          <span class="badge ${isPrimary ? 'bg-primary text-white' : 'bg-primary bg-opacity-10 text-primary border border-primary-subtle'}">
+            ${isPrimary ? '<i class="bi bi-star-fill me-1"></i>' : ''}${cat.name}
+          </span>
+        `);
+      });
+    }
+  }
+
+  // Populate modal when opened
+  $('#manageStoreCategoriesModal').on('show.bs.modal', function() {
+    const currentIds = getCurrentCategoryIds();
+    const primaryId = getCurrentPrimaryId();
+    renderModalList(currentIds, primaryId);
+    $('#modal_select_new_category').val('');
+  });
+
+  // Modal: Add category button
+  $('#modalAddCategoryBtn').on('click', function() {
+    const select = $('#modal_select_new_category');
+    const catId = parseInt(select.val());
+    if (!catId) {
+      toastr.warning('Please select a category to add.');
+      return;
+    }
+
+    const currentModalIds = [];
+    $('#modalCategoryListGroup .modal-cat-item').each(function() {
+      currentModalIds.push(parseInt($(this).data('cat-id')));
+    });
+
+    if (currentModalIds.includes(catId)) {
+      toastr.info('This category is already added to your store.');
+      return;
+    }
+
+    currentModalIds.push(catId);
+    let currentPrimaryId = parseInt($('input[name="modal_primary_radio"]:checked').val());
+    if (!currentPrimaryId) {
+      currentPrimaryId = catId;
+    }
+
+    renderModalList(currentModalIds, currentPrimaryId);
+    select.val('');
+  });
+
+  // Modal: Radio change
+  $(document).on('change', 'input[name="modal_primary_radio"]', function() {
+    const selectedPrimaryId = parseInt($(this).val());
+    $('#modalCategoryListGroup .modal-cat-item').each(function() {
+      const catId = parseInt($(this).data('cat-id'));
+      const isPrimary = (catId === selectedPrimaryId);
+      $(this).toggleClass('border-primary bg-primary bg-opacity-10', isPrimary);
+      const label = $(this).find('label');
+      label.find('.badge').remove();
+      if (isPrimary) {
+        label.append('<span class="badge bg-warning text-dark border border-warning-subtle ms-2"><i class="bi bi-star-fill me-1"></i> Primary Category</span>');
+      } else {
+        label.append('<span class="badge bg-light text-muted border ms-2">Secondary</span>');
+      }
+    });
+  });
+
+  // Modal: Remove category
+  $(document).on('click', '.modal-remove-cat-btn', function() {
+    const catId = parseInt($(this).data('cat-id'));
+    const currentModalIds = [];
+    $('#modalCategoryListGroup .modal-cat-item').each(function() {
+      const id = parseInt($(this).data('cat-id'));
+      if (id !== catId) currentModalIds.push(id);
+    });
+
+    if (currentModalIds.length === 0) {
+      toastr.warning('Your store must have at least one category.');
+      return;
+    }
+
+    let currentPrimaryId = parseInt($('input[name="modal_primary_radio"]:checked').val());
+    if (currentPrimaryId === catId) {
+      currentPrimaryId = currentModalIds[0];
+    }
+
+    renderModalList(currentModalIds, currentPrimaryId);
+  });
+
+  // Modal: Save Categories via AJAX
+  $('#saveStoreCategoriesBtn').on('click', function() {
+    const currentModalIds = [];
+    $('#modalCategoryListGroup .modal-cat-item').each(function() {
+      currentModalIds.push(parseInt($(this).data('cat-id')));
+    });
+
+    const primaryId = parseInt($('input[name="modal_primary_radio"]:checked').val());
+
+    if (currentModalIds.length === 0) {
+      toastr.warning('Please select at least one category for your store.');
+      return;
+    }
+
+    if (!primaryId) {
+      toastr.warning('Please choose a primary category.');
+      return;
+    }
+
+    const btn = $(this);
+    const originalText = btn.html();
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Saving...');
+
+    $.ajax({
+      url: "{{ route('business.setting.business.categories.update') }}",
+      type: "POST",
+      data: {
+        _token: "{{ csrf_token() }}",
+        business_category_ids: currentModalIds,
+        primary_category_id: primaryId
+      },
+      success: function(res) {
+        btn.prop('disabled', false).html(originalText);
+        if (res.success) {
+          toastr.success(res.message || 'Categories updated successfully.');
+          updatePageUI(currentModalIds, primaryId);
+          const modalEl = document.getElementById('manageStoreCategoriesModal');
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+        } else {
+          toastr.error(res.message || 'Failed to update categories.');
+        }
+      },
+      error: function(xhr) {
+        btn.prop('disabled', false).html(originalText);
+        let errorMsg = 'Failed to update categories.';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMsg = xhr.responseJSON.message;
+        }
+        toastr.error(errorMsg);
+      }
+    });
+  });
+
+  // Direct page action: Make Primary
+  $(document).on('click', '.set-primary-direct-btn', function() {
+    const newPrimaryId = parseInt($(this).data('cat-id'));
+    const currentIds = getCurrentCategoryIds();
+
+    if (!newPrimaryId || !currentIds.includes(newPrimaryId)) return;
+
+    const btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+    $.ajax({
+      url: "{{ route('business.setting.business.categories.update') }}",
+      type: "POST",
+      data: {
+        _token: "{{ csrf_token() }}",
+        business_category_ids: currentIds,
+        primary_category_id: newPrimaryId
+      },
+      success: function(res) {
+        if (res.success) {
+          toastr.success(res.message || 'Primary category updated.');
+          updatePageUI(currentIds, newPrimaryId);
+        } else {
+          btn.prop('disabled', false).html('<i class="bi bi-star me-1"></i> Set Primary');
+          toastr.error(res.message || 'Failed to update primary category.');
+        }
+      },
+      error: function(xhr) {
+        btn.prop('disabled', false).html('<i class="bi bi-star me-1"></i> Set Primary');
+        toastr.error('Failed to update primary category.');
+      }
+    });
+  });
+
+  // Direct page action: Remove category
+  $(document).on('click', '.remove-category-direct-btn', function() {
+    const removeId = parseInt($(this).data('cat-id'));
+    const currentIds = getCurrentCategoryIds();
+
+    if (currentIds.length <= 1) {
+      toastr.warning('Your store must have at least one category.');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to remove this category from your store?')) {
+      return;
+    }
+
+    const updatedIds = currentIds.filter(id => id !== removeId);
+    let primaryId = getCurrentPrimaryId();
+    if (primaryId === removeId) {
+      primaryId = updatedIds[0];
+    }
+
+    $.ajax({
+      url: "{{ route('business.setting.business.categories.update') }}",
+      type: "POST",
+      data: {
+        _token: "{{ csrf_token() }}",
+        business_category_ids: updatedIds,
+        primary_category_id: primaryId
+      },
+      success: function(res) {
+        if (res.success) {
+          toastr.success(res.message || 'Category removed.');
+          updatePageUI(updatedIds, primaryId);
+        } else {
+          toastr.error(res.message || 'Failed to remove category.');
+        }
+      },
+      error: function(xhr) {
+        toastr.error('Failed to remove category.');
+      }
+    });
+  });
+
   $('.banner_input').on('change', function(event) {
     var input = event.target;
     var image = $('#banner_preview');

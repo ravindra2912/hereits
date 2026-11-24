@@ -118,11 +118,10 @@
 
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Business Category <span class="text-danger">*</span></label>
-                                <select class="form-select required select2-search" name="business_category_id" required data-placeholder="Select Business Category">
-                                    <option value="">Select Category</option>
+                                <label class="form-label">Business Categories <span class="text-danger">*</span></label>
+                                <select class="form-select required select2-search" name="business_category_ids[]" multiple required data-placeholder="Select Business Categories">
                                     @foreach ( $businessCat as $cat)
-                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                    <option value="{{ $cat->id }}" {{ (is_array(old('business_category_ids')) && in_array($cat->id, old('business_category_ids'))) ? 'selected' : '' }}>{{ $cat->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -630,10 +629,15 @@
 <script src="{{ asset('assets/common/js/select2.min.js') }}?v={{ filemtime(public_path('assets/common/js/select2.min.js')) }}"></script>
 <script>
     $(document).ready(function() {
-        $('.select2-search').select2({
-            width: '100%',
-            placeholder: $(this).data('placeholder') || 'Select an option',
-            allowClear: true
+        $('.select2-search').each(function() {
+            var $this = $(this);
+            var placeholder = $this.attr('data-placeholder') || $this.data('placeholder') || 'Select an option';
+            $this.select2({
+                width: '100%',
+                placeholder: placeholder,
+                allowClear: true,
+                closeOnSelect: false
+            });
         });
     });
 </script>

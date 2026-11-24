@@ -8,6 +8,7 @@ class Service extends Model
 {
     protected $fillable = [
         'business_id',
+        'business_category_id',
         'category_id',
         'name',
         'slug',
@@ -23,6 +24,11 @@ class Service extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function businessCategory()
+    {
+        return $this->belongsTo(BusinessCategory::class, 'business_category_id');
     }
 
     public function business()

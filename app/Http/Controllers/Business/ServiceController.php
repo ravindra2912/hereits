@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Business;
 
 use App\Models\Service;
 use App\Models\Category;
+use App\Models\Business;
+use App\Models\BusinessCategory;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -95,12 +97,29 @@ class ServiceController extends Controller
     }
 
     /**
+     * Get the store/business categories assigned to the current business.
+     */
+    private function getStoreCategories($businessId)
+    {
+        $business = Business::with('businessCategories:id,name')->find($businessId);
+        $categories = $business ? $business->businessCategories : collect();
+        if ($categories->isEmpty() && $business && $business->business_category_id) {
+            $fallback = BusinessCategory::where('id', $business->business_category_id)->select('id', 'name')->first();
+            if ($fallback) {
+                $categories = collect([$fallback]);
+            }
+        }
+        return $categories;
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
         $categories = getServiceCategory();
-        return view('business.service.create', compact('categories'));
+        $storeCategories = $this->getStoreCategories(getBusinessId());
+        return view('business.service.create', compact('categories', 'storeCategories'));
     }
 
     /**
@@ -116,6 +135,7 @@ class ServiceController extends Controller
             DB::beginTransaction();
             $rules = [
                 'name' => 'required|string|max:255',
+                'business_category_id' => 'required|exists:business_categories,id',
                 'category_id' => 'required|exists:categories,id',
                 'image' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
                 'price_type' => 'required',
@@ -143,6 +163,7 @@ class ServiceController extends Controller
 
                 Service::create([
                     'business_id' => Auth::user()->business_id,
+                    'business_category_id' => $request->business_category_id,
                     'category_id' => $request->category_id,
                     'name' => $request->name,
                     'slug' => generateUniqueSlug(Service::class, $request->name, 'slug', Auth::user()->business_id),
@@ -178,7 +199,8 @@ class ServiceController extends Controller
     {
         $service = Service::where('id', $id)->where('business_id', Auth::user()->business_id)->firstOrFail();
         $categories = getServiceCategory();
-        return view('business.service.edit', compact('service', 'categories'));
+        $storeCategories = $this->getStoreCategories(Auth::user()->business_id);
+        return view('business.service.edit', compact('service', 'categories', 'storeCategories'));
     }
 
     /**
@@ -197,6 +219,7 @@ class ServiceController extends Controller
 
             $rules = [
                 'name' => 'required|string|max:255',
+                'business_category_id' => 'required|exists:business_categories,id',
                 'category_id' => 'required|exists:categories,id',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
                 'price_type' => 'required',
@@ -222,6 +245,7 @@ class ServiceController extends Controller
                 }
 
                 $service->name = $request->name;
+                $service->business_category_id = $request->business_category_id;
                 $service->category_id = $request->category_id;
                 $service->slug = $request->slug ?? Str::slug($request->name);
                 $service->description = $request->description;

@@ -181,6 +181,7 @@ Route::name('business.')->group(function () {
             Route::get('setting/business/about-us', 'businessAboutUs')->name('setting.business.about_us');
 
             Route::post('setting/business/profile/{id}', 'businessUpdate')->name('setting.business.update');
+            Route::post('setting/business/categories/update', 'businessCategoriesUpdate')->name('setting.business.categories.update');
             Route::post('setting/business/seo/{id}', 'seoUpdate')->name('setting.seo.update');
 
             Route::get('setting/business/timings', 'businessTiming')->name('setting.business.timing');

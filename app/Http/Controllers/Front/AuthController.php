@@ -502,7 +502,9 @@ class AuthController extends Controller
                 'business_logo' => 'required|mimes:jpg,jpeg,png,webp|',
                 'business_name' => 'required',
                 'business_contact' => 'required|numeric|digits:10|unique:businesses,contact',
-                'business_category_id' => 'required',
+                'business_category_ids' => 'required_without:business_category_id|array|min:1',
+                'business_category_ids.*' => 'exists:business_categories,id',
+                'business_category_id' => 'nullable|exists:business_categories,id',
                 'business_type' => 'required',
                 'address' => 'required',
                 'state_id' => 'required|exists:states,id',
@@ -544,12 +546,18 @@ class AuthController extends Controller
                 $logo_name = fileUploadStorage($request->file('business_logo'), 'business_logos', 500, 130);
                 $insert->business_logo = $logo_name;
 
+                $categoryIds = (array) $request->input('business_category_ids', []);
+                if (empty($categoryIds) && $request->filled('business_category_id')) {
+                    $categoryIds = [$request->input('business_category_id')];
+                }
+                $primaryCategoryId = !empty($categoryIds) ? $categoryIds[0] : $request->business_category_id;
+
                 $insert->owner_id = $user_id;
                 $insert->name = $request->business_name;
                 $insert->contact = $request->business_contact;
                 $insert->is_contact_verify = 1;
                 $insert->slug = generateUniqueSlug(Business::class, $request->business_name . ' ' . $city->name);
-                $insert->business_category_id = $request->business_category_id;
+                $insert->business_category_id = $primaryCategoryId;
                 $insert->business_type = $request->business_type;
                 $insert->address = $request->address;
                 $insert->latitude = $request->latitude;
@@ -563,9 +571,13 @@ class AuthController extends Controller
 
                 $insert->save();
 
+                if (!empty($categoryIds)) {
+                    $insert->businessCategories()->sync($categoryIds);
+                }
+
                 updateBusinessSeo($insert->id);
 
-                $business_category = BusinessCategory::select('deduct_credit_per_self_appointment', 'deduct_credit_per_customer_appointment')->first($request->business_category_id);
+                $business_category = BusinessCategory::select('deduct_credit_per_self_appointment', 'deduct_credit_per_customer_appointment')->find($primaryCategoryId);
                 $siteSetting = \App\Models\SiteSetting::first();
                 $freeCredit = (float)($siteSetting->free_credit ?? 30);
 

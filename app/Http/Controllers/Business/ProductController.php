@@ -17,12 +17,30 @@ use App\Imports\ProductsImport;
 use App\Exports\ProductStockPriceExport;
 use App\Imports\ProductStockPriceImport;
 use App\Models\BusinessSetting;
+use App\Models\Business;
+use App\Models\BusinessCategory;
 use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\Business\StoreProductRequest;
 
 class ProductController extends Controller
 {
     use \App\Traits\CacheManagement;
+
+    /**
+     * Get the store/business categories assigned to the current business.
+     */
+    private function getStoreCategories($businessId)
+    {
+        $business = Business::with('businessCategories:id,name')->find($businessId);
+        $categories = $business ? $business->businessCategories : collect();
+        if ($categories->isEmpty() && $business && $business->business_category_id) {
+            $fallback = BusinessCategory::where('id', $business->business_category_id)->select('id', 'name')->first();
+            if ($fallback) {
+                $categories = collect([$fallback]);
+            }
+        }
+        return $categories;
+    }
 
     /**
      * Display a listing of the resource.
@@ -104,9 +122,10 @@ class ProductController extends Controller
 
         $businessSetting = BusinessSetting::where('business_id', $business_id)->first(['is_product_import_export', 'is_update_stock_and_price_using_exel']);
         $categories = getProductCategory();
+        $storeCategories = $this->getStoreCategories($business_id);
         $totalProducts = Product::where('business_id', $business_id)->count();
 
-        return view('business.product.index', compact('categories', 'totalProducts', 'businessSetting'));
+        return view('business.product.index', compact('categories', 'storeCategories', 'totalProducts', 'businessSetting'));
     }
 
     /**
@@ -115,12 +134,13 @@ class ProductController extends Controller
     public function create()
     {
         $categories = getProductCategory();
+        $storeCategories = $this->getStoreCategories(getBusinessId());
         $businessSetting = getBusinessSettings();
         $labels = collect();
         if ($businessSetting->is_label) {
             $labels = \App\Models\Label::where('business_id', getBusinessId())->where('status', 'active')->orderBy('short_order', 'asc')->get();
         }
-        return view('business.product.create', compact('categories', 'labels', 'businessSetting'));
+        return view('business.product.create', compact('categories', 'storeCategories', 'labels', 'businessSetting'));
     }
 
     /**
@@ -139,6 +159,7 @@ class ProductController extends Controller
 
             $product = Product::create([
                 'business_id' => $business_id,
+                'business_category_id' => $request->business_category_id,
                 'category_id' => $request->category_id,
                 'label_id' => $request->label_id ? array_map('intval', (array)$request->label_id) : null,
                 'name' => $request->name,
@@ -223,13 +244,14 @@ class ProductController extends Controller
             $query->orderBy('sort_order', 'asc');
         }])->firstOrFail();
         $categories = getProductCategory();
+        $storeCategories = $this->getStoreCategories(Auth::user()->business_id);
         $businessSetting = getBusinessSettings();
         $labels = collect();
         if ($businessSetting->is_label) {
             $labels = \App\Models\Label::where('business_id', getBusinessId())->where('status', 'active')->orderBy('short_order', 'asc')->get();
         }
         $image_limit = config('const.product_images_upload_limit');
-        return view('business.product.edit', compact('product', 'categories', 'labels', 'image_limit', 'businessSetting'));
+        return view('business.product.edit', compact('product', 'categories', 'storeCategories', 'labels', 'image_limit', 'businessSetting'));
     }
 
     /**
@@ -253,6 +275,7 @@ class ProductController extends Controller
             $rules = [
                 'name' => 'required|string|max:255',
                 'sku' => 'required|string|max:100',
+                'business_category_id' => 'required|exists:business_categories,id',
                 'category_id' => 'required|exists:categories,id',
                 'label_id' => 'nullable|array',
                 'label_id.*' => 'exists:labels,id',
@@ -307,6 +330,7 @@ class ProductController extends Controller
                 ];
 
                 $product->update(array_merge($updateData, [
+                    'business_category_id' => $request->business_category_id,
                     'category_id' => $request->category_id,
                     'label_id' => $request->label_id ? array_map('intval', (array)$request->label_id) : null,
                 ]));

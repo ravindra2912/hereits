@@ -26,6 +26,11 @@ class BusinessCategory extends Model
         return $this->hasMany(Business::class, 'business_category_id', 'id');
     }
 
+    public function mappedBusinesses()
+    {
+        return $this->belongsToMany(Business::class, 'business_category_mappings', 'business_category_id', 'business_id')->withTimestamps();
+    }
+
     /**
      * Scope categories that have active public businesses within boundaries.
      */

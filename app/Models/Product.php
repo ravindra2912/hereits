@@ -10,6 +10,7 @@ class Product extends Model
     use SoftDeletes;
     protected $fillable = [
         'business_id',
+        'business_category_id',
         'parent_product_id',
         'parent_product_business_id',
         'category_id',
@@ -39,6 +40,11 @@ class Product extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function businessCategory()
+    {
+        return $this->belongsTo(BusinessCategory::class, 'business_category_id');
     }
 
     /**

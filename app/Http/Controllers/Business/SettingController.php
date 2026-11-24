@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Business;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Business;
+use App\Models\BusinessCategory;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -104,8 +105,9 @@ class SettingController extends Controller
     public function businessProfile(Request $request)
     {
         $businessId = getBusinessId();
-        $business = Business::with(['businessCategory:id,name', 'businessSetting', 'state:id,name', 'city:id,name'])->findOrFail($businessId);
-        return view('business.setting.business_profile', compact('business'));
+        $business = Business::with(['businessCategory:id,name', 'businessCategories:id,name', 'businessSetting', 'state:id,name', 'city:id,name'])->findOrFail($businessId);
+        $allCategories = BusinessCategory::where('status', 'active')->select('id', 'name')->orderBy('name', 'asc')->get();
+        return view('business.setting.business_profile', compact('business', 'allCategories'));
     }
 
     public function businessSeo(Request $request)
@@ -293,8 +295,9 @@ class SettingController extends Controller
                 'business_image' => 'nullable|mimes:jpg,jpeg,png,webp',
                 'business_logo' => 'nullable|mimes:jpg,jpeg,png,webp',
                 'name' => 'required',
-                // 'business_category_id' => 'required',
-                // 'business_type' => 'required',
+                'business_category_ids' => 'required|array|min:1',
+                'business_category_ids.*' => 'exists:business_categories,id',
+                'primary_category_id' => 'nullable|exists:business_categories,id',
                 'address' => 'required',
                 'contact' => 'required|numeric|unique:businesses,contact,' . $id,
                 'state_id' => 'required|exists:states,id',
@@ -339,7 +342,16 @@ class SettingController extends Controller
                 }
 
                 $update->name = $request->name;
-                // $update->business_category_id = $request->business_category_id;
+                $categoryIds = array_values(array_unique(array_filter((array) $request->input('business_category_ids', []))));
+                if (!empty($categoryIds)) {
+                    $primaryId = $request->input('primary_category_id');
+                    if ($primaryId && in_array($primaryId, $categoryIds)) {
+                        $update->business_category_id = $primaryId;
+                    } else {
+                        $update->business_category_id = $categoryIds[0];
+                    }
+                    $update->businessCategories()->sync($categoryIds);
+                }
                 $update->address = $request->address;
                 $update->contact = $request->contact;
                 $update->state_id = $request->state_id;
@@ -382,6 +394,68 @@ class SettingController extends Controller
             }
         }
         return response()->json(['success' => $success, 'message' => $message, 'data' => $data, 'redirect' => $redirect]);
+    }
+
+    public function businessCategoriesUpdate(Request $request)
+    {
+        $success = false;
+        $message = 'Something went wrong!';
+        $data = [];
+
+        try {
+            $validator = Validator::make($request->all(), [
+                'business_category_ids' => 'required|array|min:1',
+                'business_category_ids.*' => 'required|exists:business_categories,id',
+                'primary_category_id' => 'required|exists:business_categories,id',
+            ], [
+                'business_category_ids.required' => 'Please select at least one category.',
+                'primary_category_id.required' => 'Please select a primary category.',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first(),
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            $businessId = getBusinessId();
+            $business = Business::where('id', $businessId)->firstOrFail();
+
+            $categoryIds = array_values(array_unique(array_map('intval', (array) $request->input('business_category_ids', []))));
+            $primaryId = (int) $request->input('primary_category_id');
+
+            if (!in_array($primaryId, $categoryIds)) {
+                $categoryIds[] = $primaryId;
+            }
+
+            $business->business_category_id = $primaryId;
+            $business->save();
+            $business->businessCategories()->sync($categoryIds);
+
+            if (Auth::check()) {
+                Auth::user()->syncBusinessSessionData($businessId);
+            }
+
+            $business->load(['businessCategory:id,name', 'businessCategories:id,name']);
+
+            $success = true;
+            $message = 'Store categories updated successfully.';
+            $data = [
+                'primary_category_id' => $primaryId,
+                'primary_category' => $business->businessCategory,
+                'categories' => $business->businessCategories,
+            ];
+        } catch (\Exception $e) {
+            $message = checkResponse($e);
+        }
+
+        return response()->json([
+            'success' => $success,
+            'message' => $message,
+            'data' => $data,
+        ]);
     }
 
     public function seoUpdate(Request $request, $id)
