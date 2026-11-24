@@ -728,6 +728,54 @@
         </div>
       </div>
 
+      <!-- 7. Inquiry Charge Controls -->
+      <div class="mb-5">
+        <div class="d-flex align-items-center mb-3">
+          <div class="bg-info bg-opacity-10 p-2 rounded-3 text-info me-2">
+            <i class="bi bi-chat-left-dots-fill fs-5"></i>
+          </div>
+          <h6 class="fw-bold text-uppercase m-0 small tracking-wider text-muted">Inquiry Charge Controls</h6>
+        </div>
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+          <div class="row g-4 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-muted">Inquiry Charge Mode</label>
+              <div class="d-flex align-items-center gap-2 p-2 border rounded-3 bg-light">
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input custom-switch" type="checkbox" role="switch" name="is_inquiry_charge_manual" id="is_inquiry_charge_manual" {{ !empty($setting->is_inquiry_charge_manual) ? 'checked' : '' }}>
+                </div>
+                <span class="small fw-semibold">Manual Charge (Override Category Setting)</span>
+              </div>
+            </div>
+            <div class="col-md-8 inquiry_charge_fields" style="display: {{ !empty($setting->is_inquiry_charge_manual) ? 'block' : 'none' }};">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold small text-muted">Contact Us Inquiry (Credits)</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-coin text-warning"></i></span>
+                    <input type="number" step="0.01" min="0" class="form-control border-start-0 ps-0" name="charge_per_contact_us_inquiry" value="{{ $setting->charge_per_contact_us_inquiry ?? 1.00 }}">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold small text-muted">Product Inquiry (Credits)</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-coin text-warning"></i></span>
+                    <input type="number" step="0.01" min="0" class="form-control border-start-0 ps-0" name="charge_per_product_inquiry" value="{{ $setting->charge_per_product_inquiry ?? 1.00 }}">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold small text-muted">Service Inquiry (Credits)</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-coin text-warning"></i></span>
+                    <input type="number" step="0.01" min="0" class="form-control border-start-0 ps-0" name="charge_per_service_inquiry" value="{{ $setting->charge_per_service_inquiry ?? 1.00 }}">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
       <div class="d-flex justify-content-between align-items-center mt-5 pt-3 border-top">
         <button class="btn btn-outline-secondary px-4 rounded-pill" type="button" onclick="history.back()">
@@ -839,6 +887,14 @@
         $('.draw_charge_field').slideDown();
       } else {
         $('.draw_charge_field').slideUp();
+      }
+    });
+
+    $('#is_inquiry_charge_manual').on('change', function() {
+      if ($(this).is(':checked')) {
+        $('.inquiry_charge_fields').slideDown();
+      } else {
+        $('.inquiry_charge_fields').slideUp();
       }
     });
   });

@@ -23,6 +23,13 @@ class BusinessCategoryController extends Controller
                 ->addColumn('img', function ($row) {
                     return '<div class="text-center"><img src="' . getImage($row->image) . '" class="avatar-img rounded-circle" style="width: 40px; height: 40px; object-fit: cover;" /></div>';
                 })
+                ->addColumn('inquiry_charges', function ($row) {
+                    return '<div class="small">
+                        <span class="badge bg-light text-dark border me-1" title="Contact Us Inquiry">Contact: ' . number_format((float) ($row->charge_per_contact_us_inquiry ?? 1), 2) . '</span>
+                        <span class="badge bg-light text-dark border me-1" title="Product Inquiry">Product: ' . number_format((float) ($row->charge_per_product_inquiry ?? 1), 2) . '</span>
+                        <span class="badge bg-light text-dark border" title="Service Inquiry">Service: ' . number_format((float) ($row->charge_per_service_inquiry ?? 1), 2) . '</span>
+                    </div>';
+                })
                 ->addColumn('action', function ($row) {
                     $url = route('admin.businesscategory.destroy', $row->id);
                     $url = "'" . $url . "'";
@@ -34,7 +41,7 @@ class BusinessCategoryController extends Controller
                     </button>
                     </div>';
                 })
-                ->rawColumns(['action', 'img'])
+                ->rawColumns(['action', 'img', 'inquiry_charges'])
                 ->make(true);
         }
         return view('admin.businesscategory.index');
@@ -64,6 +71,9 @@ class BusinessCategoryController extends Controller
                 'name' => 'required',
                 'deduct_credit_per_customer_appointment' => 'required|numeric|min:0',
                 'deduct_credit_per_self_appointment' => 'required|numeric|min:0',
+                'charge_per_contact_us_inquiry' => 'nullable|numeric|min:0',
+                'charge_per_product_inquiry' => 'nullable|numeric|min:0',
+                'charge_per_service_inquiry' => 'nullable|numeric|min:0',
             ];
 
             $validator = Validator::make($request->all(), $rules);
@@ -84,9 +94,9 @@ class BusinessCategoryController extends Controller
                 $insert->slug = generateUniqueSlug(BusinessCategory::class, $request->name);
                 $insert->deduct_credit_per_customer_appointment = $request->deduct_credit_per_customer_appointment;
                 $insert->deduct_credit_per_self_appointment = $request->deduct_credit_per_self_appointment;
-                $insert->charge_per_contact_us_inquiry = $request->charge_per_contact_us_inquiry ?? 1;
-                $insert->charge_per_product_inquiry = $request->charge_per_product_inquiry ?? 1;
-                $insert->charge_per_service_inquiry = $request->charge_per_service_inquiry ?? 1;
+                $insert->charge_per_contact_us_inquiry = $request->filled('charge_per_contact_us_inquiry') ? $request->charge_per_contact_us_inquiry : 1.00;
+                $insert->charge_per_product_inquiry = $request->filled('charge_per_product_inquiry') ? $request->charge_per_product_inquiry : 1.00;
+                $insert->charge_per_service_inquiry = $request->filled('charge_per_service_inquiry') ? $request->charge_per_service_inquiry : 1.00;
                 $insert->save();
 
                 Cache::forget('BusinessCategory');
@@ -130,6 +140,9 @@ class BusinessCategoryController extends Controller
                 'name' => 'required',
                 'deduct_credit_per_customer_appointment' => 'required|numeric|min:0',
                 'deduct_credit_per_self_appointment' => 'required|numeric|min:0',
+                'charge_per_contact_us_inquiry' => 'nullable|numeric|min:0',
+                'charge_per_product_inquiry' => 'nullable|numeric|min:0',
+                'charge_per_service_inquiry' => 'nullable|numeric|min:0',
                 'status' => 'required'
             ];
 
@@ -152,13 +165,13 @@ class BusinessCategoryController extends Controller
                 $update->deduct_credit_per_customer_appointment = $request->deduct_credit_per_customer_appointment;
                 $update->deduct_credit_per_self_appointment = $request->deduct_credit_per_self_appointment;
                 if ($request->has('charge_per_contact_us_inquiry')) {
-                    $update->charge_per_contact_us_inquiry = $request->charge_per_contact_us_inquiry ?? 1;
+                    $update->charge_per_contact_us_inquiry = $request->filled('charge_per_contact_us_inquiry') ? $request->charge_per_contact_us_inquiry : 1.00;
                 }
                 if ($request->has('charge_per_product_inquiry')) {
-                    $update->charge_per_product_inquiry = $request->charge_per_product_inquiry ?? 1;
+                    $update->charge_per_product_inquiry = $request->filled('charge_per_product_inquiry') ? $request->charge_per_product_inquiry : 1.00;
                 }
                 if ($request->has('charge_per_service_inquiry')) {
-                    $update->charge_per_service_inquiry = $request->charge_per_service_inquiry ?? 1;
+                    $update->charge_per_service_inquiry = $request->filled('charge_per_service_inquiry') ? $request->charge_per_service_inquiry : 1.00;
                 }
                 $update->status = $request->status;
                 $update->save();

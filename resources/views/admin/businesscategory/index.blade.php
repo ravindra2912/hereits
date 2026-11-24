@@ -35,6 +35,7 @@
             <th>Name</th>
             <th>Cust. Credit</th>
             <th>Self Credit</th>
+            <th>Inquiry Charges</th>
             <th>Status</th>
             <th>Action</th>
           </tr>
@@ -97,6 +98,12 @@
           data: 'deduct_credit_per_self_appointment',
           name: 'deduct_credit_per_self_appointment',
           className: 'text-center'
+        },
+        {
+          data: 'inquiry_charges',
+          name: 'charge_per_contact_us_inquiry',
+          orderable: false,
+          searchable: false,
         },
         {
           data: 'status',

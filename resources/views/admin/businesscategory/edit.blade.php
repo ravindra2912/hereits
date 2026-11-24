@@ -75,6 +75,34 @@
                 <input type="number" class="form-control required" name="deduct_credit_per_self_appointment" value="{{ $cat->deduct_credit_per_self_appointment }}" min="0" step="0.01" placeholder="e.g. 1.00" />
               </div>
             </div>
+
+            <div class="col-12 mt-2">
+              <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">Inquiry Credit Charges</h6>
+            </div>
+
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label class="form-label">Contact Us Inquiry Credit <span class="text-danger">*</span></label>
+                <input type="number" class="form-control required" name="charge_per_contact_us_inquiry" value="{{ $cat->charge_per_contact_us_inquiry ?? 1 }}" min="0" step="0.01" placeholder="e.g. 1.00" />
+                <small class="form-text text-muted">Credits deducted when business accepts a general inquiry</small>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label class="form-label">Product Inquiry Credit <span class="text-danger">*</span></label>
+                <input type="number" class="form-control required" name="charge_per_product_inquiry" value="{{ $cat->charge_per_product_inquiry ?? 1 }}" min="0" step="0.01" placeholder="e.g. 1.00" />
+                <small class="form-text text-muted">Credits deducted when business accepts a product inquiry</small>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label class="form-label">Service Inquiry Credit <span class="text-danger">*</span></label>
+                <input type="number" class="form-control required" name="charge_per_service_inquiry" value="{{ $cat->charge_per_service_inquiry ?? 1 }}" min="0" step="0.01" placeholder="e.g. 1.00" />
+                <small class="form-text text-muted">Credits deducted when business accepts a service inquiry</small>
+              </div>
+            </div>
           </div>
         </div>
       </div>

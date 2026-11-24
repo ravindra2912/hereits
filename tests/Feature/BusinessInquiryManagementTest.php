@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Admin;
 use App\Models\Business;
 use App\Models\BusinessCategory;
 use App\Models\BusinessInquiry;
@@ -406,5 +407,65 @@ class BusinessInquiryManagementTest extends TestCase
         $logsRes = $this->getJson(route('business.inquiries.logs', $inquiry->id));
         $logsRes->assertStatus(200);
         $this->assertGreaterThanOrEqual(3, count($logsRes->json('data')));
+    }
+
+    public function test_admin_can_create_and_update_category_inquiry_charges(): void
+    {
+        $admin = new Admin();
+        $admin->forceFill([
+            'first_name' => 'Admin',
+            'last_name'  => 'Test',
+            'email'      => 'admin-inquiry-' . uniqid() . '@example.com',
+            'password'   => bcrypt('password'),
+            'role'       => 'admin',
+        ])->save();
+
+        $this->actingAs($admin, 'admin');
+
+        // 1. Create category with custom inquiry charges
+        $createRes = $this->post(route('admin.businesscategory.store'), [
+            'name' => 'Health & Fitness ' . uniqid(),
+            'deduct_credit_per_customer_appointment' => 1.00,
+            'deduct_credit_per_self_appointment'     => 1.00,
+            'charge_per_contact_us_inquiry'          => 2.50,
+            'charge_per_product_inquiry'             => 3.75,
+            'charge_per_service_inquiry'             => 4.25,
+        ]);
+
+        $createRes->assertStatus(200);
+        $this->assertTrue($createRes->json('success'));
+
+        $createdCategory = BusinessCategory::latest('id')->first();
+        $this->assertEquals(2.50, (float) $createdCategory->charge_per_contact_us_inquiry);
+        $this->assertEquals(3.75, (float) $createdCategory->charge_per_product_inquiry);
+        $this->assertEquals(4.25, (float) $createdCategory->charge_per_service_inquiry);
+
+        // 2. Update category inquiry charges
+        $updateRes = $this->patch(route('admin.businesscategory.update', $createdCategory->id), [
+            'name' => $createdCategory->name,
+            'status' => 'active',
+            'deduct_credit_per_customer_appointment' => 2.00,
+            'deduct_credit_per_self_appointment'     => 2.00,
+            'charge_per_contact_us_inquiry'          => 5.00,
+            'charge_per_product_inquiry'             => 6.50,
+            'charge_per_service_inquiry'             => 7.25,
+        ]);
+
+        $updateRes->assertStatus(200);
+        $this->assertTrue($updateRes->json('success'));
+
+        $createdCategory->refresh();
+        $this->assertEquals(5.00, (float) $createdCategory->charge_per_contact_us_inquiry);
+        $this->assertEquals(6.50, (float) $createdCategory->charge_per_product_inquiry);
+        $this->assertEquals(7.25, (float) $createdCategory->charge_per_service_inquiry);
+
+        // 3. DataTable index includes inquiry charges column
+        $indexRes = $this->get(route('admin.businesscategory.index'), [
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]);
+        $indexRes->assertStatus(200);
+        $this->assertStringContainsString('Contact: 5.00', $indexRes->getContent());
+        $this->assertStringContainsString('Product: 6.50', $indexRes->getContent());
+        $this->assertStringContainsString('Service: 7.25', $indexRes->getContent());
     }
 }
