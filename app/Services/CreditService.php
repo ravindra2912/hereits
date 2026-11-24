@@ -326,6 +326,60 @@ class CreditService
     }
 
     /**
+     * Get charge required for accepting a business inquiry.
+     *
+     * @param int|null $businessId
+     * @return float
+     */
+    public function getInquiryCharge(?int $businessId = null): float
+    {
+        if (!$businessId && auth()->check()) {
+            $user = auth()->user();
+            $businessId = $user->business_id ?? ($user->business->id ?? null);
+        }
+
+        if ($businessId) {
+            $businessSetting = BusinessSetting::where('business_id', $businessId)->first(['is_inquiry_charge_manual', 'charge_per_inquiry']);
+            if ($businessSetting && $businessSetting->is_inquiry_charge_manual) {
+                return (float)($businessSetting->charge_per_inquiry ?? 1.00);
+            }
+        }
+
+        $siteSetting = getSiteSetting();
+        return (float)($siteSetting->charge_per_inquiry ?? 1.00);
+    }
+
+    /**
+     * Check if a business has sufficient credits for accepting an inquiry.
+     *
+     * @param int $businessId
+     * @return float Required charge amount
+     * @throws Exception
+     */
+    public function checkInquiryCredit(int $businessId): float
+    {
+        $charge = $this->getInquiryCharge($businessId);
+        $this->checkSufficientCredit($businessId, $charge, 'accept inquiry');
+        return $charge;
+    }
+
+    /**
+     * Deduct inquiry charge from business credit balance.
+     *
+     * @param int $businessId
+     * @param mixed $referenceId
+     * @return CreditHistory|null
+     */
+    public function deductInquiryCharge(int $businessId, $referenceId = null): ?CreditHistory
+    {
+        $charge = $this->getInquiryCharge($businessId);
+        if ($charge > 0) {
+            return $this->deductCredit($businessId, $charge, 'inquiry', 'Credit deducted for accepting inquiry', $referenceId);
+        }
+        return null;
+    }
+
+    /**
      * Generic method to check if business has sufficient credit for a given charge.
      *
      * @param int $businessId
@@ -397,13 +451,13 @@ class CreditService
      * @param string $type
      * @param string|null $description
      * @param mixed|null $referenceId
-     * @return void
+     * @return CreditHistory|null
      */
-    public function deductCredit(int $businessId, float $amount, string $type = 'other', ?string $description = null, $referenceId = null): void
+    public function deductCredit(int $businessId, float $amount, string $type = 'other', ?string $description = null, $referenceId = null): ?CreditHistory
     {
         $amount = (float) $amount;
         if ($amount <= 0) {
-            return;
+            return null;
         }
 
         $setting = BusinessSetting::where('business_id', $businessId)->first();
@@ -412,7 +466,7 @@ class CreditService
             $newBalance = max(0.0, (float)$setting->credit - $amount);
             $setting->update(['credit' => $newBalance]);
 
-            CreditHistory::create([
+            $history = CreditHistory::create([
                 'business_id'      => $businessId,
                 'transaction_type' => 'debit',
                 'type'             => $type,
@@ -425,6 +479,10 @@ class CreditService
             if (function_exists('getBusinessSettings')) {
                 getBusinessSettings($businessId, true);
             }
+
+            return $history;
         }
+
+        return null;
     }
 }

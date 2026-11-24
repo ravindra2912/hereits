@@ -1,0 +1,34 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('business_inquiry_sources', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('inquiry_id')->constrained('business_inquiries')->cascadeOnDelete();
+            $table->unsignedBigInteger('source_id');
+            $table->enum('source_type', ['product', 'service']);
+            $table->timestamps();
+
+            $table->index('inquiry_id');
+            $table->index(['source_id', 'source_type']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('business_inquiry_sources');
+    }
+};
+

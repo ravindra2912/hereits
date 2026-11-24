@@ -306,6 +306,17 @@ class Business
                             'business.home-management.leads.recall-webhook' => 'edit_campaign_leads',
                             'business.home-management.leads.destroy' => 'delete_campaign_leads',
                             'business.home-management.leads' => 'view_campaign_leads',
+
+                            // inquiries
+                            'business.inquiries.index' => 'view_inquiries',
+                            'business.inquiries.show' => 'view_inquiries',
+                            'business.inquiries.logs' => 'view_inquiries',
+                            'business.inquiries.accept' => 'manage_inquiries',
+                            'business.inquiries.reject' => 'manage_inquiries',
+                            'business.inquiries.not-fulfilled' => 'manage_inquiries',
+                            'business.inquiries.business-status' => 'manage_inquiries',
+                            'business.inquiries.assign' => 'manage_inquiries',
+                            'business.inquiries.notes.add' => 'manage_inquiries',
                         ];
 
                         if ($routeName === 'business.home-management') {

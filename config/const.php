@@ -249,6 +249,10 @@ return [
             'edit_campaign_leads' => 'Edit Leads',
             'delete_campaign_leads' => 'Remove Leads',
         ],
+        'inquiries' => [
+            'view_inquiries' => 'View Inquiries',
+            'manage_inquiries' => 'Manage Inquiries',
+        ],
     ],
 
     'quotation_policy' => "1. Quotation Validity: This estimate is valid until the selected date and time. Prices may change thereafter.

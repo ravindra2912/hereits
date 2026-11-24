@@ -124,6 +124,16 @@ class User extends Authenticatable
         return $this->hasMany(Expert::class, 'user_id');
     }
 
+    public function inquiries()
+    {
+        return $this->hasMany(BusinessInquiry::class, 'user_id');
+    }
+
+    public function assignedInquiries()
+    {
+        return $this->hasMany(BusinessInquiry::class, 'assigned_to');
+    }
+
     //+++++++++++++++ For api responce ================
     public function apiObject(): array
     {

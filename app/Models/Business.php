@@ -149,6 +149,11 @@ class Business extends Model
         return $this->hasMany(Favorite::class, 'favorite_item_id', 'id')->where('favorite_type', 'business');
     }
 
+    public function inquiries()
+    {
+        return $this->hasMany(BusinessInquiry::class, 'business_id');
+    }
+
     /**
      * Check if business is currently open based on timing.
      */

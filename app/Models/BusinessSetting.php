@@ -37,6 +37,8 @@ class BusinessSetting extends Model
         'is_lucky_draw',
         'is_quotation_charge_manual',
         'is_create_quotation_on_inquiry',
+        'is_inquiry_charge_manual',
+        'charge_per_inquiry',
         'is_login_required',
         'charge_per_quotation',
         'is_order_charge_manual',

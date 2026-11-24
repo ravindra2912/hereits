@@ -308,6 +308,12 @@ function getBusinessSettings($business_id = null, $forceRefresh = false)
         if (!property_exists($sessSettings, 'charge_place_order_on_pos')) {
             $sessSettings->charge_place_order_on_pos = 0.00;
         }
+        if (!property_exists($sessSettings, 'is_inquiry_charge_manual')) {
+            $sessSettings->is_inquiry_charge_manual = false;
+        }
+        if (!property_exists($sessSettings, 'charge_per_inquiry')) {
+            $sessSettings->charge_per_inquiry = 1.00;
+        }
         if (!property_exists($sessSettings, 'is_show_contact')) {
             $sessSettings->is_show_contact = true;
         }

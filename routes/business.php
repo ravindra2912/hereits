@@ -19,6 +19,7 @@ use App\Http\Controllers\Business\CreditController;
 use App\Http\Controllers\Business\PurchaseHistoryController;
 use App\Http\Controllers\Business\GalleryController;
 use App\Http\Controllers\Business\StateDeliveryChargeController;
+use App\Http\Controllers\Business\InquiryController;
 
 Route::name('business.')->group(function () {
     Route::middleware('web', 'guest')->group(function () {
@@ -257,6 +258,19 @@ Route::name('business.')->group(function () {
         Route::post('staff/check-email', [\App\Http\Controllers\Business\StaffController::class, 'checkEmail'])->name('staff.check-email');
         Route::get('staff/{user_id}/history', [\App\Http\Controllers\Business\StaffController::class, 'history'])->name('staff.history');
         Route::resource('staff', \App\Http\Controllers\Business\StaffController::class);
+
+        // Inquiries Management Routes
+        Route::prefix('inquiries')->name('inquiries.')->controller(InquiryController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('{id}', 'show')->name('show');
+            Route::post('{id}/accept', 'accept')->name('accept');
+            Route::post('{id}/reject', 'reject')->name('reject');
+            Route::post('{id}/not-fulfilled', 'notFulfilled')->name('not-fulfilled');
+            Route::post('{id}/business-status', 'updateBusinessStatus')->name('business-status');
+            Route::post('{id}/assign', 'assign')->name('assign');
+            Route::post('{id}/notes', 'addNote')->name('notes.add');
+            Route::get('{id}/logs', 'getLogs')->name('logs');
+        });
 
         Route::controller(AuthController::class)->group(function () {
             Route::get('logout', 'destroy')->name('logout');

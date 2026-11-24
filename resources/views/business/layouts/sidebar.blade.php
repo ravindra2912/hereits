@@ -222,6 +222,23 @@
     </a>
     @endif
 
+    @if(Auth::user()->role === 'Business' || checkBusinessPermission('view_inquiries'))
+    <a href="{{ route('business.inquiries.index') }}" class="sidebar-nav-link {{ request()->routeIs('business.inquiries*') ? 'active' : '' }}">
+      <div class="d-flex align-items-center justify-content-between w-100">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-chat-left-dots nav-icon"></i>
+          <span>Inquiries</span>
+        </div>
+        @php
+          $pendingInquiriesCount = \App\Models\BusinessInquiry::where('business_id', getBusinessId())->where('system_status', 'pending')->count();
+        @endphp
+        @if($pendingInquiriesCount > 0)
+          <span class="badge rounded-pill bg-danger" style="font-size: 0.72rem; padding: 0.25em 0.6em;">{{ $pendingInquiriesCount }}</span>
+        @endif
+      </div>
+    </a>
+    @endif
+
 
     <!-- Modules Section -->
     <div class="sidebar-section-divider">Modules</div>
