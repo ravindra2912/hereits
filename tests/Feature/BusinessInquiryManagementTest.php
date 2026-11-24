@@ -26,6 +26,7 @@ class BusinessInquiryManagementTest extends TestCase
     protected BusinessInquiryService $inquiryService;
     protected CreditService $creditService;
     protected Business $business;
+    protected BusinessCategory $category;
     protected User $owner;
     protected User $staff;
 
@@ -36,18 +37,21 @@ class BusinessInquiryManagementTest extends TestCase
         $this->creditService = new CreditService();
         $this->inquiryService = new BusinessInquiryService($this->creditService);
 
-        $category = new BusinessCategory();
-        $category->forceFill([
+        $this->category = new BusinessCategory();
+        $this->category->forceFill([
             'name' => 'Retail',
             'slug' => 'retail-' . uniqid(),
             'status' => 'active',
+            'charge_per_contact_us_inquiry' => 1.50,
+            'charge_per_product_inquiry'    => 2.00,
+            'charge_per_service_inquiry'    => 3.00,
         ])->save();
 
         $this->business = new Business();
         $this->business->forceFill([
             'name' => 'Demo Business',
             'slug' => 'demo-business-' . uniqid(),
-            'business_category_id' => $category->id,
+            'business_category_id' => $this->category->id,
             'status' => 'active',
             'contact' => '9876543210',
             'is_contact_verify' => true,
@@ -84,9 +88,11 @@ class BusinessInquiryManagementTest extends TestCase
         BusinessSetting::updateOrCreate(
             ['business_id' => $this->business->id],
             [
-                'credit' => 10.00,
+                'credit' => 20.00,
                 'is_inquiry_charge_manual' => false,
-                'charge_per_inquiry' => 1.00,
+                'charge_per_contact_us_inquiry' => 0.50,
+                'charge_per_product_inquiry'    => 0.75,
+                'charge_per_service_inquiry'    => 1.25,
             ]
         );
     }
@@ -136,7 +142,8 @@ class BusinessInquiryManagementTest extends TestCase
         ]);
 
         $initialBalance = $this->creditService->getAvailableCredit($this->business->id);
-        $charge = $this->creditService->getInquiryCharge($this->business->id);
+        $charge = $this->creditService->getInquiryCharge($this->business->id, $inquiry->inquiry_type);
+        $this->assertEquals(3.00, $charge); // 3.00 set on category for service inquiry
 
         $acceptedInquiry = $this->inquiryService->acceptInquiry($inquiry, 'Accepted by owner', $this->owner->id);
 
@@ -163,6 +170,40 @@ class BusinessInquiryManagementTest extends TestCase
             'old_value'  => 'pending',
             'new_value'  => 'accepted',
         ]);
+    }
+
+    public function test_inquiry_charge_resolution_from_category_and_business_settings(): void
+    {
+        // 1. When manual charge is disabled: uses BusinessCategory values
+        BusinessSetting::where('business_id', $this->business->id)->update([
+            'is_inquiry_charge_manual' => false,
+        ]);
+
+        $this->assertEquals(1.50, $this->creditService->getInquiryCharge($this->business->id, 'contact_us'));
+        $this->assertEquals(2.00, $this->creditService->getInquiryCharge($this->business->id, 'product'));
+        $this->assertEquals(3.00, $this->creditService->getInquiryCharge($this->business->id, 'service'));
+
+        // 2. When manual charge is enabled: uses BusinessSetting values
+        BusinessSetting::where('business_id', $this->business->id)->update([
+            'is_inquiry_charge_manual' => true,
+            'charge_per_contact_us_inquiry' => 0.50,
+            'charge_per_product_inquiry'    => 0.75,
+            'charge_per_service_inquiry'    => 1.25,
+        ]);
+
+        $this->assertEquals(0.50, $this->creditService->getInquiryCharge($this->business->id, 'contact_us'));
+        $this->assertEquals(0.75, $this->creditService->getInquiryCharge($this->business->id, 'product'));
+        $this->assertEquals(1.25, $this->creditService->getInquiryCharge($this->business->id, 'service'));
+
+        // 3. Fallback when business has no category and not manual
+        $businessNoCat = new Business();
+        $businessNoCat->forceFill([
+            'name' => 'No Cat Business',
+            'slug' => 'no-cat-' . uniqid(),
+            'status' => 'active',
+        ])->save();
+
+        $this->assertEquals(1.00, $this->creditService->getInquiryCharge($businessNoCat->id, 'product'));
     }
 
     public function test_accepted_inquiry_cannot_be_accepted_again(): void

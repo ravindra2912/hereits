@@ -12,6 +12,9 @@ class BusinessCategory extends Model
         'image',
         'deduct_credit_per_customer_appointment',
         'deduct_credit_per_self_appointment',
+        'charge_per_contact_us_inquiry',
+        'charge_per_product_inquiry',
+        'charge_per_service_inquiry',
         'status',
     ];
 

@@ -196,8 +196,9 @@ class InquiryController extends Controller
                     $html .= '<button type="button" class="btn btn-sm btn-outline-secondary rounded-circle btn-view-inquiry" data-id="' . $row->id . '" title="View Details"><i class="bi bi-eye"></i></button>';
 
                     if ($row->isPending()) {
+                        $charge = $this->creditService->getInquiryCharge($row->business_id, $row->inquiry_type);
                         // Accept button with unlock modal
-                        $html .= '<button type="button" class="btn btn-sm btn-success rounded-pill px-2.5 btn-accept-inquiry" data-id="' . $row->id . '" title="Accept Inquiry (Unlock details)"><i class="bi bi-unlock-fill me-1"></i>Accept</button>';
+                        $html .= '<button type="button" class="btn btn-sm btn-success rounded-pill px-2.5 btn-accept-inquiry" data-id="' . $row->id . '" data-type="' . $row->inquiry_type . '" data-charge="' . $charge . '" title="Accept Inquiry (Unlock details)"><i class="bi bi-unlock-fill me-1"></i>Accept</button>';
 
                         // Reject / Not fulfilled dropdown or buttons
                         $html .= '<button type="button" class="btn btn-sm btn-outline-danger rounded-circle btn-reject-inquiry" data-id="' . $row->id . '" title="Reject Inquiry"><i class="bi bi-x-lg"></i></button>';
@@ -234,9 +235,13 @@ class InquiryController extends Controller
             'closed_rejected' => (clone $statsBase)->whereIn('system_status', ['rejected', 'not_fulfilled'])->count(),
         ];
 
-        // Available credit and required charge
+        // Available credit and required charge per type
         $availableCredit = $this->creditService->getAvailableCredit($businessId);
-        $inquiryCharge = $this->creditService->getInquiryCharge($businessId);
+        $inquiryCharges = [
+            'contact_us' => $this->creditService->getInquiryCharge($businessId, 'contact_us'),
+            'product'    => $this->creditService->getInquiryCharge($businessId, 'product'),
+            'service'    => $this->creditService->getInquiryCharge($businessId, 'service'),
+        ];
 
         // Retrieve employees for assignment dropdown
         $business = \App\Models\Business::select(['id', 'owner_id'])->find($businessId);
@@ -250,7 +255,7 @@ class InquiryController extends Controller
             ->whereIn('id', $staffUserIds)
             ->get();
 
-        return view('business.inquiries.index', compact('stats', 'availableCredit', 'inquiryCharge', 'staffUsers'));
+        return view('business.inquiries.index', compact('stats', 'availableCredit', 'inquiryCharges', 'staffUsers'));
     }
 
     /**
@@ -278,11 +283,13 @@ class InquiryController extends Controller
             ->findOrFail($id);
 
         $isAccepted = $inquiry->isAccepted();
+        $inquiryCharge = $this->creditService->getInquiryCharge($businessId, $inquiry->inquiry_type);
 
         $data = [
             'id'                => $inquiry->id,
             'business_id'       => $inquiry->business_id,
             'inquiry_type'      => $inquiry->inquiry_type,
+            'inquiry_charge'    => $inquiryCharge,
             'system_status'     => $inquiry->system_status,
             'business_status'   => $inquiry->business_status,
             'is_accepted'       => $isAccepted,

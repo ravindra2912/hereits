@@ -311,8 +311,14 @@ function getBusinessSettings($business_id = null, $forceRefresh = false)
         if (!property_exists($sessSettings, 'is_inquiry_charge_manual')) {
             $sessSettings->is_inquiry_charge_manual = false;
         }
-        if (!property_exists($sessSettings, 'charge_per_inquiry')) {
-            $sessSettings->charge_per_inquiry = 1.00;
+        if (!property_exists($sessSettings, 'charge_per_contact_us_inquiry')) {
+            $sessSettings->charge_per_contact_us_inquiry = 1.00;
+        }
+        if (!property_exists($sessSettings, 'charge_per_product_inquiry')) {
+            $sessSettings->charge_per_product_inquiry = 1.00;
+        }
+        if (!property_exists($sessSettings, 'charge_per_service_inquiry')) {
+            $sessSettings->charge_per_service_inquiry = 1.00;
         }
         if (!property_exists($sessSettings, 'is_show_contact')) {
             $sessSettings->is_show_contact = true;

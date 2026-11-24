@@ -326,40 +326,74 @@ class CreditService
     }
 
     /**
-     * Get charge required for accepting a business inquiry.
+     * Get charge required for accepting a business inquiry based on inquiry type.
      *
      * @param int|null $businessId
+     * @param string $inquiryType ('contact_us', 'product', 'service')
      * @return float
      */
-    public function getInquiryCharge(?int $businessId = null): float
+    public function getInquiryCharge(?int $businessId = null, string $inquiryType = 'contact_us'): float
     {
         if (!$businessId && auth()->check()) {
             $user = auth()->user();
             $businessId = $user->business_id ?? ($user->business->id ?? null);
         }
 
-        if ($businessId) {
-            $businessSetting = BusinessSetting::where('business_id', $businessId)->first(['is_inquiry_charge_manual', 'charge_per_inquiry']);
-            if ($businessSetting && $businessSetting->is_inquiry_charge_manual) {
-                return (float)($businessSetting->charge_per_inquiry ?? 1.00);
+        if (!$businessId) {
+            return 1.00;
+        }
+
+        $columnMap = [
+            'contact_us' => 'charge_per_contact_us_inquiry',
+            'product'    => 'charge_per_product_inquiry',
+            'service'    => 'charge_per_service_inquiry',
+        ];
+
+        $column = $columnMap[$inquiryType] ?? 'charge_per_contact_us_inquiry';
+
+        // 1. Check if business has manual override enabled
+        $businessSetting = BusinessSetting::where('business_id', $businessId)->first([
+            'is_inquiry_charge_manual',
+            'charge_per_contact_us_inquiry',
+            'charge_per_product_inquiry',
+            'charge_per_service_inquiry',
+        ]);
+
+        if ($businessSetting && $businessSetting->is_inquiry_charge_manual) {
+            return (float)($businessSetting->{$column} ?? 1.00);
+        }
+
+        // 2. Retrieve default from BusinessCategory
+        $business = \App\Models\Business::select('id', 'business_category_id')->find($businessId);
+        if ($business && $business->business_category_id) {
+            $category = \App\Models\BusinessCategory::select([
+                'id',
+                'charge_per_contact_us_inquiry',
+                'charge_per_product_inquiry',
+                'charge_per_service_inquiry',
+            ])->find($business->business_category_id);
+
+            if ($category) {
+                return (float)($category->{$column} ?? 1.00);
             }
         }
 
-        $siteSetting = getSiteSetting();
-        return (float)($siteSetting->charge_per_inquiry ?? 1.00);
+        return 1.00;
     }
 
     /**
      * Check if a business has sufficient credits for accepting an inquiry.
      *
      * @param int $businessId
+     * @param string $inquiryType
      * @return float Required charge amount
      * @throws Exception
      */
-    public function checkInquiryCredit(int $businessId): float
+    public function checkInquiryCredit(int $businessId, string $inquiryType = 'contact_us'): float
     {
-        $charge = $this->getInquiryCharge($businessId);
-        $this->checkSufficientCredit($businessId, $charge, 'accept inquiry');
+        $charge = $this->getInquiryCharge($businessId, $inquiryType);
+        $typeName = str_replace('_', ' ', $inquiryType);
+        $this->checkSufficientCredit($businessId, $charge, "accept {$typeName} inquiry");
         return $charge;
     }
 
@@ -367,14 +401,16 @@ class CreditService
      * Deduct inquiry charge from business credit balance.
      *
      * @param int $businessId
+     * @param string $inquiryType
      * @param mixed $referenceId
      * @return CreditHistory|null
      */
-    public function deductInquiryCharge(int $businessId, $referenceId = null): ?CreditHistory
+    public function deductInquiryCharge(int $businessId, string $inquiryType = 'contact_us', $referenceId = null): ?CreditHistory
     {
-        $charge = $this->getInquiryCharge($businessId);
+        $charge = $this->getInquiryCharge($businessId, $inquiryType);
         if ($charge > 0) {
-            return $this->deductCredit($businessId, $charge, 'inquiry', 'Credit deducted for accepting inquiry', $referenceId);
+            $typeName = str_replace('_', ' ', $inquiryType);
+            return $this->deductCredit($businessId, $charge, 'inquiry', "Credit deducted for accepting {$typeName} inquiry", $referenceId);
         }
         return null;
     }

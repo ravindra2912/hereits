@@ -419,6 +419,10 @@ class BusinessController extends Controller
                 $update->charge_place_order_on_pos = $request->charge_place_order_on_pos ?? 0.00;
                 $update->is_draw_charge_manual = $request->has('is_draw_charge_manual') ? 1 : 0;
                 $update->draw_credit_per_scratch = $request->draw_credit_per_scratch ?? 1.00;
+                $update->is_inquiry_charge_manual = $request->has('is_inquiry_charge_manual') ? 1 : 0;
+                $update->charge_per_contact_us_inquiry = $request->charge_per_contact_us_inquiry ?? 1.00;
+                $update->charge_per_product_inquiry = $request->charge_per_product_inquiry ?? 1.00;
+                $update->charge_per_service_inquiry = $request->charge_per_service_inquiry ?? 1.00;
                 $update->is_appointment_creadit_diduct_manual = $request->has('is_appointment_creadit_diduct_manual') ? 1 : 0;
                 $update->is_order_place_on_website = $request->has('is_order_place_on_website') ? 1 : 0;
                 $update->is_share_products_to_business = $request->has('is_share_products_to_business') ? 1 : 0;

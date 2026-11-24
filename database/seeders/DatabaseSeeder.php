@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             $this->call(AppointmentDepartmentSeeder::class);
             $this->call(ExpertSeeder::class);
             $this->call(FaqSeeder::class);
+            $this->call(BusinessInquirySeeder::class);
         }
 
 

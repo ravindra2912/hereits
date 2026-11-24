@@ -205,7 +205,7 @@
                         <div>
                             <div class="fw-bold text-dark mb-1">Customer Information is Protected</div>
                             <div class="small text-muted mb-2">
-                                Customer phone number and email are hidden until you accept this inquiry. Accepting will deduct <strong>{{ number_format($inquiryCharge, 2) }} credit(s)</strong> and unlock complete contact details.
+                                Customer phone number and email are hidden until you accept this inquiry. Accepting will deduct <strong id="view_locked_charge_text">1.00 credit(s)</strong> and unlock complete contact details.
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-secondary text-white px-2 py-1"><i class="bi bi-person me-1"></i>Name: <span id="view_locked_masked_name">Protected</span></span>
@@ -611,7 +611,7 @@
 <script>
     window.InquiriesConfig = {
         availableCredit: {{ (float)$availableCredit }},
-        inquiryCharge: {{ (float)$inquiryCharge }},
+        inquiryCharges: @json($inquiryCharges),
         routes: {
             index: "{{ route('business.inquiries.index') }}",
             show: "{{ route('business.inquiries.show', ':id') }}",

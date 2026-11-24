@@ -93,11 +93,13 @@ class BusinessInquiryService
             }
 
             // 1. Check sufficient credit balance
-            $this->creditService->checkInquiryCredit($inquiry->business_id);
+            $inquiryType = $inquiry->inquiry_type ?? BusinessInquiry::TYPE_CONTACT_US;
+            $this->creditService->checkInquiryCredit($inquiry->business_id, $inquiryType);
 
             // 2. Deduct credit
             $creditHistory = $this->creditService->deductInquiryCharge(
                 $inquiry->business_id,
+                $inquiryType,
                 $inquiry->id
             );
 

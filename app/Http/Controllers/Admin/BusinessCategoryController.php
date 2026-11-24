@@ -84,6 +84,9 @@ class BusinessCategoryController extends Controller
                 $insert->slug = generateUniqueSlug(BusinessCategory::class, $request->name);
                 $insert->deduct_credit_per_customer_appointment = $request->deduct_credit_per_customer_appointment;
                 $insert->deduct_credit_per_self_appointment = $request->deduct_credit_per_self_appointment;
+                $insert->charge_per_contact_us_inquiry = $request->charge_per_contact_us_inquiry ?? 1;
+                $insert->charge_per_product_inquiry = $request->charge_per_product_inquiry ?? 1;
+                $insert->charge_per_service_inquiry = $request->charge_per_service_inquiry ?? 1;
                 $insert->save();
 
                 Cache::forget('BusinessCategory');
@@ -148,6 +151,15 @@ class BusinessCategoryController extends Controller
                 $update->name = $request->name;
                 $update->deduct_credit_per_customer_appointment = $request->deduct_credit_per_customer_appointment;
                 $update->deduct_credit_per_self_appointment = $request->deduct_credit_per_self_appointment;
+                if ($request->has('charge_per_contact_us_inquiry')) {
+                    $update->charge_per_contact_us_inquiry = $request->charge_per_contact_us_inquiry ?? 1;
+                }
+                if ($request->has('charge_per_product_inquiry')) {
+                    $update->charge_per_product_inquiry = $request->charge_per_product_inquiry ?? 1;
+                }
+                if ($request->has('charge_per_service_inquiry')) {
+                    $update->charge_per_service_inquiry = $request->charge_per_service_inquiry ?? 1;
+                }
                 $update->status = $request->status;
                 $update->save();
 

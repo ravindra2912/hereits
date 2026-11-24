@@ -119,9 +119,13 @@ $(function () {
             $('#view_accepted_at_badge').addClass('d-none');
 
             // Set ID on accept button inside modal
-            $('#btn_modal_accept_inquiry').data('id', d.id);
+            $('#btn_modal_accept_inquiry').data('id', d.id).data('type', d.inquiry_type).data('charge', d.inquiry_charge || 1.0);
             $('#btn_modal_reject_inquiry').data('id', d.id);
             $('#btn_modal_not_fulfilled_inquiry').data('id', d.id);
+
+            if (d.inquiry_charge) {
+                $('#view_locked_charge_text').text(parseFloat(d.inquiry_charge).toFixed(2) + ' credit(s)');
+            }
         }
 
         // Status badges
@@ -186,11 +190,17 @@ $(function () {
     // 2. Accept Inquiry Modal & Action
     $(document).on('click', '.btn-accept-inquiry, #btn_modal_accept_inquiry', function () {
         const id = $(this).data('id');
+        const inquiryType = $(this).data('type') || 'contact_us';
+        let charge = $(this).data('charge');
+        if (typeof charge === 'undefined' || charge === null || charge === '') {
+            charge = (config.inquiryCharges && config.inquiryCharges[inquiryType]) ? config.inquiryCharges[inquiryType] : 1.0;
+        }
+
         $('#accept_inquiry_id').val(id);
         $('#accept_inquiry_remarks').val('');
 
         const available = parseFloat(config.availableCredit || 0);
-        const required = parseFloat(config.inquiryCharge || 1.0);
+        const required = parseFloat(charge);
 
         $('#accept_required_credits').text(required.toFixed(2));
         $('#accept_available_credits').text(available.toFixed(2));
