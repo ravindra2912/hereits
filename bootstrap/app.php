@@ -103,13 +103,15 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, Request $request) {
-            if ($request->is('api/*') || $request->expectsJson()) {
+            if ($request->is('api/*') || $request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
                     'status_code' => 404,
                     'message' => 'Requested API route or resource not found.',
                 ], 404);
             }
+
+            return response()->view('errors.404', [], 404);
         });
 
         $exceptions->render(function (\Illuminate\Validation\ValidationException $e, Request $request) {
@@ -124,23 +126,25 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (Throwable $e, Request $request) {
-            $correlationId = (string) Str::uuid();
-
-            // Log detailed error and stack trace strictly to server-side logs
-            Log::error("Unhandled Exception [Correlation ID: {$correlationId}]: " . $e->getMessage(), [
-                'correlation_id' => $correlationId,
-                'exception'      => get_class($e),
-                'file'           => $e->getFile(),
-                'line'           => $e->getLine(),
-                'trace'          => $e->getTraceAsString(),
-                'url'            => $request->fullUrl(),
-                'method'         => $request->method(),
-                'ip'             => $request->ip(),
-            ]);
-
             $statusCode = 500;
             if ($e instanceof HttpExceptionInterface) {
                 $statusCode = $e->getStatusCode();
+            }
+
+            $correlationId = (string) Str::uuid();
+
+            // Log detailed error and stack trace strictly for server-side errors (500-level)
+            if ($statusCode >= 500) {
+                Log::error("Unhandled Exception [Correlation ID: {$correlationId}]: " . $e->getMessage(), [
+                    'correlation_id' => $correlationId,
+                    'exception'      => get_class($e),
+                    'file'           => $e->getFile(),
+                    'line'           => $e->getLine(),
+                    'trace'          => $e->getTraceAsString(),
+                    'url'            => $request->fullUrl(),
+                    'method'         => $request->method(),
+                    'ip'             => $request->ip(),
+                ]);
             }
 
             // Clean, sanitized API / JSON response
@@ -159,6 +163,11 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => $clientMessage,
                     'correlation_id' => $correlationId,
                 ], $statusCode)->header('X-Correlation-ID', $correlationId);
+            }
+
+            // Web HTML responses for client error 404
+            if ($statusCode === 404) {
+                return response()->view('errors.404', [], 404);
             }
 
             // Web HTML responses for server errors (500-level)
