@@ -5,9 +5,9 @@
     $businesses = session('user_businesses_list');
 
     if ($currentBusiness === null || $businesses === null) {
-        Auth::user()->syncBusinessSessionData();
-        $currentBusiness = session('current_business_details');
-        $businesses = session('user_businesses_list');
+    Auth::user()->syncBusinessSessionData();
+    $currentBusiness = session('current_business_details');
+    $businesses = session('user_businesses_list');
     }
     @endphp
 
@@ -163,8 +163,7 @@
               src="{{ getImage($business->business_logo ?: $business->business_image) }}"
               alt="{{ $business->name }}"
               class="business-switch-logo"
-              loading="lazy"
-            >
+              loading="lazy">
             <span class="business-switch-body text-start">
               <span class="business-switch-name">
                 <span class="business-switch-name-text">{{ $business->name }}</span>
@@ -230,10 +229,10 @@
           <span>Inquiries</span>
         </div>
         @php
-          $pendingInquiriesCount = \App\Models\BusinessInquiry::where('business_id', getBusinessId())->where('system_status', 'pending')->count();
+        $pendingInquiriesCount = \App\Models\BusinessInquiry::where('business_id', getBusinessId())->where('system_status', 'pending')->count();
         @endphp
         @if($pendingInquiriesCount > 0)
-          <span class="badge rounded-pill bg-danger" style="font-size: 0.72rem; padding: 0.25em 0.6em;">{{ $pendingInquiriesCount }}</span>
+        <span class="badge rounded-pill bg-danger" style="font-size: 0.72rem; padding: 0.25em 0.6em;">{{ $pendingInquiriesCount }}</span>
         @endif
       </div>
     </a>
@@ -246,7 +245,7 @@
     <!-- E-Commerce / Products Accordion -->
     @if ($businessSettings->is_ecommerce_system && (checkBusinessPermission('view_product_category') || checkBusinessPermission('view_labels') || checkBusinessPermission('view_products') || checkBusinessPermission('view_product_sharing') || Auth::user()->role === 'Business' || $businessSettings->is_pos_access))
     @php
-      $isProductActive = request()->routeIs('business.product*') || request()->routeIs('business.product-category.*') || request()->routeIs('business.label.*') || request()->routeIs('pos.*');
+    $isProductActive = request()->routeIs('business.product*') || request()->routeIs('business.product-category.*') || request()->routeIs('business.label.*') || request()->routeIs('pos.*');
     @endphp
     <div class="sidebar-nav-group">
       <button class="sidebar-accordion-header {{ $isProductActive ? 'active-group' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#productsCollapse" aria-expanded="{{ $isProductActive ? 'true' : 'false' }}" aria-controls="productsCollapse">
@@ -289,12 +288,12 @@
 
 
           @if ($businessSettings->is_pos_access)
-            @if (Auth::user()->role === 'Business' || !empty(session('pos_permissions')['pos_access']))
-            <a href="{{ route('pos.dashboard') }}" target="_blank" class="sidebar-sub-link text-primary fw-bold">
-              <i class="bi bi-calculator"></i>
-              <span>POS Terminal</span>
-            </a>
-            @endif
+          @if (Auth::user()->role === 'Business' || !empty(session('pos_permissions')['pos_access']))
+          <a href="{{ route('pos.dashboard') }}" target="_blank" class="sidebar-sub-link text-primary fw-bold">
+            <i class="bi bi-calculator"></i>
+            <span>POS Terminal</span>
+          </a>
+          @endif
           @endif
         </div>
       </div>
@@ -305,7 +304,7 @@
     <!-- Services Accordion -->
     @if ($businessSettings->is_service_system && (checkBusinessPermission('view_service_category') || checkBusinessPermission('view_services') || Auth::user()->role === 'Business'))
     @php
-      $isServiceActive = request()->routeIs('business.service*') || request()->routeIs('business.service-category.*');
+    $isServiceActive = request()->routeIs('business.service*') || request()->routeIs('business.service-category.*');
     @endphp
     <div class="sidebar-nav-group">
       <button class="sidebar-accordion-header {{ $isServiceActive ? 'active-group' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#servicesCollapse" aria-expanded="{{ $isServiceActive ? 'true' : 'false' }}" aria-controls="servicesCollapse">
@@ -341,7 +340,7 @@
     <!-- Appointments Accordion -->
     @if ($businessSettings->is_appointment_system && (checkBusinessPermission('view_department') || checkBusinessPermission('view_experts') || checkBusinessPermission('view_appointments')))
     @php
-      $isAppointmentActive = request()->routeIs('business.appointment*') && !request()->routeIs('business.appointment.customers*');
+    $isAppointmentActive = request()->routeIs('business.appointment*') && !request()->routeIs('business.appointment.customers*');
     @endphp
     <div class="sidebar-nav-group">
       <button class="sidebar-accordion-header {{ $isAppointmentActive ? 'active-group' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#appointmentsCollapse" aria-expanded="{{ $isAppointmentActive ? 'true' : 'false' }}" aria-controls="appointmentsCollapse">
@@ -387,7 +386,7 @@
     <!-- Marketing Accordion -->
     @if(Auth::user()->role === 'Business' || checkBusinessPermission('view_offers') || (!empty($businessSettings->is_lucky_draw) && checkBusinessPermission('view_lucky_draw')) || checkBusinessPermission('view_gallery') || checkBusinessPermission('view_blogs'))
     @php
-      $isMarketingActive = request()->routeIs('business.offer*') || request()->routeIs('business.lucky-draw*') || request()->routeIs('business.gallery*') || request()->routeIs('business.blog*') || request()->routeIs('business.setting.business.share');
+    $isMarketingActive = request()->routeIs('business.offer*') || request()->routeIs('business.lucky-draw*') || request()->routeIs('business.gallery*') || request()->routeIs('business.blog*') || request()->routeIs('business.setting.business.share');
     @endphp
     <div class="sidebar-nav-group">
       <button class="sidebar-accordion-header {{ $isMarketingActive ? 'active-group' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#marketingCollapse" aria-expanded="{{ $isMarketingActive ? 'true' : 'false' }}" aria-controls="marketingCollapse">
@@ -441,7 +440,7 @@
     <!-- Home Management Accordion -->
     @if(checkBusinessPermission('view_home_layouts') || checkBusinessPermission('view_home_settings') || checkBusinessPermission('view_campaign_leads'))
     @php
-      $isHomeManagementActive = request()->routeIs('business.home-management*');
+    $isHomeManagementActive = request()->routeIs('business.home-management*');
     @endphp
     <div class="sidebar-nav-group">
       <button class="sidebar-accordion-header {{ $isHomeManagementActive ? 'active-group' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#homeManagementCollapse" aria-expanded="{{ $isHomeManagementActive ? 'true' : 'false' }}" aria-controls="homeManagementCollapse">
@@ -483,7 +482,7 @@
     <!-- Staff Management Accordion -->
     @if(checkBusinessPermission('view_staff') || checkBusinessPermission('view_roles'))
     @php
-      $isStaffManagementActive = request()->routeIs('business.staff*') || request()->routeIs('business.role*');
+    $isStaffManagementActive = request()->routeIs('business.staff*') || request()->routeIs('business.role*');
     @endphp
     <div class="sidebar-nav-group">
       <button class="sidebar-accordion-header {{ $isStaffManagementActive ? 'active-group' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#staffManagementCollapse" aria-expanded="{{ $isStaffManagementActive ? 'true' : 'false' }}" aria-controls="staffManagementCollapse">
@@ -518,12 +517,12 @@
     <!-- Settings Accordion (Moved after Staff Management) -->
     @if(Auth::user()->role === 'Business')
     @php
-      $isSettingsActive = request()->routeIs('business.setting.business.configuration')
-        || request()->routeIs('business.setting.business.seo')
-        || request()->routeIs('business.setting.business.about_us')
-        || request()->routeIs('business.setting.business.timing')
-        || request()->routeIs('business.setting.business.theme')
-        || request()->routeIs('business.setting.business.leagle-page*');
+    $isSettingsActive = request()->routeIs('business.setting.business.configuration')
+    || request()->routeIs('business.setting.business.seo')
+    || request()->routeIs('business.setting.business.about_us')
+    || request()->routeIs('business.setting.business.timing')
+    || request()->routeIs('business.setting.business.theme')
+    || request()->routeIs('business.setting.business.leagle-page*');
     @endphp
     <div class="sidebar-nav-group">
       <button class="sidebar-accordion-header {{ $isSettingsActive ? 'active-group' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#settingsCollapse" aria-expanded="{{ $isSettingsActive ? 'true' : 'false' }}" aria-controls="settingsCollapse">
@@ -556,10 +555,10 @@
             <span>Timing</span>
           </a>
 
-          <a href="{{ route('business.setting.business.theme') }}" class="sidebar-sub-link {{ request()->routeIs('business.setting.business.theme') ? 'active' : '' }}">
+          <!-- <a href="{{ route('business.setting.business.theme') }}" class="sidebar-sub-link {{ request()->routeIs('business.setting.business.theme') ? 'active' : '' }}">
             <i class="bi bi-circle-fill" style="font-size: 0.4rem;"></i>
             <span>Theme</span>
-          </a>
+          </a> -->
 
           <a href="{{ route('business.setting.business.leagle-page.index') }}" class="sidebar-sub-link {{ request()->routeIs('business.setting.business.leagle-page*') ? 'active' : '' }}">
             <i class="bi bi-circle-fill" style="font-size: 0.4rem;"></i>
@@ -574,7 +573,7 @@
     <!-- Credits & Billing Accordion -->
     @if(Auth::user()->role === 'Business')
     @php
-      $isBillingActive = request()->routeIs('business.credits*') || request()->routeIs('business.purchase*');
+    $isBillingActive = request()->routeIs('business.credits*') || request()->routeIs('business.purchase*');
     @endphp
     <div class="sidebar-nav-group">
       <button class="sidebar-accordion-header {{ $isBillingActive ? 'active-group' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#billingCollapse" aria-expanded="{{ $isBillingActive ? 'true' : 'false' }}" aria-controls="billingCollapse">
@@ -604,7 +603,7 @@
 
     <!-- Profile Accordion / Link (Moved after Subscription & Billing) -->
     @php
-      $isProfileActive = request()->routeIs('business.setting.business') || request()->routeIs('business.setting.profile');
+    $isProfileActive = request()->routeIs('business.setting.business') || request()->routeIs('business.setting.profile');
     @endphp
     @if(Auth::user()->role === 'Business')
     <div class="sidebar-nav-group">
@@ -710,4 +709,3 @@
     window.addEventListener('scroll', positionBusinessSwitchMenu, true);
   });
 </script>
-
