@@ -59,9 +59,14 @@ class BusinessSetting extends Model
     ];
 
     protected $casts = [
+        'is_show_contact' => 'boolean',
         'is_private' => 'boolean',
         'is_login_required' => 'boolean',
         'theme_setting' => 'array',
+    ];
+
+    protected $attributes = [
+        'is_show_contact' => false,
     ];
 
     /**

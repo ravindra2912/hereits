@@ -424,7 +424,7 @@ class ApiV1HomeService
             'is_service_system' => !empty($setting?->is_service_system),
             'is_appointment_system' => !empty($setting?->is_appointment_system),
             'is_label' => !empty($setting?->is_label),
-            'is_show_contact' => $setting ? (!isset($setting->is_show_contact) || (bool)$setting->is_show_contact) : true,
+            'is_show_contact' => !empty($setting?->is_show_contact),
             'is_verified' => !empty($setting?->is_verified),
             'about_us_text' => $setting?->about_us_text,
             'about_us_image' => !empty($setting?->about_us_image) && function_exists('getImage') ? getImage($setting->about_us_image) : null,

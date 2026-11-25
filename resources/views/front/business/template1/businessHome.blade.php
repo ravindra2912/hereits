@@ -172,13 +172,13 @@
             <a href="#experts-list" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
               Book Appointment
             </a>
-            @elseif((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
+            @elseif(!empty($setting?->is_show_contact) && !empty($business->contact))
             <a href="#contact-us" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
               Contact Us
             </a>
             @endif
 
-            @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
+            @if(!empty($setting?->is_show_contact) && !empty($business->contact))
             <a href="tel:{{ $business->contact }}" class="btn btn-outline-light btn-lg rounded-pill fw-bold px-4 hover-lift">
               <i class="fas fa-phone-alt me-2"></i> Call Now
             </a>
@@ -306,7 +306,7 @@
           <h2 class="h3 fw-bold mb-4">Contact Us</h2>
           <p class="text-muted mb-5 fs-5">Have any questions or need more information? Send us a message and our team will get back to you shortly.</p>
 
-          @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
+          @if(!empty($setting?->is_show_contact) && !empty($business->contact))
           <div class="d-flex align-items-center mb-4">
             <div class="flex-shrink-0 bg-primary-light p-3 rounded-4 me-3">
               <i class="fas fa-phone-alt text-primary fs-4"></i>

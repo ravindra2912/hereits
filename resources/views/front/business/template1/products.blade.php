@@ -14,14 +14,20 @@
     .label-scroll-container::-webkit-scrollbar {
         display: none;
     }
-    .category-scroll-container, .label-scroll-container {
+
+    .category-scroll-container,
+    .label-scroll-container {
         cursor: grab;
         user-select: none;
     }
-    .category-scroll-container:active, .label-scroll-container:active {
+
+    .category-scroll-container:active,
+    .label-scroll-container:active {
         cursor: grabbing;
     }
-    .category-scroll-container img, .label-scroll-container img {
+
+    .category-scroll-container img,
+    .label-scroll-container img {
         pointer-events: none;
         user-select: none;
         -webkit-user-drag: none;
@@ -147,7 +153,7 @@
                             <button class="btn btn-secondary btn_sm w-100 rounded-pill py-2 shadow-sm" disabled>
                             <i class="bi bi-x-circle me-1"></i> <span class="small">Out of Stock</span>
                             </button>
-                            @elseif(in_array($product->price_type, ['PriceInRange', 'WithoutPrice']) && isset($setting) && $setting->is_order_place_on_website && (!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
+                            @elseif(in_array($product->price_type, ['PriceInRange', 'WithoutPrice']) && isset($setting) && $setting->is_order_place_on_website)
                             <button type="button" class="btn btn-success btn_sm w-100 rounded-pill py-2 text-center text-white open-inquiry-modal"
                                 data-inquiry-type="product"
                                 data-source-id="{{ $product->id }}"
@@ -157,19 +163,19 @@
                             @else
                             <div class="cart-control-wrapper mt-3" data-product-id="{{ $product->id }}">
                                 @if (isset($setting) && ($setting->is_order_place_on_website || ($setting->is_show_contact && !empty($business->contact))))
-                                    <!-- Add to Cart Button -->
-                                    <button class="btn btn-primary btn_sm w-100 rounded-pill add-to-cart-btn-main add-to-cart py-2 shadow-sm"
-                                        data-type="product"
-                                        data-id="{{ $product->id }}"
-                                        data-name="{{ $product->name }}"
-                                        data-price="{{ $product->sell_price ?? 0 }}"
-                                        data-price-type="{{ $product->price_type }}"
-                                        data-min-price="{{ $product->min_price ?? 0 }}"
-                                        data-max-price="{{ $product->max_price ?? 0 }}"
-                                        data-max-qty="{{ $product->quantity }}"
-                                        data-image="{{ getImage($product->firstTwoImage->first()?->image_url) }}">
-                                        <span class="small">Add to Cart</span>
-                                    </button>
+                                <!-- Add to Cart Button -->
+                                <button class="btn btn-primary btn_sm w-100 rounded-pill add-to-cart-btn-main add-to-cart py-2 shadow-sm"
+                                    data-type="product"
+                                    data-id="{{ $product->id }}"
+                                    data-name="{{ $product->name }}"
+                                    data-price="{{ $product->sell_price ?? 0 }}"
+                                    data-price-type="{{ $product->price_type }}"
+                                    data-min-price="{{ $product->min_price ?? 0 }}"
+                                    data-max-price="{{ $product->max_price ?? 0 }}"
+                                    data-max-qty="{{ $product->quantity }}"
+                                    data-image="{{ getImage($product->firstTwoImage->first()?->image_url) }}">
+                                    <span class="small">Add to Cart</span>
+                                </button>
                                 @endif
 
                                 <!-- Quantity Control (hidden by default) -->
@@ -225,7 +231,7 @@
 
         // Initialize mouse drag-to-scroll logic
         const containers = document.querySelectorAll('.category-scroll-container, .label-scroll-container');
-        
+
         containers.forEach(function(container) {
             if (!container) return;
 
@@ -245,7 +251,7 @@
                 startX = e.pageX - container.offsetLeft;
                 scrollLeftStart = container.scrollLeft;
                 moved = false;
-                
+
                 // Temporarily disable smooth scroll behavior during drag for instant response
                 container.style.scrollBehavior = 'auto';
             });

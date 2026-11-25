@@ -177,7 +177,7 @@
             <a href="{{ route('checkout', $business->slug) }}" class="btn btn-primary w-100 rounded-pill mb-2 fw-bold text-white shadow-sm website-checkout-btn">
                 <i class="fas fa-shopping-bag me-1"></i> Checkout on Website
             </a>
-            @elseif(!isset($setting->is_show_contact) || $setting->is_show_contact)
+            @elseif(!empty($setting?->is_show_contact))
             <button class="whatsapp-btn cart-inquiry-btn">
                 <i class="bi bi-chat-dots me-1"></i> Send Inquiry
             </button>

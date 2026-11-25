@@ -121,7 +121,7 @@
             <div class="d-flex justify-content-between align-items-center mb-1">
               <label class="form-label small fw-bold mb-0">Contact Number <span class="text-danger">*</span></label>
               <div class="form-check form-switch d-inline-flex align-items-center gap-1 mb-0">
-                <input class="form-check-input custom-switch cursor-pointer" type="checkbox" role="switch" name="is_show_contact" value="1" id="is_show_contact" {{ (!isset($setting) || $setting->is_show_contact) ? 'checked' : '' }}>
+                <input class="form-check-input custom-switch cursor-pointer" type="checkbox" role="switch" name="is_show_contact" value="1" id="is_show_contact" {{ !empty($setting?->is_show_contact) ? 'checked' : '' }}>
                 <label class="form-check-label small fw-semibold text-muted cursor-pointer" for="is_show_contact">Show on Website</label>
               </div>
             </div>
@@ -389,7 +389,7 @@
                   </div>
                 </div>
                 <div class="form-check form-switch m-0">
-                  <input class="form-check-input custom-switch" type="checkbox" role="switch" name="is_show_contact" id="sys_is_show_contact" {{ (!isset($setting) || $setting->is_show_contact) ? 'checked' : '' }}>
+                  <input class="form-check-input custom-switch" type="checkbox" role="switch" name="is_show_contact" id="sys_is_show_contact" {{ !empty($setting?->is_show_contact) ? 'checked' : '' }}>
                 </div>
               </div>
             </div>

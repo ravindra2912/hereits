@@ -82,7 +82,7 @@
                         <li class="pb-1"><a href="{{ route('business-details', $business->slug) }}#gallery">Media Gallery</a></li>
                         @endif
 
-                        @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
+                        @if(!empty($setting?->is_show_contact) && !empty($business->contact))
                         <li class="pb-1"><a href="{{ route('business-details', $business->slug) }}#contact-us">Support Hub</a></li>
                         @endif
                         @if(isset($setting->is_appointment_system) && $setting->is_appointment_system)
@@ -125,7 +125,7 @@
                             </div>
                         </div>
 
-                        @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
+                        @if(!empty($setting?->is_show_contact) && !empty($business->contact))
                         <div class="d-flex mb-4">
                             <div class="hub-icon me-3">
                                 <i class="fas fa-headset text-primary"></i>
@@ -159,7 +159,7 @@
                             $contact = preg_replace('/\D/', '', $contact);
                             if(strlen($contact) == 10){ $contact = '91' . $contact; }
                             @endphp
-                            @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($contact))
+                            @if(!empty($setting?->is_show_contact) && !empty($contact))
                             <a href="https://wa.me/{{ $contact }}" target="_blank" class="social-btn whatsapp" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
                             @endif
                         </div>

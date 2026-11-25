@@ -76,7 +76,7 @@
                     <div class="card border-0 bg-light rounded-4 p-4 mb-4">
 
                         <div class="d-grid gap-2">
-                            @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
+                            @if(!empty($setting?->is_show_contact) && !empty($business->contact))
                             <a href="tel:{{ $business->contact }}" class="btn btn-primary btn-lg rounded-pill shadow-sm">
                                 <i class="fas fa-phone-alt me-2"></i> Call to Inquire
                             </a>

@@ -46,7 +46,7 @@ $toLinear = fn($c) => $c <= 0.03928 ? $c / 12.92 : pow(($c + 0.055) / 1.055, 2.4
                     </span>
                 </div>
                 <div class="col-md-6 d-flex align-items-center justify-content-end gap-4">
-                    @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
+                    @if(!empty($setting?->is_show_contact) && !empty($business->contact))
                     <a href="tel:{{ $business->contact }}" class="text-white text-decoration-none d-flex align-items-center">
                         <i class="fas fa-phone-alt text-primary me-2"></i> {{ $business->contact }}
                     </a>

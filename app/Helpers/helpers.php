@@ -321,7 +321,7 @@ function getBusinessSettings($business_id = null, $forceRefresh = false)
             $sessSettings->charge_per_service_inquiry = 1.00;
         }
         if (!property_exists($sessSettings, 'is_show_contact')) {
-            $sessSettings->is_show_contact = true;
+            $sessSettings->is_show_contact = false;
         }
         if (!property_exists($sessSettings, 'is_private')) {
             $sessSettings->is_private = true;
@@ -349,7 +349,7 @@ function getBusinessSettings($business_id = null, $forceRefresh = false)
             'is_share_products_to_business' => false,
             'is_product_import_export' => false,
             'is_service_system' => false,
-            'is_show_contact' => true,
+            'is_show_contact' => false,
             'is_lucky_draw' => false,
             'is_quotation_charge_manual' => false,
             'is_create_quotation_on_inquiry' => false,

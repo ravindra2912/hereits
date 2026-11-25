@@ -106,7 +106,7 @@
                             <span class="text-muted small">Our team is reviewing your requirements and will reach out shortly.</span>
                         </div>
                     </div>
-                    @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
+                    @if(!empty($setting?->is_show_contact) && !empty($business->contact))
                     <div class="d-flex align-items-center pt-2 border-top border-light-subtle">
                         <div class="me-3 text-success fs-4">
                             <i class="bi bi-telephone-fill"></i>
