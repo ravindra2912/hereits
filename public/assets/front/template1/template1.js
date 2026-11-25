@@ -74,6 +74,7 @@ $(document).ready(function () {
         }
 
         $('#inquiryModalTitle').text(titleText);
+        $('#inquiryModalHeaderIcon').attr('class', 'bi ' + iconClass + ' text-white');
 
         if (itemName) {
             $('#inquiryItemInfo').removeClass('d-none');
@@ -89,6 +90,31 @@ $(document).ready(function () {
         $modal.modal('show');
         return true;
     };
+
+    // Helper to display Inquiry Success modal
+    function showInquirySuccess(inquiryId = null) {
+        if (inquiryId) {
+            $('#inquirySuccessId').text('#' + inquiryId);
+            $('#inquirySuccessRef').removeClass('d-none');
+        } else {
+            $('#inquirySuccessRef').addClass('d-none');
+        }
+
+        const businessName = $('meta[name="business-name"]').attr('content');
+        if (businessName) {
+            $('.inquiry-business-name').text(businessName);
+        }
+
+        const $activeModal = $('#inquiryModal');
+        if ($activeModal.hasClass('show')) {
+            $activeModal.one('hidden.bs.modal', function () {
+                $('#inquirySuccessModal').modal('show');
+            });
+            $activeModal.modal('hide');
+        } else {
+            $('#inquirySuccessModal').modal('show');
+        }
+    }
 
     // Universal trigger for Inquiry Modal
     $(document).on('click', '.open-inquiry-modal', function (e) {
@@ -148,14 +174,14 @@ $(document).ready(function () {
                 $submitBtn.prop('disabled', false).html(originalBtnHtml);
 
                 if (response.status === 'success') {
-                    toastr.success(response.message || 'Inquiry submitted successfully!');
-                    $('#inquiryModal').modal('hide');
                     $('#inquiryMessage').val('');
                     $('#inquirySubject').val('');
 
                     if (typeof window.brandBataoCart !== 'undefined' && cartItems) {
                         window.brandBataoCart.clearCart();
                     }
+
+                    showInquirySuccess(response.inquiry_id);
                 } else {
                     $('#inquiryModalAlert').removeClass('d-none').text(response.message || 'Failed to submit inquiry.');
                 }
@@ -218,8 +244,8 @@ $(document).ready(function () {
                 $submitBtn.prop('disabled', false).html(originalBtnHtml);
 
                 if (response.status === 'success') {
-                    toastr.success(response.message || 'Inquiry submitted successfully!');
                     $form[0].reset();
+                    showInquirySuccess(response.inquiry_id);
                 } else {
                     toastr.error(response.message || 'Failed to submit inquiry.');
                 }

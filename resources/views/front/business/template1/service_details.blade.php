@@ -80,13 +80,14 @@
                             <a href="tel:{{ $business->contact }}" class="btn btn-primary btn-lg rounded-pill shadow-sm">
                                 <i class="fas fa-phone-alt me-2"></i> Call to Inquire
                             </a>
+                            @endif
                             <button type="button" class="btn btn-success btn-lg rounded-pill shadow-sm open-inquiry-modal"
                                 data-inquiry-type="service"
                                 data-source-id="{{ $service->id }}"
                                 data-item-name="{{ $service->name }}">
                                 <i class="bi bi-chat-dots me-2"></i> Send Inquiry
                             </button>
-                            @endif
+
                             <button class="btn btn-outline-dark btn-lg rounded-pill shadow-sm mt-2" onclick="openShareModal('{{ url()->current() }}', 'Service', '{{ e(addslashes($service->name)) }}')">
                                 <i class="fas fa-share-alt me-2"></i> Share Service
                             </button>
@@ -119,7 +120,7 @@
                             <img src="{{ getImage($recommendedService->image_url) }}"
                                 class="w-100 h-100 object-fit-cover"
                                 alt="{{ $recommendedService->name }}" loading="lazy">
-                            
+
                             @php $isFavRec = isFavorite('service', $recommendedService->id); @endphp
                             <button type="button" class="btn-toggle-favorite card-fav-btn {{ $isFavRec ? 'active' : '' }}"
                                 data-type="service"
