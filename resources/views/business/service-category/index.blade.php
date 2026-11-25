@@ -114,7 +114,7 @@
                             <option value="">Select Business Category</option>
                             @if(isset($storeCategories))
                             @foreach ($storeCategories as $stCat)
-                            <option value="{{ $stCat->id }}" {{ count($storeCategories) === 1 ? 'selected' : '' }}>{{ $stCat->name }}</option>
+                            <option value="{{ $stCat->id }}" {{ (isset($primaryBusinessCategoryId) && $primaryBusinessCategoryId == $stCat->id) || count($storeCategories) === 1 ? 'selected' : '' }}>{{ $stCat->name }}</option>
                             @endforeach
                             @endif
                         </select>
@@ -271,7 +271,7 @@
         $('#formMethod').val('POST');
         $('#categoryName').val('');
         $('#categoryParentId').val("{{ isset($currentCategory) && $currentCategory ? $currentCategory->id : '' }}").find('option').show();
-        $('#categoryBusinessCategoryId').val("{{ isset($storeCategories) && count($storeCategories) === 1 ? $storeCategories->first()->id : '' }}");
+        $('#categoryBusinessCategoryId').val("{{ $primaryBusinessCategoryId ?? (isset($storeCategories) && $storeCategories->isNotEmpty() ? $storeCategories->first()->id : '') }}");
         $('#categoryStatus').val('active');
         $('#categoryImage').val('');
         $('#previewImg').attr('src', "{{ getImage('') }}");

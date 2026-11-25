@@ -117,7 +117,9 @@ class ServiceCategoryController extends Controller
             ? $business->businessCategories
             : ($business?->business_category_id ? BusinessCategory::where('id', $business->business_category_id)->select('id', 'name')->get() : collect());
 
-        return view('business.service-category.index', compact('parentCategories', 'currentCategory', 'storeCategories'));
+        $primaryBusinessCategoryId = $business?->business_category_id ?? ($storeCategories->first()?->id ?? null);
+
+        return view('business.service-category.index', compact('parentCategories', 'currentCategory', 'storeCategories', 'primaryBusinessCategoryId'));
     }
 
     public function create()
