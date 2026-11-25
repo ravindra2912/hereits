@@ -297,7 +297,6 @@
   @endif
 
   <!-- Contact Us Section -->
-  @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
   <div id="contact-us" class="container py-5 section-scroll">
     <div class="card-modern border-0 shadow-lg rounded-4 p-4 p-md-5 overflow-hidden position-relative">
 
@@ -307,6 +306,7 @@
           <h2 class="h3 fw-bold mb-4">Contact Us</h2>
           <p class="text-muted mb-5 fs-5">Have any questions or need more information? Send us a message and our team will get back to you shortly.</p>
 
+          @if((!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
           <div class="d-flex align-items-center mb-4">
             <div class="flex-shrink-0 bg-primary-light p-3 rounded-4 me-3">
               <i class="fas fa-phone-alt text-primary fs-4"></i>
@@ -316,6 +316,7 @@
               <h6 class="fw-bold mb-0">+91 {{ $business->contact }}</h6>
             </div>
           </div>
+          @endif
 
           <div class="d-flex align-items-center mb-4">
             <div class="flex-shrink-0 bg-primary-light p-3 rounded-4 me-3">
@@ -370,7 +371,6 @@
       </div>
     </div>
   </div>
-  @endif
 
 </section>
 
