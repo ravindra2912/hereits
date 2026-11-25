@@ -2,69 +2,244 @@ $(document).ready(function () {
     const businessName = $('meta[name="business-name"]').attr('content') || 'Store';
     let businessContact = $('meta[name="business-contact"]').attr('content') || '';
 
-    // Helper function to check WhatsApp inquiry login requirement
-    function checkWhatsAppInquiryLogin(pendingUrl = null) {
+    // Helper function to check inquiry login requirement
+    function checkInquiryLogin(actionData = null) {
         const isLoginRequired = parseInt($('meta[name="is-login-required"]').attr('content') || 0) === 1;
         const isLoggedIn = parseInt($('meta[name="user-logged-in"]').attr('content') || 0) === 1;
 
         if (isLoginRequired && !isLoggedIn) {
-            if (pendingUrl) {
-                sessionStorage.setItem('pending_whatsapp_inquiry_url', pendingUrl);
+            if (actionData) {
+                sessionStorage.setItem('pending_inquiry_action', JSON.stringify(actionData));
             }
             $('.cart-drawer').removeClass('open');
             $('.cart-overlay').removeClass('show');
-            toastr.info('Please login to proceed with WhatsApp inquiry.');
+            toastr.info('Please login to proceed with your inquiry.');
             $('#authModal').modal('show');
             return false;
         }
         return true;
     }
 
-    // Direct WhatsApp Inquiry link click handler
-    $(document).on('click', '.whatsapp-inquiry-link', function (e) {
-        const targetUrl = $(this).attr('href');
-        if (!checkWhatsAppInquiryLogin(targetUrl)) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
-    // Resume pending inquiry URL after login reload
-    const pendingInquiryUrl = sessionStorage.getItem('pending_whatsapp_inquiry_url');
-    if (pendingInquiryUrl && parseInt($('meta[name="user-logged-in"]').attr('content') || 0) === 1) {
-        sessionStorage.removeItem('pending_whatsapp_inquiry_url');
-        window.open(pendingInquiryUrl, '_blank');
+    // Resume pending inquiry after login reload
+    const pendingInquiry = sessionStorage.getItem('pending_inquiry_action');
+    if (pendingInquiry && parseInt($('meta[name="user-logged-in"]').attr('content') || 0) === 1) {
+        sessionStorage.removeItem('pending_inquiry_action');
+        try {
+            const parsed = JSON.parse(pendingInquiry);
+            setTimeout(() => {
+                window.openInquiryModal(parsed.type, parsed.sourceId, parsed.itemName);
+            }, 300);
+        } catch (e) {}
     }
 
-    // WhatsApp Contact Form Handler
-    $('#whatsappContactForm').on('submit', function (e) {
-        e.preventDefault();
-
-        if (!checkWhatsAppInquiryLogin()) {
+    // Open inquiry modal helper function
+    window.openInquiryModal = function (type, sourceId = '', itemName = '', extraData = {}) {
+        if (!checkInquiryLogin({ type, sourceId, itemName })) {
             return false;
         }
 
-        const name = $('#contact_name').val();
-        const subject = $('#contact_subject').val();
-        const message = $('#contact_message').val();
+        const $modal = $('#inquiryModal');
+        if (!$modal.length) return false;
 
-        // Clean the number (remove non-digits)
-        let cleanedContact = businessContact.replace(/\D/g, '');
+        $('#inquiryModalAlert').addClass('d-none').text('');
+        $('#inquiryType').val(type || 'contact_us');
+        $('#inquirySourceId').val(sourceId || '');
 
-        // Prepend 91 if it's 10 digits (India context)
-        if (cleanedContact.length === 10) {
-            cleanedContact = '91' + cleanedContact;
+        $('#inquiryModalForm').removeData('inquiryItems');
+        $('#inquiryModalForm').removeData('inquirySources');
+
+        let titleText = 'Send Inquiry';
+        let typeLabel = 'Contact';
+        let iconClass = 'bi-chat-dots-fill';
+
+        if (type === 'product') {
+            titleText = 'Product Inquiry';
+            typeLabel = 'Product';
+            iconClass = 'bi-box-seam';
+        } else if (type === 'service') {
+            titleText = 'Service Inquiry';
+            typeLabel = 'Service';
+            iconClass = 'bi-briefcase';
+        } else if (type === 'cart') {
+            titleText = 'Cart Inquiry';
+            typeLabel = 'Cart Items';
+            iconClass = 'bi-cart-check';
+            $('#inquiryType').val('product');
+            if (extraData.items) {
+                $('#inquiryModalForm').data('inquiryItems', extraData.items);
+            }
+            if (extraData.sources) {
+                $('#inquiryModalForm').data('inquirySources', extraData.sources);
+            }
         }
 
-        const whatsappMessage = `*New Contact Inquiry for ${businessName}*%0A%0A` +
-            `*Name:* ${name}%0A` +
-            `*Subject:* ${subject}%0A%0A` +
-            `*Message:*%0A${message}`;
+        $('#inquiryModalTitle').text(titleText);
 
-        const whatsappUrl = `https://wa.me/${cleanedContact}?text=${whatsappMessage}`;
+        if (itemName) {
+            $('#inquiryItemInfo').removeClass('d-none');
+            $('#inquiryItemIcon').attr('class', 'bi ' + iconClass);
+            $('#inquiryItemTypeLabel').text(typeLabel);
+            $('#inquiryItemName').text(itemName);
+            $('#inquirySubject').val('Inquiry regarding: ' + itemName);
+        } else {
+            $('#inquiryItemInfo').addClass('d-none');
+            $('#inquirySubject').val('');
+        }
 
-        // Open in new tab
-        window.open(whatsappUrl, '_blank');
+        $modal.modal('show');
+        return true;
+    };
+
+    // Universal trigger for Inquiry Modal
+    $(document).on('click', '.open-inquiry-modal', function (e) {
+        e.preventDefault();
+        const type = $(this).data('inquiry-type') || 'contact_us';
+        const sourceId = $(this).data('source-id') || '';
+        const itemName = $(this).data('item-name') || '';
+        window.openInquiryModal(type, sourceId, itemName);
+    });
+
+    // Inquiry Modal Form AJAX Submission
+    $('#inquiryModalForm').on('submit', function (e) {
+        e.preventDefault();
+
+        if (!checkInquiryLogin()) {
+            return false;
+        }
+
+        const $form = $(this);
+        const $submitBtn = $('#inquiryModalSubmitBtn');
+        const originalBtnHtml = $submitBtn.html();
+
+        const businessSlug = $('meta[name="business-slug"]').attr('content') || '';
+        const targetUrl = `/${businessSlug}/inquiry`;
+
+        const payload = {
+            name: $('#inquiryName').val().trim(),
+            contact: $('#inquiryContact').val().trim(),
+            email: $('#inquiryEmail').val().trim() || null,
+            subject: $('#inquirySubject').val().trim() || null,
+            message: $('#inquiryMessage').val().trim() || null,
+            inquiry_type: $('#inquiryType').val(),
+            source_id: $('#inquirySourceId').val() || null,
+        };
+
+        const cartItems = $form.data('inquiryItems');
+        if (cartItems && cartItems.length) {
+            payload.items = cartItems;
+        }
+        const cartSources = $form.data('inquirySources');
+        if (cartSources && cartSources.length) {
+            payload.sources = cartSources;
+        }
+
+        $submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Submitting...');
+        $('#inquiryModalAlert').addClass('d-none').text('');
+
+        $.ajax({
+            url: targetUrl,
+            type: 'POST',
+            data: JSON.stringify(payload),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                $submitBtn.prop('disabled', false).html(originalBtnHtml);
+
+                if (response.status === 'success') {
+                    toastr.success(response.message || 'Inquiry submitted successfully!');
+                    $('#inquiryModal').modal('hide');
+                    $('#inquiryMessage').val('');
+                    $('#inquirySubject').val('');
+
+                    if (typeof window.brandBataoCart !== 'undefined' && cartItems) {
+                        window.brandBataoCart.clearCart();
+                    }
+                } else {
+                    $('#inquiryModalAlert').removeClass('d-none').text(response.message || 'Failed to submit inquiry.');
+                }
+            },
+            error: function (xhr) {
+                $submitBtn.prop('disabled', false).html(originalBtnHtml);
+
+                if (xhr.status === 401 || (xhr.responseJSON && xhr.responseJSON.requires_login)) {
+                    $('#inquiryModal').modal('hide');
+                    toastr.info(xhr.responseJSON?.message || 'Please login to proceed with inquiry.');
+                    $('#authModal').modal('show');
+                    return;
+                }
+
+                let errMsg = 'Something went wrong while submitting your inquiry.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errMsg = xhr.responseJSON.message;
+                }
+                $('#inquiryModalAlert').removeClass('d-none').text(errMsg);
+                toastr.error(errMsg);
+            }
+        });
+    });
+
+    // Home Page Contact Us Form AJAX Submission
+    $('#contactInquiryForm').on('submit', function (e) {
+        e.preventDefault();
+
+        if (!checkInquiryLogin()) {
+            return false;
+        }
+
+        const $form = $(this);
+        const $submitBtn = $('#contactFormSubmitBtn');
+        const originalBtnHtml = $submitBtn.html();
+
+        const businessSlug = $('meta[name="business-slug"]').attr('content') || '';
+        const targetUrl = `/${businessSlug}/inquiry`;
+
+        const payload = {
+            name: $('#contact_name').val().trim(),
+            contact: $('#contact_phone').val().trim(),
+            email: $('#contact_email').val().trim() || null,
+            subject: $('#contact_subject').val().trim() || null,
+            message: $('#contact_message').val().trim() || null,
+            inquiry_type: 'contact_us'
+        };
+
+        $submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Sending...');
+
+        $.ajax({
+            url: targetUrl,
+            type: 'POST',
+            data: JSON.stringify(payload),
+            contentType: 'application/json',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                $submitBtn.prop('disabled', false).html(originalBtnHtml);
+
+                if (response.status === 'success') {
+                    toastr.success(response.message || 'Inquiry submitted successfully!');
+                    $form[0].reset();
+                } else {
+                    toastr.error(response.message || 'Failed to submit inquiry.');
+                }
+            },
+            error: function (xhr) {
+                $submitBtn.prop('disabled', false).html(originalBtnHtml);
+
+                if (xhr.status === 401 || (xhr.responseJSON && xhr.responseJSON.requires_login)) {
+                    toastr.info(xhr.responseJSON?.message || 'Please login to proceed with inquiry.');
+                    $('#authModal').modal('show');
+                    return;
+                }
+
+                let errMsg = 'Something went wrong while submitting your inquiry.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errMsg = xhr.responseJSON.message;
+                }
+                toastr.error(errMsg);
+            }
+        });
     });
 
     // Drag-to-scroll for categories on desktop

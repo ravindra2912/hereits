@@ -225,7 +225,8 @@
     display: block;
 }
 
-.whatsapp-btn {
+.whatsapp-btn,
+.cart-inquiry-btn {
     background: #25d366;
     color: white;
     border: none;
@@ -237,9 +238,11 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
+    cursor: pointer;
 }
 
-.whatsapp-btn:hover {
+.whatsapp-btn:hover,
+.cart-inquiry-btn:hover {
     background: #128c7e;
     color: white;
 }

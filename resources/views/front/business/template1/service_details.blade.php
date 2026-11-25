@@ -80,9 +80,12 @@
                             <a href="tel:{{ $business->contact }}" class="btn btn-primary btn-lg rounded-pill shadow-sm">
                                 <i class="fas fa-phone-alt me-2"></i> Call to Inquire
                             </a>
-                            <a href="https://wa.me/91{{ $business->contact }}?text=Hi, I'm interested in '{{ urlencode($service->name) }}' service. Could you please provide more details?" target="_blank" class="btn btn-success btn-lg rounded-pill shadow-sm whatsapp-inquiry-link">
-                                <i class="fab fa-whatsapp me-2"></i> WhatsApp Inquiry
-                            </a>
+                            <button type="button" class="btn btn-success btn-lg rounded-pill shadow-sm open-inquiry-modal"
+                                data-inquiry-type="service"
+                                data-source-id="{{ $service->id }}"
+                                data-item-name="{{ $service->name }}">
+                                <i class="bi bi-chat-dots me-2"></i> Send Inquiry
+                            </button>
                             @endif
                             <button class="btn btn-outline-dark btn-lg rounded-pill shadow-sm mt-2" onclick="openShareModal('{{ url()->current() }}', 'Service', '{{ e(addslashes($service->name)) }}')">
                                 <i class="fas fa-share-alt me-2"></i> Share Service

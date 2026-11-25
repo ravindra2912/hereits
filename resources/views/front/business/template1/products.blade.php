@@ -148,13 +148,12 @@
                             <i class="bi bi-x-circle me-1"></i> <span class="small">Out of Stock</span>
                             </button>
                             @elseif(in_array($product->price_type, ['PriceInRange', 'WithoutPrice']) && isset($setting) && $setting->is_order_place_on_website && (!isset($setting->is_show_contact) || $setting->is_show_contact) && !empty($business->contact))
-                            @php
-                            $whatsappMsg = "Hi, I am interested in this product: " . $product->name . " - " . route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $product->slug]);
-                            $whatsappUrl = "https://wa.me/91" . ($business->contact ?? '') . "?text=" . urlencode($whatsappMsg);
-                            @endphp
-                            <a href="{{ $whatsappUrl }}" target="_blank" class="btn btn-success btn_sm w-100 rounded-pill py-2 d-inline-block text-center text-white text-decoration-none whatsapp-inquiry-link">
-                                <span class="small"><i class="bi bi-whatsapp"></i> Inquiry</span>
-                            </a>
+                            <button type="button" class="btn btn-success btn_sm w-100 rounded-pill py-2 text-center text-white open-inquiry-modal"
+                                data-inquiry-type="product"
+                                data-source-id="{{ $product->id }}"
+                                data-item-name="{{ $product->name }}">
+                                <span class="small"><i class="bi bi-chat-dots"></i> Inquiry</span>
+                            </button>
                             @else
                             <div class="cart-control-wrapper mt-3" data-product-id="{{ $product->id }}">
                                 @if (isset($setting) && ($setting->is_order_place_on_website || ($setting->is_show_contact && !empty($business->contact))))

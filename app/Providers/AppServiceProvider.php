@@ -4,10 +4,12 @@ namespace App\Providers;
 
 use App\Models\AppointmentBooking;
 use App\Models\Business;
+use App\Models\BusinessInquiry;
 use App\Models\ReviewAndRating;
 use App\Models\User;
 use App\Observers\AppointmentBookingObserver;
 use App\Observers\BusinessObserver;
+use App\Observers\BusinessInquiryObserver;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 use App\Observers\ReviewAndRatingObserver;
@@ -73,6 +75,7 @@ class AppServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
         AppointmentBooking::observe(AppointmentBookingObserver::class);
         Business::observe(BusinessObserver::class);
+        BusinessInquiry::observe(BusinessInquiryObserver::class);
 
         Passport::tokensExpireIn(now()->addDays(15));
         Passport::refreshTokensExpireIn(now()->addDays(30));

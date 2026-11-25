@@ -178,8 +178,8 @@
                 <i class="fas fa-shopping-bag me-1"></i> Checkout on Website
             </a>
             @elseif(!isset($setting->is_show_contact) || $setting->is_show_contact)
-            <button class="whatsapp-btn">
-                <i class="fab fa-whatsapp"></i> Checkout via WhatsApp
+            <button class="whatsapp-btn cart-inquiry-btn">
+                <i class="bi bi-chat-dots me-1"></i> Send Inquiry
             </button>
             @endif
         </div>
@@ -203,6 +203,9 @@
 
     <!-- Auth Modals -->
     @include('front.business.template1.layouts.auth_modals')
+
+    <!-- Inquiry Modal -->
+    @include('front.business.template1.elements.inquiry_modal')
 
     @if(request()->has('login_required') && !Auth::check())
     @push('js')

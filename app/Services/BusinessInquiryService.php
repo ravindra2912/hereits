@@ -25,7 +25,12 @@ class BusinessInquiryService
      */
     public function createInquiry(array $data, array $sources = []): BusinessInquiry
     {
-        $sources = !empty($sources) ? $sources : ($data['sources'] ?? []);
+        $rawSources = !empty($sources) ? $sources : ($data['sources'] ?? []);
+        $sources = collect($rawSources)
+            ->filter(fn($s) => !empty($s['source_id']) && !empty($s['source_type']))
+            ->unique(fn($s) => $s['source_type'] . '_' . (int)$s['source_id'])
+            ->values()
+            ->all();
 
         return DB::transaction(function () use ($data, $sources) {
             $inquiry = BusinessInquiry::create([
@@ -45,7 +50,7 @@ class BusinessInquiryService
 
             foreach ($sources as $source) {
                 if (!empty($source['source_id']) && !empty($source['source_type'])) {
-                    BusinessInquirySource::create([
+                    BusinessInquirySource::firstOrCreate([
                         'inquiry_id'  => $inquiry->id,
                         'source_id'   => $source['source_id'],
                         'source_type' => $source['source_type'],

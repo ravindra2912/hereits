@@ -8,6 +8,7 @@ $(document).ready(function () {
         businessUrl: $('meta[name="business-url"]').attr('content') || '',
 
         init() {
+            window.brandBataoCart = this;
             this.loadCart();
             this.render();
             this.bindEvents();
@@ -20,8 +21,8 @@ $(document).ready(function () {
                 return;
             }
 
-            if (sessionStorage.getItem('pending_whatsapp_inquiry_type') === 'cart' && parseInt($('meta[name="user-logged-in"]').attr('content') || 0) === 1) {
-                sessionStorage.removeItem('pending_whatsapp_inquiry_type');
+            if (sessionStorage.getItem('pending_inquiry_type') === 'cart' && parseInt($('meta[name="user-logged-in"]').attr('content') || 0) === 1) {
+                sessionStorage.removeItem('pending_inquiry_type');
                 this.openCart();
             }
         },
@@ -287,7 +288,7 @@ $(document).ready(function () {
                 self.removeItem($(this).data('id'));
             });
 
-            $('.whatsapp-btn').on('click', function () {
+            $(document).on('click', '.whatsapp-btn, .cart-inquiry-btn', function () {
                 self.checkoutWhatsApp();
             });
 
@@ -329,6 +330,13 @@ $(document).ready(function () {
             }
         },
 
+        clearCart() {
+            this.items = [];
+            this.saveCart();
+            this.render();
+            this.checkPageContext();
+        },
+
         checkoutWhatsApp() {
             if (this.items.length === 0) {
                 toastr.warning('Your cart is empty');
@@ -339,150 +347,37 @@ $(document).ready(function () {
             const isLoggedIn = parseInt($('meta[name="user-logged-in"]').attr('content') || 0) === 1;
 
             if (isLoginRequired && !isLoggedIn) {
-                sessionStorage.setItem('pending_whatsapp_inquiry_type', 'cart');
+                sessionStorage.setItem('pending_inquiry_type', 'cart');
                 this.closeCart();
-                toastr.info('Please login to proceed with WhatsApp checkout.');
+                toastr.info('Please login to proceed with your inquiry.');
                 $('#authModal').modal('show');
                 return;
             }
 
-            const $btn = $('.whatsapp-btn');
-            if ($btn.hasClass('disabled')) {
-                return;
-            }
+            this.closeCart();
 
-            const isCreateQuotation = parseInt($('meta[name="is-create-quotation-on-inquiry"]').attr('content') || 0) === 1;
-
-            if (isCreateQuotation) {
-                const originalBtnHtml = $btn.html();
-                $btn.addClass('disabled').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Creating Quotation...');
-
-                // Open blank tab synchronously to bypass browser popup blockers
-                const win = window.open('about:blank', '_blank');
-
-                this.createQuotation((err, quotationNo) => {
-                    $btn.removeClass('disabled').prop('disabled', false).html(originalBtnHtml);
-
-                    if (err) {
-                        if (win) win.close();
-                        toastr.error(err);
-                        return;
-                    }
-
-                    this.sendWhatsAppMessage(quotationNo, win);
-                });
-            } else {
-                this.sendWhatsAppMessage(null, null);
-            }
-        },
-
-        createQuotation(callback) {
-            const self = this;
             const payloadItems = this.items.map(item => ({
                 id: item.id,
                 qty: item.qty,
                 price: item.price
             }));
 
-            const csrfToken = $('meta[name="csrf-token"]').attr('content');
-            const targetUrl = `/${this.businessSlug}/whatsapp-quotation`;
+            const payloadSources = this.items.map(item => ({
+                source_id: item.id,
+                source_type: 'product'
+            }));
 
-            $.ajax({
-                url: targetUrl,
-                type: 'POST',
-                data: JSON.stringify({ items: payloadItems }),
-                contentType: 'application/json',
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken
-                },
-                success: function (response) {
-                    if (response.status === 'success' && response.quotation_no) {
-                        callback(null, response.quotation_no);
-                    } else if (response.status === 'success') {
-                        callback(null, '');
-                    } else {
-                        callback(response.message || 'Failed to create quotation.');
-                    }
-                },
-                error: function (xhr) {
-                    if (xhr.status === 401 || (xhr.responseJSON && xhr.responseJSON.requires_login)) {
-                        self.closeCart();
-                        toastr.info(xhr.responseJSON?.message || 'Please login to proceed with WhatsApp inquiry.');
-                        $('#authModal').modal('show');
-                        callback('Please login to continue.');
-                        return;
-                    }
-                    let errMsg = 'Something went wrong while creating quotation.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errMsg = xhr.responseJSON.message;
-                    }
-                    callback(errMsg);
-                }
-            });
-        },
+            const total = this.getTotal();
+            const itemCount = this.items.length;
+            const summaryText = `${itemCount} item(s) in Cart (Total: ₹${Number(total).toFixed(2)})`;
 
-        sendWhatsAppMessage(quotationNo = null, win = null) {
-            const ICON_NEW_ORDER = '';
-            const ICON_STORE = '';
-            const ICON_ORDER_DETAILS = '';
-            const ICON_TOTAL = '';
-            const ICON_CHECK = '';
-            const ICON_GLOBE = '';
-            const separator = '━━━━━━━━━━━━━━━━━━━━';
-
-            let message = `${ICON_NEW_ORDER} *NEW ONLINE ORDER RECEIVED*\n\n`;
-
-            message += `*Store Name*: *${this.businessName}*\n`;
-            if (quotationNo) {
-                message += `Quotation No: *${quotationNo}*\n`;
-            }
-            message += `Store URL : ${this.businessUrl}\n\n`;
-            message += `${separator}\n`;
-            message += `${ICON_ORDER_DETAILS} *ORDER DETAILS*\n\n`;
-
-            this.items.forEach((item, index) => {
-                let itemPrice = '';
-                let itemLineTotal = '';
-
-                if (item.priceType === 'FixPrice') {
-                    itemPrice = `₹${Number(item.price).toFixed(2)}`;
-                    itemLineTotal = ` = ₹${(item.price * item.qty).toFixed(2)}`;
-                } else if (item.priceType === 'PriceInRange') {
-                    itemPrice = `₹${item.minPrice} - ₹${item.maxPrice}`;
-                } else {
-                    itemPrice = `Contact Price`;
-                }
-
-                message += ` ${index + 1}. *${item.name}*\n`;
-                message += `   Qty: ${item.qty} × ${itemPrice}${itemLineTotal}\n\n`;
-            });
-
-            message += `${separator}\n`;
-
-            const totalAmount = this.getTotal();
-            if (totalAmount > 0) {
-                message += `${ICON_TOTAL} Total Amount: *₹${totalAmount.toFixed(2)}*\n`;
+            if (typeof window.openInquiryModal === 'function') {
+                window.openInquiryModal('cart', '', summaryText, {
+                    items: payloadItems,
+                    sources: payloadSources
+                });
             } else {
-                message += `${ICON_TOTAL} Total Amount: *Contact Price*\n`;
-            }
-
-            message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
-            message += `${ICON_CHECK} *Please confirm my order.*\n\n`;
-
-            message += `${ICON_GLOBE} Order Source: *${window.location.host}*`;
-
-            let businessContact = this.businessContact.replace(/\D/g, '');
-            if (businessContact.length === 10) {
-                businessContact = '91' + businessContact;
-            }
-
-            const encodedMessage = encodeURIComponent(message);
-            const whatsappUrl = `https://wa.me/${businessContact}?text=${encodedMessage}`;
-
-            if (win) {
-                win.location.href = whatsappUrl;
-            } else {
-                window.open(whatsappUrl, '_blank');
+                $('#inquiryModal').modal('show');
             }
         },
 

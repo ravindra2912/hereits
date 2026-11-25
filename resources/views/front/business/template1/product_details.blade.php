@@ -287,56 +287,46 @@
                         <div class="add-to-cart-container flex-grow-1">
                             @if($product->quantity !== null && $product->quantity <= 0)
                                 <button class="btn btn-secondary btn-lg rounded-pill w-100" disabled>
-                                <i class="bi bi-x-circle me-2"></i> Out of Stock
+                                    <i class="bi bi-x-circle me-2"></i> Out of Stock
                                 </button>
-                                @elseif(in_array($product->price_type, ['PriceInRange', 'WithoutPrice']))
-                                @if(isset($setting) && $setting->is_order_place_on_website && ($setting->is_show_contact && !empty($business->contact)))
-                                @php
-                                $whatsappMsg = "Hi, I am interested in this product: " . $product->name . " - " . route('product-detail', ['business_slug' => $business->slug, 'product_slug' => $product->slug]);
-                                $whatsappUrl = "https://wa.me/91" . ($business->contact ?? '') . "?text=" . urlencode($whatsappMsg);
-                                @endphp
-                                <a href="{{ $whatsappUrl }}" target="_blank" class="btn btn-success btn-lg rounded-pill add-to-cart-btn w-100 text-nowrap text-decoration-none d-inline-block text-center text-white whatsapp-inquiry-link">
-                                    <i class="bi bi-whatsapp me-2"></i> Inquiry
-                                </a>
-                                @else
-                                    @if (isset($setting) && ($setting->is_order_place_on_website || ($setting->is_show_contact && !empty($business->contact))))
-                                        <button class="btn btn-primary btn-lg rounded-pill add-to-cart-btn add-to-cart w-100 text-nowrap"
-                                            data-type="product"
-                                            data-id="{{ $product->id }}"
-                                            data-name="{{ $product->name }}"
-                                            data-price="{{ $product->sell_price ?? 0 }}"
-                                            data-price-type="{{ $product->price_type }}"
-                                            data-min-price="{{ $product->min_price ?? 0 }}"
-                                            data-max-price="{{ $product->max_price ?? 0 }}"
-                                            data-max-qty="{{ $product->quantity }}"
-                                            data-image="{{ getImage($product->images->first()?->image_url) }}">
-                                            <i class="bi bi-cart-plus-fill me-2"></i> Add to Cart
-                                        </button>
-                                    @endif
+                            @elseif(in_array($product->price_type, ['PriceInRange', 'WithoutPrice']))
+                                <button type="button" class="btn btn-success btn-lg rounded-pill add-to-cart-btn w-100 text-nowrap text-white open-inquiry-modal"
+                                    data-inquiry-type="product"
+                                    data-source-id="{{ $product->id }}"
+                                    data-item-name="{{ $product->name }}">
+                                    <i class="bi bi-chat-dots me-2"></i> Inquiry
+                                </button>
+                            @else
+                                @if (isset($setting) && ($setting->is_order_place_on_website || ($setting->is_show_contact && !empty($business->contact))))
+                                    <button class="btn btn-primary btn-lg rounded-pill add-to-cart-btn add-to-cart w-100 text-nowrap"
+                                        data-type="product"
+                                        data-id="{{ $product->id }}"
+                                        data-name="{{ $product->name }}"
+                                        data-price="{{ $product->sell_price ?? 0 }}"
+                                        data-price-type="{{ $product->price_type }}"
+                                        data-min-price="{{ $product->min_price ?? 0 }}"
+                                        data-max-price="{{ $product->max_price ?? 0 }}"
+                                        data-max-qty="{{ $product->quantity }}"
+                                        data-image="{{ getImage($product->images->where('type', 'image')->first()?->image_url ?? $product->images->first()?->image_url) }}">
+                                        <i class="bi bi-cart-plus-fill me-2"></i> Add to Cart
+                                    </button>
                                 @endif
-                                @else
-                                    @if (isset($setting) && ($setting->is_order_place_on_website || ($setting->is_show_contact && !empty($business->contact))))
-                                        <button class="btn btn-primary btn-lg rounded-pill add-to-cart-btn add-to-cart w-100 text-nowrap"
-                                            data-type="product"
-                                            data-id="{{ $product->id }}"
-                                            data-name="{{ $product->name }}"
-                                            data-price="{{ $product->sell_price ?? 0 }}"
-                                            data-price-type="{{ $product->price_type }}"
-                                            data-min-price="{{ $product->min_price ?? 0 }}"
-                                            data-max-price="{{ $product->max_price ?? 0 }}"
-                                            data-max-qty="{{ $product->quantity }}"
-                                            data-image="{{ getImage($product->images->where('type', 'image')->first()?->image_url) }}">
-                                            <i class="bi bi-cart-plus-fill me-2"></i> Add to Cart
-                                        </button>
-                                    @endif
-                                @endif
+                            @endif
                         </div>
                         <div class="go-to-cart-container flex-grow-1 d-none">
                             <button class="btn btn-success btn-lg rounded-pill go-to-cart w-100 text-nowrap">
                                 <i class="bi bi-bag-check-fill me-2"></i> Go to Cart
                             </button>
                         </div>
-                        
+                        @if(!in_array($product->price_type, ['PriceInRange', 'WithoutPrice']))
+                        <button type="button" class="btn btn-outline-success btn-lg rounded-pill px-4 text-nowrap open-inquiry-modal"
+                            data-inquiry-type="product"
+                            data-source-id="{{ $product->id }}"
+                            data-item-name="{{ $product->name }}"
+                            title="Inquire about this product">
+                            <i class="bi bi-chat-dots me-1"></i> Inquiry
+                        </button>
+                        @endif
                     </div>
                     <div class="d-flex gap-2">
                     <button class="btn btn-outline-dark btn-lg rounded-pill flex-grow-1" onclick="openShareModal('{{ url()->current() }}', 'Product', '{{ e(addslashes($product->name)) }}')">

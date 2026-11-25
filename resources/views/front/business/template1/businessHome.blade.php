@@ -13,24 +13,27 @@
 
 @push('style')
 <style>
-    .category-scroll::-webkit-scrollbar {
-        display: none;
-    }
-    .category-scroll {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-        cursor: grab;
-        user-select: none;
-        scroll-behavior: smooth;
-    }
-    .category-scroll:active {
-        cursor: grabbing;
-    }
-    .category-scroll img {
-        pointer-events: none;
-        user-select: none;
-        -webkit-user-drag: none;
-    }
+  .category-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    cursor: grab;
+    user-select: none;
+    scroll-behavior: smooth;
+  }
+
+  .category-scroll:active {
+    cursor: grabbing;
+  }
+
+  .category-scroll img {
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
 </style>
 <!-- CDN: https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css -->
 <link rel="stylesheet" href="{{ asset('assets/common/css/glightbox.min.css') }}?v={{ filemtime(public_path('assets/common/css/glightbox.min.css')) }}" />
@@ -231,15 +234,15 @@
     <div class="row g-3">
       @foreach($galleries as $gallery)
       @php
-        $isYt = ($gallery->type ?? 'image') === 'youtube_url';
-        if ($isYt) {
-            $ytId = getYoutubeId($gallery->image_url);
-            $mediaHref = $ytId ? 'https://www.youtube.com/watch?v=' . $ytId : $gallery->image_url;
-            $mediaThumb = getYoutubeThumbnail($gallery->image_url) ?: getImage(null);
-        } else {
-            $mediaHref = getImage($gallery->image_url);
-            $mediaThumb = getImage($gallery->image_url);
-        }
+      $isYt = ($gallery->type ?? 'image') === 'youtube_url';
+      if ($isYt) {
+      $ytId = getYoutubeId($gallery->image_url);
+      $mediaHref = $ytId ? 'https://www.youtube.com/watch?v=' . $ytId : $gallery->image_url;
+      $mediaThumb = getYoutubeThumbnail($gallery->image_url) ?: getImage(null);
+      } else {
+      $mediaHref = getImage($gallery->image_url);
+      $mediaThumb = getImage($gallery->image_url);
+      }
       @endphp
       <div class="col-6 col-md-4 col-lg-3">
         <a href="{{ $mediaHref }}" class="glightbox-home d-block text-decoration-none" data-gallery="home-gallery" data-title="{{ $gallery->title }}" @if($isYt) data-type="video" @endif>
@@ -247,7 +250,7 @@
             <img src="{{ $mediaThumb }}" class="img-fluid w-100 h-100 object-fit-cover gallery-img-container" alt="{{ $gallery->title }}" loading="lazy">
             @if($isYt)
             <span class="position-absolute top-50 start-50 translate-middle badge bg-danger rounded-circle p-2 shadow" style="width: 50px; height: 50px; display: inline-flex; align-items: center; justify-content: center; z-index: 2;">
-                <i class="bi bi-play-fill text-white fs-4" style="margin-left: 2px;"></i>
+              <i class="bi bi-play-fill text-white fs-4" style="margin-left: 2px;"></i>
             </span>
             @endif
             <div class="gallery-overlay gallery-item-overlay position-absolute bottom-0 start-0 w-100 p-3 text-white d-flex align-items-end" style="z-index: 3;">
@@ -302,14 +305,14 @@
         <div class="col-lg-5">
           <h6 class="text-primary fw-bold text-uppercase ls-1 mb-2">Get In Touch</h6>
           <h2 class="h3 fw-bold mb-4">Contact Us</h2>
-          <p class="text-muted mb-5 fs-5">Have any questions or need more information? Send us a message and we'll get back to you immediately via WhatsApp!</p>
+          <p class="text-muted mb-5 fs-5">Have any questions or need more information? Send us a message and our team will get back to you shortly.</p>
 
           <div class="d-flex align-items-center mb-4">
             <div class="flex-shrink-0 bg-primary-light p-3 rounded-4 me-3">
               <i class="fas fa-phone-alt text-primary fs-4"></i>
             </div>
             <div>
-              <p class="text-muted small mb-0">Call/WhatsApp</p>
+              <p class="text-muted small mb-0">Call/Contact</p>
               <h6 class="fw-bold mb-0">+91 {{ $business->contact }}</h6>
             </div>
           </div>
@@ -326,22 +329,40 @@
         </div>
 
         <div class="col-lg-7">
-          <form id="whatsappContactForm" class="row g-4">
+          <form id="contactInquiryForm" class="row g-4">
+            @csrf
+            <input type="hidden" name="inquiry_type" value="contact_us">
+            <div class="col-md-6">
+              <label class="form-label small fw-bold text-uppercase text-muted ls-1">Full Name <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-modern" id="contact_name" name="name"
+                value="{{ auth()->check() ? trim(auth()->user()->first_name . ' ' . auth()->user()->last_name) : '' }}"
+                placeholder="John Doe" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-bold text-uppercase text-muted ls-1">Contact Number <span class="text-danger">*</span></label>
+              <input type="tel" class="form-control form-control-modern" id="contact_phone" name="contact"
+                value="{{ auth()->check() ? auth()->user()->contact : '' }}"
+                placeholder="10-digit mobile number" required>
+            </div>
             <div class="col-12">
-              <label class="form-label small fw-bold text-uppercase text-muted ls-1">Full Name</label>
-              <input type="text" class="form-control form-control-modern" id="contact_name" placeholder="John Doe" required>
+              <label class="form-label small fw-bold text-uppercase text-muted ls-1">Email Address</label>
+              <input type="email" class="form-control form-control-modern" id="contact_email" name="email"
+                value="{{ auth()->check() ? auth()->user()->email : '' }}"
+                placeholder="john@example.com (optional)">
             </div>
             <div class="col-12">
               <label class="form-label small fw-bold text-uppercase text-muted ls-1">Subject</label>
-              <input type="text" class="form-control form-control-modern" id="contact_subject" placeholder="What is this regarding?" required>
+              <input type="text" class="form-control form-control-modern" id="contact_subject" name="subject"
+                placeholder="What is this regarding?">
             </div>
             <div class="col-12">
               <label class="form-label small fw-bold text-uppercase text-muted ls-1">Message</label>
-              <textarea class="form-control form-control-modern" id="contact_message" rows="4" placeholder="How can we help you?" required></textarea>
+              <textarea class="form-control form-control-modern" id="contact_message" name="message" rows="4"
+                placeholder="How can we help you?"></textarea>
             </div>
-            <div class="col-12 text-end">
-              <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm hover-lift">
-                <i class="fab fa-whatsapp me-2"></i> Send Message
+            <div class="col-12 text-end d-flex justify-content-end align-items-center flex-wrap gap-2">
+              <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm hover-lift" id="contactFormSubmitBtn">
+                <i class="bi bi-send me-2"></i> Send Inquiry
               </button>
             </div>
           </form>
@@ -355,79 +376,79 @@
 
 @push('js')
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const containers = document.querySelectorAll('.category-scroll');
-        
-        containers.forEach(function(container) {
-            if (!container) return;
+  document.addEventListener("DOMContentLoaded", function() {
+    const containers = document.querySelectorAll('.category-scroll');
 
-            // Prevent browser image/text ghost dragging
-            container.addEventListener('dragstart', (e) => {
-                e.preventDefault();
-            });
+    containers.forEach(function(container) {
+      if (!container) return;
 
-            // Mouse Drag-to-Scroll implementation
-            let isDown = false;
-            let startX;
-            let scrollLeftStart;
-            let moved = false;
+      // Prevent browser image/text ghost dragging
+      container.addEventListener('dragstart', (e) => {
+        e.preventDefault();
+      });
 
-            container.addEventListener('mousedown', (e) => {
-                isDown = true;
-                startX = e.pageX - container.offsetLeft;
-                scrollLeftStart = container.scrollLeft;
-                moved = false;
-                
-                // Temporarily disable smooth scroll behavior during drag for instant response
-                container.style.scrollBehavior = 'auto';
-            });
+      // Mouse Drag-to-Scroll implementation
+      let isDown = false;
+      let startX;
+      let scrollLeftStart;
+      let moved = false;
 
-            container.addEventListener('mouseleave', () => {
-                isDown = false;
-                container.style.scrollBehavior = 'smooth';
-            });
+      container.addEventListener('mousedown', (e) => {
+        isDown = true;
+        startX = e.pageX - container.offsetLeft;
+        scrollLeftStart = container.scrollLeft;
+        moved = false;
 
-            container.addEventListener('mouseup', () => {
-                isDown = false;
-                container.style.scrollBehavior = 'smooth';
-            });
+        // Temporarily disable smooth scroll behavior during drag for instant response
+        container.style.scrollBehavior = 'auto';
+      });
 
-            container.addEventListener('mousemove', (e) => {
-                if (!isDown) return;
-                e.preventDefault();
-                const x = e.pageX - container.offsetLeft;
-                const walk = (x - startX) * 2; // Drag speed multiplier
-                if (Math.abs(walk) > 5) {
-                    moved = true;
-                }
-                container.scrollLeft = scrollLeftStart - walk;
-            });
+      container.addEventListener('mouseleave', () => {
+        isDown = false;
+        container.style.scrollBehavior = 'smooth';
+      });
 
-            // Prevent link clicks if the user dragged/scrolled the mouse
-            const links = container.querySelectorAll('a');
-            links.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    if (moved) {
-                        e.preventDefault();
-                    }
-                });
-            });
+      container.addEventListener('mouseup', () => {
+        isDown = false;
+        container.style.scrollBehavior = 'smooth';
+      });
+
+      container.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - container.offsetLeft;
+        const walk = (x - startX) * 2; // Drag speed multiplier
+        if (Math.abs(walk) > 5) {
+          moved = true;
+        }
+        container.scrollLeft = scrollLeftStart - walk;
+      });
+
+      // Prevent link clicks if the user dragged/scrolled the mouse
+      const links = container.querySelectorAll('a');
+      links.forEach(link => {
+        link.addEventListener('click', (e) => {
+          if (moved) {
+            e.preventDefault();
+          }
         });
+      });
     });
+  });
 </script>
 <!-- CDN: https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js -->
 <script src="{{ asset('assets/common/js/glightbox.min.js') }}?v={{ filemtime(public_path('assets/common/js/glightbox.min.js')) }}"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof GLightbox !== 'undefined') {
-            GLightbox({
-                selector: '.glightbox-home',
-                touchNavigation: true,
-                loop: true,
-                autoplayVideos: false
-            });
-        }
-    });
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof GLightbox !== 'undefined') {
+      GLightbox({
+        selector: '.glightbox-home',
+        touchNavigation: true,
+        loop: true,
+        autoplayVideos: false
+      });
+    }
+  });
 </script>
 @endpush
 

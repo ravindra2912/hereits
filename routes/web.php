@@ -12,6 +12,7 @@ use App\Http\Controllers\Front\Business\ProductController;
 use App\Http\Controllers\Front\Business\CheckoutController;
 use App\Http\Controllers\Front\Business\PaymentController;
 use App\Http\Controllers\Front\Business\ServiceController;
+use App\Http\Controllers\Front\Business\InquiryController as BusinessInquiryController;
 use App\Http\Controllers\Front\Business\CommonController as BusinessCommonController;
 use App\Http\Controllers\Front\BlogController;
 use App\Http\Controllers\Front\LocationController;
@@ -181,6 +182,10 @@ Route::controller(CheckoutController::class)->group(function () {
     Route::get('{business_slug}/checkout', 'checkout')->name('checkout');
     Route::post('{business_slug}/place-order', 'placeOrder')->name('place-order');
     Route::post('{business_slug}/whatsapp-quotation', 'createWhatsAppQuotation')->name('whatsapp-quotation');
+});
+
+Route::controller(BusinessInquiryController::class)->group(function () {
+    Route::post('{business_slug}/inquiry', 'store')->name('business.inquiry.store');
 });
 
 Route::controller(PaymentController::class)->group(function () {
