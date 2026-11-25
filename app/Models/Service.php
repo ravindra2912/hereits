@@ -8,7 +8,6 @@ class Service extends Model
 {
     protected $fillable = [
         'business_id',
-        'business_category_id',
         'category_id',
         'name',
         'slug',
@@ -28,7 +27,14 @@ class Service extends Model
 
     public function businessCategory()
     {
-        return $this->belongsTo(BusinessCategory::class, 'business_category_id');
+        return $this->hasOneThrough(
+            BusinessCategory::class,
+            Category::class,
+            'id',
+            'id',
+            'category_id',
+            'business_category_id'
+        );
     }
 
     public function business()

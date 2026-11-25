@@ -26,10 +26,6 @@ class StoreProductRequest extends FormRequest
 
         return [
             'name' => 'required|string|max:255',
-            'business_category_id' => [
-                'required',
-                Rule::exists('business_categories', 'id'),
-            ],
             'sku' => [
                 'required',
                 'string',
@@ -66,8 +62,6 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'name.required' => 'The product name is required.',
-            'business_category_id.required' => 'Store category is mandatory. Please select a store category.',
-            'business_category_id.exists' => 'The selected store category is invalid.',
             'sku.required' => 'The SKU is required.',
             'sku.unique' => 'SKU already exists.',
             'category_id.required' => 'Please select a category.',

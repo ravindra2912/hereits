@@ -12,6 +12,7 @@ class Category extends Model
 
     protected $fillable = [
         'business_id',
+        'business_category_id',
         'parent_id',
         'name',
         'image_url',
@@ -39,6 +40,11 @@ class Category extends Model
     public function parent()
     {
         return $this->belongsTo(Category::class, 'parent_id');
+    }
+
+    public function businessCategory()
+    {
+        return $this->belongsTo(BusinessCategory::class, 'business_category_id');
     }
 
     public function children()

@@ -214,7 +214,7 @@ class BusinessMultiCategoryAndItemCategoryTest extends TestCase
         $this->assertNotContains($this->cat1->id, $updatedMapped);
     }
 
-    public function test_product_store_category_is_mandatory(): void
+    public function test_category_requires_business_category_and_product_resolves_it(): void
     {
         $business = new Business();
         $business->forceFill([
@@ -249,50 +249,72 @@ class BusinessMultiCategoryAndItemCategoryTest extends TestCase
         $this->actingAs($this->user);
         session(['business_id' => $business->id]);
 
-        // Create internal product category
-        $internalCategory = new Category();
-        $internalCategory->forceFill([
-            'business_id' => $business->id,
-            'name' => 'Shoes',
-            'slug' => 'shoes-' . uniqid(),
-            'type' => 'Products',
+        // 1. Creating a main product category without business_category_id should fail validation
+        $catFailRes = $this->postJson(route('business.product-category.store'), [
+            'name' => 'Footwear',
             'status' => 'active',
-        ])->save();
-
-        // 1. Missing business_category_id should fail validation
-        $failRes = $this->postJson(route('business.product.store'), [
-            'name' => 'Running Shoes',
-            'sku' => 'SKU-' . uniqid(),
-            'category_id' => $internalCategory->id,
-            'quantity' => 10,
         ]);
+        $catFailRes->assertStatus(422);
+        $catFailRes->assertJsonValidationErrors('business_category_id');
 
-        $failRes->assertStatus(422);
-        $failRes->assertJsonValidationErrors('business_category_id');
-
-        // 2. Providing valid business_category_id should succeed
-        $passRes = $this->postJson(route('business.product.store'), [
-            'name' => 'Running Shoes',
-            'sku' => 'SKU-' . uniqid(),
+        // 2. Creating a main product category with business_category_id succeeds
+        $catPassRes = $this->postJson(route('business.product-category.store'), [
+            'name' => 'Footwear',
             'business_category_id' => $this->cat2->id,
-            'category_id' => $internalCategory->id,
+            'status' => 'active',
+        ]);
+        $catPassRes->assertStatus(200);
+        $this->assertTrue($catPassRes->json('success'));
+
+        $mainCategory = Category::where('name', 'Footwear')->where('business_id', $business->id)->first();
+        $this->assertNotNull($mainCategory);
+        $this->assertEquals($this->cat2->id, $mainCategory->business_category_id);
+
+        // 3. Creating a subcategory inherits business_category_id from parent
+        $subCatRes = $this->postJson(route('business.product-category.store'), [
+            'name' => 'Running Shoes',
+            'parent_id' => $mainCategory->id,
+            'status' => 'active',
+        ]);
+        $subCatRes->assertStatus(200);
+        $this->assertTrue($subCatRes->json('success'));
+
+        $subCategory = Category::where('name', 'Running Shoes')->where('business_id', $business->id)->first();
+        $this->assertNotNull($subCategory);
+        $this->assertEquals($this->cat2->id, $subCategory->business_category_id);
+
+        // 3b. Verify DataTable returns Business Category badge with category name
+        $dtRes = $this->getJson(route('business.product-category.index'), ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
+        $dtRes->assertStatus(200);
+        $dtData = $dtRes->json('data');
+        $this->assertNotEmpty($dtData);
+        $footwearRow = collect($dtData)->firstWhere('name', '<a href="' . route('business.product-category.index', ['category' => $mainCategory->id]) . '" class="text-primary text-decoration-none fw-bold">Footwear</a>');
+        $this->assertNotNull($footwearRow);
+        $this->assertStringContainsString($this->cat2->name, $footwearRow['business_category_name']);
+
+        // 4. Product can be created with category_id (no business_category_id needed on product)
+        $prodPassRes = $this->postJson(route('business.product.store'), [
+            'name' => 'Pro Runner X',
+            'sku' => 'SKU-' . uniqid(),
+            'category_id' => $mainCategory->id,
             'quantity' => 10,
         ]);
 
-        $passRes->assertStatus(200);
-        $this->assertTrue($passRes->json('success'));
+        $prodPassRes->assertStatus(200);
+        $this->assertTrue($prodPassRes->json('success'));
 
         $product = Product::latest('id')->first();
-        $this->assertEquals($this->cat2->id, $product->business_category_id);
-        $this->assertEquals($internalCategory->id, $product->category_id);
+        $this->assertEquals($mainCategory->id, $product->category_id);
+        // Verify businessCategory relation resolves through Category
+        $this->assertNotNull($product->businessCategory);
+        $this->assertEquals($this->cat2->id, $product->businessCategory->id);
 
-        // 3. Update product with new business_category_id
+        // 5. Update product
         $updateRes = $this->patchJson(route('business.product.update', $product->id), [
-            'name' => 'Running Shoes Pro',
+            'name' => 'Pro Runner X Updated',
             'sku' => $product->sku,
-            'business_category_id' => $this->cat1->id,
-            'category_id' => $internalCategory->id,
-            'description' => 'Running shoes for athletes',
+            'category_id' => $subCategory->id,
+            'description' => 'Updated running shoes',
             'price_type' => 'FixPrice',
             'price' => 1000,
             'sell_price' => 800,
@@ -307,10 +329,11 @@ class BusinessMultiCategoryAndItemCategoryTest extends TestCase
         $this->assertTrue($updateRes->json('success'));
 
         $product->refresh();
-        $this->assertEquals($this->cat1->id, $product->business_category_id);
+        $this->assertEquals($subCategory->id, $product->category_id);
+        $this->assertEquals($this->cat2->id, $product->businessCategory->id);
     }
 
-    public function test_service_store_category_is_mandatory(): void
+    public function test_service_category_requires_business_category_and_service_resolves_it(): void
     {
         $business = new Business();
         $business->forceFill([
@@ -345,36 +368,33 @@ class BusinessMultiCategoryAndItemCategoryTest extends TestCase
         $this->actingAs($this->user);
         session(['business_id' => $business->id]);
 
-        // Create internal service category
-        $internalCategory = new Category();
-        $internalCategory->forceFill([
-            'business_id' => $business->id,
-            'name' => 'Consulting',
-            'slug' => 'consulting-' . uniqid(),
-            'type' => 'Services',
+        // 1. Creating a main service category without business_category_id should fail
+        $catFailRes = $this->postJson(route('business.service-category.store'), [
+            'name' => 'Therapy',
             'status' => 'active',
-        ])->save();
+        ]);
+        $catFailRes->assertStatus(422);
+        $catFailRes->assertJsonValidationErrors('business_category_id');
+
+        // 2. Creating a main service category with business_category_id succeeds
+        $catPassRes = $this->postJson(route('business.service-category.store'), [
+            'name' => 'Therapy',
+            'business_category_id' => $this->cat3->id,
+            'status' => 'active',
+        ]);
+        $catPassRes->assertStatus(200);
+        $this->assertTrue($catPassRes->json('success'));
+
+        $serviceCategory = Category::where('name', 'Therapy')->where('business_id', $business->id)->first();
+        $this->assertNotNull($serviceCategory);
+        $this->assertEquals($this->cat3->id, $serviceCategory->business_category_id);
 
         $image = UploadedFile::fake()->image('service.jpg', 600, 600);
 
-        // 1. Missing business_category_id should fail validation
-        $failRes = $this->postJson(route('business.service.store'), [
-            'name' => 'Health Consultation',
-            'category_id' => $internalCategory->id,
-            'image' => $image,
-            'price_type' => 'WithoutPrice',
-            'status' => 'active',
-        ]);
-
-        $failRes->assertStatus(200);
-        $this->assertFalse($failRes->json('success'));
-        $this->assertArrayHasKey('business_category_id', $failRes->json('message'));
-
-        // 2. Providing valid business_category_id should succeed
+        // 3. Service can be created without business_category_id on request
         $passRes = $this->post(route('business.service.store'), [
             'name' => 'Health Consultation',
-            'business_category_id' => $this->cat3->id,
-            'category_id' => $internalCategory->id,
+            'category_id' => $serviceCategory->id,
             'image' => $image,
             'price_type' => 'WithoutPrice',
             'status' => 'active',
@@ -384,14 +404,15 @@ class BusinessMultiCategoryAndItemCategoryTest extends TestCase
         $this->assertTrue($passRes->json('success'));
 
         $service = Service::latest('id')->first();
-        $this->assertEquals($this->cat3->id, $service->business_category_id);
-        $this->assertEquals($internalCategory->id, $service->category_id);
+        $this->assertEquals($serviceCategory->id, $service->category_id);
+        // Verify businessCategory resolves through Category
+        $this->assertNotNull($service->businessCategory);
+        $this->assertEquals($this->cat3->id, $service->businessCategory->id);
 
-        // 3. Update service with new store category
+        // 4. Update service
         $updateRes = $this->patch(route('business.service.update', $service->id), [
             'name' => 'Health Consultation Deluxe',
-            'business_category_id' => $this->cat2->id,
-            'category_id' => $internalCategory->id,
+            'category_id' => $serviceCategory->id,
             'price_type' => 'WithoutPrice',
             'status' => 'active',
         ]);
@@ -400,7 +421,8 @@ class BusinessMultiCategoryAndItemCategoryTest extends TestCase
         $this->assertTrue($updateRes->json('success'));
 
         $service->refresh();
-        $this->assertEquals($this->cat2->id, $service->business_category_id);
+        $this->assertEquals('Health Consultation Deluxe', $service->name);
+        $this->assertEquals($this->cat3->id, $service->businessCategory->id);
     }
 
     public function test_business_categories_modal_update_and_primary_category_setting(): void

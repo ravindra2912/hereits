@@ -99,15 +99,6 @@
                         <input type="text" class="form-control required" id="modal_sku" name="sku" placeholder="E.g. WH-001">
                     </div>
                     <div class="mb-3">
-                        <label for="modal_business_category_id" class="form-label fw-bold">Store Category <span class="text-danger">*</span></label>
-                        <select class="form-select required select2-search" id="modal_business_category_id" name="business_category_id" data-placeholder="Select Store Category" required>
-                            <option value="">Select Store Category</option>
-                            @foreach ($storeCategories as $stCat)
-                            <option value="{{ $stCat->id }}" {{ count($storeCategories) === 1 ? 'selected' : '' }}>{{ $stCat->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
                         <label for="modal_category_id" class="form-label fw-bold">Category <span class="text-danger">*</span></label>
                         <select class="form-select required select2-search" id="modal_category_id" name="category_id" data-placeholder="Select Category" required>
                             <option value="">Select Category</option>
@@ -358,11 +349,6 @@
 
         // Initialize Select2 in Modal
         $('#addProductModal').on('shown.bs.modal', function() {
-            $('#modal_business_category_id').select2({
-                dropdownParent: $('#addProductModal'),
-                width: '100%',
-                placeholder: 'Select Store Category'
-            });
             $('#modal_category_id').select2({
                 dropdownParent: $('#addProductModal'),
                 width: '100%',

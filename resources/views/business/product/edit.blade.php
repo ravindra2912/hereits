@@ -313,16 +313,6 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label for="business_category_id" class="form-label fw-semibold text-secondary small">Store Category <span class="text-danger">*</span></label>
-                                    <select class="form-select required select2-search" id="business_category_id" name="business_category_id" data-placeholder="Select Store Category" required>
-                                        <option value="">Select Store Category</option>
-                                        @foreach ($storeCategories as $stCat)
-                                        <option value="{{ $stCat->id }}" {{ ($product->business_category_id == $stCat->id) || (count($storeCategories) === 1) ? 'selected' : '' }}>{{ $stCat->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
                                     <label for="category_id" class="form-label fw-semibold text-secondary small">Product Category <span class="text-danger">*</span></label>
                                     <select class="form-select required select2-search" id="category_id" name="category_id" data-placeholder="Select Category">
                                         <option value="">Select Category</option>

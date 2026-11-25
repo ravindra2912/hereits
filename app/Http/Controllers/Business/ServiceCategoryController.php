@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Business;
 
 use App\Models\Category;
+use App\Models\Business;
+use App\Models\BusinessCategory;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use App\Http\Controllers\Controller;
@@ -32,7 +34,7 @@ class ServiceCategoryController extends Controller
                 return response()->json(['success' => true, 'data' => $categories]);
             }
 
-            $query = Category::with('parent:id,name')
+            $query = Category::with(['parent:id,name,business_category_id', 'parent.businessCategory:id,name', 'businessCategory:id,name'])
                 ->where('business_id', getBusinessId())
                 ->where('type', 'Services');
 
@@ -49,7 +51,7 @@ class ServiceCategoryController extends Controller
                 $query->orderBy('sort_order', 'asc');
             }
 
-            $data = $query->select('id', 'business_id', 'parent_id', 'name', 'status', 'image_url', 'sort_order');
+            $data = $query->select('id', 'business_id', 'parent_id', 'business_category_id', 'name', 'status', 'image_url', 'sort_order');
 
             return Datatables::of($data)
                 ->addIndexColumn()
@@ -62,6 +64,10 @@ class ServiceCategoryController extends Controller
                 })
                 ->addColumn('parent_name', function ($row) {
                     return $row->parent ? '<span class="badge bg-light text-dark border fw-normal px-2 py-1">' . e($row->parent->name) . '</span>' : '<span class="text-muted small">-</span>';
+                })
+                ->addColumn('business_category_name', function ($row) {
+                    $cat = $row->businessCategory ?? $row->parent?->businessCategory;
+                    return $cat ? '<span class="badge bg-primary bg-opacity-10 text-primary border border-primary-subtle fw-normal px-2 py-1">' . e($cat->name) . '</span>' : '<span class="text-muted small">-</span>';
                 })
                 ->editColumn('status', function ($row) {
                     $canEdit = checkBusinessPermission('edit_service_category');
@@ -89,7 +95,7 @@ class ServiceCategoryController extends Controller
                     $btn .= '</div>';
                     return $btn;
                 })
-                ->rawColumns(['action', 'status', 'image', 'parent_name', 'name'])
+                ->rawColumns(['action', 'status', 'image', 'parent_name', 'business_category_name', 'name'])
                 ->make(true);
         }
 
@@ -106,7 +112,12 @@ class ServiceCategoryController extends Controller
             ->orderBy('name', 'asc')
             ->get(['id', 'name']);
 
-        return view('business.service-category.index', compact('parentCategories', 'currentCategory'));
+        $business = Business::with('businessCategories:id,name')->find(getBusinessId());
+        $storeCategories = $business?->businessCategories && $business->businessCategories->isNotEmpty()
+            ? $business->businessCategories
+            : ($business?->business_category_id ? BusinessCategory::where('id', $business->business_category_id)->select('id', 'name')->get() : collect());
+
+        return view('business.service-category.index', compact('parentCategories', 'currentCategory', 'storeCategories'));
     }
 
     public function create()
@@ -133,6 +144,12 @@ class ServiceCategoryController extends Controller
             $insert = new Category();
             $insert->business_id = getBusinessId();
             $insert->parent_id = $request->parent_id ?: null;
+            if (empty($insert->parent_id)) {
+                $insert->business_category_id = $request->business_category_id;
+            } else {
+                $parent = Category::find($insert->parent_id);
+                $insert->business_category_id = $parent?->business_category_id;
+            }
             $insert->name = $request->name;
             $insert->slug = Str::slug($request->name);
             $insert->type = 'Services';
@@ -161,7 +178,7 @@ class ServiceCategoryController extends Controller
         if (!checkBusinessPermission('edit_service_category')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized. You do not have permission to edit service categories.'], 403);
         }
-        $category = Category::where('business_id', getBusinessId())->where('type', 'Services')->findOrFail($id);
+        $category = Category::with('businessCategory:id,name')->where('business_id', getBusinessId())->where('type', 'Services')->findOrFail($id);
         return response()->json([
             'success' => true,
             'data' => $category,
@@ -184,6 +201,12 @@ class ServiceCategoryController extends Controller
 
             $update = Category::where('business_id', getBusinessId())->where('type', 'Services')->findOrFail($id);
             $update->parent_id = ($request->parent_id && $request->parent_id != $id) ? $request->parent_id : null;
+            if (empty($update->parent_id)) {
+                $update->business_category_id = $request->business_category_id;
+            } else {
+                $parent = Category::find($update->parent_id);
+                $update->business_category_id = $parent?->business_category_id;
+            }
             $update->name = $request->name;
             $update->slug = Str::slug($request->name);
             $update->status = $request->status;
@@ -204,6 +227,11 @@ class ServiceCategoryController extends Controller
             }
 
             $update->save();
+
+            // If main category, synchronize its children's business_category_id
+            if (empty($update->parent_id) && $update->business_category_id) {
+                Category::where('parent_id', $update->id)->update(['business_category_id' => $update->business_category_id]);
+            }
 
             $success = true;
             $message = 'Service Category updated successfully.';

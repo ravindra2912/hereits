@@ -56,6 +56,7 @@
                         <th class="py-3 text-secondary text-uppercase small fw-bold border-0" width="80">Image</th>
                         <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Category Name</th>
                         <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Parent Category</th>
+                        <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Business Category</th>
                         <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Status</th>
                         <th class="pe-4 py-3 text-secondary text-uppercase small fw-bold border-0 text-end">Action</th>
                     </tr>
@@ -106,6 +107,18 @@
                             @endforeach
                             @endif
                         </select>
+                    </div>
+                    <div class="mb-4" id="businessCategoryGroup">
+                        <label class="form-label fw-bold">Business Category <span class="text-danger">*</span></label>
+                        <select class="form-select rounded-3" name="business_category_id" id="categoryBusinessCategoryId">
+                            <option value="">Select Business Category</option>
+                            @if(isset($storeCategories))
+                            @foreach ($storeCategories as $stCat)
+                            <option value="{{ $stCat->id }}" {{ count($storeCategories) === 1 ? 'selected' : '' }}>{{ $stCat->name }}</option>
+                            @endforeach
+                            @endif
+                        </select>
+                        <div class="form-text small text-muted">Select which of your store's business categories this main category belongs to.</div>
                     </div>
                     <div class="mb-0">
                         <label class="form-label fw-bold">Status <span class="text-danger">*</span></label>
@@ -203,6 +216,13 @@
                     className: 'py-3'
                 },
                 {
+                    data: 'business_category_name',
+                    name: 'business_category_name',
+                    orderable: false,
+                    searchable: false,
+                    className: 'py-3'
+                },
+                {
                     data: 'status',
                     name: 'status',
                     className: 'py-3'
@@ -229,15 +249,32 @@
         });
     });
 
+    function toggleBusinessCategoryField() {
+        var parentId = $('#categoryParentId').val();
+        if (!parentId) {
+            $('#businessCategoryGroup').show();
+            $('#categoryBusinessCategoryId').prop('required', true);
+        } else {
+            $('#businessCategoryGroup').hide();
+            $('#categoryBusinessCategoryId').prop('required', false);
+        }
+    }
+
+    $(document).ready(function() {
+        $('#categoryParentId').on('change', toggleBusinessCategoryField);
+    });
+
     function openCreateModal() {
         $('#categoryModalLabel').text('Add Product Category');
         $('#categoryForm').attr('action', "{{ route('business.product-category.store') }}");
         $('#formMethod').val('POST');
         $('#categoryName').val('');
         $('#categoryParentId').val("{{ isset($currentCategory) && $currentCategory ? $currentCategory->id : '' }}").find('option').show();
+        $('#categoryBusinessCategoryId').val("{{ isset($storeCategories) && count($storeCategories) === 1 ? $storeCategories->first()->id : '' }}");
         $('#categoryStatus').val('active');
         $('#categoryImage').val('');
         $('#previewImg').attr('src', "{{ getImage('') }}");
+        toggleBusinessCategoryField();
         $('#categoryModal').modal('show');
     }
 
@@ -252,9 +289,11 @@
                 $('#categoryParentId option').show();
                 $('#categoryParentId option[value="' + id + '"]').hide();
                 $('#categoryParentId').val(response.data.parent_id || '');
+                $('#categoryBusinessCategoryId').val(response.data.business_category_id || '');
                 $('#categoryStatus').val(response.data.status);
                 $('#categoryImage').val('');
                 $('#previewImg').attr('src', response.image_url);
+                toggleBusinessCategoryField();
                 $('#categoryModal').modal('show');
             }
         });

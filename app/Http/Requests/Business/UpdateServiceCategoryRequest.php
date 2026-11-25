@@ -47,6 +47,11 @@ class UpdateServiceCategoryRequest extends FormRequest
                         ->whereNull('deleted_at');
                 }),
             ],
+            'business_category_id' => [
+                'nullable',
+                Rule::requiredIf(fn() => empty($this->parent_id)),
+                Rule::exists('business_categories', 'id'),
+            ],
             'status' => 'required|in:active,in-active',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:2048',
         ];
@@ -64,6 +69,8 @@ class UpdateServiceCategoryRequest extends FormRequest
             'name.unique' => 'This service category name already exists.',
             'parent_id.exists' => 'The selected parent category is invalid.',
             'parent_id.not_in' => 'A category cannot be its own parent.',
+            'business_category_id.required' => 'Business category is required for main categories.',
+            'business_category_id.exists' => 'The selected business category is invalid.',
             'status.required' => 'The status field is required.',
         ];
     }
