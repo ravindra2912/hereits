@@ -23,6 +23,7 @@ class BusinessVisibilityTest extends TestCase
             'contact' => substr(time() . rand(100, 999), -10),
             'password' => bcrypt('password'),
             'role' => 'User',
+            'is_contact_verify' => true,
         ]);
 
         $response = $this->actingAs($user)->get(route('register.business'));
@@ -129,5 +130,88 @@ class BusinessVisibilityTest extends TestCase
         $response->assertSee('Visibility');
         $response->assertSee('<option value="0" selected>Public</option>', false);
         $response->assertSee('<option value="1">Private</option>', false);
+    }
+
+    /**
+     * Test admin edit business view contains Show on Website switch.
+     */
+    public function test_admin_edit_business_view_contains_show_on_website_switch(): void
+    {
+        $admin = \App\Models\Admin::first() ?? \App\Models\Admin::create([
+            'name' => 'Admin User',
+            'email' => 'admin_' . uniqid() . '@example.com',
+            'password' => bcrypt('password'),
+        ]);
+
+        $business = Business::create([
+            'name' => 'Admin Edit Test Biz',
+            'slug' => 'admin-edit-test-' . uniqid(),
+            'business_type' => 'Product',
+            'business_category_id' => 1,
+            'city_id' => 1,
+            'state_id' => 1,
+            'address' => 'Test Address',
+            'area' => 'Test Area',
+            'pincode' => '123456',
+            'contact' => '77' . rand(10000000, 99999999),
+            'status' => 'active',
+        ]);
+
+        BusinessSetting::create([
+            'business_id' => $business->id,
+            'is_show_contact' => true,
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.business.edit', $business->id));
+        $response->assertStatus(200);
+        $response->assertSee('Show on Website');
+        $response->assertSee('name="is_show_contact"', false);
+    }
+
+    /**
+     * Test admin can update is_show_contact via admin.business.systemsetting.update.
+     */
+    public function test_admin_can_update_is_show_contact(): void
+    {
+        $admin = \App\Models\Admin::first() ?? \App\Models\Admin::create([
+            'name' => 'Admin User',
+            'email' => 'admin_' . uniqid() . '@example.com',
+            'password' => bcrypt('password'),
+        ]);
+
+        $business = Business::create([
+            'name' => 'Setting Test Biz',
+            'slug' => 'setting-test-' . uniqid(),
+            'business_type' => 'Product',
+            'business_category_id' => 1,
+            'city_id' => 1,
+            'state_id' => 1,
+            'address' => 'Test Address',
+            'area' => 'Test Area',
+            'pincode' => '123456',
+            'contact' => '66' . rand(10000000, 99999999),
+            'status' => 'active',
+        ]);
+
+        $setting = BusinessSetting::create([
+            'business_id' => $business->id,
+            'is_show_contact' => true,
+        ]);
+
+        // Toggle off
+        $response = $this->actingAs($admin, 'admin')->post(route('admin.business.systemsetting.update', $business->id), []);
+        $response->assertJson(['success' => true]);
+
+        $setting->refresh();
+        $this->assertFalse((bool)$setting->is_show_contact);
+
+        // Toggle on
+        $response = $this->actingAs($admin, 'admin')->post(route('admin.business.systemsetting.update', $business->id), [
+            'is_show_contact' => '1',
+        ]);
+        $response->assertJson(['success' => true]);
+
+        $setting->refresh();
+        $this->assertTrue((bool)$setting->is_show_contact);
     }
 }

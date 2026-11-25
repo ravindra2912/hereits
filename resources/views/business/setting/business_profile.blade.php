@@ -209,13 +209,7 @@
                   <input type="text" class="form-control required" value="{{ $business->name }}" name="name" placeholder="Enter business name" />
                 </div>
                 <div class="col-md-6">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <label class="form-label small fw-bold text-uppercase text-muted mb-0">Contact <span class="text-danger">*</span></label>
-                    <div class="form-check form-switch d-inline-flex align-items-center gap-2 mb-0">
-                      <input class="form-check-input cursor-pointer" type="checkbox" role="switch" name="is_show_contact" value="1" id="is_show_contact" {{ (!isset($business->businessSetting) || $business->businessSetting->is_show_contact) ? 'checked' : '' }}>
-                      <label class="form-check-label small fw-semibold text-muted cursor-pointer show-on-web-label" for="is_show_contact">Show on Website</label>
-                    </div>
-                  </div>
+                  <label class="form-label small fw-bold text-uppercase text-muted">Contact <span class="text-danger">*</span></label>
                   <input type="text" class="form-control required" value="{{ $business->contact }}" name="contact" placeholder="Contact number" />
                 </div>
 

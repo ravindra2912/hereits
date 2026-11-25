@@ -371,11 +371,6 @@ class SettingController extends Controller
                     updateBusinessSeo($update->id);
                 }
 
-                BusinessSetting::updateOrCreate(
-                    ['business_id' => $id],
-                    ['is_show_contact' => $request->has('is_show_contact') ? 1 : 0]
-                );
-
                 if (function_exists('getBusinessSettings')) {
                     getBusinessSettings($id, true);
                 }

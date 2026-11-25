@@ -310,6 +310,15 @@ class BusinessController extends Controller
                 $update->rating = $request->rating ?? 0;
                 $update->save();
 
+                BusinessSetting::updateOrCreate(
+                    ['business_id' => $id],
+                    ['is_show_contact' => $request->has('is_show_contact') ? 1 : 0]
+                );
+
+                if (function_exists('getBusinessSettings')) {
+                    getBusinessSettings($id, true);
+                }
+
 
                 // Removed individual fileRemove calls as they are handled above within the existence checks
 
@@ -427,6 +436,7 @@ class BusinessController extends Controller
                 $update->is_order_place_on_website = $request->has('is_order_place_on_website') ? 1 : 0;
                 $update->is_share_products_to_business = $request->has('is_share_products_to_business') ? 1 : 0;
                 $update->is_private = $request->has('is_private') ? 1 : 0;
+                $update->is_show_contact = $request->has('is_show_contact') ? 1 : 0;
 
                 // New fields
                 $update->show_delivery_charges = $request->has('show_delivery_charges') ? 1 : 0;

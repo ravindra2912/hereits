@@ -118,7 +118,13 @@
         </div>
         <div class="col-md-4">
           <div class="mb-3">
-            <label class="form-label small fw-bold">Contact Number <span class="text-danger">*</span></label>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label small fw-bold mb-0">Contact Number <span class="text-danger">*</span></label>
+              <div class="form-check form-switch d-inline-flex align-items-center gap-1 mb-0">
+                <input class="form-check-input custom-switch cursor-pointer" type="checkbox" role="switch" name="is_show_contact" value="1" id="is_show_contact" {{ (!isset($setting) || $setting->is_show_contact) ? 'checked' : '' }}>
+                <label class="form-check-label small fw-semibold text-muted cursor-pointer" for="is_show_contact">Show on Website</label>
+              </div>
+            </div>
             <input type="text" class="form-control required" value="{{ $business->contact }}" name="contact" placeholder="Primary Contact" />
           </div>
         </div>
@@ -365,6 +371,25 @@
                 </div>
                 <div class="form-check form-switch m-0">
                   <input class="form-check-input custom-switch" type="checkbox" role="switch" name="is_private" id="is_private" {{ ($setting->is_private ?? true) ? 'checked' : '' }}>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3 transition-hover">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                  <div class="rounded-circle bg-success bg-opacity-10 p-3 text-success me-3">
+                    <i class="bi bi-telephone-fill fs-4"></i>
+                  </div>
+                  <div>
+                    <h6 class="mb-0 fw-bold">Show on Website</h6>
+                    <small class="text-muted">Contact Number Visibility</small>
+                  </div>
+                </div>
+                <div class="form-check form-switch m-0">
+                  <input class="form-check-input custom-switch" type="checkbox" role="switch" name="is_show_contact" id="sys_is_show_contact" {{ (!isset($setting) || $setting->is_show_contact) ? 'checked' : '' }}>
                 </div>
               </div>
             </div>
@@ -801,6 +826,11 @@
   $(document).ready(function() {
     $('.select2').select2({
       width: '100%'
+    });
+
+    $('#is_show_contact, #sys_is_show_contact').on('change', function() {
+      const isChecked = $(this).is(':checked');
+      $('#is_show_contact, #sys_is_show_contact').prop('checked', isChecked);
     });
   });
   document.addEventListener("DOMContentLoaded", function() {
