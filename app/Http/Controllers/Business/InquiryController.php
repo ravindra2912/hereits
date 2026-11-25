@@ -63,8 +63,10 @@ class InquiryController extends Controller
                     'sources' => function ($q) {
                         $q->select(['id', 'inquiry_id', 'source_id', 'source_type'])
                             ->with([
-                                'product:id,name,sell_price,price',
-                                'service:id,name,price',
+                                'product:id,category_id,name,sell_price,price',
+                                'product.category.businessCategory',
+                                'service:id,category_id,name,price',
+                                'service.category.businessCategory',
                             ]);
                     },
                 ]);
@@ -196,7 +198,7 @@ class InquiryController extends Controller
                     $html .= '<button type="button" class="btn btn-sm btn-outline-secondary rounded-circle btn-view-inquiry" data-id="' . $row->id . '" title="View Details"><i class="bi bi-eye"></i></button>';
 
                     if ($row->isPending()) {
-                        $charge = $this->creditService->getInquiryCharge($row->business_id, $row->inquiry_type);
+                        $charge = $this->creditService->getInquiryCharge($row->business_id, $row->inquiry_type, $row);
                         // Accept button with unlock modal
                         $html .= '<button type="button" class="btn btn-sm btn-success rounded-pill px-2.5 btn-accept-inquiry" data-id="' . $row->id . '" data-type="' . $row->inquiry_type . '" data-charge="' . $charge . '" title="Accept Inquiry (Unlock details)"><i class="bi bi-unlock-fill me-1"></i>Accept</button>';
 
@@ -271,8 +273,10 @@ class InquiryController extends Controller
                 'sources' => function ($q) {
                     $q->select(['id', 'inquiry_id', 'source_id', 'source_type'])
                         ->with([
-                            'product:id,name,sell_price,price,description',
-                            'service:id,name,price,description',
+                            'product:id,category_id,name,sell_price,price,description',
+                            'product.category.businessCategory',
+                            'service:id,category_id,name,price,description',
+                            'service.category.businessCategory',
                         ]);
                 },
                 'creditDeducted:id,amount,transaction_type,type,balance_after,created_at',
@@ -283,7 +287,7 @@ class InquiryController extends Controller
             ->findOrFail($id);
 
         $isAccepted = $inquiry->isAccepted();
-        $inquiryCharge = $this->creditService->getInquiryCharge($businessId, $inquiry->inquiry_type);
+        $inquiryCharge = $this->creditService->getInquiryCharge($businessId, $inquiry->inquiry_type, $inquiry);
 
         $data = [
             'id'                => $inquiry->id,

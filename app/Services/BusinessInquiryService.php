@@ -25,6 +25,8 @@ class BusinessInquiryService
      */
     public function createInquiry(array $data, array $sources = []): BusinessInquiry
     {
+        $sources = !empty($sources) ? $sources : ($data['sources'] ?? []);
+
         return DB::transaction(function () use ($data, $sources) {
             $inquiry = BusinessInquiry::create([
                 'business_id'      => $data['business_id'],
@@ -94,13 +96,14 @@ class BusinessInquiryService
 
             // 1. Check sufficient credit balance
             $inquiryType = $inquiry->inquiry_type ?? BusinessInquiry::TYPE_CONTACT_US;
-            $this->creditService->checkInquiryCredit($inquiry->business_id, $inquiryType);
+            $this->creditService->checkInquiryCredit($inquiry->business_id, $inquiryType, $inquiry);
 
             // 2. Deduct credit
             $creditHistory = $this->creditService->deductInquiryCharge(
                 $inquiry->business_id,
                 $inquiryType,
-                $inquiry->id
+                $inquiry->id,
+                $inquiry
             );
 
             // 3. Update inquiry

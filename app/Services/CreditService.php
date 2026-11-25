@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\BusinessInquiry;
 use App\Models\BusinessSetting;
 use App\Models\CreditHistory;
 use App\Models\SiteSetting;
@@ -327,13 +328,20 @@ class CreditService
 
     /**
      * Get charge required for accepting a business inquiry based on inquiry type.
+     * For product and service inquiries with items, it evaluates the business category charge
+     * of each item and selects the highest charge among them.
      *
      * @param int|null $businessId
      * @param string $inquiryType ('contact_us', 'product', 'service')
+     * @param BusinessInquiry|null $inquiry
      * @return float
      */
-    public function getInquiryCharge(?int $businessId = null, string $inquiryType = 'contact_us'): float
+    public function getInquiryCharge(?int $businessId = null, string $inquiryType = 'contact_us', ?BusinessInquiry $inquiry = null): float
     {
+        if (!$businessId && $inquiry) {
+            $businessId = $inquiry->business_id;
+        }
+
         if (!$businessId && auth()->check()) {
             $user = auth()->user();
             $businessId = $user->business_id ?? ($user->business->id ?? null);
@@ -341,6 +349,18 @@ class CreditService
 
         if (!$businessId) {
             return 1.00;
+        }
+
+        if ($inquiry && empty($inquiryType)) {
+            $inquiryType = $inquiry->inquiry_type ?? 'contact_us';
+        }
+
+        // For product and service inquiries: check items in inquiry sources and pick highest category charge
+        if ($inquiry && in_array($inquiryType, ['product', 'service'], true)) {
+            $itemCharges = $this->getItemCategoryCharges($inquiry);
+            if (!empty($itemCharges)) {
+                return (float)max($itemCharges);
+            }
         }
 
         $columnMap = [
@@ -382,16 +402,71 @@ class CreditService
     }
 
     /**
+     * Collect inquiry charges for all items referenced in inquiry sources.
+     *
+     * @param BusinessInquiry $inquiry
+     * @return array<float>
+     */
+    protected function getItemCategoryCharges(BusinessInquiry $inquiry): array
+    {
+        if (!$inquiry->relationLoaded('sources')) {
+            $inquiry->load([
+                'sources.product.category.businessCategory',
+                'sources.service.category.businessCategory',
+            ]);
+        }
+
+        $charges = [];
+
+        foreach ($inquiry->sources as $source) {
+            $item = $source->item;
+            if (!$item) {
+                if ($source->source_type === 'product') {
+                    $item = \App\Models\Product::with('category.businessCategory')->find($source->source_id);
+                } elseif ($source->source_type === 'service') {
+                    $item = \App\Models\Service::with('category.businessCategory')->find($source->source_id);
+                }
+            }
+
+            if (!$item) {
+                continue;
+            }
+
+            $businessCategory = $item->businessCategory ?? $item->category?->businessCategory;
+
+            if (!$businessCategory && $item->category_id) {
+                $category = $item->category ?? \App\Models\Category::with('businessCategory')->find($item->category_id);
+                $businessCategory = $category?->businessCategory;
+                if (!$businessCategory && $category?->parent_id) {
+                    $parent = \App\Models\Category::with('businessCategory')->find($category->parent_id);
+                    $businessCategory = $parent?->businessCategory;
+                }
+            }
+
+            if ($businessCategory) {
+                if ($source->source_type === 'product') {
+                    $charges[] = (float)($businessCategory->charge_per_product_inquiry ?? 1.00);
+                } elseif ($source->source_type === 'service') {
+                    $charges[] = (float)($businessCategory->charge_per_service_inquiry ?? 1.00);
+                }
+            }
+        }
+
+        return $charges;
+    }
+
+    /**
      * Check if a business has sufficient credits for accepting an inquiry.
      *
      * @param int $businessId
      * @param string $inquiryType
+     * @param BusinessInquiry|null $inquiry
      * @return float Required charge amount
      * @throws Exception
      */
-    public function checkInquiryCredit(int $businessId, string $inquiryType = 'contact_us'): float
+    public function checkInquiryCredit(int $businessId, string $inquiryType = 'contact_us', ?BusinessInquiry $inquiry = null): float
     {
-        $charge = $this->getInquiryCharge($businessId, $inquiryType);
+        $charge = $this->getInquiryCharge($businessId, $inquiryType, $inquiry);
         $typeName = str_replace('_', ' ', $inquiryType);
         $this->checkSufficientCredit($businessId, $charge, "accept {$typeName} inquiry");
         return $charge;
@@ -403,11 +478,12 @@ class CreditService
      * @param int $businessId
      * @param string $inquiryType
      * @param mixed $referenceId
+     * @param BusinessInquiry|null $inquiry
      * @return CreditHistory|null
      */
-    public function deductInquiryCharge(int $businessId, string $inquiryType = 'contact_us', $referenceId = null): ?CreditHistory
+    public function deductInquiryCharge(int $businessId, string $inquiryType = 'contact_us', $referenceId = null, ?BusinessInquiry $inquiry = null): ?CreditHistory
     {
-        $charge = $this->getInquiryCharge($businessId, $inquiryType);
+        $charge = $this->getInquiryCharge($businessId, $inquiryType, $inquiry);
         if ($charge > 0) {
             $typeName = str_replace('_', ' ', $inquiryType);
             return $this->deductCredit($businessId, $charge, 'inquiry', "Credit deducted for accepting {$typeName} inquiry", $referenceId);

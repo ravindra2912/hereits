@@ -9,6 +9,7 @@ use App\Models\BusinessInquiry;
 use App\Models\BusinessInquiryLog;
 use App\Models\BusinessInquirySource;
 use App\Models\BusinessSetting;
+use App\Models\Category;
 use App\Models\CreditHistory;
 use App\Models\Product;
 use App\Models\Service;
@@ -467,5 +468,164 @@ class BusinessInquiryManagementTest extends TestCase
         $this->assertStringContainsString('Contact: 5.00', $indexRes->getContent());
         $this->assertStringContainsString('Product: 6.50', $indexRes->getContent());
         $this->assertStringContainsString('Service: 7.25', $indexRes->getContent());
+    }
+
+    public function test_multiple_items_inquiry_deducts_highest_category_charge(): void
+    {
+        // 1. Create two business categories with distinct inquiry charges
+        $bCatLow = new BusinessCategory();
+        $bCatLow->forceFill([
+            'name' => 'Low Category ' . uniqid(),
+            'slug' => 'low-cat-' . uniqid(),
+            'status' => 'active',
+            'charge_per_contact_us_inquiry' => 1.00,
+            'charge_per_product_inquiry'    => 2.00,
+            'charge_per_service_inquiry'    => 1.50,
+        ])->save();
+
+        $bCatHigh = new BusinessCategory();
+        $bCatHigh->forceFill([
+            'name' => 'High Category ' . uniqid(),
+            'slug' => 'high-cat-' . uniqid(),
+            'status' => 'active',
+            'charge_per_contact_us_inquiry' => 1.00,
+            'charge_per_product_inquiry'    => 5.50,
+            'charge_per_service_inquiry'    => 6.25,
+        ])->save();
+
+        // 2. Create internal product categories assigned to these business categories
+        $pCatLow = new Category();
+        $pCatLow->forceFill([
+            'business_id'          => $this->business->id,
+            'business_category_id' => $bCatLow->id,
+            'name'                 => 'Low Prod Cat ' . uniqid(),
+            'slug'                 => 'low-pcat-' . uniqid(),
+            'type'                 => 'Products',
+            'status'               => 'active',
+        ])->save();
+
+        $pCatHigh = new Category();
+        $pCatHigh->forceFill([
+            'business_id'          => $this->business->id,
+            'business_category_id' => $bCatHigh->id,
+            'name'                 => 'High Prod Cat ' . uniqid(),
+            'slug'                 => 'high-pcat-' . uniqid(),
+            'type'                 => 'Products',
+            'status'               => 'active',
+        ])->save();
+
+        // 3. Create two products
+        $prod1 = new Product();
+        $prod1->forceFill([
+            'business_id' => $this->business->id,
+            'category_id' => $pCatLow->id,
+            'name'        => 'Item Low ' . uniqid(),
+            'sku'         => 'SKU-LOW-' . uniqid(),
+            'slug'        => 'item-low-' . uniqid(),
+            'price_type'  => 'FixPrice',
+            'price'       => 100,
+            'sell_price'  => 80,
+            'status'      => 'active',
+        ])->save();
+
+        $prod2 = new Product();
+        $prod2->forceFill([
+            'business_id' => $this->business->id,
+            'category_id' => $pCatHigh->id,
+            'name'        => 'Item High ' . uniqid(),
+            'sku'         => 'SKU-HIGH-' . uniqid(),
+            'slug'        => 'item-high-' . uniqid(),
+            'price_type'  => 'FixPrice',
+            'price'       => 500,
+            'sell_price'  => 450,
+            'status'      => 'active',
+        ])->save();
+
+        // 4. Create product inquiry with both products
+        $inquiry = $this->inquiryService->createInquiry([
+            'business_id'  => $this->business->id,
+            'name'         => 'Multi Product Customer',
+            'contact'      => '9988776611',
+            'email'        => 'multi@example.com',
+            'inquiry_type' => 'product',
+            'sources'      => [
+                ['source_id' => $prod1->id, 'source_type' => 'product'],
+                ['source_id' => $prod2->id, 'source_type' => 'product'],
+            ],
+        ]);
+
+        // Verify CreditService calculates the maximum of (2.00, 5.50) -> 5.50
+        $calculatedCharge = $this->creditService->getInquiryCharge($this->business->id, 'product', $inquiry);
+        $this->assertEquals(5.50, $calculatedCharge);
+
+        // 5. Accept inquiry and verify deduction equals the highest credit (5.50)
+        BusinessSetting::where('business_id', $this->business->id)->update(['credit' => 20.00]);
+        $accepted = $this->inquiryService->acceptInquiry($inquiry, 'Accepting multi-item inquiry', $this->owner->id);
+
+        $this->assertTrue($accepted->isAccepted());
+        $newBalance = $this->creditService->getAvailableCredit($this->business->id);
+        $this->assertEquals(14.50, $newBalance); // 20.00 - 5.50
+
+        // 6. Test with services
+        $sCatLow = new Category();
+        $sCatLow->forceFill([
+            'business_id'          => $this->business->id,
+            'business_category_id' => $bCatLow->id,
+            'name'                 => 'Low Serv Cat ' . uniqid(),
+            'slug'                 => 'low-scat-' . uniqid(),
+            'type'                 => 'Services',
+            'status'               => 'active',
+        ])->save();
+
+        $sCatHigh = new Category();
+        $sCatHigh->forceFill([
+            'business_id'          => $this->business->id,
+            'business_category_id' => $bCatHigh->id,
+            'name'                 => 'High Serv Cat ' . uniqid(),
+            'slug'                 => 'high-scat-' . uniqid(),
+            'type'                 => 'Services',
+            'status'               => 'active',
+        ])->save();
+
+        $serv1 = new Service();
+        $serv1->forceFill([
+            'business_id' => $this->business->id,
+            'category_id' => $sCatLow->id,
+            'name'        => 'Service Low ' . uniqid(),
+            'slug'        => 'serv-low-' . uniqid(),
+            'price_type'  => 'WithoutPrice',
+            'status'      => 'active',
+        ])->save();
+
+        $serv2 = new Service();
+        $serv2->forceFill([
+            'business_id' => $this->business->id,
+            'category_id' => $sCatHigh->id,
+            'name'        => 'Service High ' . uniqid(),
+            'slug'        => 'serv-high-' . uniqid(),
+            'price_type'  => 'WithoutPrice',
+            'status'      => 'active',
+        ])->save();
+
+        $serviceInquiry = $this->inquiryService->createInquiry([
+            'business_id'  => $this->business->id,
+            'name'         => 'Multi Service Customer',
+            'contact'      => '9988776622',
+            'email'        => 'multiserv@example.com',
+            'inquiry_type' => 'service',
+            'sources'      => [
+                ['source_id' => $serv1->id, 'source_type' => 'service'],
+                ['source_id' => $serv2->id, 'source_type' => 'service'],
+            ],
+        ]);
+
+        // Max of (1.50, 6.25) -> 6.25
+        $serviceCharge = $this->creditService->getInquiryCharge($this->business->id, 'service', $serviceInquiry);
+        $this->assertEquals(6.25, $serviceCharge);
+
+        $acceptedService = $this->inquiryService->acceptInquiry($serviceInquiry, 'Accepting multi-service inquiry', $this->owner->id);
+        $this->assertTrue($acceptedService->isAccepted());
+        $serviceNewBalance = $this->creditService->getAvailableCredit($this->business->id);
+        $this->assertEquals(8.25, $serviceNewBalance); // 14.50 - 6.25
     }
 }
