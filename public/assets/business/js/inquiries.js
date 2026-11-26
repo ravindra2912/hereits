@@ -26,7 +26,6 @@ $(function () {
             { data: 'id_date', name: 'id', width: '90px' },
             { data: 'type_and_source', name: 'inquiry_type' },
             { data: 'customer_info', name: 'name' },
-            { data: 'system_status_badge', name: 'system_status', className: 'text-center' },
             { data: 'business_status_badge', name: 'business_status', className: 'text-center' },
             { data: 'assigned_user', name: 'assigned_to', className: 'text-center' },
             { data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-end' }
@@ -130,7 +129,7 @@ $(function () {
 
         // Status badges
         $('#view_system_status').text(d.system_status.replace('_', ' ').toUpperCase());
-        $('#view_business_status').text(d.is_accepted ? d.business_status.replace('_', ' ').toUpperCase() : 'PENDING ACCEPTANCE');
+        $('#view_business_status').text(d.is_accepted ? d.business_status.replace('_', ' ').toUpperCase() : 'NEW INQUIRY');
         $('#view_assigned_staff').text(d.assigned_user || 'Unassigned');
 
         // Next follow up

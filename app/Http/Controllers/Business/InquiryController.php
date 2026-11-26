@@ -165,7 +165,7 @@ class InquiryController extends Controller
                 })
                 ->addColumn('business_status_badge', function ($row) {
                     if (!$row->isAccepted()) {
-                        return '<span class="text-muted small fst-italic">Awaiting Acceptance</span>';
+                        return '<span class="text-muted small fst-italic">New Inquiry</span>';
                     }
 
                     $badges = [

@@ -53,7 +53,7 @@
                         <i class="bi bi-hourglass-split fs-4"></i>
                     </div>
                     <div>
-                        <div class="text-muted small fw-semibold">Pending (Awaiting Action)</div>
+                        <div class="text-muted small fw-semibold">New Inquiries</div>
                         <div class="fs-4 fw-bold text-warning-emphasis">{{ number_format($stats['pending']) }}</div>
                     </div>
                 </div>
@@ -99,7 +99,7 @@
                         <li class="nav-item">
                             <button type="button" class="nav-link filter-status-tab rounded-pill px-3 py-1.5 fw-semibold"
                                 data-status="pending">
-                                <i class="bi bi-hourglass-split me-1 text-warning"></i>Pending Acceptance
+                                <i class="bi bi-hourglass-split me-1 text-warning"></i>New Inquiry
                                 @if ($stats['pending'] > 0)
                                     <span class="badge bg-danger rounded-pill ms-1">{{ $stats['pending'] }}</span>
                                 @endif
@@ -108,7 +108,7 @@
                         <li class="nav-item">
                             <button type="button" class="nav-link filter-status-tab rounded-pill px-3 py-1.5 fw-semibold"
                                 data-status="accepted">
-                                <i class="bi bi-check-circle me-1 text-success"></i>Accepted (Sales Workflow)
+                                <i class="bi bi-check-circle me-1 text-success"></i>Accepted
                             </button>
                         </li>
                         <li class="nav-item">
@@ -175,8 +175,6 @@
                                 <th class="ps-3 py-3 text-secondary text-uppercase small fw-bold border-0">ID & Date</th>
                                 <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Type & Items</th>
                                 <th class="py-3 text-secondary text-uppercase small fw-bold border-0">Customer Info</th>
-                                <th class="py-3 text-secondary text-uppercase small fw-bold border-0 text-center">System
-                                    Status</th>
                                 <th class="py-3 text-secondary text-uppercase small fw-bold border-0 text-center">Sales
                                     Status</th>
                                 <th class="py-3 text-secondary text-uppercase small fw-bold border-0 text-center">Assigned
