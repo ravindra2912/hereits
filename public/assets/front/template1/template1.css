@@ -964,6 +964,87 @@ body.business-details-layout {
     max-width: 600px;
 }
 
+/* Hero CTA Action Buttons */
+.hero-cta-buttons {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.hero-cta-buttons .hero-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    text-decoration: none;
+    border-radius: 50rem;
+    padding: 0.625rem 1.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    transition: all 0.25s ease-in-out;
+}
+
+.hero-cta-buttons .hero-cta-btn-primary {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+}
+
+.hero-cta-buttons .hero-cta-btn-call {
+    color: #ffffff !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.8) !important;
+    background-color: transparent !important;
+}
+
+.hero-cta-buttons .hero-cta-btn-call:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    border-color: #ffffff !important;
+}
+
+.hero-cta-buttons .hero-cta-btn-direction {
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    border: 1.5px solid #ffffff !important;
+}
+
+.hero-cta-buttons .hero-cta-btn-direction:hover {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+}
+
+.hero-cta-buttons .hero-cta-btn i {
+    font-size: 0.95em;
+}
+
+@media (max-width: 575.98px) {
+    .hero-cta-buttons {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: stretch !important;
+        gap: 0.35rem !important;
+        width: 100% !important;
+    }
+
+    .hero-cta-buttons .hero-cta-btn {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        padding: 0.5rem 0.25rem !important;
+        font-size: clamp(0.72rem, 2.7vw, 0.8125rem) !important;
+        line-height: 1.2 !important;
+        text-align: center !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+    }
+
+    .hero-cta-buttons .hero-cta-btn i {
+        font-size: 0.8em !important;
+        margin-right: 0.2rem !important;
+    }
+}
+
 .bg-cover {
     background-repeat: no-repeat !important;
     background-position: center center !important;

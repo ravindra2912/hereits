@@ -159,32 +159,38 @@
           </div>
 
           <!-- CTA Buttons -->
-          <div class="d-flex flex-wrap gap-3">
+          <div class="hero-cta-buttons">
             @if(isset($setting->is_ecommerce_system) && $setting->is_ecommerce_system)
-            <a href="#products" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
+            <a href="#products" class="btn btn-primary rounded-pill shadow-lg hover-lift hero-cta-btn hero-cta-btn-primary">
               Shop Now
             </a>
             @elseif(isset($setting->is_service_system) && $setting->is_service_system)
-            <a href="#services" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
+            <a href="#services" class="btn btn-primary rounded-pill shadow-lg hover-lift hero-cta-btn hero-cta-btn-primary">
               Book Service
             </a>
             @elseif(isset($setting->is_appointment_system) && $setting->is_appointment_system)
-            <a href="#experts-list" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
+            <a href="#experts-list" class="btn btn-primary rounded-pill shadow-lg hover-lift hero-cta-btn hero-cta-btn-primary">
               Book Appointment
             </a>
             @elseif(!empty($setting?->is_show_contact) && !empty($business->contact))
-            <a href="#contact-us" class="btn btn-primary btn-lg rounded-pill fw-bold px-5 shadow-lg hover-lift">
+            <a href="#contact-us" class="btn btn-primary rounded-pill shadow-lg hover-lift hero-cta-btn hero-cta-btn-primary">
               Contact Us
             </a>
             @endif
 
             @if(!empty($setting?->is_show_contact) && !empty($business->contact))
-            <a href="tel:{{ $business->contact }}" class="btn btn-outline-light btn-lg rounded-pill fw-bold px-4 hover-lift">
-              <i class="fas fa-phone-alt me-2"></i> Call Now
+            <a href="tel:{{ $business->contact }}" class="btn btn-outline-light rounded-pill hover-lift hero-cta-btn hero-cta-btn-call">
+              <i class="fas fa-phone-alt me-1 me-md-2"></i>Call Now
             </a>
             @endif
-            <a href="http://maps.google.com/maps?q={{ $business->latitude.','.$business->longitude }}&ll={{ $business->latitude.','.$business->longitude }}&z=17" target="_blank" class="btn btn-white bg-white text-dark btn-lg rounded-pill fw-bold px-3 hover-lift" data-bs-toggle="tooltip" title="Get Directions">
-              <i class="fas fa-directions"></i>
+
+            @php
+            $mapTarget = (!empty($business->latitude) && !empty($business->longitude))
+                ? "https://maps.google.com/maps?q={$business->latitude},{$business->longitude}&ll={$business->latitude},{$business->longitude}&z=17"
+                : "https://maps.google.com/maps?q=" . urlencode($business->name . ' ' . ($business->area ?? '') . ' ' . ($business->city->name ?? ''));
+            @endphp
+            <a href="{{ $mapTarget }}" target="_blank" class="btn btn-white bg-white text-dark rounded-pill hover-lift hero-cta-btn hero-cta-btn-direction" data-bs-toggle="tooltip" title="Get Directions">
+              <i class="fas fa-directions me-1 me-md-2"></i>Direction
             </a>
           </div>
         </div>
