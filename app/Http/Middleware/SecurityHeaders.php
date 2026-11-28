@@ -28,9 +28,9 @@ class SecurityHeaders
 
         // Content-Security-Policy: Restricting scripts to trusted self domain and essential services
         $csp = "default-src 'self'; "
-            . "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://checkout.razorpay.com https://sdk.cashfree.com https://pagead2.googlesyndication.com https://www.google.com https://www.gstatic.com; "
-            . "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-            . "font-src 'self' data: https://fonts.gstatic.com; "
+            . "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://checkout.razorpay.com https://sdk.cashfree.com https://pagead2.googlesyndication.com https://www.google.com https://www.gstatic.com https://cdn.jsdelivr.net; "
+            . "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+            . "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; "
             . "img-src 'self' data: https: blob:; "
             . "connect-src 'self' https: wss:; "
             . "frame-src 'self' https://checkout.razorpay.com https://api.cashfree.com https://www.google.com; "

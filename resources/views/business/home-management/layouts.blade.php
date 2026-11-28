@@ -3,7 +3,6 @@
 @section('title', 'Home Layout Management')
 
 @push('style')
-<link rel="stylesheet" href="{{ asset('assets/common/css/toastr.min.css') }}">
 <style>
     .type-selector-card,
     .count-selector-card,
@@ -312,7 +311,12 @@
                         <div class="text-center py-5">
                             <div class="text-secondary display-5 mb-3"><i class="bi bi-layout-three"></i></div>
                             <h6 class="fw-bold text-dark">No layout sections added yet</h6>
-                            <p class="text-muted small">Click "Add Home Section" above to configure custom image banners, product categories, or service sections for your storefront.</p>
+                            <p class="text-muted small mb-3">Click "Add Home Section" to configure custom image banners, product categories, or service sections for your storefront.</p>
+                            @if(checkBusinessPermission('add_home_layouts'))
+                            <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm open-add-modal-trigger" data-limit-reached="{{ $isLimitReached ? '1' : '0' }}" data-limit="{{ $sectionLimit }}">
+                                <i class="bi bi-plus-lg me-1"></i> Add Home Section
+                            </button>
+                            @endif
                         </div>
                         @endforelse
                     </div>
@@ -659,8 +663,7 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('assets/common/js/toastr.min.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="{{ asset('assets/common/js/sortable.min.js') }}?v={{ filemtime(public_path('assets/common/js/sortable.min.js')) }}"></script>
 
 <script>
     $(document).ready(function() {
@@ -672,9 +675,29 @@
         let currentSearchXhr = null;
         let searchDebounceTimer = null;
 
+        function showModal(modalId) {
+            const modalEl = document.getElementById(modalId);
+            if (!modalEl) return;
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            } else {
+                $(modalEl).modal('show');
+            }
+        }
+
+        function hideModal(modalId) {
+            const modalEl = document.getElementById(modalId);
+            if (!modalEl) return;
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+            } else {
+                $(modalEl).modal('hide');
+            }
+        }
+
         // Initialize Drag & Drop Sorting for Layout Sections
         const sectionsContainerEl = document.getElementById('sections-container');
-        if (sectionsContainerEl) {
+        if (typeof Sortable !== 'undefined' && sectionsContainerEl) {
             new Sortable(sectionsContainerEl, {
                 animation: 150,
                 handle: '.drag-handle',
@@ -1321,7 +1344,7 @@
         });
 
         // Open Add Modal
-        $('#openAddModalBtn').click(function() {
+        $(document).on('click', '#openAddModalBtn, .open-add-modal-trigger', function() {
             if ($(this).attr('data-limit-reached') === '1') {
                 let limit = $(this).attr('data-limit') || 15;
                 toastr.warning('Maximum limit of ' + limit + ' home sections reached. Please delete an existing section before creating a new one.');
@@ -1340,19 +1363,18 @@
             currentEditItems = [];
             currentSelectedCategoryIds = [];
             currentSelectedItemIds = [];
-            toggleSectionTypeFields('banner_custom');
+            $('#selected_image_count').val(1);
             $('.count-selector-card').removeClass('active');
             $('.count-selector-card[data-count="1"]').addClass('active');
-            $('#selected_image_count').val(1);
+            $('#selected_ui_style').val('style_1');
             $('.style-selector-card').removeClass('active');
             $('.style-selector-card[data-style="style_1"]').addClass('active');
-            $('#selected_ui_style').val('style_1');
-            renderUploadSlots(1);
-            $('#addSectionModal').modal('show');
+            toggleSectionTypeFields('banner_custom');
+            showModal('addSectionModal');
         });
 
         // Image Count Selector Click
-        $('.count-selector-card').click(function() {
+        $(document).on('click', '.count-selector-card', function() {
             $('.count-selector-card').removeClass('active');
             $(this).addClass('active');
             let count = $(this).data('count');
@@ -1361,7 +1383,7 @@
         });
 
         // UI Style Selector Click
-        $('.style-selector-card').click(function() {
+        $(document).on('click', '.style-selector-card', function() {
             $('.style-selector-card').removeClass('active');
             $(this).addClass('active');
             let style = $(this).data('style');
@@ -1452,7 +1474,7 @@
                             renderUploadSlots(count, currentEditItems);
                         }
 
-                        $('#addSectionModal').modal('show');
+                        showModal('addSectionModal');
                     } else {
                         toastr.error(response.message || 'Section not found.');
                     }
@@ -1508,7 +1530,7 @@
 
                     if (response.success) {
                         toastr.success(response.message);
-                        $('#addSectionModal').modal('hide');
+                        hideModal('addSectionModal');
                         location.reload();
                     } else {
                         toastr.error(response.message || 'Something went wrong');
@@ -1524,7 +1546,7 @@
         });
 
         // Delete Section
-        $('.delete-section-btn').click(function() {
+        $(document).on('click', '.delete-section-btn', function() {
             let id = $(this).data('id');
             if (confirm('Are you sure you want to delete this home section?')) {
                 $.ajax({
