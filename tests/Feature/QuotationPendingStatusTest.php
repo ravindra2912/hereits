@@ -242,6 +242,7 @@ class QuotationPendingStatusTest extends TestCase
             'password' => bcrypt('password'),
             'role' => 'Business',
             'status' => 'active',
+            'is_contact_verify' => true,
         ])->save();
 
         $business = new Business();
@@ -251,6 +252,8 @@ class QuotationPendingStatusTest extends TestCase
             'business_category_id' => $category->id,
             'owner_id' => $owner->id,
             'status' => 'active',
+            'contact' => '9999999999',
+            'is_contact_verify' => true,
         ]);
         $business->save();
 

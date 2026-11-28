@@ -1,8 +1,12 @@
-@extends('front.business.template1.layouts.main', ['seo' => [
-'title' => 'Quotation ' . $quotation->quotation_no . ' | ' . $business->name,
-'description' => 'View quotation details from ' . $business->name,
-'keywords' => 'Quotation, ' . $business->name
-]])
+@extends('front.business.template1.layouts.main', [
+    'hidePopups' => true,
+    'homePopups' => collect([]),
+    'seo' => [
+        'title' => 'Quotation ' . $quotation->quotation_no . ' | ' . $business->name,
+        'description' => 'View quotation details from ' . $business->name,
+        'keywords' => 'Quotation, ' . $business->name
+    ]
+])
 
 @section('content')
 <div class="container py-5">

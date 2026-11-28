@@ -89,6 +89,10 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\View::composer('front.business.template1.layouts.main', function ($view) {
             $viewData = $view->getData();
             $business = $viewData['business'] ?? null;
+            if (!empty($viewData['hidePopups']) || request()->routeIs('quotation-details')) {
+                $view->with('homePopups', collect([]));
+                return;
+            }
             if ($business && !isset($viewData['homePopups'])) {
                 $homePopups = cache()->remember("business_{$business->id}_home_popups", 600, function () use ($business) {
                     return \App\Models\BusinessHomePopup::where('business_id', $business->id)

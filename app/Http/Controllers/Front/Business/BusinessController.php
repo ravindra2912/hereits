@@ -453,7 +453,10 @@ class BusinessController extends Controller
             $view = "front.business.template1.quotation_details";
         }
 
-        return view($view, compact('business', 'setting', 'quotation', 'quotationPolicy'));
+        $homePopups = collect([]);
+        $hidePopups = true;
+
+        return view($view, compact('business', 'setting', 'quotation', 'quotationPolicy', 'homePopups', 'hidePopups'));
     }
 
     public function quotationPdf(Request $request, $slug, $quotation_no)
@@ -560,7 +563,7 @@ class BusinessController extends Controller
 
     function getBusinessAddress($business): string
     {
-        $address = $business->address;
+        $address = (string)($business->address ?? '');
         if (isset($business->city) && !empty($business->city->name)) {
             $address .= ', ' . $business->city->name;
         }

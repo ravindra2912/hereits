@@ -222,7 +222,9 @@
     @include('front.business.template1.layouts.share_modal')
 
     <!-- Popups -->
-    @include('front.business.template1.elements.popups')
+    @if(empty($hidePopups) && !request()->routeIs('quotation-details'))
+        @include('front.business.template1.elements.popups')
+    @endif
 
     @stack('js')
 
